@@ -24,6 +24,7 @@ import Footer from './components/layout/Footer';
 import ScrollToTop from './components/common/ScrollToTop';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import LoadingSpinner from './components/common/LoadingSpinner';
+import FloatingSupportWidget from './components/navigation/FloatingSupportWidget';
 // REMOVED: ToastContainer import - it's now handled by ToastProvider in index.js
 
 // ============================================================================
@@ -36,7 +37,9 @@ const ShopPage = lazy(() => import('./pages/main/ShopPage'));
 const ProductDetailsPage = lazy(() => import('./pages/product/ProductDetailsPage'));
 const CategoryPage = lazy(() => import('./pages/main/CategoryPage'));
 const AboutPage = lazy(() => import('./pages/main/AboutPage'));
+const ServicesPage = lazy(() => import('./pages/main/ServicesPage'));
 const ContactPage = lazy(() => import('./pages/main/ContactPage'));
+const ContactSupportPage = lazy(() => import('./pages/main/ContactSupportPage'));
 const BlogPage = lazy(() => import('./pages/main/BlogPage'));
 const BlogPostPage = lazy(() => import('./pages/main/BlogPostPage'));
 const FAQPage = lazy(() => import('./pages/main/FAQPage'));
@@ -408,7 +411,9 @@ function App() {
                 <Route path="/product/:id" element={<ProductDetailsPage />} />
                 <Route path="/category/:slug" element={<CategoryPage />} />
                 <Route path="/about" element={<AboutPage />} />
-                <Route path="/contact" element={<ContactPage />} />
+                <Route path="/services" element={<ServicesPage />} />
+                <Route path="/contact-support" element={<ContactSupportPage />} />
+                <Route path="/ContactSupport" element={<ContactSupportPage />} /> 
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/blog/:slug" element={<BlogPostPage />} />
                 <Route path="/faq" element={<FAQPage />} />
@@ -679,6 +684,14 @@ function App() {
 
         {/* Footer */}
         <Footer />
+
+        {/* ADD THIS: Floating Support Widget - Persists across all pages */}
+        <FloatingSupportWidget 
+          excludePaths={[
+            '/contact-support',
+            '/checkout'
+          ]} 
+        />
 
         {/* Toast Notifications - REMOVED */}
         {/* ToastContainer is now automatically rendered by ToastProvider in index.js */}
