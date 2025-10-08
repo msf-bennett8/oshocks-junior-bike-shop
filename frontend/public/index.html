@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="theme-color" content="#667eea" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#764ba2" media="(prefers-color-scheme: dark)" />
+  
+  <!-- Security Headers -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <!--<meta http-equiv="X-Frame-Options" content="SAMEORIGIN" />-->
+  <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()" />
+  <meta name="referrer" content="origin-when-cross-origin" />
+  
+  <!-- Primary Meta Tags -->
+  <title>Oshocks Junior Bike Shop - Kenya's Premier Cycling Marketplace | Buy Bicycles Online</title>
+  <meta name="title" content="Oshocks Junior Bike Shop - Kenya's Premier Cycling Marketplace | Buy Bicycles Online" />
+  <meta name="description" content="Shop thousands of bicycles, cycling accessories & spare parts online in Kenya. Mountain bikes, road bikes, BMX, kids bikes. Fast delivery nationwide. M-Pesa & card payments. Quality guaranteed." />
+  <meta name="keywords" content="bicycles Kenya, bike shop Nairobi, cycling accessories Kenya, bicycle spare parts, mountain bikes Kenya, road bikes Nairobi, BMX bikes, kids bicycles, cycling gear Kenya, M-Pesa payments, online bike store Kenya, bicycle delivery Nairobi, cycling marketplace Kenya, bike accessories, cycling equipment" />
+  <meta name="author" content="Oshocks Junior Bike Shop" />
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow" />
+  <meta name="language" content="English" />
+  <meta name="geo.region" content="KE-110" />
+  <meta name="geo.placename" content="Nairobi" />
+  <meta name="geo.position" content="-1.286389;36.817223" />
+  <meta name="ICBM" content="-1.286389, 36.817223" />
+  
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://oshocks.co.ke/" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://oshocks.co.ke/" />
+  <meta property="og:site_name" content="Oshocks Junior Bike Shop" />
+  <meta property="og:title" content="Oshocks Junior Bike Shop - Kenya's Premier Cycling Marketplace" />
+  <meta property="og:description" content="Discover thousands of bicycles, accessories, and spare parts. Fast delivery, M-Pesa payments, quality guaranteed. Shop now!" />
+  <meta property="og:image" content="https://oshocks.co.ke/og-image.jpg" />
+  <meta property="og:image:secure_url" content="https://oshocks.co.ke/og-image.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Oshocks Junior Bike Shop - Quality Bicycles in Kenya" />
+  <meta property="og:locale" content="en_KE" />
+  <meta property="fb:app_id" content="YOUR_FACEBOOK_APP_ID" />
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@oshocksbikeshop" />
+  <meta name="twitter:creator" content="@oshocksbikeshop" />
+  <meta name="twitter:url" content="https://oshocks.co.ke/" />
+  <meta name="twitter:title" content="Oshocks Junior Bike Shop - Kenya's Premier Cycling Marketplace" />
+  <meta name="twitter:description" content="Discover thousands of bicycles, accessories, and spare parts. Fast delivery, M-Pesa payments, quality guaranteed." />
+  <meta name="twitter:image" content="https://oshocks.co.ke/twitter-image.jpg" />
+  <meta name="twitter:image:alt" content="Oshocks Junior Bike Shop - Quality Bicycles in Kenya" />
+  
+  <!-- Favicon Package -->
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/favicon.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/favicon-16x16.png" />
+  <link rel="mask-icon" href="%PUBLIC_URL%/safari-pinned-tab.svg" color="#667eea" />
+  
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Oshocks" />
+  <meta name="application-name" content="Oshocks Bike Shop" />
+  <meta name="msapplication-TileColor" content="#667eea" />
+  <meta name="msapplication-TileImage" content="%PUBLIC_URL%/mstile-144x144.png" />
+  <meta name="msapplication-config" content="%PUBLIC_URL%/browserconfig.xml" />
+  
+  <!-- Preconnect to External Resources for Performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://res.cloudinary.com" />
+  <link rel="dns-prefetch" href="https://api.oshocks.co.ke" />
+  <link rel="dns-prefetch" href="https://embed.tawk.to" />
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+  
+  <!-- Google Fonts - Inter for modern, clean UI -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  
+  <!-- Preload Critical Assets -->
+  <!-- <link rel="preload" href="%PUBLIC_URL%/logo.svg" as="image" type="image/svg+xml" /> -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" as="style" />
+  
+  <!-- Structured Data for SEO - Local Business -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    "@id": "https://oshocks.co.ke/#store",
+    "name": "Oshocks Junior Bike Shop",
+    "alternateName": "Oshocks Bike Shop",
+    "description": "Kenya's leading online marketplace for bicycles, cycling accessories, and spare parts. Premium quality bikes, fast delivery, M-Pesa payments accepted.",
+    "url": "https://oshocks.co.ke",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://oshocks.co.ke/logo.png",
+      "width": 600,
+      "height": 600
+    },
+    "image": {
+      "@type": "ImageObject",
+      "url": "https://oshocks.co.ke/store-image.jpg",
+      "width": 1200,
+      "height": 630
+    },
+    "telephone": "+254-712-345-678",
+    "email": "info@oshocks.co.ke",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Kimathi Street, City Center",
+      "addressLocality": "Nairobi",
+      "addressRegion": "Nairobi County",
+      "postalCode": "00100",
+      "addressCountry": "KE"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": "-1.286389",
+      "longitude": "36.817223"
+    },
+    "priceRange": "KES 500 - KES 500,000",
+    "currenciesAccepted": "KES",
+    "paymentAccepted": ["M-Pesa", "Credit Card", "Debit Card", "Visa", "Mastercard"],
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "opens": "08:00",
+        "closes": "20:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Saturday", "Sunday"],
+        "opens": "09:00",
+        "closes": "18:00"
+      }
+    ],
+    "areaServed": {
+      "@type": "Country",
+      "name": "Kenya"
+    },
+    "sameAs": [
+      "https://www.facebook.com/oshocksbikeshop",
+      "https://twitter.com/oshocksbikeshop",
+      "https://www.instagram.com/oshocksbikeshop",
+      "https://www.youtube.com/@oshocksbikeshop",
+      "https://www.linkedin.com/company/oshocksbikeshop"
+    ],
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://oshocks.co.ke/search?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+  
+  <!-- Structured Data - Website -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": "https://oshocks.co.ke/#website",
+    "url": "https://oshocks.co.ke",
+    "name": "Oshocks Junior Bike Shop",
+    "description": "Kenya's Premier Cycling Marketplace",
+    "publisher": {
+      "@id": "https://oshocks.co.ke/#store"
+    },
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://oshocks.co.ke/search?q={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    },
+    "inLanguage": "en-KE"
+  }
+  </script>
+  
+  <!-- Structured Data - Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": "https://oshocks.co.ke/#organization",
+    "name": "Oshocks Junior Bike Shop",
+    "url": "https://oshocks.co.ke",
+    "logo": "https://oshocks.co.ke/logo.png",
+    "foundingDate": "2024",
+    "founders": [
+      {
+        "@type": "Person",
+        "name": "Oshocks Founder"
+      }
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+254-712-345-678",
+      "contactType": "Customer Service",
+      "areaServed": "KE",
+      "availableLanguage": ["English", "Swahili"]
+    },
+    "sameAs": [
+      "https://www.facebook.com/oshocksbikeshop",
+      "https://twitter.com/oshocksbikeshop",
+      "https://www.instagram.com/oshocksbikeshop"
+    ]
+  }
+  </script>
+  
+  <!-- Structured Data - BreadcrumbList (for homepage) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://oshocks.co.ke/"
+      }
+    ]
+  }
+  </script>
+  
+  <!-- Tawk.to Live Chat Widget - DISABLED UNTIL YOU GET YOUR ID -->
+   
+  <!-- Tawk.to Live Chat Widget -->
+   <!--
+
+  <script type="text/javascript">
+    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+    (function(){
+      var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+      s1.async=true;
+      s1.src='https://embed.tawk.to/YOUR_TAWK_ID/default';
+      s1.charset='UTF-8';
+      s1.setAttribute('crossorigin','*');
+      s0.parentNode.insertBefore(s1,s0);
+    })();
+    
+    // Custom Tawk.to configuration
+    Tawk_API.onLoad = function(){
+      console.log('Live chat loaded');
+    };
+  </script>
+    -->
+  
+  <style>
+    /* Critical CSS for initial render - Prevents Flash of Unstyled Content */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --primary-color: #667eea;
+      --secondary-color: #764ba2;
+      --text-dark: #1a1a1a;
+      --text-light: #ffffff;
+      --bg-light: #ffffff;
+      --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    html {
+      font-size: 16px;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+      scroll-behavior: smooth;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-light);
+      color: var(--text-dark);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    
+    code {
+      font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+    }
+    
+    /* Loading Screen Styles */
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg-gradient);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+    }
+    
+    #loading-screen.fade-out {
+      opacity: 0;
+      visibility: hidden;
+    }
+    
+    .loading-bike {
+      font-size: 64px;
+      margin-bottom: 24px;
+      animation: bounce 1.5s ease-in-out infinite;
+      filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
+    }
+    
+    .loader {
+      width: 60px;
+      height: 60px;
+      border: 5px solid rgba(255, 255, 255, 0.2);
+      border-top-color: var(--text-light);
+      border-radius: 50%;
+      animation: spin 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      margin-top: 24px;
+      color: var(--text-light);
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .loading-subtext {
+      margin-top: 8px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+    
+    @keyframes bounce {
+      0%, 100% { 
+        transform: translateY(0) scale(1); 
+      }
+      50% { 
+        transform: translateY(-30px) scale(1.1); 
+      }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    /* Loading Progress Bar */
+    .loading-progress {
+      width: 200px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      margin-top: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .loading-progress-bar {
+      height: 100%;
+      background: var(--text-light);
+      border-radius: 10px;
+      animation: progress 2s ease-in-out infinite;
+    }
+    
+    @keyframes progress {
+      0% { width: 0%; transform: translateX(0); }
+      50% { width: 100%; transform: translateX(0); }
+      100% { width: 100%; transform: translateX(100%); }
+    }
+    
+    /* React Root Styles */
+    #root {
+      min-height: 100vh;
+      isolation: isolate;
+    }
+    
+    /* Accessibility - Skip to main content link */
+    .skip-link {
+      position: absolute;
+      top: -50px;
+      left: 10px;
+      background: var(--primary-color);
+      color: white;
+      padding: 12px 20px;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 600;
+      z-index: 10000;
+      transition: top 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .skip-link:focus {
+      top: 10px;
+      outline: 3px solid #ffd700;
+      outline-offset: 2px;
+    }
+    
+    /* Prevent layout shift */
+    img, picture, video, canvas, svg {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+    
+    /* Improve text readability */
+    p, h1, h2, h3, h4, h5, h6 {
+      overflow-wrap: break-word;
+    }
+    
+    /* Remove default button styles */
+    button {
+      font-family: inherit;
+      cursor: pointer;
+    }
+    
+    /* Focus visible for better accessibility */
+    *:focus-visible {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
+    
+    /* Reduce motion for users who prefer it */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+    
+    /* Print styles */
+    @media print {
+      #loading-screen,
+      .skip-link {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- NoScript Warning -->
+  <noscript>
+    <div style="position: fixed; top: 0; left: 0; width: 100%; padding: 20px; text-align: center; background: #fff3cd; color: #856404; border-bottom: 3px solid #ffc107; z-index: 10001; font-family: Arial, sans-serif;">
+      <strong style="font-size: 18px; display: block; margin-bottom: 10px;">⚠️ JavaScript Required</strong>
+      <p style="margin: 0; font-size: 14px;">
+        Oshocks Junior Bike Shop requires JavaScript to function properly. 
+        Please enable JavaScript in your browser settings and refresh this page to continue shopping.
+      </p>
+    </div>
+  </noscript>
+  
+  <!-- Accessibility: Skip to main content -->
+  <a href="#root" class="skip-link" aria-label="Skip to main content">Skip to main content</a>
+  
+  <!-- Loading Screen with Enhanced UX -->
+  <div id="loading-screen" role="status" aria-live="polite" aria-label="Loading application">
+    <div class="loading-bike" role="img" aria-label="Bicycle icon">🚴‍♂️</div>
+    <div class="loader" aria-hidden="true"></div>
+    <div class="loading-text">Loading Oshocks</div>
+    <div class="loading-subtext">Preparing your cycling experience...</div>
+    <div class="loading-progress" aria-hidden="true">
+      <div class="loading-progress-bar"></div>
+    </div>
+  </div>
+  
+  <!-- React Root -->
+  <div id="root" role="main"></div>
+  
+  <!-- Core Application Scripts -->
+  <script>
+    // Configuration
+    const CONFIG = {
+      loadingDelay: 800,
+      fadeOutDuration: 500,
+      enableServiceWorker: true,
+      enableAnalytics: false // Set to true when GA is configured
+    };
+    
+    // Loading Screen Management
+    function hideLoadingScreen() {
+      const loadingScreen = document.getElementById('loading-screen');
+      if (!loadingScreen) return;
+      
+      setTimeout(() => {
+        loadingScreen.classList.add('fade-out');
+        setTimeout(() => {
+          loadingScreen.style.display = 'none';
+          loadingScreen.remove(); // Clean up DOM
+        }, CONFIG.fadeOutDuration);
+      }, CONFIG.loadingDelay);
+    }
+    
+    // Remove loading screen after React loads
+    if (document.readyState === 'complete') {
+      hideLoadingScreen();
+    } else {
+      window.addEventListener('load', hideLoadingScreen);
+    }
+    
+    // Service Worker Registration for PWA
+    if (CONFIG.enableServiceWorker && 'serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker
+          .register('/service-worker.js')
+          .then(registration => {
+            console.log('✅ Service Worker registered:', registration.scope);
+            
+            // Check for updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              console.log('🔄 Service Worker update found');
+            });
+          })
+          .catch(error => {
+            console.warn('❌ Service Worker registration failed:', error);
+          });
+      });
+    }
+    
+    // Performance Monitoring
+    if ('PerformanceObserver' in window) {
+      // Largest Contentful Paint (LCP)
+      const lcpObserver = new PerformanceObserver((list) => {
+        const entries = list.getEntries();
+        const lastEntry = entries[entries.length - 1];
+        console.log('📊 LCP:', lastEntry.renderTime || lastEntry.loadTime);
+      });
+      lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+      
+      // First Input Delay (FID)
+      const fidObserver = new PerformanceObserver((list) => {
+        const entries = list.getEntries();
+        entries.forEach(entry => {
+          console.log('📊 FID:', entry.processingStart - entry.startTime);
+        });
+      });
+      fidObserver.observe({ entryTypes: ['first-input'] });
+    }
+    
+    // Error Boundary - Global Error Handler
+    window.addEventListener('error', (event) => {
+      console.error('❌ Global Error:', event.error);
+      // You can send errors to your logging service here
+    });
+    
+    window.addEventListener('unhandledrejection', (event) => {
+      console.error('❌ Unhandled Promise Rejection:', event.reason);
+      // You can send errors to your logging service here
+    });
+    
+    // Online/Offline Status
+    window.addEventListener('online', () => {
+      console.log('✅ Back online');
+      // Show notification to user
+    });
+    
+    window.addEventListener('offline', () => {
+      console.log('❌ Connection lost');
+      // Show notification to user
+    });
+    
+    // Detect if user is on mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+      document.body.classList.add('mobile-device');
+    }
+    
+    // Add browser detection for targeted fixes
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (isIOS) document.body.classList.add('ios-device');
+    if (isSafari) document.body.classList.add('safari-browser');
+  </script>
+  
+  <!-- Google Analytics 4 (GA4) - Uncomment and add your Measurement ID -->
+  <!--
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX', {
+      'send_page_view': true,
+      'anonymize_ip': true,
+      'cookie_flags': 'SameSite=None;Secure'
+    });
+    
+    // E-commerce tracking setup
+    gtag('config', 'G-XXXXXXXXXX', {
+      'currency': 'KES'
+    });
+  </script>
+  -->
+  
+  <!-- Facebook Pixel - Uncomment and add your Pixel ID -->
+  <!--
+  <script>
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', 'YOUR_PIXEL_ID');
+    fbq('track', 'PageView');
+  </script>
+  <noscript>
+    <img height="1" width="1" style="display:none"
+      src="https://www.facebook.com/tr?id=YOUR_PIXEL_ID&ev=PageView&noscript=1"
+      alt="" />
+  </noscript>
+  -->
+  
+  <!-- Hotjar Tracking Code - Uncomment and add your Site ID -->
+  <!--
+  <script>
+    (function(h,o,t,j,a,r){
+      h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+      h._hjSettings={hjid:YOUR_HOTJAR_ID,hjsv:6};
+      a=o.getElementsByTagName('head')[0];
+      r=o.createElement('script');r.async=1;
+      r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+      a.appendChild(r);
+    })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+  </script>
+  -->
+  
+</body>
+</html>

@@ -1,0 +1,89 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.backup
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build outputs
+dist/
+build/
+
+# Frontend specific (React/Vite)
+frontend/dist/
+frontend/build/
+frontend/.vite/
+frontend/coverage/
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+frontend/.env.development
+frontend/package-lock.json
+frontend/yarn.lock
+
+# Backend specific (Laravel)
+backend/.env
+backend/.env.backup
+backend/storage/*.key
+backend/storage/framework/cache/
+backend/storage/framework/sessions/
+backend/storage/framework/testing/
+backend/storage/framework/views/
+backend/storage/logs/
+backend/bootstrap/cache/
+backend/public/storage
+backend/public/hot
+backend/composer.lock
+backend/auth.json
+backend/phpunit.xml
+backend/.phpunit.result.cache
+
+# Testing
+coverage/
+.nyc_output/
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+dump.rdb
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+*.backup
+*.bak
+*.old
+
+# Package manager locks (optional - comment out if you want to commit them)
+package-lock.json
+yarn.lock
+composer.lock
+
+# Uploads (if storing locally during development)
+backend/storage/app/public/uploads/
+uploads/

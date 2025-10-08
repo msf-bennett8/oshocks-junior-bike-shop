@@ -1,0 +1,106 @@
+# Oshocks Junior Bike Shop - Robots.txt
+# This file tells search engine crawlers which pages to crawl and which to avoid
+
+# Default Rule - Allow all bots to crawl most pages
+User-agent: *
+Allow: /
+
+# Disallow crawling of user-specific pages (privacy & duplicate content)
+Disallow: /admin/
+Disallow: /seller/dashboard/
+Disallow: /profile/
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /login/
+Disallow: /register/
+Disallow: /reset-password/
+Disallow: /verify-email/
+
+# Disallow search results pages (prevent duplicate content issues)
+Disallow: /search?*
+Disallow: /*?q=
+Disallow: /*?search=
+Disallow: /*?keyword=
+
+# Disallow filtered/sorted pages that create duplicate content
+Disallow: /*?sort=
+Disallow: /*?filter=
+Disallow: /*?page=
+Disallow: /*?limit=
+
+# Disallow API endpoints (no need to index these)
+Disallow: /api/
+Disallow: /*.json$
+
+# Disallow payment processing pages
+Disallow: /payment/
+Disallow: /mpesa-callback/
+Disallow: /stripe-webhook/
+
+# Disallow tracking and analytics URLs
+Disallow: /*?utm_*
+Disallow: /*?fbclid=
+Disallow: /*?gclid=
+Disallow: /*?ref=
+
+# Allow specific important pages explicitly
+Allow: /products/
+Allow: /categories/
+Allow: /brands/
+Allow: /deals/
+Allow: /about/
+Allow: /contact/
+Allow: /help/
+Allow: /blog/
+Allow: /sellers/
+
+# Block bad bots that ignore robots.txt (known scrapers)
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+# Allow Google Image Bot (important for product images)
+User-agent: Googlebot-Image
+Allow: /static/images/
+Allow: /products/*/images/
+
+# Crawl-delay for specific bots (prevent server overload)
+User-agent: Bingbot
+Crawl-delay: 1
+
+User-agent: Yandex
+Crawl-delay: 2
+
+# Sitemap location (generate this with your build process)
+Sitemap: https://oshocks.co.ke/sitemap.xml
+Sitemap: https://oshocks.co.ke/sitemap-products.xml
+Sitemap: https://oshocks.co.ke/sitemap-categories.xml
+Sitemap: https://oshocks.co.ke/sitemap-pages.xml
+
+# Alternative sitemap locations for different environments
+# Sitemap: https://www.oshocks.co.ke/sitemap.xml
+
+# Clean URL parameters (Google Search Console setting)
+# These parameters don't change page content, so ignore them:
+# utm_source, utm_medium, utm_campaign, fbclid, gclid, ref
+
+# Host specification (helps avoid duplicate content)
+# Host: https://oshocks.co.ke
+
+# Notes for future reference:
+# 1. Update sitemap URLs when you deploy to production
+# 2. Submit sitemaps to Google Search Console and Bing Webmaster Tools
+# 3. Monitor crawl stats in Search Console to ensure proper indexing
+# 4. Review this file quarterly as your site structure evolves
+# 5. Test with Google's robots.txt Tester tool before deployment
