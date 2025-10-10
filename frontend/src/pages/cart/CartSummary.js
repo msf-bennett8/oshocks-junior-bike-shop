@@ -500,4 +500,4 @@ const CartSummaryDemo = () => {
   );
 };
 
-export default CartSummaryDemo;
+export default CartSummary;

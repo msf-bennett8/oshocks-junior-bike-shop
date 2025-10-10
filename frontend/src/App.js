@@ -59,7 +59,7 @@ const DashboardPage = lazy(() => import('./pages/user/DashboardPage'));
 const ProfilePage = lazy(() => import('./pages/user/ProfilePage'));
 const OrdersPage = lazy(() => import('./pages/user/OrdersPage'));
 const OrderDetailsPage = lazy(() => import('./pages/user/OrderDetailsPage'));
-const WishlistPage = lazy(() => import('./pages/user/WishlistPage'));
+const Wishlist = lazy(() => import('./pages/user/Wishlist'));
 const AddressesPage = lazy(() => import('./pages/user/AddressesPage'));
 const ReviewsPage = lazy(() => import('./pages/user/ReviewsPage'));
 const SettingsPage = lazy(() => import('./pages/user/SettingsPage'));
@@ -413,7 +413,7 @@ function App() {
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/services" element={<ServicesPage />} />
                 <Route path="/contact-support" element={<ContactSupportPage />} />
-                <Route path="/ContactSupport" element={<ContactSupportPage />} /> 
+                <Route path="/Contact" element={<ContactPage />} /> 
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/blog/:slug" element={<BlogPostPage />} />
                 <Route path="/faq" element={<FAQPage />} />
@@ -514,7 +514,7 @@ function App() {
                   path="/wishlist"
                   element={
                     <ProtectedRoute>
-                      <WishlistPage />
+                      <Wishlist />
                     </ProtectedRoute>
                   }
                 />

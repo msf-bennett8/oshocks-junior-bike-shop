@@ -1,13 +1,402 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
+import {
+  ShoppingCart,
+  ArrowLeft,
+  Package,
+  Trash2,
+  Heart,
+  RefreshCw,
+  TrendingUp,
+  AlertCircle
+} from 'lucide-react';
 
+// Import your existing components
+import CartItem from './CartItem';
+import CartSummary from './CartSummary';
+
+/**
+ * CartPage Component
+ * Full shopping cart page for Oshocks Junior Bike Shop
+ * Integrates CartItem and CartSummary components
+ */
 const CartPage = () => {
+  const navigate = useNavigate();
+  
+  // Cart state (in production, this would come from context/redux)
+  const [cartItems, setCartItems] = useState([
+    {
+      id: 1,
+      name: 'Mountain Bike Pro X1 - 21 Speed Shimano',
+      category: 'Mountain Bikes',
+      price: 45000,
+      originalPrice: 52000,
+      quantity: 1,
+      stock: 8,
+      seller: 'Oshocks Junior',
+      image: '/api/placeholder/200/200'
+    },
+    {
+      id: 2,
+      name: 'Professional Cycling Helmet - Safety Certified',
+      category: 'Safety Gear',
+      price: 2500,
+      quantity: 2,
+      stock: 3,
+      seller: 'BikeGear Kenya',
+      image: '/api/placeholder/200/200'
+    },
+    {
+      id: 3,
+      name: 'Heavy Duty U-Lock with Cable',
+      category: 'Security',
+      price: 1800,
+      quantity: 1,
+      stock: 15,
+      seller: 'SecureBikes',
+      image: '/api/placeholder/200/200'
+    }
+  ]);
+
+  const [wishlist, setWishlist] = useState([]);
+  const [notification, setNotification] = useState(null);
+
+  // Calculate totals - with safe defaults
+  const totalItems = cartItems?.reduce((sum, item) => sum + (item?.quantity || 0), 0) || 0;
+  const subtotal = cartItems?.reduce((sum, item) => sum + ((item?.price || 0) * (item?.quantity || 0)), 0) || 0;
+
+  // Show notification
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  // Handle quantity update
+  const handleUpdateQuantity = (id, newQuantity) => {
+    setCartItems(cartItems.map(item =>
+      item.id === id ? { ...item, quantity: newQuantity } : item
+    ));
+    showNotification('Quantity updated');
+  };
+
+  // Handle remove item
+  const handleRemoveItem = (id) => {
+    const item = cartItems.find(i => i.id === id);
+    setCartItems(cartItems.filter(item => item.id !== id));
+    if (item) {
+      showNotification(`${item.name} removed from cart`, 'info');
+    }
+  };
+
+  // Handle add to wishlist
+  const handleAddToWishlist = (item) => {
+    setWishlist([...wishlist, item]);
+    showNotification(`${item.name} moved to wishlist`);
+  };
+
+  // Handle clear cart
+  const handleClearCart = () => {
+    if (window.confirm('Are you sure you want to clear your cart?')) {
+      setCartItems([]);
+      showNotification('Cart cleared', 'info');
+    }
+  };
+
+  // Handle checkout
+  const handleCheckout = () => {
+    navigate('/checkout');
+  };
+
+  // Handle continue shopping
+  const handleContinueShopping = () => {
+    navigate('/shop');
+  };
+
+  // Recommended products (mock data)
+  const recommendedProducts = [
+    {
+      id: 101,
+      name: 'Bike Water Bottle Holder',
+      price: 800,
+      image: '/api/placeholder/150/150'
+    },
+    {
+      id: 102,
+      name: 'LED Bike Light Set',
+      price: 1200,
+      originalPrice: 1500,
+      image: '/api/placeholder/150/150'
+    },
+    {
+      id: 103,
+      name: 'Bike Repair Kit',
+      price: 1500,
+      image: '/api/placeholder/150/150'
+    },
+    {
+      id: 104,
+      name: 'Cycling Gloves',
+      price: 1000,
+      image: '/api/placeholder/150/150'
+    }
+  ];
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-KE', {
+      style: 'currency',
+      currency: 'KES',
+      minimumFractionDigits: 0
+    }).format(price || 0);
+  };
+
+  // Generate safe page title
+  const pageTitle = `Shopping Cart (${totalItems}) - Oshocks Junior Bike Shop`;
+
+  // Empty cart view
+  if (cartItems.length === 0) {
+    return (
+      <>
+        <Helmet>
+          <title>Shopping Cart (0) - Oshocks Junior Bike Shop</title>
+          <meta name="description" content="View and manage your shopping cart" />
+        </Helmet>
+
+        <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl mx-auto text-center py-16">
+            <ShoppingCart className="w-24 h-24 mx-auto mb-6 text-gray-300" />
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              Your Cart is Empty
+            </h1>
+            <p className="text-gray-600 mb-8">
+              Looks like you haven't added any bikes yet. Start shopping to fill your cart!
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                to="/shop"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                Start Shopping
+              </Link>
+              {wishlist.length > 0 && (
+                <Link
+                  to="/wishlist"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  <Heart className="w-5 h-5" />
+                  View Wishlist ({wishlist.length})
+                </Link>
+              )}
+            </div>
+
+            {/* Popular Categories */}
+            <div className="mt-16">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Popular Categories</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {['Mountain Bikes', 'Road Bikes', 'Accessories', 'Safety Gear'].map((category) => (
+                  <Link
+                    key={category}
+                    to={`/category/${category.toLowerCase().replace(' ', '-')}`}
+                    className="p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-600 hover:shadow-md transition-all"
+                  >
+                    <Package className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                    <p className="font-medium text-gray-800">{category}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Main cart view
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-4">Cart</h1>
-        <p className="text-gray-600">This page is under construction. Coming soon!</p>
+    <>
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content="Review your shopping cart and proceed to checkout" />
+      </Helmet>
+
+      <div className="min-h-screen bg-gray-50">
+        {/* Notification Toast */}
+        {notification && (
+          <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg animate-fadeIn ${
+            notification.type === 'success' ? 'bg-green-600' : 'bg-blue-600'
+          } text-white`}>
+            {notification.message}
+          </div>
+        )}
+
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-3">
+                  <ShoppingCart className="w-8 h-8 text-blue-600" />
+                  Shopping Cart
+                </h1>
+                <p className="text-gray-600 mt-1">
+                  {totalItems} {totalItems === 1 ? 'item' : 'items'} • {formatPrice(subtotal)}
+                </p>
+              </div>
+              <button
+                onClick={handleContinueShopping}
+                className="hidden sm:flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                Continue Shopping
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Cart Items Section */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Cart Actions Bar */}
+              <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer hover:text-gray-800">
+                    <input type="checkbox" className="rounded" />
+                    Select All
+                  </label>
+                </div>
+                <button
+                  onClick={handleClearCart}
+                  className="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Clear Cart
+                </button>
+              </div>
+
+              {/* Cart Items */}
+              <div className="space-y-4">
+                {cartItems.map((item) => (
+                  <CartItem
+                    key={item.id}
+                    item={item}
+                    onUpdateQuantity={handleUpdateQuantity}
+                    onRemoveItem={handleRemoveItem}
+                    onAddToWishlist={handleAddToWishlist}
+                    showStock={true}
+                    editable={true}
+                    compact={false}
+                  />
+                ))}
+              </div>
+
+              {/* Trust Badges */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                  <div>
+                    <Package className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                    <p className="text-xs font-medium text-gray-800">Free Shipping</p>
+                    <p className="text-xs text-gray-500">Orders over KES 5,000</p>
+                  </div>
+                  <div>
+                    <RefreshCw className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                    <p className="text-xs font-medium text-gray-800">30-Day Returns</p>
+                    <p className="text-xs text-gray-500">Money-back guarantee</p>
+                  </div>
+                  <div>
+                    <Heart className="w-8 h-8 mx-auto mb-2 text-red-600" />
+                    <p className="text-xs font-medium text-gray-800">1-Year Warranty</p>
+                    <p className="text-xs text-gray-500">On all bikes</p>
+                  </div>
+                  <div>
+                    <AlertCircle className="w-8 h-8 mx-auto mb-2 text-orange-600" />
+                    <p className="text-xs font-medium text-gray-800">Expert Support</p>
+                    <p className="text-xs text-gray-500">24/7 assistance</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recommended Products */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                  You Might Also Like
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {recommendedProducts.map((product) => (
+                    <Link
+                      key={product.id}
+                      to={`/product/${product.id}`}
+                      className="group"
+                    >
+                      <div className="bg-gray-50 rounded-lg p-3 hover:shadow-md transition-all">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-32 object-cover rounded mb-2"
+                        />
+                        <h3 className="text-sm font-medium text-gray-800 mb-1 line-clamp-2 group-hover:text-blue-600">
+                          {product.name}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <p className="text-blue-600 font-bold text-sm">
+                            {formatPrice(product.price)}
+                          </p>
+                          {product.originalPrice && (
+                            <p className="text-gray-400 line-through text-xs">
+                              {formatPrice(product.originalPrice)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Order Summary Section */}
+            <div className="lg:col-span-1">
+              <CartSummary
+                cartItems={cartItems}
+                onCheckout={handleCheckout}
+                showPromoCode={true}
+                showShippingEstimate={true}
+                showPaymentMethods={true}
+                deliveryLocation="Nairobi CBD, Kenya"
+                sticky={true}
+              />
+
+              {/* Need Help? */}
+              <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-bold text-blue-900 mb-2">Need Help?</h3>
+                <p className="text-sm text-blue-800 mb-3">
+                  Our customer support team is here to assist you.
+                </p>
+                <Link
+                  to="/contact-support"
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                >
+                  Contact Support
+                  <ArrowLeft className="w-4 h-4 rotate-180" />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Continue Shopping Button */}
+          <button
+            onClick={handleContinueShopping}
+            className="sm:hidden fixed bottom-20 left-4 right-4 bg-white text-gray-700 py-3 px-6 rounded-lg font-semibold border-2 border-gray-300 hover:bg-gray-50 transition-colors shadow-lg flex items-center justify-center gap-2"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Continue Shopping
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

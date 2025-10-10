@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   TrendingUp, TrendingDown, ShoppingCart, Package, Users, DollarSign, 
   Eye, AlertCircle, CheckCircle, Clock, XCircle, Star, MapPin, 
-  Calendar, ArrowUpRight, ArrowDownRight, MoreVertical, Search,
-  Filter, Download, RefreshCw, Bell, ChevronRight, Activity,
-  CreditCard, Truck, ShoppingBag, UserCheck, Percent, Tag
+  ArrowUpRight, ArrowDownRight, MoreVertical,
+  Download, RefreshCw, Bell, ChevronRight, Activity,
+  CreditCard, Truck, ShoppingBag, UserCheck, Percent, Tag, Plus 
 } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const AdminDashboardPage = () => {
   const [timeRange, setTimeRange] = useState('7days');
@@ -14,7 +14,7 @@ const AdminDashboardPage = () => {
   const [lastUpdated, setLastUpdated] = useState(new Date());
 
   // Mock data for dashboard
-  const [dashboardData, setDashboardData] = useState({
+  const [dashboardData ] = useState({
     revenue: {
       total: 2847650,
       change: 12.5,

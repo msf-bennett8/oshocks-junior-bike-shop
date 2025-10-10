@@ -7,7 +7,6 @@ const AdminSettingsPage = () => {
   const [showSecretKey, setShowSecretKey] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Form states
   const [generalSettings, setGeneralSettings] = useState({
     siteName: 'Oshocks Junior Bike Shop',
     tagline: 'Kenya\'s Premier Cycling Marketplace',
@@ -92,13 +91,11 @@ const AdminSettingsPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-6 md:py-8">
-        {/* Header */}
         <div className="mb-6 md:mb-8">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Settings</h1>
           <p className="text-sm md:text-base text-gray-600">Manage your marketplace configuration and preferences</p>
         </div>
 
-        {/* Success Message */}
         {saveSuccess && (
           <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
             <CheckCircle className="text-green-600" size={20} />
@@ -107,7 +104,6 @@ const AdminSettingsPage = () => {
         )}
 
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar Navigation */}
           <div className="lg:w-64 flex-shrink-0">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="p-4 border-b border-gray-100">
@@ -132,11 +128,9 @@ const AdminSettingsPage = () => {
             </div>
           </div>
 
-          {/* Content Area */}
           <div className="flex-1">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
               
-              {/* General Settings */}
               {activeTab === 'general' && (
                 <div>
                   <div className="flex items-center gap-3 mb-6">
@@ -255,7 +249,6 @@ const AdminSettingsPage = () => {
                 </div>
               )}
 
-              {/* Payment Settings */}
               {activeTab === 'payment' && (
                 <div>
                   <div className="flex items-center gap-3 mb-6">
@@ -264,7 +257,6 @@ const AdminSettingsPage = () => {
                   </div>
 
                   <div className="space-y-8">
-                    {/* M-Pesa Settings */}
                     <div className="border border-gray-200 rounded-lg p-4 md:p-6">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
@@ -291,6 +283,249 @@ const AdminSettingsPage = () => {
                               value={paymentSettings.mpesaConsumerKey}
                               onChange={(e) => setPaymentSettings({...paymentSettings, mpesaConsumerKey: e.target.value})}
                               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Consumer Secret</label>
+                            <div className="relative">
+                              <input
+                                type={showSecretKey ? "text" : "password"}
+                                value={paymentSettings.mpesaConsumerSecret}
+                                onChange={(e) => setPaymentSettings({...paymentSettings, mpesaConsumerSecret: e.target.value})}
+                                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowSecretKey(!showSecretKey)}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                              >
+                                {showSecretKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Shortcode</label>
+                            <input
+                              type="text"
+                              value={paymentSettings.mpesaShortcode}
+                              onChange={(e) => setPaymentSettings({...paymentSettings, mpesaShortcode: e.target.value})}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Passkey</label>
+                            <input
+                              type="password"
+                              value={paymentSettings.mpesaPasskey}
+                              onChange={(e) => setPaymentSettings({...paymentSettings, mpesaPasskey: e.target.value})}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Environment</label>
+                            <select
+                              value={paymentSettings.mpesaEnvironment}
+                              onChange={(e) => setPaymentSettings({...paymentSettings, mpesaEnvironment: e.target.value})}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                              <option value="sandbox">Sandbox (Testing)</option>
+                              <option value="production">Production (Live)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
+                          <AlertCircle className="text-blue-600 flex-shrink-0" size={20} />
+                          <div>
+                            <p className="text-sm text-blue-800 font-medium">M-Pesa Integration</p>
+                            <p className="text-xs text-blue-700 mt-1">Obtain credentials from Safaricom Daraja Portal. Use sandbox for testing.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border border-gray-200 rounded-lg p-4 md:p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <CreditCard className="text-purple-600" size={24} />
+                          <h3 className="text-lg font-semibold text-gray-900">Stripe</h3>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={paymentSettings.stripeEnabled}
+                            onChange={(e) => setPaymentSettings({...paymentSettings, stripeEnabled: e.target.checked})}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                        </label>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Publishable Key</label>
+                            <input
+                              type="text"
+                              value={paymentSettings.stripePublicKey}
+                              onChange={(e) => setPaymentSettings({...paymentSettings, stripePublicKey: e.target.value})}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Secret Key</label>
+                            <div className="relative">
+                              <input
+                                type={showApiKey ? "text" : "password"}
+                                value={paymentSettings.stripeSecretKey}
+                                onChange={(e) => setPaymentSettings({...paymentSettings, stripeSecretKey: e.target.value})}
+                                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowApiKey(!showApiKey)}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                              >
+                                {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border border-gray-200 rounded-lg p-4 md:p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <DollarSign className="text-orange-600" size={24} />
+                          <h3 className="text-lg font-semibold text-gray-900">Flutterwave</h3>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={paymentSettings.flutterwaveEnabled}
+                            onChange={(e) => setPaymentSettings({...paymentSettings, flutterwaveEnabled: e.target.checked})}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                        </label>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Public Key</label>
+                            <input
+                              type="text"
+                              value={paymentSettings.flutterwavePublicKey}
+                              onChange={(e) => setPaymentSettings({...paymentSettings, flutterwavePublicKey: e.target.value})}
+                              placeholder="FLWPUBK-xxxxxxxxxxxxx"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Secret Key</label>
+                            <input
+                              type="password"
+                              value={paymentSettings.flutterwaveSecretKey}
+                              onChange={(e) => setPaymentSettings({...paymentSettings, flutterwaveSecretKey: e.target.value})}
+                              placeholder="FLWSECK-xxxxxxxxxxxxx"
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleSave('payment')}
+                      className="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                    >
+                      <Save size={18} />
+                      Save Payment Settings
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'shipping' && (
+                <div>
+                  <div className="flex items-center gap-3 mb-6">
+                    <Truck className="text-gray-400" size={24} />
+                    <h2 className="text-xl md:text-2xl font-bold text-gray-900">Shipping Settings</h2>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Free Shipping Threshold (KSh)</label>
+                      <input
+                        type="number"
+                        value={shippingSettings.freeShippingThreshold}
+                        onChange={(e) => setShippingSettings({...shippingSettings, freeShippingThreshold: e.target.value})}
+                        className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                      <p className="text-sm text-gray-500 mt-1">Orders above this amount get free shipping</p>
+                    </div>
+
+                    <div className="border-t border-gray-200 pt-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Shipping Rates by Location</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Flat Rate (Default)</label>
+                          <input
+                            type="number"
+                            value={shippingSettings.flatRate}
+                            onChange={(e) => setShippingSettings({...shippingSettings, flatRate: e.target.value})}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Nairobi</label>
+                          <input
+                            type="number"
+                            value={shippingSettings.nairobiRate}
+                            onChange={(e) => setShippingSettings({...shippingSettings, nairobiRate: e.target.value})}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Mombasa</label>
+                          <input
+                            type="number"
+                            value={shippingSettings.mombasaRate}
+                            onChange={(e) => setShippingSettings({...shippingSettings, mombasaRate: e.target.value})}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Kisumu</label>
+                          <input
+                            type="number"
+                            value={shippingSettings.kisumuRate}
+                            onChange={(e) => setShippingSettings({...shippingSettings, kisumuRate: e.target.value})}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Other Cities</label>
+                          <input
+                            type="number"
+                            value={shippingSettings.otherCitiesRate}
+                            onChange={(e) => setShippingSettings({...shippingSettings, otherCitiesRate: e.target.value})}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Delivery Days</label>
+                          <input
+                            type="text"
+                            value={shippingSettings.estimatedDays}
+                            onChange={(e) => setShippingSettings({...shippingSettings, estimatedDays: e.target.value})}
+                            placeholder="e.g., 3-5"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
                       </div>
@@ -307,7 +542,6 @@ const AdminSettingsPage = () => {
                 </div>
               )}
 
-              {/* Email Settings */}
               {activeTab === 'email' && (
                 <div>
                   <div className="flex items-center gap-3 mb-6">
@@ -415,7 +649,6 @@ const AdminSettingsPage = () => {
                 </div>
               )}
 
-              {/* Seller Settings */}
               {activeTab === 'seller' && (
                 <div>
                   <div className="flex items-center gap-3 mb-6">
@@ -514,7 +747,6 @@ const AdminSettingsPage = () => {
                 </div>
               )}
 
-              {/* Notification Settings */}
               {activeTab === 'notifications' && (
                 <div>
                   <div className="flex items-center gap-3 mb-6">
@@ -612,7 +844,6 @@ const AdminSettingsPage = () => {
                 </div>
               )}
 
-              {/* Security Settings */}
               {activeTab === 'security' && (
                 <div>
                   <div className="flex items-center gap-3 mb-6">
@@ -721,250 +952,4 @@ const AdminSettingsPage = () => {
   );
 };
 
-export default AdminSettingsPage;-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Consumer Secret</label>
-                            <div className="relative">
-                              <input
-                                type={showSecretKey ? "text" : "password"}
-                                value={paymentSettings.mpesaConsumerSecret}
-                                onChange={(e) => setPaymentSettings({...paymentSettings, mpesaConsumerSecret: e.target.value})}
-                                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setShowSecretKey(!showSecretKey)}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                              >
-                                {showSecretKey ? <EyeOff size={18} /> : <Eye size={18} />}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Shortcode</label>
-                            <input
-                              type="text"
-                              value={paymentSettings.mpesaShortcode}
-                              onChange={(e) => setPaymentSettings({...paymentSettings, mpesaShortcode: e.target.value})}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Passkey</label>
-                            <input
-                              type="password"
-                              value={paymentSettings.mpesaPasskey}
-                              onChange={(e) => setPaymentSettings({...paymentSettings, mpesaPasskey: e.target.value})}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Environment</label>
-                            <select
-                              value={paymentSettings.mpesaEnvironment}
-                              onChange={(e) => setPaymentSettings({...paymentSettings, mpesaEnvironment: e.target.value})}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                              <option value="sandbox">Sandbox (Testing)</option>
-                              <option value="production">Production (Live)</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
-                          <AlertCircle className="text-blue-600 flex-shrink-0" size={20} />
-                          <div>
-                            <p className="text-sm text-blue-800 font-medium">M-Pesa Integration</p>
-                            <p className="text-xs text-blue-700 mt-1">Obtain credentials from Safaricom Daraja Portal. Use sandbox for testing.</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Stripe Settings */}
-                    <div className="border border-gray-200 rounded-lg p-4 md:p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <CreditCard className="text-purple-600" size={24} />
-                          <h3 className="text-lg font-semibold text-gray-900">Stripe</h3>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={paymentSettings.stripeEnabled}
-                            onChange={(e) => setPaymentSettings({...paymentSettings, stripeEnabled: e.target.checked})}
-                            className="sr-only peer"
-                          />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                        </label>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Publishable Key</label>
-                            <input
-                              type="text"
-                              value={paymentSettings.stripePublicKey}
-                              onChange={(e) => setPaymentSettings({...paymentSettings, stripePublicKey: e.target.value})}
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Secret Key</label>
-                            <div className="relative">
-                              <input
-                                type={showApiKey ? "text" : "password"}
-                                value={paymentSettings.stripeSecretKey}
-                                onChange={(e) => setPaymentSettings({...paymentSettings, stripeSecretKey: e.target.value})}
-                                className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setShowApiKey(!showApiKey)}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                              >
-                                {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Flutterwave Settings */}
-                    <div className="border border-gray-200 rounded-lg p-4 md:p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <DollarSign className="text-orange-600" size={24} />
-                          <h3 className="text-lg font-semibold text-gray-900">Flutterwave</h3>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={paymentSettings.flutterwaveEnabled}
-                            onChange={(e) => setPaymentSettings({...paymentSettings, flutterwaveEnabled: e.target.checked})}
-                            className="sr-only peer"
-                          />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
-                        </label>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Public Key</label>
-                            <input
-                              type="text"
-                              value={paymentSettings.flutterwavePublicKey}
-                              onChange={(e) => setPaymentSettings({...paymentSettings, flutterwavePublicKey: e.target.value})}
-                              placeholder="FLWPUBK-xxxxxxxxxxxxx"
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Secret Key</label>
-                            <input
-                              type="password"
-                              value={paymentSettings.flutterwaveSecretKey}
-                              onChange={(e) => setPaymentSettings({...paymentSettings, flutterwaveSecretKey: e.target.value})}
-                              placeholder="FLWSECK-xxxxxxxxxxxxx"
-                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => handleSave('payment')}
-                      className="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
-                    >
-                      <Save size={18} />
-                      Save Payment Settings
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Shipping Settings */}
-              {activeTab === 'shipping' && (
-                <div>
-                  <div className="flex items-center gap-3 mb-6">
-                    <Truck className="text-gray-400" size={24} />
-                    <h2 className="text-xl md:text-2xl font-bold text-gray-900">Shipping Settings</h2>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Free Shipping Threshold (KSh)</label>
-                      <input
-                        type="number"
-                        value={shippingSettings.freeShippingThreshold}
-                        onChange={(e) => setShippingSettings({...shippingSettings, freeShippingThreshold: e.target.value})}
-                        className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                      <p className="text-sm text-gray-500 mt-1">Orders above this amount get free shipping</p>
-                    </div>
-
-                    <div className="border-t border-gray-200 pt-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Shipping Rates by Location</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Flat Rate (Default)</label>
-                          <input
-                            type="number"
-                            value={shippingSettings.flatRate}
-                            onChange={(e) => setShippingSettings({...shippingSettings, flatRate: e.target.value})}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Nairobi</label>
-                          <input
-                            type="number"
-                            value={shippingSettings.nairobiRate}
-                            onChange={(e) => setShippingSettings({...shippingSettings, nairobiRate: e.target.value})}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Mombasa</label>
-                          <input
-                            type="number"
-                            value={shippingSettings.mombasaRate}
-                            onChange={(e) => setShippingSettings({...shippingSettings, mombasaRate: e.target.value})}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Kisumu</label>
-                          <input
-                            type="number"
-                            value={shippingSettings.kisumuRate}
-                            onChange={(e) => setShippingSettings({...shippingSettings, kisumuRate: e.target.value})}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Other Cities</label>
-                          <input
-                            type="number"
-                            value={shippingSettings.otherCitiesRate}
-                            onChange={(e) => setShippingSettings({...shippingSettings, otherCitiesRate: e.target.value})}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Estimated Delivery Days</label>
-                          <input
-                            type="text"
-                            value={shippingSettings.estimatedDays}
-                            onChange={(e) => setShippingSettings({...shippingSettings, estimatedDays: e.target.value})}
-                            placeholder="e.g., 3-5"
-                            className="w-full px-4 py-2 border border
+export default AdminSettingsPage;

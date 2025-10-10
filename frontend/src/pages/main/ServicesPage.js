@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { Wrench, Package, Zap, Shield, Clock, CheckCircle, MessageCircle, Calendar, MapPin, Phone, Mail } from 'lucide-react';
+import { 
+  Wrench, Package, Zap, Shield, Clock, CheckCircle, 
+  Calendar, MapPin, Phone, Mail, X 
+} from 'lucide-react';
 
 const ServicesPage = () => {
   const [selectedService, setSelectedService] = useState(null);

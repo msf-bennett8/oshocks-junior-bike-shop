@@ -276,4 +276,4 @@ const CartDrawerDemo = () => {
   );
 };
 
-export default CartDrawerDemo;
+export default CartDrawer;
