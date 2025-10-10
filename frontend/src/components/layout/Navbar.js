@@ -45,14 +45,6 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  // Smooth scroll to top function
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
-
   // Smooth scroll to section
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
@@ -270,16 +262,6 @@ const Navbar = () => {
 
             {/* Right Side Actions */}
             <div className="flex items-center gap-1 sm:gap-3">
-              {/* Desktop Menu Button */}
-              <div className="hidden lg:block relative" ref={desktopMenuRef}>
-                <button
-                  onClick={() => setIsDesktopMenuOpen(!isDesktopMenuOpen)}
-                  className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <Menu size={20} className="text-gray-700" />
-                  <span className="text-sm font-medium text-gray-700">All</span>
-                </button>
-              </div>
 
               {/* Search Button */}
               <button
@@ -326,6 +308,16 @@ const Navbar = () => {
                   <span className="hidden sm:inline">Sign Up</span>
                 </Link>
               )}
+              {/* Desktop Menu Button */}
+              <div className="hidden lg:block relative" ref={desktopMenuRef}>
+                <button
+                  onClick={() => setIsDesktopMenuOpen(!isDesktopMenuOpen)}
+                  className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <Menu size={20} className="text-gray-700" />
+                  <span className="text-sm font-medium text-gray-700">All</span>
+                </button>
+              </div>
 
               {/* Cart */}
               <Link
@@ -375,17 +367,6 @@ const Navbar = () => {
           )}
         </div>
       </nav>
-
-      {/* Scroll to Top Button */}
-      {showScrollTop && (
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-40 p-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 animate-bounce-in"
-          aria-label="Scroll to top"
-        >
-          <ArrowUp size={24} />
-        </button>
-      )}
 
       {/* Desktop Side Menu Panel */}
       {isDesktopMenuOpen && (

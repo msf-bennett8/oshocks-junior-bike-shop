@@ -38,10 +38,6 @@ const Footer = () => {
     // }
   };
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const footerLinks = {
     shop: [
       { name: 'All Products', path: '/shop' },
@@ -94,14 +90,6 @@ const Footer = () => {
 
   return (
     <footer className="bg-gradient-to-b from-gray-900 to-black text-white relative">
-      {/* Back to Top Button */}
-      <button
-        onClick={scrollToTop}
-        className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-full shadow-2xl hover:shadow-purple-500/50 hover:scale-110 transition-all duration-300 group"
-        aria-label="Back to top"
-      >
-        <span className="text-2xl group-hover:animate-bounce inline-block">⬆️</span>
-      </button>
 
       {/* Newsletter Section */}
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 py-12">

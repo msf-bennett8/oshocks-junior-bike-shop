@@ -14,21 +14,11 @@ import {
   ShieldCheck,
   Truck,
   Clock,
-  Award,
-  ArrowUp,
-  ChevronUp
+  Award
 } from 'lucide-react';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-
-  // Smooth scroll to top
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
 
   const shopCategories = [
     { name: 'Mountain Bikes', link: '/shop?category=mountain' },
@@ -94,22 +84,13 @@ const Footer = () => {
 
   return (
     <footer className="bg-gray-900 text-gray-300 relative">
-      {/* Scroll to Top Button - Floating */}
-      <button
-        onClick={scrollToTop}
-        className="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 hover:from-blue-700 hover:to-purple-700 z-10"
-        aria-label="Scroll to top"
-      >
-        <ChevronUp size={24} />
-      </button>
-
       {/* Main Footer Content */}
       <div className="container mx-auto px-4 py-12 pt-16">
         {/* Top Section - Brand & Newsletter */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10 border-b border-gray-800">
           {/* Brand Info */}
           <div className="lg:col-span-1">
-            <Link to="/" onClick={scrollToTop} className="flex items-center gap-2 mb-4">
+            <Link to="/" className="flex items-center gap-2 mb-4">
               <span className="text-4xl">🚴‍♂️</span>
               <div className="flex flex-col">
                 <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
@@ -187,8 +168,7 @@ const Footer = () => {
               {shopCategories.map((item, index) => (
                 <li key={index}>
                   <Link 
-                    to={item.link} 
-                    onClick={scrollToTop}
+                    to={item.link}
                     className="text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 block"
                   >
                     {item.name}
@@ -205,8 +185,7 @@ const Footer = () => {
               {quickLinks.map((item, index) => (
                 <li key={index}>
                   <Link 
-                    to={item.link} 
-                    onClick={scrollToTop}
+                    to={item.link}
                     className="text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 block"
                   >
                     {item.name}
@@ -223,8 +202,7 @@ const Footer = () => {
               {customerService.map((item, index) => (
                 <li key={index}>
                   <Link 
-                    to={item.link} 
-                    onClick={scrollToTop}
+                    to={item.link}
                     className="text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 block"
                   >
                     {item.name}
@@ -241,8 +219,7 @@ const Footer = () => {
               {aboutCompany.map((item, index) => (
                 <li key={index}>
                   <Link 
-                    to={item.link} 
-                    onClick={scrollToTop}
+                    to={item.link}
                     className="text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 block"
                   >
                     {item.name}
@@ -259,8 +236,7 @@ const Footer = () => {
               {myAccount.map((item, index) => (
                 <li key={index}>
                   <Link 
-                    to={item.link} 
-                    onClick={scrollToTop}
+                    to={item.link}
                     className="text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 block"
                   >
                     {item.name}
@@ -277,8 +253,7 @@ const Footer = () => {
               {policies.map((item, index) => (
                 <li key={index}>
                   <Link 
-                    to={item.link} 
-                    onClick={scrollToTop}
+                    to={item.link}
                     className="text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 block"
                   >
                     {item.name}
@@ -324,35 +299,45 @@ const Footer = () => {
             {/* Social Media Links */}
             <div className="flex items-center gap-4">
               <a 
-                href="#" 
+                href="https://facebook.com" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-blue-400 transition-colors transform hover:scale-110 duration-200"
                 aria-label="Facebook"
               >
                 <Facebook size={20} />
               </a>
               <a 
-                href="#" 
+                href="https://twitter.com" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-blue-400 transition-colors transform hover:scale-110 duration-200"
                 aria-label="Twitter"
               >
                 <Twitter size={20} />
               </a>
               <a 
-                href="#" 
+                href="https://instagram.com" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-pink-400 transition-colors transform hover:scale-110 duration-200"
                 aria-label="Instagram"
               >
                 <Instagram size={20} />
               </a>
               <a 
-                href="#" 
+                href="https://linkedin.com" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-blue-400 transition-colors transform hover:scale-110 duration-200"
                 aria-label="LinkedIn"
               >
                 <Linkedin size={20} />
               </a>
               <a 
-                href="#" 
+                href="https://youtube.com" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-red-400 transition-colors transform hover:scale-110 duration-200"
                 aria-label="YouTube"
               >
