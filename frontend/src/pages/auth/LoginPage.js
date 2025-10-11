@@ -350,7 +350,7 @@ const LoginPage = () => {
 
         {/* Additional Links */}
         <div className="text-center text-xs text-gray-500 space-x-4">
-          <Link to="/terms" className="hover:text-gray-700 transition-colors">
+          <Link to="/terms-of-service" className="hover:text-gray-700 transition-colors">
             Terms of Service
           </Link>
           <span>•</span>

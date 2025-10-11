@@ -470,7 +470,7 @@ const PaymentFailedPage = () => {
             <div className="flex items-center justify-center space-x-4">
               <a href="/privacy" className="hover:text-blue-600 transition-colors">Privacy Policy</a>
               <span>•</span>
-              <a href="/terms" className="hover:text-blue-600 transition-colors">Terms of Service</a>
+              <a href="/terms-of-service" className="hover:text-blue-600 transition-colors">Terms of Service</a>
               <span>•</span>
               <a href="/help" className="hover:text-blue-600 transition-colors">Help Center</a>
             </div>

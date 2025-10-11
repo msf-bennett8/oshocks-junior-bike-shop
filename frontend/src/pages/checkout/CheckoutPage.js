@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { CreditCard, Truck, MapPin, Phone, Mail, User, ShoppingBag, AlertCircle, CheckCircle, Loader } from 'lucide-react';
+import { CreditCard, Truck, MapPin, Phone, Mail, User, ShoppingBag, AlertCircle, CheckCircle, Loader, Shield } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const CheckoutPage = () => {
   const [step, setStep] = useState(1);
@@ -526,20 +527,28 @@ const CheckoutPage = () => {
                   )}
                   
                   {/* Terms and Conditions */}
-                  <div className="mb-6">
-                    <label className="flex items-start">
-                      <input
-                        type="checkbox"
-                        checked={agreedToTerms}
-                        onChange={(e) => setAgreedToTerms(e.target.checked)}
-                        className="mt-1 mr-2 w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-                      />
-                      <span className="text-sm text-gray-700">
-                        I agree to the <a href="#" className="text-orange-600 hover:underline">Terms and Conditions</a> and <a href="#" className="text-orange-600 hover:underline">Privacy Policy</a> *
-                      </span>
-                    </label>
-                    {errors.terms && <p className="text-red-500 text-xs mt-1">{errors.terms}</p>}
-                  </div>
+                    <div className="mb-6">
+                      <label className="flex items-start">
+                        <input
+                          type="checkbox"
+                          checked={agreedToTerms}
+                          onChange={(e) => setAgreedToTerms(e.target.checked)}
+                          className="mt-1 mr-2 w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                        />
+                        <span className="text-sm text-gray-700">
+                          I agree to the{' '}
+                          <Link to="/terms-of-service" className="text-orange-600 hover:underline font-medium">
+                            Terms and Conditions
+                          </Link>
+                          {' and '}
+                          <Link to="/privacy-policy" className="text-orange-600 hover:underline font-medium">
+                            Privacy Policy
+                          </Link>
+                          {' *'}
+                        </span>
+                      </label>
+                      {errors.terms && <p className="text-red-500 text-xs mt-1">{errors.terms}</p>}
+                    </div>
                   
                   {errors.submit && (
                     <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3 flex items-center">
@@ -575,6 +584,27 @@ const CheckoutPage = () => {
               </div>
             )}
           </div>
+
+          {/* Policy Links Footer */}
+            <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
+              By completing this purchase, you agree to our{' '}
+              <Link to="/terms-of-service" className="text-orange-600 hover:underline font-medium">
+                Terms of Service
+              </Link>
+              {', '}
+              <Link to="/privacy-policy" className="text-orange-600 hover:underline font-medium">
+                Privacy Policy
+              </Link>
+              {', '}
+              <Link to="/shipping-policy" className="text-orange-600 hover:underline font-medium">
+                Shipping Policy
+              </Link>
+              {', and '}
+              <Link to="/refund-policy" className="text-orange-600 hover:underline font-medium">
+                Refund Policy
+              </Link>
+              .
+            </div>
           
           {/* Order Summary Sidebar */}
           <div className="lg:col-span-1">
@@ -663,13 +693,16 @@ const CheckoutPage = () => {
                 </div>
               </div>
               
-              {/* Support Info */}
+             {/* Support Info */}
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <p className="text-xs text-gray-600 mb-2">Need help?</p>
-                <div className="flex items-center text-xs text-orange-600 hover:text-orange-700 cursor-pointer">
+                <Link 
+                  to="/contact-support" 
+                  className="flex items-center text-xs text-orange-600 hover:text-orange-700 transition-colors"
+                >
                   <Phone className="w-3 h-3 mr-1" />
                   <span>Contact Support</span>
-                </div>
+                </Link>
               </div>
             </div>
           </div>
@@ -707,6 +740,21 @@ const CheckoutPage = () => {
                 <p className="text-sm text-gray-600">7-day return policy</p>
               </div>
             </div>
+
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4">
+                <Shield className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-gray-900">Privacy Protected</h4>
+                <p className="text-sm text-gray-600">
+                  <Link to="/privacy-policy" className="text-orange-600 hover:underline">
+                    View our privacy policy
+                  </Link>
+                </p>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

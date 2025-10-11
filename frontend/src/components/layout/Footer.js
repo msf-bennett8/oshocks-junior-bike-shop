@@ -65,12 +65,12 @@ const Footer = () => {
   ];
 
   const policies = [
-    { name: 'Privacy Policy', link: '#' },
-    { name: 'Terms of Service', link: '#' },
-    { name: 'Cookie Policy', link: '#' },
-    { name: 'Payment Terms', link: '#' },
-    { name: 'Shipping Policy', link: '#' },
-    { name: 'Return Policy', link: '#' }
+    { name: 'Privacy Policy', link: 'privacy-policy' },
+    { name: 'Terms of Service', link: 'terms-of-service' },
+    { name: 'Cookie Policy', link: 'cookie-policy' },
+    { name: 'Payment Terms', link: 'payment-terms' },
+    { name: 'Shipping Policy', link: 'shipping-policy' },
+    { name: 'Return Policy', link: 'return-policy' }
   ];
 
   const myAccount = [

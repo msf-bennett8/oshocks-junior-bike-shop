@@ -955,7 +955,7 @@ const DatabaseErrorPage = () => {
             <div className="mt-4 flex items-center justify-center space-x-4 text-xs text-gray-500">
               <a href="/privacy" className="hover:text-gray-700 transition-colors">Privacy Policy</a>
               <span>•</span>
-              <a href="/terms" className="hover:text-gray-700 transition-colors">Terms of Service</a>
+              <a href="/terms-of-service" className="hover:text-gray-700 transition-colors">Terms of Service</a>
               <span>•</span>
               <a href="/status" className="hover:text-gray-700 transition-colors">System Status</a>
             </div>

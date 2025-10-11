@@ -64,7 +64,7 @@ const ServerErrorPage = () => {
       title: 'Contact Support',
       description: 'Get immediate help',
       icon: <MessageCircle className="w-6 h-6" />,
-      action: () => window.location.href = '/contact',
+      action: () => window.location.href = '/contact-support',
       color: 'bg-green-500 hover:bg-green-600'
     }
   ];
@@ -311,7 +311,7 @@ const ServerErrorPage = () => {
             </div>
 
             <button
-              onClick={() => window.location.href = '/contact'}
+              onClick={() => window.location.href = '/contact-support'}
               className="bg-white text-orange-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors shadow-lg inline-flex items-center space-x-2"
             >
               <MessageCircle className="w-5 h-5" />

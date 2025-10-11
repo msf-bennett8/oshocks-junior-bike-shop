@@ -1757,7 +1757,7 @@ export default function RefundPolicyPage() {
             <p className="text-sm text-gray-700 mb-4">
               Understand product warranties and how to make warranty claims.
             </p>
-            <a href="/warranty" className="text-green-600 hover:underline font-semibold text-sm flex items-center gap-1">
+            <a href="/refund-policy" className="text-green-600 hover:underline font-semibold text-sm flex items-center gap-1">
               Read More <ArrowRight className="w-4 h-4" />
             </a>
           </div>

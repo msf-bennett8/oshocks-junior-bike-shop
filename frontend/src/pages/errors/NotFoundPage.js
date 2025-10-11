@@ -37,7 +37,7 @@ const NotFoundPage = () => {
     { name: 'Shop All Products', link: '/shop', icon: <ShoppingBag className="w-4 h-4" /> },
     { name: 'My Orders', link: '/orders', icon: <Package className="w-4 h-4" /> },
     { name: 'Store Locations', link: '/locations', icon: <MapPin className="w-4 h-4" /> },
-    { name: 'Contact Support', link: '/contact', icon: <Search className="w-4 h-4" /> }
+    { name: 'Contact Support', link: '/contact-support', icon: <Search className="w-4 h-4" /> }
   ];
 
   return (
