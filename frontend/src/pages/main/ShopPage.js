@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { fetchProducts, fetchCategories } from '../../redux/slices/productSlice';
@@ -19,7 +19,6 @@ const ShopPage = () => {
 
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
-  const observerTarget = useRef(null);
 
   // Helper function to safely extract error messages
   const getErrorMessage = (error) => {
@@ -36,35 +35,9 @@ const ShopPage = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    // Only reset to page 1 when filters change (not when page increments)
-    if (filters.page === 1) {
-      dispatch(fetchProducts({ ...filters, replace: true }));
-    } else {
-      dispatch(fetchProducts({ ...filters, replace: false }));
-    }
+    // Always fetch products with replace: true to show only current page
+    dispatch(fetchProducts({ ...filters, replace: true }));
   }, [dispatch, filters]);
-
-  // Infinite scroll observer
-  const handleObserver = useCallback((entries) => {
-    const target = entries[0];
-    if (target.isIntersecting && !loading && pagination?.hasMore) {
-      setFilters(prev => ({ ...prev, page: prev.page + 1 }));
-    }
-  }, [loading, pagination?.hasMore]);
-
-  useEffect(() => {
-    const option = {
-      root: null,
-      rootMargin: '20px',
-      threshold: 0
-    };
-    const observer = new IntersectionObserver(handleObserver, option);
-    if (observerTarget.current) observer.observe(observerTarget.current);
-    
-    return () => {
-      if (observerTarget.current) observer.unobserve(observerTarget.current);
-    };
-  }, [handleObserver]);
 
   const handleCategoryChange = (categoryId) => {
     setFilters(prev => ({ ...prev, category: categoryId, page: 1 }));
@@ -103,6 +76,7 @@ const ShopPage = () => {
     return sortOptions[filters.sort] || 'Latest';
   };
 
+  // Show full skeleton only on initial load
   if (loading && products.length === 0) {
     return (
       <div className="min-h-screen py-4 md:py-8 bg-gray-50">
@@ -139,7 +113,7 @@ const ShopPage = () => {
             <div className="lg:col-span-3">
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map(i => (
-                  <ProductCardSkeleton key={i} />
+                  <ProductCardSkeleton key={i} delay={i} />
                 ))}
               </div>
             </div>
@@ -181,7 +155,11 @@ const ShopPage = () => {
         <div className="mb-4 md:mb-8">
           <h1 className="text-2xl md:text-4xl font-bold mb-2">Shop Bicycles & Accessories</h1>
           <p className="text-gray-600 text-sm md:text-base">
-            Showing {products.length} {pagination?.total ? `of ${pagination.total}` : ''} products
+            {loading ? (
+              <span className="inline-block h-4 w-32 bg-gray-200 rounded animate-pulse"></span>
+            ) : (
+              <>Showing {products.length} {pagination?.total ? `of ${pagination.total}` : ''} products</>
+            )}
           </p>
         </div>
 
@@ -258,7 +236,13 @@ const ShopPage = () => {
                       >
                         All Categories
                       </button>
-                      {categories && categories.length > 0 ? (
+                      {!categories || categories.length === 0 ? (
+                        <div className="space-y-2">
+                          {[1, 2, 3].map(i => (
+                            <div key={i} className="h-10 bg-gray-200 rounded animate-pulse"></div>
+                          ))}
+                        </div>
+                      ) : (
                         categories.map((category) => (
                           <button
                             key={category.id}
@@ -272,8 +256,6 @@ const ShopPage = () => {
                             {category.name}
                           </button>
                         ))
-                      ) : (
-                        <p className="text-sm text-gray-500 italic">No categories available</p>
                       )}
                     </div>
                   </div>
@@ -311,29 +293,21 @@ const ShopPage = () => {
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {products.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                  
-                  {/* Loading skeletons while fetching more */}
-                  {loading && products.length > 0 && (
-                    <>
-                      {[1, 2, 3].map(i => (
-                        <ProductCardSkeleton key={`skeleton-${i}`} />
-                      ))}
-                    </>
-                  )}
-                </div>
-
-                {/* Infinite scroll trigger */}
-                <div ref={observerTarget} className="h-10 flex items-center justify-center">
-                  {loading && products.length > 0 && (
-                    <div className="text-gray-500 text-sm">Loading more products...</div>
+                  {loading ? (
+                    // Show skeletons during loading
+                    [1, 2, 3, 4, 5, 6].map(i => (
+                      <ProductCardSkeleton key={`skeleton-${i}`} delay={i} />
+                    ))
+                  ) : (
+                    // Show actual products
+                    products.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))
                   )}
                 </div>
 
                 {/* Pagination */}
-                {pagination && pagination.totalPages > 1 && (
+                {pagination && pagination.totalPages > 1 && !loading && (
                   <div className="flex justify-center mt-8 gap-2 flex-wrap">
                     <button
                       onClick={() => handlePageChange(filters.page - 1)}
@@ -387,6 +361,15 @@ const ShopPage = () => {
                     </button>
                   </div>
                 )}
+
+                {/* Pagination Skeleton */}
+                {loading && pagination && pagination.totalPages > 1 && (
+                  <div className="flex justify-center mt-8 gap-2">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <div key={i} className="w-10 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+                    ))}
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -418,7 +401,13 @@ const ShopPage = () => {
               >
                 All Categories
               </button>
-              {categories && categories.length > 0 ? (
+              {!categories || categories.length === 0 ? (
+                <div className="space-y-2">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <div key={i} className="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+                  ))}
+                </div>
+              ) : (
                 categories.map((category) => (
                   <button
                     key={category.id}
@@ -432,8 +421,6 @@ const ShopPage = () => {
                     {category.name}
                   </button>
                 ))
-              ) : (
-                <p className="text-sm text-gray-500 italic text-center py-4">No categories available</p>
               )}
             </div>
           </div>
@@ -481,16 +468,40 @@ const ShopPage = () => {
   );
 };
 
-// Product Card Skeleton Component
-const ProductCardSkeleton = () => {
+// Product Card Skeleton Component with staggered animation
+const ProductCardSkeleton = ({ delay = 0 }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div 
+      className="bg-white rounded-lg shadow-md overflow-hidden"
+      style={{ animationDelay: `${delay * 50}ms` }}
+    >
+      {/* Image skeleton */}
       <div className="aspect-square bg-gray-200 animate-pulse"></div>
+      
       <div className="p-4 space-y-3">
-        <div className="h-5 bg-gray-200 rounded animate-pulse"></div>
-        <div className="h-5 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-        <div className="h-6 bg-gray-200 rounded w-1/2 animate-pulse"></div>
-        <div className="h-4 bg-gray-200 rounded w-1/3 animate-pulse"></div>
+        {/* Title skeleton - 2 lines to match min-h-[3.5rem] */}
+        <div className="space-y-2 min-h-[3.5rem]">
+          <div className="h-5 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-5 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+        </div>
+        
+        {/* Rating skeleton */}
+        <div className="flex items-center gap-2">
+          <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded w-10 animate-pulse"></div>
+        </div>
+        
+        {/* Price skeleton */}
+        <div className="flex items-center gap-2">
+          <div className="h-7 bg-gray-200 rounded w-32 animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+        </div>
+        
+        {/* Stock badge skeleton */}
+        <div className="h-6 bg-gray-200 rounded w-20 animate-pulse"></div>
+        
+        {/* Brand skeleton */}
+        <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
       </div>
     </div>
   );

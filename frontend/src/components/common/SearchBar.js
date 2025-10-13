@@ -251,32 +251,32 @@ const SearchBar = ({
       <button
         key={`${item.type}-${item.id}`}
         onClick={() => handleResultClick(item)}
-        className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${
+        className={`w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 flex items-start gap-2 sm:gap-3 transition-all ${
           isSelected 
-            ? 'bg-blue-50 border-l-4 border-blue-600' 
-            : 'hover:bg-gray-50'
+            ? 'bg-blue-50 border-l-4 border-blue-600 shadow-sm' 
+            : 'hover:bg-gray-50 active:bg-gray-100'
         }`}
       >
-        <div className="flex-shrink-0 mt-1">
-          <Icon size={18} className={isSelected ? 'text-blue-600' : 'text-gray-400'} />
+        <div className="flex-shrink-0 mt-0.5 sm:mt-1">
+          <Icon size={16} className={`sm:w-[18px] sm:h-[18px] ${isSelected ? 'text-blue-600' : 'text-gray-400'}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-gray-900 truncate">
+          <div className="font-medium text-sm sm:text-base text-gray-900 truncate">
             {highlightText(item.title || item.name, query)}
           </div>
-          {item.description && (
-            <div className="text-sm text-gray-600 truncate mt-0.5">
-              {item.description}
-            </div>
-          )}
-          {item.price && (
-            <div className="text-sm font-semibold text-green-600 mt-1">
-              KSh {item.price.toLocaleString()}
-            </div>
-          )}
+         {item.description && (
+          <div className="text-xs sm:text-sm text-gray-600 truncate mt-0.5">
+            {item.description}
+          </div>
+        )}
+        {item.price && (
+          <div className="text-sm sm:text-base font-semibold text-green-600 mt-1">
+            KSh {item.price.toLocaleString()}
+          </div>
+        )}
         </div>
         {item.badge && (
-          <span className="flex-shrink-0 text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium">
+          <span className="flex-shrink-0 text-[10px] sm:text-xs bg-orange-100 text-orange-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium">
             {item.badge}
           </span>
         )}
@@ -285,59 +285,77 @@ const SearchBar = ({
   };
 
   return (
-    <div className={variant === 'overlay' ? 'fixed inset-0 bg-black bg-opacity-50 z-50 animate-fade-in' : ''}>
-      <div className={
-        variant === 'overlay' 
-          ? 'bg-white w-full max-w-4xl mx-auto mt-20 rounded-lg shadow-2xl overflow-hidden'
-          : 'w-full'
-      }>
+  <div className={variant === 'overlay' ? 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center p-4 animate-fade-in' : ''}>
+    <div className={
+      variant === 'overlay' 
+        ? 'bg-white w-full max-w-3xl mt-12 sm:mt-16 md:mt-20 rounded-xl shadow-2xl overflow-hidden animate-slide-down'
+        : 'w-full'
+    }>
         
         {/* Search Header */}
-        <div className="border-b border-gray-200 p-4">
-          <div className="flex items-center gap-3">
-            <Search size={20} className="text-gray-400 flex-shrink-0" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={placeholder}
-              className="flex-1 outline-none text-lg"
-            />
-            {query && (
-              <button
-                onClick={() => setQuery('')}
-                className="p-1 hover:bg-gray-100 rounded transition-colors"
-              >
-                <X size={18} className="text-gray-400" />
-              </button>
-            )}
-            {onClose && variant === 'overlay' && (
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded transition-colors"
-              >
-                <X size={20} className="text-gray-600" />
-              </button>
-            )}
-          </div>
+          <div className="border-b border-gray-200 p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex-1 flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 rounded-lg border-2 border-gray-300 focus-within:border-blue-500 focus-within:bg-white transition-all">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={placeholder}
+                  className="flex-1 outline-none text-base sm:text-lg placeholder:text-gray-400 placeholder:text-sm sm:placeholder:text-base bg-transparent focus:ring-0 focus:outline-none"
+                  style={{ boxShadow: 'none' }}
+                />
+                {query && (
+                  <button
+                    onClick={() => setQuery('')}
+                    className="p-1 hover:bg-gray-200 rounded transition-colors flex-shrink-0"
+                    aria-label="Clear search"
+                  >
+                    <X size={18} className="text-gray-400" />
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    if (query.trim()) {
+                      performSearch(query, activeFilter);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg transition-all font-medium text-sm sm:text-base shadow-md hover:shadow-lg flex-shrink-0"
+                  aria-label="Search"
+                >
+                  <Search size={18} className="md:hidden" />
+                  <Search size={16} className="hidden md:inline md:w-[18px] md:h-[18px]" />
+                  <span className="hidden md:inline">Search</span>
+                </button>
+              </div>
+              {onClose && variant === 'overlay' && (
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+                  aria-label="Close search"
+                >
+                  <X size={20} className="text-gray-600" />
+                </button>
+              )}
+            </div>
 
           {/* Filters */}
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
+          <div className="flex gap-1.5 sm:gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">
             {filters.map((filter) => {
               const Icon = filter.icon;
               return (
                 <button
                   key={filter.id}
                   onClick={() => setActiveFilter(filter.id)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                     activeFilter === filter.id
-                      ? 'bg-blue-600 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-blue-600 text-white shadow-md scale-105'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:scale-95'
                   }`}
                 >
-                  <Icon size={14} />
-                  {filter.label}
+                  <Icon size={14} className="sm:w-4 sm:h-4" />
+                  <span className="hidden xs:inline sm:inline">{filter.label}</span>
+                  <span className="xs:hidden sm:hidden">{filter.label.slice(0, 3)}</span>
                 </button>
               );
             })}
@@ -345,7 +363,7 @@ const SearchBar = ({
         </div>
 
         {/* Results Area */}
-        <div ref={resultsRef} className="max-h-[60vh] overflow-y-auto">
+        <div ref={resultsRef} className="max-h-[50vh] sm:max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
           {isLoading && (
             <div className="p-8 text-center">
               <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -359,13 +377,13 @@ const SearchBar = ({
               {recentSearches.length > 0 && (
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                      <Clock size={16} />
+                    <h3 className="text-xs sm:text-sm font-semibold text-gray-900 flex items-center gap-1.5 sm:gap-2">
+                      <Clock size={14} className="sm:w-4 sm:h-4" />
                       Recent Searches
                     </h3>
                     <button
                       onClick={clearRecentSearches}
-                      className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                      className="text-[10px] sm:text-xs text-blue-600 hover:text-blue-700 font-medium active:scale-95 transition-transform"
                     >
                       Clear all
                     </button>
@@ -375,10 +393,10 @@ const SearchBar = ({
                       <button
                         key={index}
                         onClick={() => handleRecentClick(search)}
-                        className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center gap-3 group"
+                        className="w-full text-left px-2.5 sm:px-3 py-2 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-all flex items-center gap-2 sm:gap-3 group"
                       >
-                        <Clock size={14} className="text-gray-400 group-hover:text-blue-600" />
-                        <span className="text-gray-700 group-hover:text-blue-600">
+                        <Clock size={12} className="sm:w-[14px] sm:h-[14px] text-gray-400 group-hover:text-blue-600 flex-shrink-0" />
+                        <span className="text-sm sm:text-base text-gray-700 group-hover:text-blue-600 truncate">
                           {search}
                         </span>
                       </button>
@@ -389,11 +407,11 @@ const SearchBar = ({
 
               {/* Popular/Trending */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <TrendingUp size={16} />
+                <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-3 flex items-center gap-1.5 sm:gap-2">
+                  <TrendingUp size={14} className="sm:w-4 sm:h-4" />
                   Trending Searches
                 </h3>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                   {[
                     'Mountain Bikes',
                     'Road Bikes',
@@ -405,7 +423,7 @@ const SearchBar = ({
                     <button
                       key={index}
                       onClick={() => setQuery(item)}
-                      className="text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-sm text-gray-700"
+                      className="text-left px-2.5 sm:px-3 py-2 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-all text-xs sm:text-sm text-gray-700 font-medium"
                     >
                       {item}
                     </button>
@@ -420,7 +438,7 @@ const SearchBar = ({
               {/* Products */}
               {results.products && results.products.length > 0 && (
                 <div className="border-b border-gray-200">
-                  <h3 className="px-4 py-2 text-xs font-bold text-gray-500 uppercase bg-gray-50">
+                  <h3 className="px-3 sm:px-4 py-2 text-[10px] sm:text-xs font-bold text-gray-500 uppercase bg-gray-50 tracking-wide">
                     Products ({results.products.length})
                   </h3>
                   <div>
@@ -501,13 +519,16 @@ const SearchBar = ({
 
         {/* Footer Tips */}
         {variant === 'overlay' && (
-          <div className="border-t border-gray-200 px-4 py-2 bg-gray-50 text-xs text-gray-500 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <span>↑↓ Navigate</span>
-              <span>↵ Select</span>
+          <div className="border-t border-gray-200 px-3 sm:px-4 py-2 bg-gray-50 text-[10px] sm:text-xs text-gray-500 flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="hidden sm:inline">↑↓ Navigate</span>
+              <span className="hidden sm:inline">↵ Select</span>
               <span>ESC Close</span>
             </div>
-            <span>Searching: {activeFilter}</span>
+            <span className="text-[10px] sm:text-xs">
+              <span className="hidden sm:inline">Searching: </span>
+              {activeFilter}
+            </span>
           </div>
         )}
       </div>

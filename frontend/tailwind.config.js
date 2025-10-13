@@ -6,6 +6,14 @@ module.exports = {
   ],
   theme: {
     extend: {
+      screens: {
+        'xs': '475px',
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+        '2xl': '1536px',
+      },
       colors: {
         primary: {
           50: '#eef2ff',
@@ -43,7 +51,9 @@ module.exports = {
         'fadeIn': 'fadeIn 0.3s ease-out',
         'slideInRight': 'slideInRight 0.3s ease-out',
         'slideInUp': 'slideInUp 0.3s ease-out',
+        'slideDown': 'slideDown 0.3s ease-out',
         'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'bounce-in': 'bounce-in 0.3s ease-out',
       },
       keyframes: {
         fadeIn: {
@@ -58,8 +68,19 @@ module.exports = {
           '0%': { transform: 'translateY(100%)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
         },
+        slideDown: {
+          '0%': { opacity: '0', transform: 'translateY(-20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'bounce-in': {
+          '0%': { transform: 'scale(0)' },
+          '50%': { transform: 'scale(1.1)' },
+          '100%': { transform: 'scale(1)' },
+        },
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('tailwind-scrollbar')({ nocompatible: true }),
+  ],
 }

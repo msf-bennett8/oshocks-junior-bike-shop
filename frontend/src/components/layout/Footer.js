@@ -99,22 +99,22 @@ const Footer = () => {
                 <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-orange-400 bg-clip-text text-transparent">
                   Oshocks
                 </span>
-                <span className="text-sm text-gray-400">Kenya's Premier Cycling Marketplace</span>
+                <span className="text-sm text-gray-400">A Premier Cycling Marketplace</span>
               </div>
             </Link>
             <p className="text-sm text-gray-400 mb-6 leading-relaxed">
-              Quality bicycles, accessories, and spare parts for all your cycling needs. Fast delivery nationwide with secure M-Pesa and card payments. Your trusted partner for everything cycling in Kenya.
+              Quality bicycles, accessories, bike repairs and spare parts for all your cycling needs. Fast delivery around Nairobi. Your trusted partner for everything cycling.
             </p>
             
             {/* Contact Info */}
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-sm">
                 <Phone size={18} className="text-blue-400" />
-                <span>+254 700 000 000</span>
+                <span>+254 798 558 285</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <Mail size={18} className="text-blue-400" />
-                <span>support@oshocks.co.ke</span>
+                <span>oshocksjuniorbikeshop@gmail.com</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <MapPin size={18} className="text-blue-400" />
@@ -144,7 +144,7 @@ const Footer = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
               <div className="flex items-center gap-2 text-xs">
                 <Truck size={20} className="text-green-400" />
-                <span>Free Shipping Over 5,000 KES</span>
+                <span>Free Shipping Over 1,000 KES</span>
               </div>
               <div className="flex items-center gap-2 text-xs">
                 <ShieldCheck size={20} className="text-blue-400" />
@@ -269,28 +269,29 @@ const Footer = () => {
 
         {/* Payment Methods */}
         <div className="py-8 border-t border-gray-800">
-          <h3 className="text-white font-bold text-sm mb-4 text-center">We Accept</h3>
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <div className="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-lg">
-              <Smartphone size={20} className="text-green-400" />
-              <span className="text-sm font-medium">M-Pesa</span>
-            </div>
-            <div className="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-lg">
-              <CreditCard size={20} className="text-blue-400" />
-              <span className="text-sm font-medium">Visa</span>
-            </div>
-            <div className="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-lg">
-              <CreditCard size={20} className="text-orange-400" />
-              <span className="text-sm font-medium">Mastercard</span>
-            </div>
-            <div className="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-lg">
-              <ShieldCheck size={20} className="text-purple-400" />
-              <span className="text-sm font-medium">Secure Payment</span>
-            </div>
+          <h3 className="text-gray-400 text-xs uppercase tracking-wider mb-4 text-center">Secure Payment Methods</h3>
+          <div className="flex flex-wrap items-center justify-center gap-6">
+            {/* M-Pesa Logo */}
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg" 
+              alt="M-Pesa" 
+              className="h-12 object-contain opacity-80 hover:opacity-100 transition-opacity"
+            />
+            {/* Visa Logo */}
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" 
+              alt="Visa" 
+              className="h-6 object-contain opacity-80 hover:opacity-100 transition-opacity"
+            />
+            {/* Mastercard Logo */}
+            <img 
+              src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
+              alt="Mastercard" 
+              className="h-10 object-contain opacity-80 hover:opacity-100 transition-opacity"
+            />
           </div>
         </div>
       </div>
-
       {/* Bottom Bar */}
       <div className="border-t border-gray-800 bg-gray-950">
         <div className="container mx-auto px-4 py-6">
@@ -305,25 +306,25 @@ const Footer = () => {
                 href="https://facebook.com" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-blue-400 transition-colors transform hover:scale-110 duration-200"
+                className="text-[#1877F2] hover:text-[#0C63D4] transition-colors transform hover:scale-110 duration-200"
                 aria-label="Facebook"
               >
-                <Facebook size={20} />
+                <Facebook size={20} fill="currentColor" />
               </a>
               <a 
                 href="https://twitter.com" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-blue-400 transition-colors transform hover:scale-110 duration-200"
+                className="text-[#1DA1F2] hover:text-[#0C85D0] transition-colors transform hover:scale-110 duration-200"
                 aria-label="Twitter"
               >
-                <Twitter size={20} />
+                <Twitter size={20} fill="currentColor" />
               </a>
               <a 
                 href="https://instagram.com" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-pink-400 transition-colors transform hover:scale-110 duration-200"
+                className="text-[#E4405F] hover:text-[#C13584] transition-colors transform hover:scale-110 duration-200"
                 aria-label="Instagram"
               >
                 <Instagram size={20} />
@@ -332,26 +333,23 @@ const Footer = () => {
                 href="https://linkedin.com" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-blue-400 transition-colors transform hover:scale-110 duration-200"
+                className="text-[#0A66C2] hover:text-[#004182] transition-colors transform hover:scale-110 duration-200"
                 aria-label="LinkedIn"
               >
-                <Linkedin size={20} />
+                <Linkedin size={20} fill="currentColor" />
               </a>
               <a 
                 href="https://youtube.com" 
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-red-400 transition-colors transform hover:scale-110 duration-200"
+                className="text-[#FF0000] hover:text-[#CC0000] transition-colors transform hover:scale-110 duration-200"
                 aria-label="YouTube"
               >
                 <Youtube size={20} />
               </a>
             </div>
-
             <div className="flex items-center gap-2 text-sm text-gray-400">
-              <span>Made with</span>
-              <span className="text-red-500 animate-pulse">❤️</span>
-              <span>in Kenya</span>
+              <span>Based in Nairobi, Kenya</span>
             </div>
           </div>
         </div>
@@ -359,5 +357,4 @@ const Footer = () => {
     </footer>
   );
 };
-
 export default Footer;

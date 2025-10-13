@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
-import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowUp } from 'lucide-react';
+import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowUp, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Star, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift } from 'lucide-react';
 import SearchBar from '../common/SearchBar'; // ← IMPORT THE NEW SEARCHBAR
 
 const Navbar = () => {
@@ -13,7 +13,7 @@ const Navbar = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
-  
+
   const { isAuthenticated, user, logout } = useAuth();
   const { cartItems } = useCart();
   const navigate = useNavigate();
@@ -68,48 +68,48 @@ const Navbar = () => {
   };
 
   const menuCategories = [
-  {
-    title: 'Shop Categories',
-    items: [
-      { name: 'Mountain Bikes', link: '/shop?category=mountain', icon: '⛰️' },
-      { name: 'Road Bikes', link: '/shop?category=road', icon: '🚴' },
-      { name: 'Electric Bikes', link: '/shop?category=electric', icon: '⚡' },
-      { name: 'Kids Bikes', link: '/shop?category=kids', icon: '👶' },
-      { name: 'Accessories', link: '/shop?category=accessories', icon: '🎒' },
-      { name: 'Spare Parts', link: '/spare-parts-accessories', icon: '🔧' },
-    ]
-  },
-  {
-    title: 'Quick Links',
-    items: [
-      { name: 'New Arrivals', link: '/new-arrivals', icon: '✨' },
-      { name: 'Best Sellers', link: '/best-sellers', icon: '🔥' },
-      { name: 'Special Offers', link: '/special-offers', icon: '💰' },
-      { name: 'Clearance Sale', link: '/clearance-sale', icon: '🏷️' },
-      { name: 'Bike Finder', link: '/bike-finder', icon: '🔍' },
-      { name: 'Gift Cards', link: '/gift-cards', icon: '🎁' },
-    ]
-  },
-  {
-    title: 'Resources',
-    items: [
-      { name: 'Size Guide', link: '/size-guide', icon: '📏' },
-      { name: 'Bike Maintenance', link: '/bike-maintenance', icon: '🛠️' },
-      { name: 'Warranty Info', link: '/warranty-information', icon: '🛡️' },
-      { name: 'Safety Tips', link: '/safety', icon: '⚠️' },
-      { name: 'Store Locations', link: '/store-locations', icon: '📍' },
-    ]
-  },
-  {
-    title: 'Company',
-    items: [
-      { name: 'About Us', link: '/about', icon: 'ℹ️' },
-      { name: 'Careers', link: '/careers', icon: '💼' },
-      { name: 'Become a Seller', link: '/become-a-seller', icon: '🏪' },
-      { name: 'Partner With Us', link: '/partner-with-us', icon: '🤝' },
-    ]
-  }
-];
+    {
+      title: 'Shop Categories',
+      items: [
+        { name: 'Mountain Bikes', link: '/shop?category=mountain', icon: Mountain },
+        { name: 'Road Bikes', link: '/shop?category=road', icon: Bike },
+        { name: 'Electric Bikes', link: '/shop?category=electric', icon: Zap },
+        { name: 'Kids Bikes', link: '/shop?category=kids', icon: Baby },
+        { name: 'Accessories', link: '/shop?category=accessories', icon: Backpack },
+        { name: 'Spare Parts', link: '/spare-parts-accessories', icon: SettingsIcon },
+      ]
+    },
+    {
+      title: 'Quick Links',
+      items: [
+        { name: 'New Arrivals', link: '/new-arrivals', icon: Sparkles },
+        { name: 'Best Sellers', link: '/best-sellers', icon: Flame },
+        { name: 'Special Offers', link: '/special-offers', icon: DollarSign },
+        { name: 'Clearance Sale', link: '/clearance-sale', icon: Tag },
+        { name: 'Bike Finder', link: '/bike-finder', icon: Search },
+        { name: 'Gift Cards', link: '/gift-cards', icon: Gift },
+      ]
+    },
+    {
+      title: 'Resources',
+      items: [
+        { name: 'Size Guide', link: '/size-guide', icon: Ruler },
+        { name: 'Bike Maintenance', link: '/bike-maintenance', icon: Wrench },
+        { name: 'Warranty Info', link: '/warranty-information', icon: Shield },
+        { name: 'Safety Tips', link: '/safety', icon: AlertTriangle },
+        { name: 'Store Locations', link: '/store-locations', icon: MapPin },
+      ]
+    },
+    {
+      title: 'Company',
+      items: [
+        { name: 'About Us', link: '/about', icon: Info },
+        { name: 'Careers', link: '/careers', icon: Briefcase },
+        { name: 'Become a Seller', link: '/become-a-seller', icon: Store },
+        { name: 'Partner With Us', link: '/partner-with-us', icon: Handshake },
+      ]
+    }
+  ];
 
   return (
     <>
@@ -142,6 +142,50 @@ const Navbar = () => {
 
         .animate-slide-in-left {
           animation: slide-in-left 0.3s ease-out;
+        }
+
+        @keyframes slide-down {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-slide-down {
+          animation: slide-down 0.3s ease-out;
+        }
+
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+
+        /* Custom scrollbar */
+        .scrollbar-thin::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-track {
+          background: #f1f1f1;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+          background: #d1d5db;
+          border-radius: 3px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+          background: #9ca3af;
         }
 
         @keyframes bounce-in {
@@ -254,6 +298,7 @@ const Navbar = () => {
                   <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></span>
                 )}
               </Link>
+              
             </div>
 
             {/* Right Side Actions */}
@@ -328,27 +373,7 @@ const Navbar = () => {
                     {cartItemCount > 99 ? '99+' : cartItemCount}
                   </span>
                 )}
-              </Link>{/* New: Resources Dropdown */}
-            <div className="relative group">
-              <button className="text-gray-700 hover:text-blue-600 font-medium transition-colors pb-1 flex items-center gap-1">
-                Resources
-                <ChevronDown size={16} />
-              </button>
-              <div className="absolute top-full left-0 mt-2 w-48 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                <Link to="/size-guide" className="block px-4 py-3 hover:bg-gray-50 text-gray-700 hover:text-blue-600">
-                  Size Guide
-                </Link>
-                <Link to="/warranty-information" className="block px-4 py-3 hover:bg-gray-50 text-gray-700 hover:text-blue-600">
-                  Warranty Info
-                </Link>
-                <Link to="/safety" className="block px-4 py-3 hover:bg-gray-50 text-gray-700 hover:text-blue-600">
-                  Safety Tips
-                </Link>
-                <Link to="/bike-maintenance" className="block px-4 py-3 hover:bg-gray-50 text-gray-700 hover:text-blue-600">
-                  Maintenance
-                </Link>
-              </div>
-            </div>
+              </Link>
 
               {/* Mobile Menu Button */}
               <button
@@ -402,22 +427,25 @@ const Navbar = () => {
                 <div key={idx} className="border-b border-gray-200 pb-2 mb-2">
                   <h3 className="px-4 py-2 text-sm font-bold text-gray-900">{category.title}</h3>
                   <div className="py-1">
-                    {category.items.map((item, itemIdx) => (
-                      <Link
-                        key={itemIdx}
-                        to={item.link}
-                        onClick={() => setIsDesktopMenuOpen(false)}
-                        className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors group"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="text-lg">{item.icon}</span>
-                          <span className="text-sm text-gray-700 group-hover:text-blue-600">
-                            {item.name}
-                          </span>
-                        </div>
-                        <ChevronRight size={16} className="text-gray-400 group-hover:text-blue-600" />
-                      </Link>
-                    ))}
+                    {category.items.map((item, itemIdx) => {
+                      const IconComponent = item.icon;
+                      return (
+                        <Link
+                          key={itemIdx}
+                          to={item.link}
+                          onClick={() => setIsDesktopMenuOpen(false)}
+                          className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <IconComponent size={20} className="text-gray-600 group-hover:text-blue-600" />
+                            <span className="text-sm text-gray-700 group-hover:text-blue-600">
+                              {item.name}
+                            </span>
+                          </div>
+                          <ChevronRight size={16} className="text-gray-400 group-hover:text-blue-600" />
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -516,25 +544,64 @@ const Navbar = () => {
                 <BookOpen size={20} className="text-gray-600" />
                 <span className="text-gray-900">Blog</span>
               </Link>
+              {/* ADD THESE RESOURCE LINKS HERE */}
+                <div className="mt-2 pt-2 border-t border-gray-100">
+                  <h4 className="px-4 py-2 text-sm font-bold text-gray-900">Resources</h4>
+                  <Link
+                    to="/size-guide"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                  >
+                    <Ruler size={20} className="text-gray-600" />
+                    <span className="text-gray-900">Size Guide</span>
+                  </Link>
+                  <Link
+                    to="/warranty-information"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                  >
+                    <Shield size={20} className="text-gray-600" />
+                    <span className="text-gray-900">Warranty Info</span>
+                  </Link>
+                  <Link
+                    to="/safety"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                  >
+                    <AlertTriangle size={20} className="text-gray-600" />
+                    <span className="text-gray-900">Safety Tips</span>
+                  </Link>
+                  <Link
+                    to="/bike-maintenance"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                  >
+                    <Wrench size={20} className="text-gray-600" />
+                    <span className="text-gray-900">Bike Maintenance</span>
+                  </Link>
+                </div>
             </div>
 
             {menuCategories.map((category, idx) => (
               <div key={idx} className="border-b border-gray-200 pb-2 mb-2">
                 <h3 className="px-4 py-2 text-sm font-bold text-gray-900">{category.title}</h3>
-                {category.items.map((item, itemIdx) => (
-                  <Link
-                    key={itemIdx}
-                    to={item.link}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">{item.icon}</span>
-                      <span className="text-gray-700 group-hover:text-blue-600">{item.name}</span>
-                    </div>
-                    <ChevronRight size={18} className="text-gray-400 group-hover:text-blue-600" />
-                  </Link>
-                ))}
+                {category.items.map((item, itemIdx) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <Link
+                      key={itemIdx}
+                      to={item.link}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <IconComponent size={20} className="text-gray-600 group-hover:text-blue-600" />
+                        <span className="text-gray-700 group-hover:text-blue-600">{item.name}</span>
+                      </div>
+                      <ChevronRight size={18} className="text-gray-400 group-hover:text-blue-600" />
+                    </Link>
+                  );
+                })}
               </div>
             ))}
 

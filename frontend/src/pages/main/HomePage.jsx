@@ -43,17 +43,6 @@ const HomePage = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Loading products...</p>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -93,27 +82,27 @@ const HomePage = () => {
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight">
-                Welcome to Oshocks 🚴
+                Welcome to Oshocks
               </h1>
               <p className="text-xl md:text-2xl lg:text-3xl mb-3 md:mb-4 font-semibold">
-                Kenya's Premier Cycling Marketplace
+                A Premier Cycling Marketplace
               </p>
               <p className="text-base md:text-lg lg:text-xl mb-8 md:mb-10 max-w-3xl mx-auto leading-relaxed opacity-95">
-                Shop thousands of bicycles and accessories from trusted sellers. Get professional bike repairs, 
-                book service appointments, and enjoy fast delivery across Kenya with M-Pesa & card payments.
+                Shop bicycles and accessories from trusted sellers. Get professional bike repairs, 
+                book service appointments, and enjoy fast deliveries.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Link
                   to="/shop"
                   className="w-full sm:w-auto px-8 py-4 bg-white text-purple-600 font-bold rounded-lg hover:bg-gray-100 transition shadow-xl hover:shadow-2xl transform hover:-translate-y-1 duration-200 text-lg"
                 >
-                  🛒 Shop Now
+                  Shop Now
                 </Link>
                 <Link
                   to="/book-service"
                   className="w-full sm:w-auto px-8 py-4 bg-purple-800 border-2 border-white text-white font-bold rounded-lg hover:bg-purple-900 transition shadow-xl hover:shadow-2xl transform hover:-translate-y-1 duration-200 text-lg"
                 >
-                  🔧 Book Repair Service
+                  Book Repair Service
                 </Link>
               </div>
             </div>
@@ -126,9 +115,9 @@ const HomePage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
               <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-md hover:shadow-lg transition">
                 <div className="text-5xl mb-4">🚚</div>
-                <h3 className="text-xl font-bold mb-2 text-gray-800">Nationwide Delivery</h3>
+                <h3 className="text-xl font-bold mb-2 text-gray-800">Fast Delivery</h3>
                 <p className="text-gray-700 text-sm leading-relaxed">
-                  Fast and reliable delivery to all counties in Kenya. Track your order in real-time from our warehouse to your doorstep.
+                  Fast and reliable delivery in Nairobi Metropolitan. Track your order in real-time from our stores to your doorstep.
                 </p>
               </div>
               <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-md hover:shadow-lg transition">
@@ -149,7 +138,7 @@ const HomePage = () => {
                 <div className="text-5xl mb-4">🏪</div>
                 <h3 className="text-xl font-bold mb-2 text-gray-800">Multi-Vendor Platform</h3>
                 <p className="text-gray-700 text-sm leading-relaxed">
-                  Access products from multiple verified sellers across Kenya. More choices, competitive prices, quality assured.
+                  Access products from multiple verified sellers. More choices, competitive prices, quality assured.
                 </p>
               </div>
             </div>
@@ -173,7 +162,7 @@ const HomePage = () => {
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2 text-gray-800">Buy & Sell</h3>
                     <p className="text-gray-600 text-sm mb-3">
-                      Browse thousands of bikes, parts, and accessories. Sellers can list products and reach customers nationwide.
+                      Browse bikes, parts, and accessories. Ask for delivery and it wll be delivered to your doorstep.
                     </p>
                     <Link to="/shop" className="text-purple-600 font-semibold text-sm hover:underline">
                       Start Shopping →
@@ -188,7 +177,7 @@ const HomePage = () => {
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2 text-gray-800">Repair Services</h3>
                     <p className="text-gray-600 text-sm mb-3">
-                      Professional bike repairs and maintenance by certified mechanics. Quick turnaround, quality guaranteed.
+                      Professional bike repairs and maintenance by experienced mechanics. Quick turnaround, quality guaranteed.
                     </p>
                     <Link to="/book-service" className="text-purple-600 font-semibold text-sm hover:underline">
                       Book Now →
@@ -218,7 +207,7 @@ const HomePage = () => {
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2 text-gray-800">Become a Seller</h3>
                     <p className="text-gray-600 text-sm mb-3">
-                      Join our marketplace and reach thousands of cycling enthusiasts. Easy setup, powerful tools.
+                      Join our marketplace and reach other cycling enthusiasts. Easy setup, powerful tools.
                     </p>
                     <Link to="/seller/register" className="text-purple-600 font-semibold text-sm hover:underline">
                       Register →
@@ -233,7 +222,7 @@ const HomePage = () => {
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2 text-gray-800">Trade-In Program</h3>
                     <p className="text-gray-600 text-sm mb-3">
-                      Upgrade your bike with our trade-in program. Get fair value for your old bike towards a new purchase.
+                      Upgrade your bike with our trade-in program. Get fair value for your old bike towards a new purchase and get your bike a new owner.
                     </p>
                     <Link to="/trade-in" className="text-purple-600 font-semibold text-sm hover:underline">
                       Learn More →
@@ -248,7 +237,7 @@ const HomePage = () => {
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2 text-gray-800">Expert Support</h3>
                     <p className="text-gray-600 text-sm mb-3">
-                      Get cycling advice, product recommendations, and technical support from our team of experts.
+                      Connect, Get cycling advice, product recommendations, and technical support from our team and fellow cyclists.
                     </p>
                     <Link to="/contact" className="text-purple-600 font-semibold text-sm hover:underline">
                       Contact Us →
@@ -277,7 +266,14 @@ const HomePage = () => {
               </Link>
             </div>
 
-            {products.length === 0 ? (
+            {loading ? (
+              // Loading Skeleton
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                  <ProductCardSkeleton key={i} delay={i} />
+                ))}
+              </div>
+            ) : products.length === 0 ? (
               <div className="text-center py-16 md:py-20 bg-gray-50 rounded-xl shadow-inner">
                 <div className="text-6xl md:text-7xl mb-4">📦</div>
                 <p className="text-gray-600 text-lg md:text-xl mb-2 font-semibold">No products available yet</p>
@@ -390,7 +386,7 @@ const HomePage = () => {
             <div className="text-center mb-10">
               <h2 className="text-3xl md:text-4xl font-bold mb-3 text-gray-800">Why Choose Oshocks?</h2>
               <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                Your trusted partner for all things cycling in Kenya
+                Your trusted partner for all things cycling
               </p>
             </div>
             
@@ -398,17 +394,17 @@ const HomePage = () => {
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
                 <div className="text-5xl mb-3">✅</div>
                 <h3 className="text-lg font-bold mb-2">Quality Verified</h3>
-                <p className="text-gray-600 text-sm">All products and sellers undergo strict verification for authenticity and quality standards.</p>
+                <p className="text-gray-600 text-sm">All our products are tested and undergo strict verification for authenticity and quality standards.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3">🏆</div>
+                <div className="text-5xl mb-3">💰</div>
                 <h3 className="text-lg font-bold mb-2">Best Prices</h3>
-                <p className="text-gray-600 text-sm">Competitive pricing from multiple sellers ensures you get the best deals on cycling products.</p>
+                <p className="text-gray-600 text-sm">Competitive pricing from multiple sellers to ensures you get the best deals on cycling products.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3">🛡️</div>
+                <div className="text-5xl mb-3">🔒</div>
                 <h3 className="text-lg font-bold mb-2">Secure Shopping</h3>
                 <p className="text-gray-600 text-sm">Your transactions are protected with encrypted payments and buyer protection policies.</p>
               </div>
@@ -416,13 +412,13 @@ const HomePage = () => {
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
                 <div className="text-5xl mb-3">⚡</div>
                 <h3 className="text-lg font-bold mb-2">Fast Processing</h3>
-                <p className="text-gray-600 text-sm">Orders are processed within 24 hours and shipped quickly to your preferred location.</p>
+                <p className="text-gray-600 text-sm">Ypur orders are processed within 24 hours and shipped quickly to your preferred location as by our shipping policy.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3">💯</div>
+                <div className="text-5xl mb-3">😊</div>
                 <h3 className="text-lg font-bold mb-2">Satisfaction Guarantee</h3>
-                <p className="text-gray-600 text-sm">Not happy with your purchase? Easy returns and refunds within 7 days of delivery.</p>
+                <p className="text-gray-600 text-sm">Not happy with your purchase? Easy returns and refunds within 7 days of delivery as by our return and refund policy.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
@@ -469,7 +465,7 @@ const HomePage = () => {
           <div className="container mx-auto px-4 text-center relative z-10">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6">Ready to Start Your Cycling Journey?</h2>
             <p className="text-lg md:text-xl lg:text-2xl mb-8 md:mb-10 max-w-3xl mx-auto leading-relaxed opacity-95">
-              Join thousands of satisfied customers who trust Oshocks for quality bikes, 
+              Join other satisfied customers who trust Oshocks for quality bikes, 
               professional repairs, and exceptional service. Your perfect ride awaits!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -477,19 +473,56 @@ const HomePage = () => {
                 to="/shop"
                 className="w-full sm:w-auto inline-block px-10 py-4 bg-white text-purple-600 font-bold rounded-lg hover:bg-gray-100 transition shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 duration-200 text-lg"
               >
-                🚴 Browse Products
+                Browse Products
               </Link>
               <Link
                 to="/seller/register"
                 className="w-full sm:w-auto inline-block px-10 py-4 bg-purple-800 border-2 border-white text-white font-bold rounded-lg hover:bg-purple-900 transition shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 duration-200 text-lg"
               >
-                🏪 Become a Seller
+                Become a Seller
               </Link>
             </div>
           </div>
         </section>
       </div>
     </>
+  );
+};
+
+// Product Card Skeleton Component
+const ProductCardSkeleton = ({ delay = 0 }) => {
+  return (
+    <div 
+      className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100"
+      style={{ animationDelay: `${delay * 50}ms` }}
+    >
+      {/* Image skeleton */}
+      <div className="relative pb-[75%] bg-gray-200 animate-pulse"></div>
+
+      {/* Content skeleton */}
+      <div className="p-4 space-y-3">
+        {/* Title skeleton - 2 lines */}
+        <div className="space-y-2 h-12">
+          <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+        </div>
+        
+        {/* Brand skeleton */}
+        <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+        
+        {/* Price skeleton */}
+        <div className="flex items-center gap-2 pt-1">
+          <div className="h-6 bg-gray-200 rounded w-24 animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+        </div>
+        
+        {/* Bottom row skeleton */}
+        <div className="flex items-center justify-between pt-1">
+          <div className="h-5 bg-gray-200 rounded w-16 animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+        </div>
+      </div>
+    </div>
   );
 };
 
