@@ -1,3 +1,4 @@
+//frontend/src/redux/slices/productslice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import productService from '../../services/productService';
 
@@ -7,7 +8,10 @@ export const fetchProducts = createAsyncThunk(
   async (params, { rejectWithValue }) => {
     try {
       const data = await productService.getAllProducts(params);
-      return data;
+      return {
+        ...data,
+        shouldReplace: params?.page === 1 || params?.shouldReplace !== false
+      };
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
     }
@@ -51,6 +55,7 @@ const productSlice = createSlice({
       totalPages: 1,
       perPage: 12,
       total: 0,
+      hasMore: false,
     },
   },
   reducers: {
@@ -60,22 +65,54 @@ const productSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    resetProducts: (state) => {
+      state.items = [];
+      state.pagination = {
+        currentPage: 1,
+        totalPages: 1,
+        perPage: 12,
+        total: 0,
+        hasMore: false,
+      };
+    },
   },
   extraReducers: (builder) => {
     builder
       // Fetch Products
-      .addCase(fetchProducts.pending, (state) => {
+      .addCase(fetchProducts.pending, (state, action) => {
         state.loading = true;
-        state.error = null;
+        // Only clear error on new search/filter, not on pagination
+        if (action.meta.arg?.page === 1) {
+          state.error = null;
+        }
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload.data || action.payload;
+        const newItems = action.payload.data || action.payload;
+        const shouldReplace = action.payload.shouldReplace;
+        
+        // Replace items on new search/filter, append on pagination
+        if (shouldReplace) {
+          state.items = Array.isArray(newItems) ? newItems : [];
+        } else {
+          // Append new items, avoiding duplicates
+          const existingIds = new Set(state.items.map(item => item.id));
+          const uniqueNewItems = Array.isArray(newItems) 
+            ? newItems.filter(item => !existingIds.has(item.id))
+            : [];
+          state.items = [...state.items, ...uniqueNewItems];
+        }
+        
+        // Update pagination
+        const currentPage = action.payload.current_page || 1;
+        const totalPages = action.payload.last_page || 1;
+        
         state.pagination = {
-          currentPage: action.payload.current_page || 1,
-          totalPages: action.payload.last_page || 1,
+          currentPage: currentPage,
+          totalPages: totalPages,
           perPage: action.payload.per_page || 12,
-          total: action.payload.total || action.payload.length || 0,
+          total: action.payload.total || state.items.length,
+          hasMore: currentPage < totalPages,
         };
       })
       .addCase(fetchProducts.rejected, (state, action) => {
@@ -112,5 +149,5 @@ const productSlice = createSlice({
   },
 });
 
-export const { clearCurrentProduct, clearError } = productSlice.actions;
+export const { clearCurrentProduct, clearError, resetProducts } = productSlice.actions;
 export default productSlice.reducer;

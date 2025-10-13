@@ -1,16 +1,17 @@
+//frontend/src/components/layout/Navbar.js
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
-import { Search, User, ShoppingCart, Menu, X, ChevronRight, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowUp } from 'lucide-react';
+import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowUp } from 'lucide-react';
+import SearchBar from '../common/SearchBar'; // ← IMPORT THE NEW SEARCHBAR
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false); // ← FOR OVERLAY SEARCH
   const [isVisible, setIsVisible] = useState(true);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
   
   const { isAuthenticated, user, logout } = useAuth();
@@ -26,39 +27,21 @@ const Navbar = () => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
-      // Show/hide navbar
       if (currentScrollY < lastScrollY || currentScrollY < 10) {
         setIsVisible(true);
       } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setIsVisible(false);
-        setIsSearchOpen(false);
+        setIsSearchOpen(false); // ← CLOSE SEARCH ON SCROLL DOWN
         setIsDesktopMenuOpen(false);
       }
       
-      // Show/hide scroll to top button
       setShowScrollTop(currentScrollY > 400);
-      
       setLastScrollY(currentScrollY);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
-
-  // Smooth scroll to section
-  const scrollToSection = (sectionId) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      const offset = 80; // Navbar height
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - offset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-    }
-  };
 
   // Close desktop menu when clicking outside
   useEffect(() => {
@@ -80,41 +63,53 @@ const Navbar = () => {
     navigate('/');
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/shop?search=${encodeURIComponent(searchQuery)}`);
-      setSearchQuery('');
-      setIsSearchOpen(false);
-    }
-  };
-
   const isActiveRoute = (path) => {
     return location.pathname === path;
   };
 
   const menuCategories = [
-    {
-      title: 'Shop Categories',
-      items: [
-        { name: 'Mountain Bikes', link: '/shop?category=mountain', icon: '⛰️' },
-        { name: 'Road Bikes', link: '/shop?category=road', icon: '🚴' },
-        { name: 'Electric Bikes', link: '/shop?category=electric', icon: '⚡' },
-        { name: 'Kids Bikes', link: '/shop?category=kids', icon: '👶' },
-        { name: 'Accessories', link: '/shop?category=accessories', icon: '🎒' },
-        { name: 'Spare Parts', link: '/shop?category=parts', icon: '🔧' },
-      ]
-    },
-    {
-      title: 'Quick Links',
-      items: [
-        { name: 'New Arrivals', link: '/shop?sort=newest', icon: '✨' },
-        { name: 'Best Sellers', link: '/shop?sort=popular', icon: '🔥' },
-        { name: 'Special Offers', link: '/shop?filter=sale', icon: '💰' },
-        { name: 'Bike Maintenance', link: '/services', icon: '🛠️' },
-      ]
-    }
-  ];
+  {
+    title: 'Shop Categories',
+    items: [
+      { name: 'Mountain Bikes', link: '/shop?category=mountain', icon: '⛰️' },
+      { name: 'Road Bikes', link: '/shop?category=road', icon: '🚴' },
+      { name: 'Electric Bikes', link: '/shop?category=electric', icon: '⚡' },
+      { name: 'Kids Bikes', link: '/shop?category=kids', icon: '👶' },
+      { name: 'Accessories', link: '/shop?category=accessories', icon: '🎒' },
+      { name: 'Spare Parts', link: '/spare-parts-accessories', icon: '🔧' },
+    ]
+  },
+  {
+    title: 'Quick Links',
+    items: [
+      { name: 'New Arrivals', link: '/new-arrivals', icon: '✨' },
+      { name: 'Best Sellers', link: '/best-sellers', icon: '🔥' },
+      { name: 'Special Offers', link: '/special-offers', icon: '💰' },
+      { name: 'Clearance Sale', link: '/clearance-sale', icon: '🏷️' },
+      { name: 'Bike Finder', link: '/bike-finder', icon: '🔍' },
+      { name: 'Gift Cards', link: '/gift-cards', icon: '🎁' },
+    ]
+  },
+  {
+    title: 'Resources',
+    items: [
+      { name: 'Size Guide', link: '/size-guide', icon: '📏' },
+      { name: 'Bike Maintenance', link: '/bike-maintenance', icon: '🛠️' },
+      { name: 'Warranty Info', link: '/warranty-information', icon: '🛡️' },
+      { name: 'Safety Tips', link: '/safety', icon: '⚠️' },
+      { name: 'Store Locations', link: '/store-locations', icon: '📍' },
+    ]
+  },
+  {
+    title: 'Company',
+    items: [
+      { name: 'About Us', link: '/about', icon: 'ℹ️' },
+      { name: 'Careers', link: '/careers', icon: '💼' },
+      { name: 'Become a Seller', link: '/become-a-seller', icon: '🏪' },
+      { name: 'Partner With Us', link: '/partner-with-us', icon: '🤝' },
+    ]
+  }
+];
 
   return (
     <>
@@ -159,7 +154,6 @@ const Navbar = () => {
           animation: bounce-in 0.3s ease-out;
         }
 
-        /* Smooth scroll behavior */
         html {
           scroll-behavior: smooth;
         }
@@ -168,11 +162,13 @@ const Navbar = () => {
       <nav className={`bg-white shadow-md fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
+           {/* Logo */}
             <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-              <span className="text-3xl">🚴‍♂️</span>
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">OS</span>
+              </div>
               <div className="flex flex-col">
-                <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
                   Oshocks
                 </span>
                 <span className="text-xs text-gray-600 hidden sm:block">Bike Shop</span>
@@ -263,9 +259,9 @@ const Navbar = () => {
             {/* Right Side Actions */}
             <div className="flex items-center gap-1 sm:gap-3">
 
-              {/* Search Button */}
+              {/* Search Button - CHANGED TO OPEN OVERLAY */}
               <button
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                onClick={() => setIsSearchOpen(true)}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 aria-label="Search"
                 title="Search"
@@ -308,6 +304,7 @@ const Navbar = () => {
                   <span className="hidden sm:inline">Sign Up</span>
                 </Link>
               )}
+              
               {/* Desktop Menu Button */}
               <div className="hidden lg:block relative" ref={desktopMenuRef}>
                 <button
@@ -331,7 +328,27 @@ const Navbar = () => {
                     {cartItemCount > 99 ? '99+' : cartItemCount}
                   </span>
                 )}
-              </Link>
+              </Link>{/* New: Resources Dropdown */}
+            <div className="relative group">
+              <button className="text-gray-700 hover:text-blue-600 font-medium transition-colors pb-1 flex items-center gap-1">
+                Resources
+                <ChevronDown size={16} />
+              </button>
+              <div className="absolute top-full left-0 mt-2 w-48 bg-white shadow-lg rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <Link to="/size-guide" className="block px-4 py-3 hover:bg-gray-50 text-gray-700 hover:text-blue-600">
+                  Size Guide
+                </Link>
+                <Link to="/warranty-information" className="block px-4 py-3 hover:bg-gray-50 text-gray-700 hover:text-blue-600">
+                  Warranty Info
+                </Link>
+                <Link to="/safety" className="block px-4 py-3 hover:bg-gray-50 text-gray-700 hover:text-blue-600">
+                  Safety Tips
+                </Link>
+                <Link to="/bike-maintenance" className="block px-4 py-3 hover:bg-gray-50 text-gray-700 hover:text-blue-600">
+                  Maintenance
+                </Link>
+              </div>
+            </div>
 
               {/* Mobile Menu Button */}
               <button
@@ -343,30 +360,16 @@ const Navbar = () => {
               </button>
             </div>
           </div>
-
-          {/* Search Bar Dropdown */}
-          {isSearchOpen && (
-            <div className="border-t border-gray-200 py-3 animate-fade-in">
-              <form onSubmit={handleSearch} className="flex gap-2">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search for bikes, accessories, parts..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  autoFocus
-                />
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-medium"
-                >
-                  Search
-                </button>
-              </form>
-            </div>
-          )}
         </div>
       </nav>
+
+      {/* Universal Search Overlay - NEW! */}
+      {isSearchOpen && (
+        <SearchBar 
+          onClose={() => setIsSearchOpen(false)}
+          variant="overlay"
+        />
+      )}
 
       {/* Desktop Side Menu Panel */}
       {isDesktopMenuOpen && (

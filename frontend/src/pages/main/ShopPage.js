@@ -36,16 +36,21 @@ const ShopPage = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    dispatch(fetchProducts(filters));
+    // Only reset to page 1 when filters change (not when page increments)
+    if (filters.page === 1) {
+      dispatch(fetchProducts({ ...filters, replace: true }));
+    } else {
+      dispatch(fetchProducts({ ...filters, replace: false }));
+    }
   }, [dispatch, filters]);
 
   // Infinite scroll observer
   const handleObserver = useCallback((entries) => {
     const target = entries[0];
-    if (target.isIntersecting && !loading && pagination?.totalPages && filters.page < pagination.totalPages) {
+    if (target.isIntersecting && !loading && pagination?.hasMore) {
       setFilters(prev => ({ ...prev, page: prev.page + 1 }));
     }
-  }, [loading, pagination, filters.page]);
+  }, [loading, pagination?.hasMore]);
 
   useEffect(() => {
     const option = {
@@ -62,21 +67,24 @@ const ShopPage = () => {
   }, [handleObserver]);
 
   const handleCategoryChange = (categoryId) => {
-    setFilters({ ...filters, category: categoryId, page: 1 });
+    setFilters(prev => ({ ...prev, category: categoryId, page: 1 }));
     setShowCategoryModal(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSearchChange = (e) => {
-    setFilters({ ...filters, search: e.target.value, page: 1 });
+    setFilters(prev => ({ ...prev, search: e.target.value, page: 1 }));
   };
 
   const handleSortChange = (sortValue) => {
-    setFilters({ ...filters, sort: sortValue, page: 1 });
+    setFilters(prev => ({ ...prev, sort: sortValue, page: 1 }));
     setShowSortModal(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handlePageChange = (page) => {
     setFilters({ ...filters, page });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const getCategoryName = () => {
@@ -275,7 +283,10 @@ const ShopPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
                     <select
                       value={filters.sort}
-                      onChange={(e) => setFilters({ ...filters, sort: e.target.value, page: 1 })}
+                      onChange={(e) => {
+                        setFilters(prev => ({ ...prev, sort: e.target.value, page: 1 }));
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
                     >
                       <option value="latest">Latest</option>

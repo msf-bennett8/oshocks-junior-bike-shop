@@ -22,12 +22,25 @@ use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\Api\SearchController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
 */
+
+//Search Routes
+Route::prefix('search')->group(function () {
+    // Universal search endpoint
+    Route::get('/', [SearchController::class, 'search']);
+    
+    // Autocomplete suggestions
+    Route::get('/suggestions', [SearchController::class, 'suggestions']);
+    
+    // Trending searches
+    Route::get('/trending', [SearchController::class, 'trending']);
+});
 
 // Public routes
 Route::prefix('v1')->group(function () {

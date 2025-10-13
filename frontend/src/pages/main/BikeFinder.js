@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Bike, Filter, X, ChevronDown, ChevronUp, MapPin, DollarSign, Users, Mountain, Road, Baby, Zap, Heart, ShoppingCart, Star, TrendingUp, CheckCircle, AlertCircle, Sliders } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Bike, Filter, X, Users, Mountain, Zap, Baby, Heart, ShoppingCart, Star, TrendingUp, CheckCircle, AlertCircle, Sliders, Truck, Shield, RotateCcw } from 'lucide-react';
 
 const BikeFinder = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -20,7 +20,7 @@ const BikeFinder = () => {
     { id: 'all', name: 'All Bikes', icon: Bike, count: 150 },
     { id: 'kids', name: "Kids' Bikes", icon: Baby, count: 45 },
     { id: 'mountain', name: 'Mountain Bikes', icon: Mountain, count: 38 },
-    { id: 'road', name: 'Road Bikes', icon: Road, count: 28 },
+    { id: 'road', name: 'Road Bikes', icon: Bike, count: 28 },
     { id: 'electric', name: 'Electric Bikes', icon: Zap, count: 22 },
     { id: 'bmx', name: 'BMX', icon: Users, count: 17 }
   ];
@@ -777,7 +777,7 @@ const BikeFinder = () => {
             </div>
             <div>
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <TruckIcon className="w-8 h-8 text-green-600" />
+                <Truck className="w-8 h-8 text-green-600" />
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">Free Delivery</h3>
               <p className="text-sm text-gray-600">Within Nairobi on orders over KES 10,000</p>

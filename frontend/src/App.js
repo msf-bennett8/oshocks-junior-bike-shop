@@ -93,6 +93,39 @@ const NotFoundPage = lazy(() => import('./pages/errors/NotFoundPage'));
 const UnauthorizedPage = lazy(() => import('./pages/errors/UnauthorizedPage'));
 const ServerErrorPage = lazy(() => import('./pages/errors/ServerErrorPage'));
 
+// Product Pages
+const ClearanceSale = lazy(() => import('./pages/product/ClearanceSale'));
+const NewArrival = lazy(() => import('./pages/product/NewArrival'));
+const SpecialOffer = lazy(() => import('./pages/product/SpecialOffer'));
+const BestSeller = lazy(() => import('./pages/seller/BestSeller'));
+const OshocksStoreLocation = lazy(() => import('./pages/product/OshocksStoreLocation'));
+const SizeGuide = lazy(() => import('./pages/product/SizeGuide'));
+const SparePartsAndAccessories = lazy(() => import('./pages/product/SparePartsAndAccessories'));
+const WarrantyInformation = lazy(() => import('./pages/product/WarrantyInformation'));
+
+// Cart Pages
+const OrderHistory = lazy(() => import('./pages/cart/OrderHistory'));
+const GiftCards = lazy(() => import('./pages/cart/GiftCards'));
+
+// Seller Pages
+const BecomeASeller = lazy(() => import('./pages/seller/BecomeASeller'));
+
+// Main Pages
+const PatnerWithUsPage = lazy(() => import('./pages/main/PatnerWithUsPage'));
+const BikeFinder = lazy(() => import('./pages/main/BikeFinder'));
+
+// Education Pages
+const Careers = lazy(() => import('./pages/education/Careers'));
+const Safety = lazy(() => import('./pages/education/Safety'));
+
+// Services
+const Bikemaintainance = lazy(() => import('./pages/services/Bikemaintainance'));
+
+// Legal Pages
+const CookiePolicy = lazy(() => import('./pages/legal/CookiePolicy'));
+const PaymentTerms = lazy(() => import('./pages/legal/PaymentTerms'));
+const ReturnPolicy = lazy(() => import('./pages/legal/ReturnPolicy'));
+
 // ============================================================================
 // ROUTE PROTECTION COMPONENTS
 // ============================================================================
@@ -662,6 +695,52 @@ function App() {
                     </AdminRoute>
                   }
                 />
+
+                {/* ============================================
+                    PRODUCT & SHOPPING ROUTES
+                    ============================================ */}
+                <Route path="/clearance-sale" element={<ClearanceSale />} />
+                <Route path="/new-arrivals" element={<NewArrival />} />
+                <Route path="/special-offers" element={<SpecialOffer />} />
+                <Route path="/best-sellers" element={<BestSeller />} />
+                <Route path="/store-locations" element={<OshocksStoreLocation />} />
+                <Route path="/size-guide" element={<SizeGuide />} />
+                <Route path="/spare-parts-accessories" element={<SparePartsAndAccessories />} />
+                <Route path="/warranty-information" element={<WarrantyInformation />} />
+                <Route path="/gift-cards" element={<GiftCards />} />
+                <Route path="/bike-finder" element={<BikeFinder />} />
+
+                {/* ============================================
+                    ORDER HISTORY (Protected)
+                    ============================================ */}
+                <Route
+                  path="/order-history"
+                  element={
+                    <ProtectedRoute>
+                      <OrderHistory />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* ============================================
+                    EDUCATION & RESOURCES
+                    ============================================ */}
+                <Route path="/careers" element={<Careers />} />
+                <Route path="/safety" element={<Safety />} />
+                <Route path="/bike-maintenance" element={<Bikemaintainance />} />
+
+                {/* ============================================
+                    SELLER ROUTES
+                    ============================================ */}
+                <Route path="/become-a-seller" element={<BecomeASeller />} />
+                <Route path="/partner-with-us" element={<PatnerWithUsPage />} />
+
+                {/* ============================================
+                    ADDITIONAL LEGAL PAGES
+                    ============================================ */}
+                <Route path="/cookie-policy" element={<CookiePolicy />} />
+                <Route path="/payment-terms" element={<PaymentTerms />} />
+                <Route path="/return-policy" element={<ReturnPolicy />} />
 
                 {/* ============================================
                     LEGAL & POLICY PAGES

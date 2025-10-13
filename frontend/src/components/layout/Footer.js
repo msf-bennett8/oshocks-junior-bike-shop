@@ -26,60 +26,61 @@ const Footer = () => {
     { name: 'Electric Bikes', link: '/shop?category=electric' },
     { name: 'Kids Bikes', link: '/shop?category=kids' },
     { name: 'Accessories', link: '/shop?category=accessories' },
-    { name: 'Spare Parts', link: '/shop?category=parts' },
-    { name: 'Helmets & Safety', link: '#' },
-    { name: 'Bike Maintenance', link: '#' }
+    { name: 'Spare Parts', link: '/spare-parts-accessories' },
+    { name: 'Helmets & Safety', link: '/safety' },
+    { name: 'Bike Maintenance', link: '/bike-maintenance' }
   ];
 
   const quickLinks = [
     { name: 'Shop All Products', link: '/shop' },
-    { name: 'New Arrivals', link: '/shop?sort=newest' },
-    { name: 'Best Sellers', link: '/shop?sort=popular' },
-    { name: 'Special Offers', link: '/shop?filter=sale' },
-    { name: 'Clearance Sale', link: '#' },
-    { name: 'Gift Cards', link: '#' },
+    { name: 'New Arrivals', link: '/new-arrivals' },
+    { name: 'Best Sellers', link: '/best-sellers' },
+    { name: 'Special Offers', link: '/special-offers' },
+    { name: 'Clearance Sale', link: '/clearance-sale' },
+    { name: 'Gift Cards', link: '/gift-cards' },
     { name: 'Blog', link: '/blog' },
-    { name: 'Bike Finder', link: '#' }
+    { name: 'Bike Finder', link: '/bike-finder' }
   ];
 
   const customerService = [
-    { name: 'Help Center', link: '#' },
-    { name: 'Track Your Order', link: '#' },
-    { name: 'Shipping Information', link: '#' },
-    { name: 'Returns & Refunds', link: '#' },
-    { name: 'Warranty Information', link: '#' },
+    { name: 'Help Center', link: '/faq' },
+    { name: 'Track Your Order', link: '/order-history' },
+    { name: 'Shipping Information', link: '/shipping-policy' },
+    { name: 'Returns & Refunds', link: '/return-policy' },
+    { name: 'Warranty Information', link: '/warranty-information' },
     { name: 'Bike Assembly Guide', link: '#' },
-    { name: 'Size Guide', link: '#' },
+    { name: 'Size Guide', link: '/size-guide' },
     { name: 'FAQ', link: '/faq' }
   ];
 
   const aboutCompany = [
     { name: 'About Us', link: '/about' },
-    { name: 'Our Story', link: '#' },
+    { name: 'Our Story', link: '/about' },
     { name: 'Our Services', link: '/services' },
     { name: 'Contact Us', link: '/contact' },
-    { name: 'Careers', link: '#' },
-    { name: 'Store Locations', link: '#' },
-    { name: 'Partner With Us', link: '#' },
-    { name: 'Become a Seller', link: '#' }
+    { name: 'Careers', link: '/careers' },
+    { name: 'Store Locations', link: '/store-locations' },
+    { name: 'Partner With Us', link: '/partner-with-us' },
+    { name: 'Become a Seller', link: '/become-a-seller' }
   ];
 
   const policies = [
-    { name: 'Privacy Policy', link: 'privacy-policy' },
-    { name: 'Terms of Service', link: 'terms-of-service' },
-    { name: 'Cookie Policy', link: 'cookie-policy' },
-    { name: 'Payment Terms', link: 'payment-terms' },
-    { name: 'Shipping Policy', link: 'shipping-policy' },
-    { name: 'Return Policy', link: 'return-policy' }
+    { name: 'Privacy Policy', link: '/privacy-policy' },
+    { name: 'Terms of Service', link: '/terms-of-service' },
+    { name: 'Cookie Policy', link: '/cookie-policy' },
+    { name: 'Payment Terms', link: '/payment-terms' },
+    { name: 'Shipping Policy', link: '/shipping-policy' },
+    { name: 'Return Policy', link: '/return-policy' },
+    { name: 'Refund Policy', link: '/refund-policy' }
   ];
 
   const myAccount = [
     { name: 'My Account', link: '/dashboard' },
-    { name: 'Order History', link: '#' },
-    { name: 'Wishlist', link: '#' },
-    { name: 'Saved Addresses', link: '#' },
-    { name: 'Payment Methods', link: '#' },
-    { name: 'Notifications', link: '#' }
+    { name: 'Order History', link: '/order-history' },
+    { name: 'Wishlist', link: '/wishlist' },
+    { name: 'Saved Addresses', link: '/addresses' },
+    { name: 'Payment Methods', link: '/settings' },
+    { name: 'Notifications', link: '/settings' }
   ];
 
   return (
@@ -91,9 +92,11 @@ const Footer = () => {
           {/* Brand Info */}
           <div className="lg:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <span className="text-4xl">🚴‍♂️</span>
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center shadow-md">
+                <span className="text-white font-bold text-xl">OS</span>
+              </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-orange-400 bg-clip-text text-transparent">
                   Oshocks
                 </span>
                 <span className="text-sm text-gray-400">Kenya's Premier Cycling Marketplace</span>

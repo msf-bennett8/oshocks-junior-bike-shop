@@ -1,49 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react';
+// frontend/src/components/common/SearchBar.js
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Search, Clock, X, TrendingUp, Package, FileText, Wrench, User, Tag } from 'lucide-react';
 
 const SearchBar = ({ 
-  placeholder = 'Search for bikes, accessories, parts...',
-  onSearch,
-  showSuggestions = true,
-  showFilters = true,
-  variant = 'default',
-  size = 'md',
-  className = ''
+  placeholder = 'Search for bikes, accessories, parts, blogs...',
+  onClose,
+  autoFocus = true,
+  variant = 'overlay' // 'overlay' | 'inline'
 }) => {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
-  const [suggestions, setSuggestions] = useState([]);
+  const [results, setResults] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
-  const [selectedFilter, setSelectedFilter] = useState('all');
-  const [isListening, setIsListening] = useState(false);
-  const searchRef = useRef(null);
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const inputRef = useRef(null);
+  const resultsRef = useRef(null);
+  const searchTimeoutRef = useRef(null);
 
-  // Mock data - Replace with API calls
-  const popularSearches = [
-    { text: 'Mountain bikes', icon: '🏔️', category: 'bikes' },
-    { text: 'Road bikes', icon: '🛣️', category: 'bikes' },
-    { text: 'Bike helmets', icon: '🪖', category: 'accessories' },
-    { text: 'Cycling shoes', icon: '👟', category: 'accessories' },
-    { text: 'Bike lights', icon: '💡', category: 'accessories' },
-    { text: 'Water bottles', icon: '🚰', category: 'accessories' }
+  // Search filters/categories
+  const filters = [
+    { id: 'all', label: 'All', icon: Search },
+    { id: 'products', label: 'Products', icon: Package },
+    { id: 'blogs', label: 'Blogs', icon: FileText },
+    { id: 'services', label: 'Services', icon: Wrench },
+    { id: 'sellers', label: 'Sellers', icon: User },
+    { id: 'categories', label: 'Categories', icon: Tag }
   ];
-
-  const categories = [
-    { id: 'all', name: 'All', icon: '🔍' },
-    { id: 'bikes', name: 'Bikes', icon: '🚴' },
-    { id: 'accessories', name: 'Accessories', icon: '🎽' },
-    { id: 'parts', name: 'Parts', icon: '⚙️' },
-    { id: 'gear', name: 'Gear', icon: '🎒' }
-  ];
-
-  // Size variants
-  const sizeClasses = {
-    sm: 'px-4 py-2 text-sm',
-    md: 'px-6 py-3 text-base',
-    lg: 'px-8 py-4 text-lg'
-  };
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -57,69 +42,118 @@ const SearchBar = ({
     }
   }, []);
 
-  // Generate suggestions based on query
+  // Auto-focus input
   useEffect(() => {
-    if (query.length > 1) {
-      // Simulate API call - Replace with actual search API
-      const filtered = popularSearches.filter(item =>
-        item.text.toLowerCase().includes(query.toLowerCase())
-      );
-      setSuggestions(filtered.slice(0, 5));
-    } else {
-      setSuggestions([]);
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus();
     }
-  }, [query]);
+  }, [autoFocus]);
 
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setIsFocused(false);
-      }
-    };
+  // Debounced search function
+  const performSearch = useCallback(async (searchQuery, filter) => {
+    if (!searchQuery.trim()) {
+      setResults(null);
+      return;
+    }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    setIsLoading(true);
+    
+    try {
+      // API endpoint for universal search
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/search?q=${encodeURIComponent(searchQuery)}&type=${filter}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            // Add auth token if needed
+            // 'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
+
+      if (!response.ok) throw new Error('Search failed');
+
+      const data = await response.json();
+      setResults(data);
+    } catch (error) {
+      console.error('Search error:', error);
+      // Fallback to mock data for development
+      setResults(getMockResults(searchQuery, filter));
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  // Handle search submission
-  const handleSearch = (searchText = query) => {
-    if (!searchText.trim()) return;
+  // Handle query change with debouncing
+  useEffect(() => {
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
 
-    // Save to recent searches
-    const updatedRecent = [
+    // Set new timeout for search
+    if (query.length > 0) {
+      searchTimeoutRef.current = setTimeout(() => {
+        performSearch(query, activeFilter);
+      }, 300); // 300ms debounce
+    } else {
+      setResults(null);
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [query, activeFilter, performSearch]);
+
+  // Save to recent searches
+  const saveRecentSearch = (searchText) => {
+    const updated = [
       searchText,
       ...recentSearches.filter(s => s !== searchText)
-    ].slice(0, 5);
+    ].slice(0, 10);
     
-    setRecentSearches(updatedRecent);
+    setRecentSearches(updated);
     try {
-      localStorage.setItem('oshocks_recent_searches', JSON.stringify(updatedRecent));
+      localStorage.setItem('oshocks_recent_searches', JSON.stringify(updated));
     } catch (error) {
       console.error('Failed to save search:', error);
     }
+  };
 
-    // Execute search
-    if (onSearch) {
-      onSearch(searchText, selectedFilter);
-    } else {
-      navigate(`/shop?search=${encodeURIComponent(searchText)}&category=${selectedFilter}`);
+  // Handle result click
+  const handleResultClick = (result) => {
+    saveRecentSearch(query);
+    
+    // Navigate based on result type
+    switch (result.type) {
+      case 'product':
+        navigate(`/product/${result.id}`);
+        break;
+      case 'blog':
+        navigate(`/blog/${result.slug || result.id}`);
+        break;
+      case 'service':
+        navigate(`/services#${result.slug || result.id}`);
+        break;
+      case 'seller':
+        navigate(`/seller/${result.id}`);
+        break;
+      case 'category':
+        navigate(`/shop?category=${result.slug || result.id}`);
+        break;
+      default:
+        navigate(`/search?q=${encodeURIComponent(query)}`);
     }
-
-    setIsFocused(false);
-    setQuery('');
+    
+    if (onClose) onClose();
   };
 
-  // Handle form submission
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    handleSearch();
-  };
-
-  // Handle suggestion click
-  const handleSuggestionClick = (text) => {
-    setQuery(text);
-    handleSearch(text);
+  // Handle recent search click
+  const handleRecentClick = (search) => {
+    setQuery(search);
+    performSearch(search, activeFilter);
   };
 
   // Clear recent searches
@@ -132,349 +166,383 @@ const SearchBar = ({
     }
   };
 
-  // Voice search (if supported)
-  const handleVoiceSearch = () => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!results) return;
+
+      const allResults = getAllResultsFlat(results);
       
-      recognition.lang = 'en-US';
-      recognition.continuous = false;
-      recognition.interimResults = false;
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setSelectedIndex(prev => 
+            prev < allResults.length - 1 ? prev + 1 : prev
+          );
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (selectedIndex >= 0 && allResults[selectedIndex]) {
+            handleResultClick(allResults[selectedIndex]);
+          }
+          break;
+        case 'Escape':
+          if (onClose) onClose();
+          break;
+        default:
+          break;
+      }
+    };
 
-      recognition.onstart = () => {
-        setIsListening(true);
-      };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [results, selectedIndex, onClose]);
 
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setQuery(transcript);
-        setIsListening(false);
-        handleSearch(transcript);
-      };
-
-      recognition.onerror = () => {
-        setIsListening(false);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognition.start();
-    } else {
-      alert('Voice search is not supported in your browser');
-    }
+  // Get all results as flat array for keyboard navigation
+  const getAllResultsFlat = (resultsData) => {
+    if (!resultsData) return [];
+    const flat = [];
+    Object.values(resultsData).forEach(category => {
+      if (Array.isArray(category)) {
+        flat.push(...category);
+      }
+    });
+    return flat;
   };
 
-  // Render different variants
-  const renderSearchInput = () => {
-    const baseClasses = `w-full ${sizeClasses[size]} pr-24 border-2 rounded-lg transition-all duration-200 focus:outline-none ${
-      isFocused 
-        ? 'border-purple-500 shadow-lg shadow-purple-100' 
-        : 'border-gray-300 hover:border-gray-400'
-    }`;
+  // Get icon for result type
+  const getResultIcon = (type) => {
+    const icons = {
+      product: Package,
+      blog: FileText,
+      service: Wrench,
+      seller: User,
+      category: Tag
+    };
+    return icons[type] || Package;
+  };
+
+  // Highlight matching text
+  const highlightText = (text, query) => {
+    if (!query.trim()) return text;
+    
+    const parts = text.split(new RegExp(`(${query})`, 'gi'));
+    return parts.map((part, i) => 
+      part.toLowerCase() === query.toLowerCase() ? (
+        <mark key={i} className="bg-yellow-200 text-gray-900 font-semibold">
+          {part}
+        </mark>
+      ) : (
+        part
+      )
+    );
+  };
+
+  // Render result item
+  const renderResultItem = (item, index) => {
+    const Icon = getResultIcon(item.type);
+    const isSelected = index === selectedIndex;
 
     return (
-      <div className="relative flex-1">
-        <input
-          ref={inputRef}
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          placeholder={placeholder}
-          className={baseClasses}
-          autoComplete="off"
-        />
-        
-        {/* Clear button */}
-        {query && (
-          <button
-            type="button"
-            onClick={() => setQuery('')}
-            className="absolute right-20 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            ✖️
-          </button>
+      <button
+        key={`${item.type}-${item.id}`}
+        onClick={() => handleResultClick(item)}
+        className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${
+          isSelected 
+            ? 'bg-blue-50 border-l-4 border-blue-600' 
+            : 'hover:bg-gray-50'
+        }`}
+      >
+        <div className="flex-shrink-0 mt-1">
+          <Icon size={18} className={isSelected ? 'text-blue-600' : 'text-gray-400'} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-medium text-gray-900 truncate">
+            {highlightText(item.title || item.name, query)}
+          </div>
+          {item.description && (
+            <div className="text-sm text-gray-600 truncate mt-0.5">
+              {item.description}
+            </div>
+          )}
+          {item.price && (
+            <div className="text-sm font-semibold text-green-600 mt-1">
+              KSh {item.price.toLocaleString()}
+            </div>
+          )}
+        </div>
+        {item.badge && (
+          <span className="flex-shrink-0 text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium">
+            {item.badge}
+          </span>
         )}
-
-        {/* Voice search button */}
-        <button
-          type="button"
-          onClick={handleVoiceSearch}
-          className={`absolute right-12 top-1/2 transform -translate-y-1/2 transition-all duration-200 ${
-            isListening 
-              ? 'text-red-500 animate-pulse' 
-              : 'text-gray-400 hover:text-purple-600'
-          }`}
-          title="Voice search"
-        >
-          🎤
-        </button>
-
-        {/* Search button */}
-        <button
-          type="submit"
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-md hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg"
-        >
-          🔍
-        </button>
-      </div>
+      </button>
     );
   };
 
   return (
-    <div ref={searchRef} className={`relative ${className}`}>
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        {/* Category filter dropdown */}
-        {showFilters && variant !== 'compact' && (
-          <select
-            value={selectedFilter}
-            onChange={(e) => setSelectedFilter(e.target.value)}
-            className="px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 bg-white hover:border-gray-400 transition-colors cursor-pointer font-medium text-gray-700"
-          >
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.icon} {cat.name}
-              </option>
-            ))}
-          </select>
-        )}
-
-        {/* Search input */}
-        {renderSearchInput()}
-      </form>
-
-      {/* Suggestions dropdown */}
-      {showSuggestions && isFocused && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-200 z-50 max-h-96 overflow-y-auto">
-          
-          {/* Search suggestions */}
-          {suggestions.length > 0 && (
-            <div className="p-2">
-              <div className="text-xs font-semibold text-gray-500 px-3 py-2">
-                Suggestions
-              </div>
-              {suggestions.map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSuggestionClick(item.text)}
-                  className="w-full text-left px-4 py-3 hover:bg-purple-50 rounded-lg transition-colors flex items-center gap-3 group"
-                >
-                  <span className="text-2xl group-hover:scale-110 transition-transform">
-                    {item.icon}
-                  </span>
-                  <div className="flex-1">
-                    <span className="text-gray-700 group-hover:text-purple-600 font-medium">
-                      {item.text}
-                    </span>
-                  </div>
-                  <span className="text-gray-400 text-sm">↵</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Recent searches */}
-          {recentSearches.length > 0 && suggestions.length === 0 && (
-            <div className="p-2">
-              <div className="flex items-center justify-between px-3 py-2">
-                <div className="text-xs font-semibold text-gray-500">
-                  Recent Searches
-                </div>
-                <button
-                  onClick={clearRecentSearches}
-                  className="text-xs text-purple-600 hover:text-purple-700 font-medium"
-                >
-                  Clear all
-                </button>
-              </div>
-              {recentSearches.map((search, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSuggestionClick(search)}
-                  className="w-full text-left px-4 py-3 hover:bg-purple-50 rounded-lg transition-colors flex items-center gap-3 group"
-                >
-                  <span className="text-gray-400 group-hover:text-purple-600">🕐</span>
-                  <span className="text-gray-700 group-hover:text-purple-600 flex-1">
-                    {search}
-                  </span>
-                  <span className="text-gray-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                    ↵
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Popular searches */}
-          {query.length === 0 && (
-            <div className="p-2 border-t border-gray-100">
-              <div className="text-xs font-semibold text-gray-500 px-3 py-2">
-                Popular Searches
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {popularSearches.map((item, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleSuggestionClick(item.text)}
-                    className="text-left px-4 py-3 hover:bg-purple-50 rounded-lg transition-colors flex items-center gap-2 group"
-                  >
-                    <span className="text-xl group-hover:scale-110 transition-transform">
-                      {item.icon}
-                    </span>
-                    <span className="text-sm text-gray-700 group-hover:text-purple-600">
-                      {item.text}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Quick tips */}
-          {query.length === 0 && (
-            <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-t border-purple-100">
-              <div className="text-xs font-semibold text-purple-900 mb-2">
-                💡 Pro Tips
-              </div>
-              <ul className="text-xs text-purple-700 space-y-1">
-                <li>• Try searching by brand, model, or product type</li>
-                <li>• Use filters to narrow down your results</li>
-                <li>• Click 🎤 to search using your voice</li>
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Compact variant for mobile/header
-export const CompactSearchBar = ({ onSearch }) => {
-  return (
-    <SearchBar
-      placeholder="Search..."
-      onSearch={onSearch}
-      showFilters={false}
-      size="sm"
-      variant="compact"
-    />
-  );
-};
-
-// Hero search variant (for homepage)
-export const HeroSearchBar = ({ onSearch }) => {
-  return (
-    <div className="max-w-4xl mx-auto">
-      <div className="text-center mb-6">
-        <h2 className="text-4xl font-bold text-gray-900 mb-3">
-          Find Your Perfect Ride 🚴‍♂️
-        </h2>
-        <p className="text-gray-600">
-          Search thousands of bikes, accessories, and parts from trusted sellers
-        </p>
-      </div>
-      <SearchBar
-        placeholder="What are you looking for today?"
-        onSearch={onSearch}
-        size="lg"
-        className="shadow-2xl"
-      />
-    </div>
-  );
-};
-
-// Advanced search with more filters
-export const AdvancedSearchBar = ({ onSearch }) => {
-  const [priceRange, setPriceRange] = useState([0, 100000]);
-  const [condition, setCondition] = useState('all');
-  const [location, setLocation] = useState('all');
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  return (
-    <div className="space-y-4">
-      <SearchBar onSearch={onSearch} />
-      
-      {/* Advanced filters toggle */}
-      <button
-        onClick={() => setShowAdvanced(!showAdvanced)}
-        className="text-purple-600 text-sm font-medium hover:text-purple-700 flex items-center gap-2"
-      >
-        <span>⚙️</span>
-        <span>Advanced Filters</span>
-        <span className="text-xs">{showAdvanced ? '▲' : '▼'}</span>
-      </button>
-
-      {/* Advanced filters panel */}
-      {showAdvanced && (
-        <div className="bg-gray-50 rounded-lg p-6 space-y-4 border border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Price range */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price Range
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  placeholder="Min"
-                  value={priceRange[0]}
-                  onChange={(e) => setPriceRange([+e.target.value, priceRange[1]])}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                />
-                <span className="text-gray-500">-</span>
-                <input
-                  type="number"
-                  placeholder="Max"
-                  value={priceRange[1]}
-                  onChange={(e) => setPriceRange([priceRange[0], +e.target.value])}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                />
-              </div>
-            </div>
-
-            {/* Condition */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Condition
-              </label>
-              <select
-                value={condition}
-                onChange={(e) => setCondition(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+    <div className={variant === 'overlay' ? 'fixed inset-0 bg-black bg-opacity-50 z-50 animate-fade-in' : ''}>
+      <div className={
+        variant === 'overlay' 
+          ? 'bg-white w-full max-w-4xl mx-auto mt-20 rounded-lg shadow-2xl overflow-hidden'
+          : 'w-full'
+      }>
+        
+        {/* Search Header */}
+        <div className="border-b border-gray-200 p-4">
+          <div className="flex items-center gap-3">
+            <Search size={20} className="text-gray-400 flex-shrink-0" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={placeholder}
+              className="flex-1 outline-none text-lg"
+            />
+            {query && (
+              <button
+                onClick={() => setQuery('')}
+                className="p-1 hover:bg-gray-100 rounded transition-colors"
               >
-                <option value="all">All Conditions</option>
-                <option value="new">New</option>
-                <option value="like-new">Like New</option>
-                <option value="used">Used</option>
-              </select>
-            </div>
-
-            {/* Location */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Location
-              </label>
-              <select
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                <X size={18} className="text-gray-400" />
+              </button>
+            )}
+            {onClose && variant === 'overlay' && (
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 rounded transition-colors"
               >
-                <option value="all">All Kenya</option>
-                <option value="nairobi">Nairobi</option>
-                <option value="mombasa">Mombasa</option>
-                <option value="kisumu">Kisumu</option>
-                <option value="nakuru">Nakuru</option>
-              </select>
-            </div>
+                <X size={20} className="text-gray-600" />
+              </button>
+            )}
+          </div>
+
+          {/* Filters */}
+          <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
+            {filters.map((filter) => {
+              const Icon = filter.icon;
+              return (
+                <button
+                  key={filter.id}
+                  onClick={() => setActiveFilter(filter.id)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                    activeFilter === filter.id
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  <Icon size={14} />
+                  {filter.label}
+                </button>
+              );
+            })}
           </div>
         </div>
-      )}
+
+        {/* Results Area */}
+        <div ref={resultsRef} className="max-h-[60vh] overflow-y-auto">
+          {isLoading && (
+            <div className="p-8 text-center">
+              <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-gray-600 mt-3">Searching...</p>
+            </div>
+          )}
+
+          {!query && !isLoading && (
+            <div className="p-4">
+              {/* Recent Searches */}
+              {recentSearches.length > 0 && (
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                      <Clock size={16} />
+                      Recent Searches
+                    </h3>
+                    <button
+                      onClick={clearRecentSearches}
+                      className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+                  <div className="space-y-1">
+                    {recentSearches.map((search, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleRecentClick(search)}
+                        className="w-full text-left px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors flex items-center gap-3 group"
+                      >
+                        <Clock size={14} className="text-gray-400 group-hover:text-blue-600" />
+                        <span className="text-gray-700 group-hover:text-blue-600">
+                          {search}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Popular/Trending */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <TrendingUp size={16} />
+                  Trending Searches
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    'Mountain Bikes',
+                    'Road Bikes',
+                    'Bike Helmets',
+                    'Cycling Shoes',
+                    'Bike Lights',
+                    'Water Bottles'
+                  ].map((item, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setQuery(item)}
+                      className="text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-sm text-gray-700"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {results && !isLoading && (
+            <div>
+              {/* Products */}
+              {results.products && results.products.length > 0 && (
+                <div className="border-b border-gray-200">
+                  <h3 className="px-4 py-2 text-xs font-bold text-gray-500 uppercase bg-gray-50">
+                    Products ({results.products.length})
+                  </h3>
+                  <div>
+                    {results.products.map((item, idx) => 
+                      renderResultItem(item, idx)
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Blogs */}
+              {results.blogs && results.blogs.length > 0 && (
+                <div className="border-b border-gray-200">
+                  <h3 className="px-4 py-2 text-xs font-bold text-gray-500 uppercase bg-gray-50">
+                    Blog Posts ({results.blogs.length})
+                  </h3>
+                  <div>
+                    {results.blogs.map((item, idx) => 
+                      renderResultItem(item, idx + (results.products?.length || 0))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Services */}
+              {results.services && results.services.length > 0 && (
+                <div className="border-b border-gray-200">
+                  <h3 className="px-4 py-2 text-xs font-bold text-gray-500 uppercase bg-gray-50">
+                    Services ({results.services.length})
+                  </h3>
+                  <div>
+                    {results.services.map((item, idx) => 
+                      renderResultItem(item, idx + (results.products?.length || 0) + (results.blogs?.length || 0))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Sellers */}
+              {results.sellers && results.sellers.length > 0 && (
+                <div className="border-b border-gray-200">
+                  <h3 className="px-4 py-2 text-xs font-bold text-gray-500 uppercase bg-gray-50">
+                    Sellers ({results.sellers.length})
+                  </h3>
+                  <div>
+                    {results.sellers.map((item, idx) => 
+                      renderResultItem(item, idx + (results.products?.length || 0) + (results.blogs?.length || 0) + (results.services?.length || 0))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Categories */}
+              {results.categories && results.categories.length > 0 && (
+                <div>
+                  <h3 className="px-4 py-2 text-xs font-bold text-gray-500 uppercase bg-gray-50">
+                    Categories ({results.categories.length})
+                  </h3>
+                  <div>
+                    {results.categories.map((item, idx) => 
+                      renderResultItem(item, idx + (results.products?.length || 0) + (results.blogs?.length || 0) + (results.services?.length || 0) + (results.sellers?.length || 0))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* No results */}
+              {Object.values(results).every(arr => !arr || arr.length === 0) && (
+                <div className="p-8 text-center">
+                  <div className="text-4xl mb-3">🔍</div>
+                  <p className="text-gray-600 font-medium">No results found for "{query}"</p>
+                  <p className="text-sm text-gray-500 mt-1">Try different keywords or browse categories</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer Tips */}
+        {variant === 'overlay' && (
+          <div className="border-t border-gray-200 px-4 py-2 bg-gray-50 text-xs text-gray-500 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span>↑↓ Navigate</span>
+              <span>↵ Select</span>
+              <span>ESC Close</span>
+            </div>
+            <span>Searching: {activeFilter}</span>
+          </div>
+        )}
+      </div>
     </div>
   );
+};
+
+// Mock results for development
+const getMockResults = (query, filter) => {
+  const mockData = {
+    products: [
+      { id: 1, type: 'product', title: 'Mountain Bike Pro X', description: '27.5" Aluminum Frame', price: 45000, badge: 'New' },
+      { id: 2, type: 'product', title: 'Road Bike Elite', description: 'Carbon Fiber, 21 Speed', price: 85000 },
+      { id: 3, type: 'product', title: 'Electric Bike City', description: '250W Motor, 50km Range', price: 120000, badge: 'Hot' }
+    ],
+    blogs: [
+      { id: 1, type: 'blog', title: 'Top 10 Mountain Bikes in Kenya', description: 'Complete buyer\'s guide for 2024', slug: 'top-10-mountain-bikes' },
+      { id: 2, type: 'blog', title: 'Bike Maintenance Tips', description: 'Keep your bike running smoothly', slug: 'maintenance-tips' }
+    ],
+    services: [
+      { id: 1, type: 'service', title: 'Bike Repair Service', description: 'Professional repairs and maintenance', price: 2000 },
+      { id: 2, type: 'service', title: 'Custom Bike Build', description: 'Build your dream bike', price: 15000 }
+    ],
+    sellers: [
+      { id: 1, type: 'seller', name: 'Oshocks Junior', description: 'Verified Seller • 500+ Sales' },
+      { id: 2, type: 'seller', name: 'Bike Master Kenya', description: 'Premium Bikes • 200+ Sales' }
+    ],
+    categories: [
+      { id: 1, type: 'category', name: 'Mountain Bikes', description: '150 products', slug: 'mountain' },
+      { id: 2, type: 'category', name: 'Accessories', description: '300+ products', slug: 'accessories' }
+    ]
+  };
+
+  if (filter === 'all') return mockData;
+  return { [filter]: mockData[filter] || [] };
 };
 
 export default SearchBar;
