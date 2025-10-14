@@ -65,7 +65,7 @@ const ProductFormModal = ({
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/v1/categories');
+      const response = await fetch('https://oshocks-junior-bike-shop-backend.onrender.com/api/v1/categories');
       const data = await response.json();
       setCategories(data.data || data);
     } catch (err) {
@@ -104,11 +104,14 @@ const ProductFormModal = ({
       
       if (!token) {
         throw new Error('Please login first');
-      }
+      } 
 
-      const url = mode === 'edit' 
-        ? `http://127.0.0.1:8000/api/v1/seller/products/${product.id}`
-        : 'http://127.0.0.1:8000/api/v1/seller/products';
+     // const url = mode === 'edit' 
+     //   ? `http://127.0.0.1:8000/api/v1/seller/products/${product.id}`
+     //   : 'http://127.0.0.1:8000/api/v1/seller/products';
+
+
+      const url = `${process.env.REACT_APP_API_URL}/api/v1/seller/products`;
 
       const method = mode === 'edit' ? 'PUT' : 'POST';
 

@@ -34,7 +34,7 @@ const HomePage = () => {
       if (err.response) {
         setError(`Server error: ${err.response.status} - ${err.response.data?.message || 'Unknown error'}`);
       } else if (err.request) {
-        setError('No response from server. Please check if the backend is running at http://127.0.0.1:8000');
+        setError('No response from server. Please check if the backend is running at https://oshocks-junior-bike-shop-backend.onrender.com/api/v1');
       } else {
         setError(`Request setup error: ${err.message}`);
       }
@@ -52,7 +52,7 @@ const HomePage = () => {
           <p className="text-gray-600 mb-4">{error}</p>
           <p className="text-sm text-gray-500 mb-4">
             Make sure your backend server is running at:<br />
-            <code className="bg-gray-100 px-2 py-1 rounded">http://127.0.0.1:8000</code>
+            <code className="bg-gray-100 px-2 py-1 rounded">https://oshocks-junior-bike-shop-backend.onrender.com/api/v1</code>
           </p>
           <button
             onClick={fetchProducts}
