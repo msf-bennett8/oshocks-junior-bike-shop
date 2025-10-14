@@ -1,8 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductVariantController;
@@ -24,32 +24,27 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\Api\SearchController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-*/
+// Public authentication routes
+Route::post('/auth/register', [AuthController::class, 'register']);
+Route::post('/auth/login', [AuthController::class, 'login']);
 
-//Search Routes
+// Protected authentication routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
+});
+
+// Search Routes
 Route::prefix('search')->group(function () {
-    // Universal search endpoint
     Route::get('/', [SearchController::class, 'search']);
-    
-    // Autocomplete suggestions
     Route::get('/suggestions', [SearchController::class, 'suggestions']);
-    
-    // Trending searches
     Route::get('/trending', [SearchController::class, 'trending']);
 });
 
 // Public routes
 Route::prefix('v1')->group(function () {
-    
-    // Authentication
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     
     // Public product browsing
     Route::get('/products', [ProductController::class, 'index']);
@@ -77,9 +72,6 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::put('/user/profile', [AuthController::class, 'updateProfile']);
-    Route::put('/user/password', [AuthController::class, 'changePassword']);
     
     // Cart
     Route::get('/cart', [CartController::class, 'show']);
