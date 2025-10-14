@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
-import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowUp, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Star, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift } from 'lucide-react';
+import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowUp, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Star, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, UserCog, Users, Package2, BarChart3, FolderTree } from 'lucide-react';
 import SearchBar from '../common/SearchBar'; // ← IMPORT THE NEW SEARCHBAR
 
 const Navbar = () => {
@@ -89,6 +89,21 @@ const Navbar = () => {
         { name: 'Bike Finder', link: '/bike-finder', icon: Search },
         { name: 'Gift Cards', link: '/gift-cards', icon: Gift },
       ]
+    },
+    {
+      title: 'Admin',
+      items: [
+        { name: 'Dashboard', link: '/admin/dashboard', icon: LayoutDashboard },
+        { name: 'Manage Users', link: '/admin/users', icon: Users },
+        { name: 'Manage Products', link: '/admin/products', icon: Package2 },
+        { name: 'Orders', link: '/admin/orders', icon: Package },
+        { name: 'Categories', link: '/admin/categories', icon: FolderTree },
+        { name: 'Analytics', link: '/admin/analytics', icon: BarChart3 },
+        { name: 'Reports', link: '/admin/reports', icon: BarChart3 },
+        { name: 'Settings', link: '/admin/settings', icon: Settings },
+      ],
+      requiresAuth: true,
+      requiresRole: 'admin'
     },
     {
       title: 'Resources',
@@ -423,7 +438,16 @@ const Navbar = () => {
             </div>
 
             <div className="py-2">
-              {menuCategories.map((category, idx) => (
+            {/*  {menuCategories  //after auth to show on admins only
+                .filter(category => {
+                  // Hide admin section if not admin
+                  if (category.requiresRole === 'admin' && user?.role !== 'admin') {
+                    return false;
+                  }
+                  return true;
+                })
+                .map((category, idx) => ( */}
+                {menuCategories.map((category, idx) => (
                 <div key={idx} className="border-b border-gray-200 pb-2 mb-2">
                   <h3 className="px-4 py-2 text-sm font-bold text-gray-900">{category.title}</h3>
                   <div className="py-1">
@@ -544,6 +568,17 @@ const Navbar = () => {
                 <BookOpen size={20} className="text-gray-600" />
                 <span className="text-gray-900">Blog</span>
               </Link>
+              {/* Admin Dashboard Link - Only visible to admins */}
+                {isAuthenticated && user?.role === 'admin' && (
+                  <Link
+                    to="/admin/dashboard"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                  >
+                    <LayoutDashboard size={20} className="text-gray-600" />
+                    <span className="text-gray-900">Admin Dashboard</span>
+                  </Link>
+                )}
               {/* ADD THESE RESOURCE LINKS HERE */}
                 <div className="mt-2 pt-2 border-t border-gray-100">
                   <h4 className="px-4 py-2 text-sm font-bold text-gray-900">Resources</h4>
@@ -582,7 +617,16 @@ const Navbar = () => {
                 </div>
             </div>
 
-            {menuCategories.map((category, idx) => (
+           {/* {menuCategories   //after auth, to show on admimins only
+              .filter(category => {
+                // Hide admin section if not admin
+                if (category.requiresRole === 'admin' && user?.role !== 'admin') {
+                  return false;
+                }
+                return true;
+              })
+              .map((category, idx) => ( */}
+              {menuCategories.map((category, idx) => (
               <div key={idx} className="border-b border-gray-200 pb-2 mb-2">
                 <h3 className="px-4 py-2 text-sm font-bold text-gray-900">{category.title}</h3>
                 {category.items.map((item, itemIdx) => {

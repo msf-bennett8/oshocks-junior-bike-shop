@@ -43,6 +43,7 @@ const ContactSupportPage = lazy(() => import('./pages/main/ContactSupportPage'))
 const BlogPage = lazy(() => import('./pages/main/BlogPage'));
 const BlogPostPage = lazy(() => import('./pages/main/BlogPostPage'));
 const FAQPage = lazy(() => import('./pages/main/FAQPage'));
+const AdminAnalyticsPage = lazy(() => import('./pages/admin/Analytics'));
 
 // Cart & Checkout
 const CartPage = lazy(() => import('./pages/cart/CartPage'));
@@ -464,6 +465,14 @@ function App() {
                   }
                 />
                 <Route
+                  path="/admin/analytics"
+                  element={
+                    <AdminRoute>
+                      <AdminAnalyticsPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
                   path="/order-success/:orderId"
                   element={
                     <ProtectedRoute>
@@ -639,6 +648,7 @@ function App() {
                 {/* ============================================
                     ADMIN DASHBOARD (Admin Only)
                     ============================================ */}
+
                 <Route
                   path="/admin/dashboard"
                   element={
@@ -647,6 +657,7 @@ function App() {
                     </AdminRoute>
                   }
                 />
+
                 <Route
                   path="/admin/users"
                   element={
@@ -655,13 +666,18 @@ function App() {
                     </AdminRoute>
                   }
                 />
-                <Route
+               {/* <Route
                   path="/admin/products"
                   element={
                     <AdminRoute>
                       <AdminProductsPage />
                     </AdminRoute>
                   }
+                />*/}
+                <Route
+                  path="/admin/products"
+                  element={
+                      <AdminProductsPage />}
                 />
                 <Route
                   path="/admin/orders"

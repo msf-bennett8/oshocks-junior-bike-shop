@@ -114,28 +114,28 @@ const HomePage = () => {
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
               <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-md hover:shadow-lg transition">
-                <div className="text-5xl mb-4">🚚</div>
+                <div className="text-5xl mb-4"></div>
                 <h3 className="text-xl font-bold mb-2 text-gray-800">Fast Delivery</h3>
                 <p className="text-gray-700 text-sm leading-relaxed">
                   Fast and reliable delivery in Nairobi Metropolitan. Track your order in real-time from our stores to your doorstep.
                 </p>
               </div>
               <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-md hover:shadow-lg transition">
-                <div className="text-5xl mb-4">💳</div>
+                <div className="text-5xl mb-4"></div>
                 <h3 className="text-xl font-bold mb-2 text-gray-800">Flexible Payments</h3>
                 <p className="text-gray-700 text-sm leading-relaxed">
                   Pay conveniently with M-Pesa, Airtel Money, bank cards, or cash on delivery. Secure transactions guaranteed.
                 </p>
               </div>
               <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-md hover:shadow-lg transition">
-                <div className="text-5xl mb-4">🔧</div>
+                <div className="text-5xl mb-4"></div>
                 <h3 className="text-xl font-bold mb-2 text-gray-800">Professional Repairs</h3>
                 <p className="text-gray-700 text-sm leading-relaxed">
                   Expert bike mechanics available for repairs, maintenance, and custom builds. Book appointments online easily.
                 </p>
               </div>
               <div className="p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-md hover:shadow-lg transition">
-                <div className="text-5xl mb-4">🏪</div>
+                <div className="text-5xl mb-4"></div>
                 <h3 className="text-xl font-bold mb-2 text-gray-800">Multi-Vendor Platform</h3>
                 <p className="text-gray-700 text-sm leading-relaxed">
                   Access products from multiple verified sellers. More choices, competitive prices, quality assured.
@@ -392,37 +392,37 @@ const HomePage = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3">✅</div>
+                <div className="text-5xl mb-3"></div>
                 <h3 className="text-lg font-bold mb-2">Quality Verified</h3>
                 <p className="text-gray-600 text-sm">All our products are tested and undergo strict verification for authenticity and quality standards.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3">💰</div>
+                <div className="text-5xl mb-3"></div>
                 <h3 className="text-lg font-bold mb-2">Best Prices</h3>
                 <p className="text-gray-600 text-sm">Competitive pricing from multiple sellers to ensures you get the best deals on cycling products.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3">🔒</div>
+                <div className="text-5xl mb-3"></div>
                 <h3 className="text-lg font-bold mb-2">Secure Shopping</h3>
                 <p className="text-gray-600 text-sm">Your transactions are protected with encrypted payments and buyer protection policies.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3">⚡</div>
+                <div className="text-5xl mb-3"></div>
                 <h3 className="text-lg font-bold mb-2">Fast Processing</h3>
                 <p className="text-gray-600 text-sm">Ypur orders are processed within 24 hours and shipped quickly to your preferred location as by our shipping policy.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3">😊</div>
+                <div className="text-5xl mb-3"></div>
                 <h3 className="text-lg font-bold mb-2">Satisfaction Guarantee</h3>
                 <p className="text-gray-600 text-sm">Not happy with your purchase? Easy returns and refunds within 7 days of delivery as by our return and refund policy.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3">📞</div>
+                <div className="text-5xl mb-3"></div>
                 <h3 className="text-lg font-bold mb-2">24/7 Support</h3>
                 <p className="text-gray-600 text-sm">Our customer support team is always available to help with your inquiries and concerns.</p>
               </div>

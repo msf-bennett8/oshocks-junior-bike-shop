@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ProductFormModal from './ProductFormModal'; 
 import { 
   Search, Filter, Plus, Edit2, Trash2, Eye, Copy, MoreVertical,
   Package, DollarSign, TrendingUp, AlertCircle, Star, Image as ImageIcon,
@@ -1177,83 +1178,26 @@ const AdminProductsPage = () => {
       )}
 
       {/* Product Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
-              <h2 className="text-2xl font-bold">
-                {modalMode === 'create' ? 'Add New Product' : modalMode === 'edit' ? 'Edit Product' : 'Product Details'}
-              </h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="p-6">
-              {modalMode === 'view' && selectedProduct ? (
-                /* View Mode */
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <img
-                        src={selectedProduct.images[0] || 'https://via.placeholder.com/400'}
-                        alt={selectedProduct.name}
-                        className="w-full rounded-lg"
-                      />
-                    </div>
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="text-2xl font-bold">{selectedProduct.name}</h3>
-                        <p className="text-gray-600">{selectedProduct.categoryName}</p>
-                      </div>
-                      <div className="flex items-baseline gap-3">
-                        <span className="text-3xl font-bold text-blue-600">
-                          {formatCurrency(selectedProduct.price)}
-                        </span>
-                        {selectedProduct.comparePrice > selectedProduct.price && (
-                          <span className="text-lg text-gray-500 line-through">
-                            {formatCurrency(selectedProduct.comparePrice)}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Star size={20} className="text-yellow-500 fill-yellow-500" />
-                        <span className="font-semibold">{selectedProduct.rating}</span>
-                        <span className="text-gray-600">({selectedProduct.reviews} reviews)</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-600">Stock</p>
-                          <p className="text-xl font-bold">{selectedProduct.stock}</p>
-                        </div>
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                          <p className="text-sm text-gray-600">Sales</p>
-                          <p className="text-xl font-bold">{selectedProduct.sales}</p>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">SKU</p>
-                        <p className="font-medium">{selectedProduct.sku}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600 mb-2">Description</p>
-                        <p className="text-gray-700">{selectedProduct.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                /* Create/Edit Mode - Placeholder */
-                <div className="text-center py-12">
-                  <Package size={64} className="mx-auto text-gray-300 mb-4" />
-                  <p className="text-gray-600 mb-2">Product form coming soon!</p>
-                  <p className="text-sm text-gray-500">This will include full product creation/editing capabilities</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+<ProductFormModal 
+  isOpen={showModal}
+  onClose={() => {
+    setShowModal(false);
+    setSelectedProduct(null);
+    setModalMode('create');
+  }}
+  mode={modalMode === 'view' ? 'view' : modalMode}
+  product={selectedProduct}
+  onSuccess={(newProduct) => {
+    // Refresh products list
+    if (modalMode === 'create') {
+      setProducts([newProduct, ...products]);
+      showNotification('Product created successfully!');
+    } else {
+      setProducts(products.map(p => p.id === newProduct.id ? newProduct : p));
+      showNotification('Product updated successfully!');
+    }
+  }}
+/>
     </div>
   );
 };

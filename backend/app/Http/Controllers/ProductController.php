@@ -152,6 +152,7 @@ class ProductController extends Controller
 
         $validated['seller_id'] = auth()->id();
         $validated['slug'] = \Str::slug($validated['name']) . '-' . time();
+	$validated['sku'] = 'SKU-' . strtoupper(uniqid());
 
         $product = Product::create($validated);
 
