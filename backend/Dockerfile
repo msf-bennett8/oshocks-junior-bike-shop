@@ -24,11 +24,14 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy existing application directory contents
-COPY . /var/www/html
+# Copy composer files first
+COPY composer.json composer.lock /var/www/html/
 
 # Install application dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+# Copy the rest of the application
+COPY . /var/www/html
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
@@ -49,13 +52,11 @@ RUN echo '<Directory /var/www/html/public>\n\
 </Directory>' > /etc/apache2/conf-available/laravel.conf && \
     a2enconf laravel
 
-# Cache Laravel config and routes
-RUN php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache
-
 # Expose port 80
 EXPOSE 80
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Start Apache and run migrations
+CMD php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache && \
+    apache2-foreground
