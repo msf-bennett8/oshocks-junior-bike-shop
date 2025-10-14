@@ -55,8 +55,8 @@ const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
 
 // User Dashboard
-const DashboardPage = lazy(() => import('./pages/user/DashboardPage'));
-const ProfilePage = lazy(() => import('./pages/user/ProfilePage'));
+const DashboardPage = lazy(() => import('./pages/user/UserDashboardPage'));
+const ProfilePage = lazy(() => import('./pages/user/UserProfilePage'));
 const OrdersPage = lazy(() => import('./pages/user/OrdersPage'));
 const OrderDetailsPage = lazy(() => import('./pages/user/OrderDetailsPage'));
 const Wishlist = lazy(() => import('./pages/user/Wishlist'));
@@ -119,7 +119,7 @@ const Careers = lazy(() => import('./pages/education/Careers'));
 const Safety = lazy(() => import('./pages/education/Safety'));
 
 // Services
-const Bikemaintainance = lazy(() => import('./pages/services/Bikemaintainance'));
+const BikeMaintainance = lazy(() => import('./pages/education/BikeMaintainance'));
 
 // Legal Pages
 const CookiePolicy = lazy(() => import('./pages/legal/CookiePolicy'));
@@ -727,7 +727,7 @@ function App() {
                     ============================================ */}
                 <Route path="/careers" element={<Careers />} />
                 <Route path="/safety" element={<Safety />} />
-                <Route path="/bike-maintenance" element={<Bikemaintainance />} />
+                <Route path="/bike-maintenance" element={<BikeMaintainance />} />
 
                 {/* ============================================
                     SELLER ROUTES

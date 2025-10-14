@@ -6,12 +6,12 @@ const AboutPage = () => {
     {
       icon: <Store className="w-8 h-8" />,
       title: "Physical & Online Presence",
-      description: "Based in Nairobi with a retail shop and nationwide delivery capabilities, bringing cycling products to every corner of Kenya."
+      description: "Based in Nairobi with a retail shop and delivery around Nairobi Metropolitan, bringing cycling products to every corner around you."
     },
     {
       icon: <Users className="w-8 h-8" />,
       title: "Multi-Vendor Marketplace",
-      description: "Empowering bicycle sellers across Kenya to reach customers nationwide through our trusted platform."
+      description: "Empowering bicycle sellers to reach more customers through our trusted platform."
     },
     {
       icon: <Shield className="w-8 h-8" />,
@@ -29,7 +29,7 @@ const AboutPage = () => {
     { number: "1000+", label: "Products Available" },
     { number: "24/7", label: "Customer Support" },
     { number: "100%", label: "Secure Checkout" },
-    { number: "Kenya-Wide", label: "Delivery" }
+    { number: "NMS", label: "Delivery" }
   ];
 
   return (
@@ -55,7 +55,7 @@ const AboutPage = () => {
           <div className="bg-white rounded-lg shadow-md p-8 md:p-12 mb-12">
             <h2 className="text-3xl font-bold mb-6 text-gray-900">Our Vision</h2>
             <p className="text-lg text-gray-700 leading-relaxed mb-4">
-              Oshocks Junior Bike Shop is more than just an online store—it's a comprehensive cycling ecosystem designed to revolutionize how Kenyans discover, purchase, and experience cycling products. Inspired by the functionality of global marketplaces like Amazon and Alibaba, we're building Kenya's first truly integrated cycling marketplace.
+              Oshocks Junior Bike Shop is more than just an online store—it's a comprehensive cycling ecosystem designed to revolutionize how Kenyans discover, purchase, and experience cycling products. Inspired by the functionality of the global marketplaces, we're building Kenya's first truly integrated cycling marketplace.
             </p>
             <p className="text-lg text-gray-700 leading-relaxed">
               Starting from our physical shop in Nairobi, we're expanding to create a platform where cycling enthusiasts can find everything they need, from complete bicycles to the smallest spare parts, all while supporting local businesses and sellers across the country.
@@ -96,10 +96,10 @@ const AboutPage = () => {
                 Oshocks Junior Bike Shop began with a simple mission: make quality cycling products accessible to everyone in Kenya. As cycling enthusiasts ourselves, we understood the challenges of finding reliable suppliers, authentic products, and trustworthy service in the cycling industry.
               </p>
               <p>
-                What started as a small retail operation in Nairobi has evolved into an ambitious project to build Kenya's first comprehensive cycling marketplace. We're not just selling bikes—we're creating a platform that connects sellers with customers, supports local businesses, and builds a vibrant cycling community.
+                We wish to empower what started as a small retail operation to evolved into an ambitious project to build a comprehensive cycling marketplace. We're not just selling bikes—we're creating a platform that connects sellers with customers, supports local businesses, and builds a vibrant cycling community.
               </p>
               <p>
-                By combining cutting-edge e-commerce technology with local payment solutions like M-Pesa, we're making it easier than ever for Kenyans to access quality cycling products, whether they're in Nairobi, Mombasa, Kisumu, or anywhere in between.
+                By combining cutting-edge e-commerce technology with local payment solutions like M-Pesa, we're making it easier than ever for Kenyans to access quality cycling products, whether they're in Nairobi, Mombasa, Kisumu, Kisii, or anywhere in between.
               </p>
             </div>
           </div>
@@ -122,7 +122,7 @@ const AboutPage = () => {
           <div className="bg-blue-600 text-white rounded-lg p-8 md:p-12 text-center">
             <h2 className="text-3xl font-bold mb-6">Our Commitment to You</h2>
             <p className="text-lg text-blue-100 leading-relaxed mb-6 max-w-3xl mx-auto">
-              We're committed to providing authentic products, competitive prices, reliable delivery, and exceptional customer service. Whether you're a casual rider or a serious cyclist, we're here to support your cycling journey every step of the way.
+              We're committed to providing authentic products, competitive prices, reliable delivery, and exceptional customer service. Whether you're a casual rider or an elite cyclist, we're here to support your cycling journey every step of the way.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a href="/products" className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors">

@@ -11,200 +11,307 @@ const Careers = () => {
   const jobOpenings = [
     {
       id: 1,
-      title: 'Senior Full Stack Developer',
+      title: 'Senior Full Stack Developer (React & Laravel)',
       department: 'Engineering',
       location: 'Nairobi, Kenya',
       type: 'Full-time',
       salary: 'KSh 150,000 - 250,000',
       experience: '3-5 years',
-      description: 'We are looking for an experienced Full Stack Developer to join our engineering team and help build the future of cycling e-commerce in Kenya.',
+      description: 'Build the future of cycling e-commerce in Kenya! Join Oshocks Junior Bike Shop as we develop a world-class marketplace platform using React.js and Laravel.',
       responsibilities: [
-        'Develop and maintain React.js frontend applications',
-        'Build robust Laravel backend APIs and services',
-        'Implement M-Pesa and payment gateway integrations',
-        'Optimize database queries and application performance',
-        'Collaborate with designers and product managers',
+        'Develop and maintain React.js frontend for our cycling marketplace',
+        'Build robust Laravel backend APIs for product catalog and orders',
+        'Implement M-Pesa Daraja API and Stripe payment integrations',
+        'Optimize MySQL database queries and application performance',
+        'Integrate Cloudinary for product image management',
+        'Implement real-time features using Redis caching',
         'Write clean, maintainable, and well-documented code'
       ],
       requirements: [
         'Bachelor\'s degree in Computer Science or related field',
-        '3+ years of experience with React.js and Laravel',
-        'Strong knowledge of MySQL and database design',
+        '3+ years of experience with React.js and Laravel PHP',
+        'Strong knowledge of MySQL database design and optimization',
         'Experience with RESTful API development',
-        'Familiarity with payment integrations (M-Pesa, Stripe)',
+        'Familiarity with M-Pesa, Stripe, or payment gateway integrations',
+        'Experience with cloud services (Vercel, Railway, PlanetScale)',
+        'Understanding of e-commerce platforms and shopping cart systems',
         'Excellent problem-solving and communication skills'
       ],
       benefits: [
         'Competitive salary and performance bonuses',
-        'Health insurance coverage',
+        'Financial Guidance',
         'Professional development opportunities',
-        'Flexible working hours',
-        'Remote work options'
+        'Flexible working hours and remote work options',
+        'Bicycle and cycling gear discounts',
+        'Work on cutting-edge e-commerce technology'
       ]
     },
     {
       id: 2,
-      title: 'Digital Marketing Manager',
+      title: 'Cycling Products Content Creator',
       department: 'Marketing',
       location: 'Nairobi, Kenya',
       type: 'Full-time',
-      salary: 'KSh 100,000 - 150,000',
-      experience: '2-4 years',
-      description: 'Join our marketing team to drive growth and brand awareness for Kenya\'s premier cycling marketplace.',
+      salary: 'KSh 80,000 - 120,000',
+      experience: '2-3 years',
+      description: 'Create compelling content for Kenya\'s premier cycling marketplace. Showcase bicycles, accessories, and gear through engaging photography, videos, and product descriptions.',
       responsibilities: [
-        'Develop and execute digital marketing strategies',
-        'Manage social media channels and content calendar',
-        'Run paid advertising campaigns (Google Ads, Facebook)',
-        'Analyze marketing metrics and optimize campaigns',
-        'Collaborate with content creators and designers',
-        'Build partnerships with cycling communities'
+        'Photograph bicycles and cycling products for the marketplace',
+        'Write detailed, SEO-optimized product descriptions',
+        'Create engaging social media content showcasing cycling gear',
+        'Produce video content including bike reviews and tutorials',
+        'Develop blog content about cycling in Kenya',
+        'Manage product image uploads to Cloudinary',
+        'Collaborate with the cycling community for authentic content'
       ],
       requirements: [
-        'Bachelor\'s degree in Marketing or related field',
-        '2+ years of digital marketing experience',
-        'Proven track record with social media marketing',
-        'Experience with Google Analytics and advertising platforms',
-        'Strong copywriting and communication skills',
-        'Knowledge of the Kenyan cycling community is a plus'
+        'Diploma or Bachelor\'s degree in Marketing, Communications, or related field',
+        '2+ years of content creation experience',
+        'Photography and videography skills (product photography experience preferred)',
+        'Strong copywriting abilities',
+        'Knowledge of SEO best practices',
+        'Passion for cycling and understanding of bicycle products',
+        'Proficiency with Adobe Creative Suite or similar tools',
+        'Ability to work independently and meet deadlines'
       ],
       benefits: [
         'Competitive salary package',
-        'Marketing tools and software subscriptions',
-        'Conference and workshop attendance',
+        'Photography equipment and software provided',
+        'Bicycle and accessories discounts',
         'Creative freedom and autonomy',
-        'Cycling gear discounts'
+        'Access to latest cycling products for content creation',
+        'Professional portfolio building opportunities'
       ]
     },
     {
       id: 3,
-      title: 'Customer Success Specialist',
+      title: 'E-commerce Customer Support Specialist',
       department: 'Customer Support',
       location: 'Nairobi, Kenya',
       type: 'Full-time',
-      salary: 'KSh 60,000 - 90,000',
+      salary: 'KSh 55,000 - 85,000',
       experience: '1-3 years',
-      description: 'Help our customers have an exceptional experience shopping for cycling products on our platform.',
+      description: 'Provide exceptional customer service for Kenya\'s growing cycling marketplace. Help customers find the perfect bikes and accessories while managing inquiries across multiple channels.',
       responsibilities: [
-        'Respond to customer inquiries via chat, email, and phone',
-        'Resolve customer issues and complaints efficiently',
-        'Process orders, returns, and refunds',
-        'Gather customer feedback and insights',
-        'Maintain customer satisfaction metrics',
-        'Create help documentation and FAQs'
+        'Respond to customer inquiries via Tawk.to live chat, email, and phone',
+        'Assist customers with product selection and recommendations',
+        'Process orders, track shipments, and handle returns/refunds',
+        'Resolve M-Pesa payment issues and transaction queries',
+        'Help sellers navigate the multi-vendor marketplace',
+        'Gather customer feedback for platform improvements',
+        'Create and maintain help documentation and FAQs',
+        'Maintain excellent customer satisfaction ratings'
       ],
       requirements: [
         'Diploma or Bachelor\'s degree in any field',
-        '1+ years of customer service experience',
+        '1+ years of customer service experience (e-commerce preferred)',
         'Excellent communication skills in English and Swahili',
+        'Knowledge of bicycles and cycling products is highly advantageous',
+        'Familiarity with M-Pesa and online payment systems',
         'Problem-solving mindset and patience',
-        'Experience with CRM tools is a plus',
-        'Passion for cycling and helping people'
+        'Experience with live chat platforms and CRM tools',
+        'Ability to multitask and work in a fast-paced environment'
       ],
       benefits: [
         'Competitive salary',
-        'Training and development programs',
-        'Health insurance',
-        'Employee discounts',
-        'Supportive team environment'
+        'Comprehensive training on cycling products',
+        'Financial Guidance',
+        'Generous employee discounts on bicycles and gear',
+        'Supportive team environment',
+        'Career growth opportunities'
       ]
     },
     {
       id: 4,
-      title: 'Logistics Coordinator',
+      title: 'Bicycle Delivery & Logistics Coordinator',
       department: 'Operations',
       location: 'Nairobi, Kenya',
       type: 'Full-time',
       salary: 'KSh 70,000 - 110,000',
       experience: '2-3 years',
-      description: 'Manage our delivery operations and ensure timely fulfillment of orders across Kenya.',
+      description: 'Manage the logistics of delivering bicycles and cycling products across Kenya. Coordinate with courier services and ensure safe, timely delivery of orders from our marketplace.',
       responsibilities: [
-        'Coordinate delivery schedules and routes',
-        'Manage relationships with courier partners',
-        'Track shipments and resolve delivery issues',
-        'Optimize logistics processes for efficiency',
-        'Maintain inventory accuracy',
-        'Handle warehouse operations'
+        'Coordinate delivery schedules for bicycles and cycling products',
+        'Manage relationships with courier partners across Kenya',
+        'Handle specialized packaging for bicycle shipments',
+        'Track shipments and resolve delivery issues promptly',
+        'Optimize delivery routes and logistics processes',
+        'Maintain accurate inventory records in the system',
+        'Coordinate with sellers for order fulfillment',
+        'Handle warehouse operations and bicycle assembly area'
       ],
       requirements: [
-        'Bachelor\'s degree in Supply Chain or related field',
-        '2+ years of logistics experience',
-        'Knowledge of Kenyan delivery landscape',
+        'Diploma or Bachelor\'s degree in Supply Chain, Logistics, or related field',
+        '2+ years of logistics experience (e-commerce preferred)',
+        'Knowledge of Kenyan delivery landscape and courier services',
+        'Understanding of bicycle packaging and handling requirements',
         'Strong organizational and planning skills',
-        'Proficiency with logistics software',
-        'Valid driving license is a plus'
+        'Proficiency with logistics software and Excel',
+        'Valid driving license is a plus',
+        'Physical fitness for handling bicycles and equipment'
       ],
       benefits: [
         'Competitive salary',
         'Transport allowance',
-        'Health insurance',
+        'Financial Guidance',
         'Performance bonuses',
-        'Career growth opportunities'
+        'Bicycle discounts',
+        'Career growth opportunities in e-commerce logistics'
       ]
     },
     {
       id: 5,
-      title: 'Product Manager',
+      title: 'E-commerce Marketplace Manager',
       department: 'Product',
       location: 'Nairobi, Kenya',
       type: 'Full-time',
       salary: 'KSh 120,000 - 180,000',
       experience: '3-5 years',
-      description: 'Lead product strategy and development for our e-commerce marketplace platform.',
+      description: 'Lead the strategic development of Oshocks Junior Bike Shop marketplace. Shape the future of cycling e-commerce in Kenya by managing platform features, seller relationships, and customer experience.',
       responsibilities: [
-        'Define product vision and roadmap',
-        'Conduct market research and user analysis',
-        'Prioritize features and manage product backlog',
-        'Work closely with engineering and design teams',
-        'Monitor product metrics and KPIs',
-        'Gather stakeholder and customer feedback'
+        'Define marketplace vision and strategic roadmap',
+        'Manage product catalog expansion and categorization',
+        'Onboard and support third-party bicycle sellers',
+        'Conduct market research on cycling trends in Kenya',
+        'Prioritize platform features and enhancements',
+        'Work closely with engineering team on React/Laravel development',
+        'Monitor marketplace metrics, sales, and user behavior',
+        'Develop seller commission structures and policies',
+        'Gather feedback from buyers and sellers for improvements'
       ],
       requirements: [
-        'Bachelor\'s degree in Business or related field',
-        '3+ years of product management experience',
+        'Bachelor\'s degree in Business, E-commerce, or related field',
+        '3+ years of marketplace or e-commerce management experience',
         'Strong analytical and strategic thinking',
-        'Experience with e-commerce platforms',
-        'Excellent communication and leadership skills',
-        'Understanding of Agile methodologies'
+        'Understanding of multi-vendor marketplace platforms',
+        'Knowledge of the Kenyan cycling industry is highly advantageous',
+        'Experience with product management tools and methodologies',
+        'Excellent communication and stakeholder management skills',
+        'Data-driven decision-making approach'
       ],
       benefits: [
-        'Competitive salary and equity options',
-        'Health insurance',
+        'Competitive salary and potential equity options',
+        'Financial Guidance',
         'Professional development budget',
         'Flexible working arrangements',
-        'Impact on product direction'
+        'Significant impact on platform direction',
+        'Bicycle and cycling gear discounts'
       ]
     },
     {
       id: 6,
-      title: 'Bike Mechanic',
+      title: 'Professional Bicycle Mechanic & Assembly Technician',
       department: 'Technical',
       location: 'Nairobi, Kenya',
       type: 'Full-time',
       salary: 'KSh 50,000 - 80,000',
       experience: '2+ years',
-      description: 'Provide expert bicycle assembly, maintenance, and repair services for our customers.',
+      description: 'Join our technical team to assemble, service, and repair bicycles sold through our marketplace. Provide expert mechanical support and create educational content for our cycling community.',
       responsibilities: [
-        'Assemble new bicycles and check quality',
-        'Perform bike repairs and maintenance',
-        'Diagnose mechanical issues',
-        'Advise customers on bike care',
-        'Manage tools and spare parts inventory',
-        'Create maintenance guides and tutorials'
+        'Assemble new bicycles from shipments and verify quality',
+        'Perform pre-delivery inspections and adjustments',
+        'Provide repair and maintenance services for customer bikes',
+        'Diagnose and troubleshoot mechanical issues',
+        'Advise customers on bike care and maintenance',
+        'Manage bicycle tools, spare parts, and component inventory',
+        'Create video tutorials and maintenance guides for the website',
+        'Support product descriptions with technical specifications'
       ],
       requirements: [
-        'Certificate in bicycle mechanics or equivalent',
-        '2+ years of hands-on bike repair experience',
-        'Deep knowledge of bike components and systems',
-        'Ability to work with various bike types',
-        'Good customer service skills',
-        'Physical fitness for manual work'
+        'Certificate in bicycle mechanics or equivalent training',
+        '2+ years of hands-on bike repair and assembly experience',
+        'Deep knowledge of bicycle components, systems, and brands',
+        'Ability to work with road bikes, mountain bikes, and specialty cycles',
+        'Good customer service and communication skills',
+        'Physical fitness for manual work and lifting bicycles',
+        'Attention to detail for quality control',
+        'Willingness to learn about new bicycle technologies'
       ],
       benefits: [
         'Competitive salary',
-        'Tools and equipment provided',
-        'Training on new bike technologies',
-        'Health insurance',
-        'Employee bike discounts'
+        'Professional tools and equipment provided',
+        'Training on new bike technologies and components',
+        'Financial Guidance',
+        'Generous employee bicycle and parts discounts',
+        'Opportunity to work with latest cycling products'
+      ]
+    },
+    {
+      id: 7,
+      title: 'Digital Marketing Specialist - Cycling E-commerce',
+      department: 'Marketing',
+      location: 'Nairobi, Kenya',
+      type: 'Full-time',
+      salary: 'KSh 90,000 - 140,000',
+      experience: '2-4 years',
+      description: 'Drive growth for Kenya\'s premier cycling marketplace through strategic digital marketing. Reach cycling enthusiasts across Kenya and build our brand in the cycling community.',
+      responsibilities: [
+        'Develop and execute digital marketing strategies for cycling products',
+        'Manage social media channels (Instagram, Facebook, Twitter, TikTok)',
+        'Run paid advertising campaigns (Google Ads, Facebook Ads)',
+        'Optimize marketplace SEO and product discoverability',
+        'Create email marketing campaigns using SendGrid/Resend',
+        'Analyze marketing metrics using Google Analytics',
+        'Build partnerships with Kenyan cycling clubs and communities',
+        'Manage influencer relationships in the cycling space',
+        'Develop promotional campaigns for different cycling seasons'
+      ],
+      requirements: [
+        'Bachelor\'s degree in Marketing, Communications, or related field',
+        '2+ years of digital marketing experience (e-commerce preferred)',
+        'Proven track record with social media marketing',
+        'Experience with Google Ads, Facebook Ads, and analytics platforms',
+        'Strong copywriting and content creation skills',
+        'Understanding of SEO and marketplace optimization',
+        'Knowledge of Kenyan cycling community is a major plus',
+        'Data-driven approach to campaign optimization'
+      ],
+      benefits: [
+        'Competitive salary package',
+        'Marketing tools and software subscriptions',
+        'Attendance at cycling events and conferences',
+        'Creative freedom and autonomy',
+        'Bicycle and cycling gear discounts',
+        'Opportunity to shape a growing cycling brand'
+      ]
+    },
+    {
+      id: 8,
+      title: 'Marketplace Vendor Success Manager',
+      department: 'Operations',
+      location: 'Nairobi, Kenya',
+      type: 'Full-time',
+      salary: 'KSh 75,000 - 115,000',
+      experience: '2-3 years',
+      description: 'Help bicycle sellers across Kenya succeed on our marketplace platform. Onboard new vendors, provide training, and ensure they maximize their sales potential on Oshocks.',
+      responsibilities: [
+        'Onboard new bicycle sellers to the marketplace',
+        'Train vendors on platform features and best practices',
+        'Help sellers optimize product listings and descriptions',
+        'Assist with inventory management and order fulfillment',
+        'Resolve seller issues and technical support queries',
+        'Monitor seller performance metrics and provide insights',
+        'Develop resources and documentation for sellers',
+        'Build relationships with cycling shops across Kenya',
+        'Identify opportunities for platform improvement'
+      ],
+      requirements: [
+        'Bachelor\'s degree in Business, Marketing, or related field',
+        '2+ years of account management or vendor relations experience',
+        'Strong interpersonal and communication skills',
+        'Understanding of e-commerce and marketplace dynamics',
+        'Knowledge of cycling products and the Kenyan bicycle industry',
+        'Problem-solving abilities and customer service mindset',
+        'Proficiency with CRM tools and data analysis',
+        'Ability to travel occasionally across Kenya'
+      ],
+      benefits: [
+        'Competitive salary',
+        'Travel allowance for vendor visits',
+        'Financial Guidance',
+        'Performance-based bonuses',
+        'Bicycle discounts',
+        'Impact on growing Kenya\'s cycling economy'
       ]
     }
   ];
@@ -237,7 +344,7 @@ const Careers = () => {
 
   const perks = [
     'Competitive Salaries',
-    'Health Insurance',
+    'Financial Guidance',
     'Flexible Hours',
     'Remote Work Options',
     'Professional Development',

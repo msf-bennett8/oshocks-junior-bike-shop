@@ -24,7 +24,7 @@ const FAQPage = () => {
     {
       category: 'ordering',
       question: 'Can I modify or cancel my order after placing it?',
-      answer: 'Yes, you can modify or cancel your order within 2 hours of placing it. After this window, orders are processed and shipped quickly, making changes difficult. To modify or cancel, go to "My Orders" in your account dashboard and select the order you wish to change. For urgent requests, contact our support team immediately via live chat or call us.'
+      answer: 'Yes, you can modify or cancel your order within 30 minutes of placing it. After this window, orders are processed and shipped quickly, making changes difficult. To modify or cancel, go to "My Orders" in your account dashboard and select the order you wish to change. For urgent requests, contact our support team immediately via live chat or call us.'
     },
     {
       category: 'ordering',
@@ -49,7 +49,7 @@ const FAQPage = () => {
     {
       category: 'payment',
       question: 'Is it safe to use my credit card on your website?',
-      answer: 'Yes, absolutely! We use Stripe and Flutterwave, industry-leading payment processors with bank-level security. All card transactions are encrypted using SSL/TLS technology. We never store your complete card details on our servers. Additionally, our checkout page is PCI DSS compliant, ensuring the highest security standards for online payments.'
+      answer: 'Yes, absolutely! We use Stripe and Flutterwave, industry-leading payment processors with bank-level security. All card transactions are encrypted using SSL/TLS technology. We never store your complete card details on our servers. Additionally, our checkout page is PCI DSS compliant, ensuring the highest security standards for online payments. '
     },
     {
       category: 'payment',
@@ -64,7 +64,7 @@ const FAQPage = () => {
     {
       category: 'shipping',
       question: 'Where do you deliver in Kenya?',
-      answer: 'We deliver nationwide across all 47 counties in Kenya! Whether you\'re in Nairobi, Mombasa, Kisumu, Eldoret, Nakuru, or any other town, we\'ll get your order to you. Delivery times vary by location: Nairobi and major cities typically receive orders within 1-3 business days, while remote areas may take 3-7 business days.'
+      answer: 'We deliver in Nairobi and counties around! Whether you\'re in Nairobi, Kiambu, or any other town, we\'ll get your order to you. Delivery times vary by location: Nairobi and around typically receive orders within 1-5 hours in a days, while remote areas may take 1-3 business days.'
     },
     {
       category: 'shipping',
@@ -129,7 +129,7 @@ const FAQPage = () => {
     {
       category: 'products',
       question: 'Can I get help choosing the right bike for my needs?',
-      answer: 'Absolutely! Our team of cycling experts is here to help. You can use our live chat feature (bottom right of any page), call us during business hours, or visit our Nairobi shop for personalized recommendations. Tell us about your riding style, terrain, budget, and experience level, and we\'ll help you find the perfect bike. We also have detailed buying guides in our blog section.'
+      answer: 'Absolutely! Our team of cycling experts is here to help. You can use our live chat feature (bottom left of any page), call us during business hours, or visit our Nairobi shop for personalized recommendations. Tell us about your riding style, terrain, budget, and experience level, and we\'ll help you find the perfect bike. We also have detailed buying guides in our blog section.'
     },
     {
       category: 'products',
@@ -276,8 +276,8 @@ const FAQPage = () => {
                 <p className="text-gray-600 text-sm mb-4">
                   Mon-Sat, 8AM-6PM EAT
                 </p>
-                <a href="tel:+254700000000" className="text-green-600 font-semibold hover:text-green-700">
-                  +254 700 000 000
+                <a href="tel:+25498558285" className="text-green-600 font-semibold hover:text-green-700">
+                  +254 798 558 285
                 </a>
               </div>
 

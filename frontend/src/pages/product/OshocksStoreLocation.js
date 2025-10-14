@@ -12,11 +12,11 @@ const StoreLocation = () => {
       id: 1,
       name: 'Oshocks Junior Bike Shop - Nairobi Main',
       type: 'Flagship Store',
-      address: 'Moi Avenue, Nairobi CBD',
-      fullAddress: 'Building 45, Moi Avenue, Near Kenya National Archives, Nairobi, Kenya',
+      address: 'Mwihoko, Eastern Bypass, Nairobi',
+      fullAddress: 'Mwihoko, Eastern Bypass, Communication Authority of Kenya Kahawa Sukari, Nairobi',
       city: 'Nairobi',
-      phone: '+254 700 123 456',
-      whatsapp: '+254 700 123 456',
+      phone: '+254 798 558 285',
+      whatsapp: '+254 798 558 285',
       email: 'nairobi@oshocksjunior.co.ke',
       coordinates: { lat: -1.2864, lng: 36.8172 },
       image: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=600',
@@ -61,14 +61,14 @@ const StoreLocation = () => {
     },
     {
       id: 2,
-      name: 'Oshocks Junior - Westlands Branch',
+      name: 'Oshocks Junior - Mwihoko Branch',
       type: 'Branch Store',
-      address: 'Westlands, Nairobi',
-      fullAddress: 'Sarit Centre, 3rd Floor, Shop 312, Westlands, Nairobi, Kenya',
+      address: 'Githurai, Thika Road, Nairobi',
+      fullAddress: 'Githurai, Thika Road',
       city: 'Nairobi',
-      phone: '+254 700 654 321',
-      whatsapp: '+254 700 654 321',
-      email: 'westlands@oshocksjunior.co.ke',
+      phone: '++254 798 558 285',
+      whatsapp: '+254 798 558 285',
+      email: 'oshocksjuniorbikeshop@gmail.com',
       coordinates: { lat: -1.2649, lng: 36.8061 },
       image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600',
       hours: {
@@ -109,13 +109,13 @@ const StoreLocation = () => {
     },
     {
       id: 3,
-      name: 'Oshocks Junior - Karen Outlet',
+      name: 'Oshocks Junior - Githurai Outlet',
       type: 'Outlet Store',
-      address: 'Karen, Nairobi',
-      fullAddress: 'Karen Shopping Centre, Ground Floor, Karen Road, Nairobi, Kenya',
+      address: 'online, Virtual',
+      fullAddress: 'Githurai Shopping Centre, Ground Floor, Karen Road, Nairobi, Kenya',
       city: 'Nairobi',
-      phone: '+254 700 789 012',
-      whatsapp: '+254 700 789 012',
+      phone: '+254 798 558 285',
+      whatsapp: '+254 798 558 285',
       email: 'karen@oshocksjunior.co.ke',
       coordinates: { lat: -1.3197, lng: 36.7076 },
       image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600',
@@ -165,11 +165,11 @@ const StoreLocation = () => {
     },
     {
       question: 'What payment methods do you accept?',
-      answer: 'We accept Cash, M-Pesa, Credit/Debit Cards (Visa, Mastercard), and Bank Transfers. Some locations also offer installment payment plans.'
+      answer: 'We accept Cash, M-Pesa, Credit/Debit Cards (Visa, Mastercard), and Bank Transfers. To some instances we accept installment payment plans.'
     },
     {
       question: 'Do you offer bike repair services?',
-      answer: 'Yes! Our main store in Nairobi CBD offers comprehensive repair and maintenance services. Minor repairs can be done while you wait, while major work may take 1-3 days.'
+      answer: 'Yes! Our main stores both in Nairobi Githurai and Mwihoko offers comprehensive repair and maintenance services. Minor repairs can be done while you wait, while major work may take 1-3 days.'
     },
     {
       question: 'Can I order online and pick up in-store?',

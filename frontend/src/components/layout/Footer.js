@@ -50,6 +50,7 @@ const Footer = () => {
     { name: 'Warranty Information', link: '/warranty-information' },
     { name: 'Bike Assembly Guide', link: '#' },
     { name: 'Size Guide', link: '/size-guide' },
+    { name: 'Documentations', link: '#' },
     { name: 'FAQ', link: '/faq' }
   ];
 
@@ -59,6 +60,7 @@ const Footer = () => {
     { name: 'Our Services', link: '/services' },
     { name: 'Contact Us', link: '/contact' },
     { name: 'Careers', link: '/careers' },
+    { name: 'Jobs', link: '/#' },
     { name: 'Store Locations', link: '/store-locations' },
     { name: 'Partner With Us', link: '/partner-with-us' },
     { name: 'Become a Seller', link: '/become-a-seller' }
@@ -79,8 +81,9 @@ const Footer = () => {
     { name: 'Order History', link: '/order-history' },
     { name: 'Wishlist', link: '/wishlist' },
     { name: 'Saved Addresses', link: '/addresses' },
-    { name: 'Payment Methods', link: '/settings' },
-    { name: 'Notifications', link: '/settings' }
+    { name: 'Payment Methods', link: '/PaymentMethod' },
+    { name: 'Documentary', link: '/Documentary' },
+    { name: 'Notifications', link: '/Notifications' }
   ];
 
   return (
@@ -349,7 +352,7 @@ const Footer = () => {
               </a>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-400">
-              <span>Based in Nairobi, Kenya</span>
+              <span>Nairobi, Kenya</span>
             </div>
           </div>
         </div>

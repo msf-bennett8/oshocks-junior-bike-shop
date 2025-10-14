@@ -140,12 +140,12 @@ const ServicesPage = () => {
     {
       icon: <Shield className="w-8 h-8" />,
       title: "Certified Technicians",
-      description: "Our mechanics are trained and certified professionals with years of experience in bicycle repair and maintenance."
+      description: "Our mechanics are elite cyclists with experience in bicycle repair and maintenance."
     },
     {
       icon: <CheckCircle className="w-8 h-8" />,
       title: "Quality Guarantee",
-      description: "We stand behind our work with comprehensive warranties on all services and use only genuine parts."
+      description: "We stand behind our work with comprehensive approach to ensure better user experience on all services and use only genuine parts."
     },
     {
       icon: <Clock className="w-8 h-8" />,
@@ -173,7 +173,7 @@ const ServicesPage = () => {
     {
       step: "3",
       title: "Expert Service",
-      description: "Our certified technicians will perform the required service with attention to detail."
+      description: "Our experienced technicians will perform the required service with attention to detail."
     },
     {
       step: "4",
@@ -190,10 +190,10 @@ const ServicesPage = () => {
           <div className="max-w-4xl mx-auto text-center">
             <Wrench className="w-20 h-20 mx-auto mb-6" />
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Professional Bike Services
+              Bike Services by Experienced Mechanics
             </h1>
             <p className="text-xl md:text-2xl text-blue-100 mb-8">
-              Expert maintenance and repair to keep you riding safely and smoothly
+              Expert maintenance and repair to keep you riding safe and smooth
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a href="#services" className="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold hover:bg-blue-50 transition-colors text-lg">
@@ -215,7 +215,7 @@ const ServicesPage = () => {
               Why Choose Oshocks Service Center
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Trusted by thousands of cyclists across Kenya for reliable, professional bike service
+              Trusted by many cyclists for reliable and professional bike services
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -336,33 +336,33 @@ const ServicesPage = () => {
                 <tbody className="divide-y divide-gray-200">
                   <tr className="hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium text-gray-900">Basic Tune-Up</td>
-                    <td className="px-6 py-4 text-gray-700">KSh 1,500</td>
+                    <td className="px-6 py-4 text-gray-700">KSh 1,000</td>
                     <td className="px-6 py-4 text-gray-700">1-2 hours</td>
                   </tr>
                   <tr className="hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium text-gray-900">Flat Tire Repair</td>
-                    <td className="px-6 py-4 text-gray-700">KSh 500</td>
+                    <td className="px-6 py-4 text-gray-700">KSh 50</td>
                     <td className="px-6 py-4 text-gray-700">30 minutes</td>
                   </tr>
                   <tr className="hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium text-gray-900">Brake Adjustment</td>
-                    <td className="px-6 py-4 text-gray-700">KSh 800</td>
+                    <td className="px-6 py-4 text-gray-700">KSh 300</td>
                     <td className="px-6 py-4 text-gray-700">45 minutes</td>
                   </tr>
                   <tr className="hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium text-gray-900">Gear Tune-Up</td>
-                    <td className="px-6 py-4 text-gray-700">KSh 1,000</td>
+                    <td className="px-6 py-4 text-gray-700">KSh 5,000</td>
                     <td className="px-6 py-4 text-gray-700">1 hour</td>
                   </tr>
                   <tr className="hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium text-gray-900">Wheel Truing</td>
-                    <td className="px-6 py-4 text-gray-700">KSh 1,200</td>
+                    <td className="px-6 py-4 text-gray-700">KSh 700</td>
                     <td className="px-6 py-4 text-gray-700">1-2 hours</td>
                   </tr>
                   <tr className="hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium text-gray-900">Complete Overhaul</td>
-                    <td className="px-6 py-4 text-gray-700">KSh 5,000</td>
-                    <td className="px-6 py-4 text-gray-700">3-5 days</td>
+                    <td className="px-6 py-4 text-gray-700">KSh 1,000</td>
+                    <td className="px-6 py-4 text-gray-700">1-2 days</td>
                   </tr>
                 </tbody>
               </table>
@@ -399,7 +399,7 @@ const ServicesPage = () => {
                   <Phone className="w-6 h-6 flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold mb-1">Call Us</h3>
-                    <p className="text-blue-100">+254 700 000 000</p>
+                    <p className="text-blue-100">+254 798 558 285</p>
                     <p className="text-blue-100 text-sm">Available during business hours</p>
                   </div>
                 </div>
@@ -407,7 +407,7 @@ const ServicesPage = () => {
                   <Mail className="w-6 h-6 flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold mb-1">Email Us</h3>
-                    <p className="text-blue-100">support@oshocks.co.ke</p>
+                    <p className="text-blue-100">oshocksjuniorbikeshop@gmail.com</p>
                     <p className="text-blue-100 text-sm">We'll respond within 24 hours</p>
                   </div>
                 </div>

@@ -108,8 +108,8 @@ const Safety = () => {
   ];
 
   const emergencyContacts = [
-    { name: 'Customer Support', contact: '+254 XXX XXX XXX', available: '8 AM - 8 PM EAT' },
-    { name: 'Emergency Support', contact: 'support@oshocksjunior.com', available: '24/7 Email' },
+    { name: 'Customer Support', contact: '+254 798 558 285', available: '8 AM - 8 PM EAT' },
+    { name: 'Emergency Support', contact: 'oshocksjuniorbikeshop@gmail.com', available: '24/7 Email' },
     { name: 'Nairobi Traffic Police', contact: '999', available: 'Emergency' }
   ];
 
