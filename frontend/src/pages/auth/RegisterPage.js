@@ -2,13 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import authService from '../services/authService';
-import { useAuth } from '../context/AuthContext';
+import authService from '../../services/authService';
+import { useAuth } from '../../context/AuthContext';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader, User, Phone, MapPin, CheckCircle2, X } from 'lucide-react';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  const { register: registerUser } = useAuth();
+  const { register: registerUser, isAuthenticated } = useAuth();
 
   // Form state
   const [formData, setFormData] = useState({
