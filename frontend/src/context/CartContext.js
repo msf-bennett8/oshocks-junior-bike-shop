@@ -1,5 +1,7 @@
+//frontend/src/context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import axios from 'axios';
 
 const CartContext = createContext();
 
