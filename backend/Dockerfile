@@ -33,16 +33,19 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 # Copy the rest of the application
 COPY . /var/www/html
 
-# Set permissions
-RUN mkdir -p /var/www/html/storage/framework/{sessions,views,cache} && \
-    mkdir -p /var/www/html/bootstrap/cache && \
-    chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Set permissions - ADD storage/logs directory
+RUN mkdir -p /var/www/html/storage/framework/{sessions,views,cache} \
+    /var/www/html/bootstrap/cache \
+    /var/www/html/storage/logs \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
 # Configure Apache DocumentRoot to Laravel's public directory
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
@@ -57,8 +60,8 @@ RUN echo '<Directory /var/www/html/public>\n\
 # Expose port 80
 EXPOSE 80
 
-# Start Apache and run migrations
+# Start Apache and run migrations - UPDATED to handle view:cache gracefully
 CMD php artisan config:cache && \
     php artisan route:cache && \
-    php artisan view:cache && \
+    (php artisan view:cache || echo "View cache skipped") && \
     apache2-foreground
