@@ -1,15 +1,15 @@
+//src/frontend/src/pages/auth/RegisterPage.js
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import authService from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader, User, Phone, MapPin, CheckCircle2, X } from 'lucide-react';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  
-  // Get auth state from Redux store
-  const { isAuthenticated, loading } = useSelector((state) => state.auth);
-  
+  const { register: registerUser } = useAuth();
+
   // Form state
   const [formData, setFormData] = useState({
     firstName: '',
@@ -162,50 +162,37 @@ const RegisterPage = () => {
     try {
       // Prepare registration data
       const registrationData = {
-        first_name: formData.firstName.trim(),
-        last_name: formData.lastName.trim(),
+        name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
         email: formData.email.trim().toLowerCase(),
         phone: formData.phone.replace(/\s/g, ''),
         password: formData.password,
-        password_confirmation: formData.confirmPassword,
-        city: formData.city.trim(),
-        user_type: formData.userType,
-        subscribe_newsletter: formData.subscribeNewsletter
+        passwordConfirmation: formData.confirmPassword,
+        address: formData.city.trim()
       };
+
+      // Call register from AuthContext
+      const result = await registerUser(registrationData);
       
-      // Dispatch registration action (you'll need to create this in your Redux auth slice)
-      // Example: await dispatch(registerUser(registrationData)).unwrap();
-      
-      // Simulate API call for demonstration
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock successful registration - replace with actual API call
-      const response = {
-        success: true,
-        message: 'Registration successful! Please check your email to verify your account.'
-      };
-      
-      if (response.success) {
+      if (result.success) {
         // Navigate to login with success message
         navigate('/login', {
           state: {
-            message: response.message
+            message: 'Registration successful! Please sign in with your new account.'
           }
+        });
+      } else {
+        // Handle error from AuthContext
+        setValidationErrors({
+          general: result.error || 'Registration failed. Please try again.'
         });
       }
       
     } catch (err) {
-      // Handle registration error
+      // Handle unexpected errors
       console.error('Registration error:', err);
-      
-      if (err.response?.data?.errors) {
-        // Backend validation errors
-        setValidationErrors(err.response.data.errors);
-      } else {
-        setValidationErrors({
-          general: err.response?.data?.message || 'Registration failed. Please try again.'
-        });
-      }
+      setValidationErrors({
+        general: err.response?.data?.message || 'Registration failed. Please try again.'
+      });
     } finally {
       setIsSubmitting(false);
     }

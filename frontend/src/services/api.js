@@ -5,7 +5,7 @@
 import axios from 'axios';
 
 // Base API URL - Update this to match your Laravel backend
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://oshocks-junior-bike-shop-backend.onrender.com/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://oshocks-junior-bike-shop-backend.onrender.com/api';
 
 console.log('🌐 API Service Initialized');
 console.log('📍 Base URL:', API_BASE_URL);
@@ -33,10 +33,11 @@ api.interceptors.request.use(
       headers: config.headers,
     });
     
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log('🔐 Auth token added to request');
+      console.log('🔐 Using token:', token ? `${token.substring(0, 20)}...` : 'none');
     }
     return config;
   },

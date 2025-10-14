@@ -1,6 +1,6 @@
-//frontend/src/context/AuthContext.js
+// frontend/src/context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import authService from '../services/authService';
 
 const AuthContext = createContext();
 
@@ -10,9 +10,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // API base URL - update with your Laravel backend URL
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
-
   // Initialize authentication state on mount
   useEffect(() => {
     checkAuthStatus();
@@ -21,7 +18,7 @@ export const AuthProvider = ({ children }) => {
   // Check if user is authenticated (on app load)
   const checkAuthStatus = async () => {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = authService.getToken();
       
       if (!token) {
         setLoading(false);
@@ -29,11 +26,8 @@ export const AuthProvider = ({ children }) => {
       }
 
       // Verify token with backend
-      const response = await axios.get(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      setUser(response.data.user);
+      const data = await authService.getCurrentUser();
+      setUser(data.user);
       setIsAuthenticated(true);
       setError(null);
     } catch (err) {
@@ -50,25 +44,16 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
 
-      const response = await axios.post(`${API_URL}/auth/register`, {
-        name: userData.name,
-        email: userData.email,
-        password: userData.password,
-        password_confirmation: userData.passwordConfirmation,
-        phone: userData.phone,
-        address: userData.address
-      });
-
-      const { token, user: newUser } = response.data;
-
+      const data = await authService.register(userData);
+      
       // Store token
-      localStorage.setItem('authToken', token);
+      authService.setToken(data.token);
 
       // Update state
-      setUser(newUser);
+      setUser(data.user);
       setIsAuthenticated(true);
 
-      return { success: true, user: newUser };
+      return { success: true, user: data.user };
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Registration failed';
       setError(errorMessage);
@@ -84,21 +69,16 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
 
-      const response = await axios.post(`${API_URL}/auth/login`, {
-        email: credentials.email,
-        password: credentials.password
-      });
-
-      const { token, user: loggedInUser } = response.data;
+      const data = await authService.login(credentials);
 
       // Store token
-      localStorage.setItem('authToken', token);
+      authService.setToken(data.token);
 
       // Update state
-      setUser(loggedInUser);
+      setUser(data.user);
       setIsAuthenticated(true);
 
-      return { success: true, user: loggedInUser };
+      return { success: true, user: data.user };
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Login failed';
       setError(errorMessage);
@@ -111,19 +91,17 @@ export const AuthProvider = ({ children }) => {
   // Logout user
   const logout = async () => {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = authService.getToken();
       
       if (token) {
         // Notify backend
-        await axios.post(`${API_URL}/auth/logout`, {}, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await authService.logout();
       }
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
       // Clear local state regardless of API call success
-      localStorage.removeItem('authToken');
+      authService.removeToken();
       setUser(null);
       setIsAuthenticated(false);
       setError(null);
@@ -136,13 +114,10 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem('authToken');
-      const response = await axios.put(`${API_URL}/auth/profile`, updates, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      setUser(response.data.user);
-      return { success: true, user: response.data.user };
+      const data = await authService.updateProfile(updates);
+      setUser(data.user);
+      
+      return { success: true, user: data.user };
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Update failed';
       setError(errorMessage);
@@ -158,14 +133,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem('authToken');
-      await axios.post(`${API_URL}/auth/change-password`, {
-        current_password: passwordData.currentPassword,
-        new_password: passwordData.newPassword,
-        new_password_confirmation: passwordData.newPasswordConfirmation
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await authService.changePassword(passwordData);
 
       return { success: true, message: 'Password changed successfully' };
     } catch (err) {
@@ -183,7 +151,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
 
-      await axios.post(`${API_URL}/auth/forgot-password`, { email });
+      await authService.forgotPassword(email);
 
       return { success: true, message: 'Password reset link sent to your email' };
     } catch (err) {
@@ -201,12 +169,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
 
-      await axios.post(`${API_URL}/auth/reset-password`, {
-        email: resetData.email,
-        token: resetData.token,
-        password: resetData.password,
-        password_confirmation: resetData.passwordConfirmation
-      });
+      await authService.resetPassword(resetData);
 
       return { success: true, message: 'Password reset successful' };
     } catch (err) {
@@ -216,11 +179,6 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Get auth token
-  const getToken = () => {
-    return localStorage.getItem('authToken');
   };
 
   // Check if user has specific role
@@ -245,7 +203,6 @@ export const AuthProvider = ({ children }) => {
     changePassword,
     forgotPassword,
     resetPassword,
-    getToken,
     hasRole,
     hasAnyRole,
     checkAuthStatus
