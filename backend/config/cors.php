@@ -23,12 +23,16 @@ return [
         'http://localhost:3000',
         'http://localhost:3001',
         'http://127.0.0.1:3000',
+        'https://oshocks-junior-bike-shop-96s0lix0n.vercel.app',
         'https://oshocks-junior-bike-shop-3a1jdoket.vercel.app',
         'https://oshocks-junior-bike-shop-5p59pxaxn.vercel.app',
         'https://oshocks-junior-bike-shop.vercel.app',
+        'https://*.vercel.app',
     ],
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        '/^https:\/\/.*\.vercel\.app$/',
+    ],
 
     'allowed_headers' => ['*'],
 
