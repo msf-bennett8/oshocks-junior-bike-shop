@@ -4,8 +4,8 @@
 
 import axios from 'axios';
 
-// Base API URL - Update this to match your Laravel backend
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://oshocks-junior-bike-shop-backend.onrender.com/api/v1';
+// Base API URL - NO /v1/ because your Laravel routes don't have it
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://oshocks-junior-bike-shop-backend.onrender.com/api';
 
 console.log('🌐 API Service Initialized');
 console.log('📍 Base URL:', API_BASE_URL);
@@ -30,14 +30,12 @@ api.interceptors.request.use(
       baseURL: config.baseURL,
       fullURL: `${config.baseURL}${config.url}`,
       params: config.params,
-      headers: config.headers,
     });
     
     const token = localStorage.getItem('authToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log('🔐 Auth token added to request');
-      console.log('🔐 Using token:', token ? `${token.substring(0, 20)}...` : 'none');
     }
     return config;
   },
@@ -54,35 +52,28 @@ api.interceptors.response.use(
       status: response.status,
       statusText: response.statusText,
       url: response.config.url,
-      dataType: typeof response.data,
-      dataKeys: response.data ? Object.keys(response.data) : [],
-      hasData: !!response.data?.data,
-      dataLength: Array.isArray(response.data?.data) ? response.data.data.length : 'N/A'
+      fullURL: `${response.config.baseURL}${response.config.url}`,
     });
     return response;
   },
   (error) => {
     if (error.response) {
-      // Server responded with error
       console.error('🔴 API Error Response:', {
         status: error.response.status,
         statusText: error.response.statusText,
         data: error.response.data,
-        headers: error.response.headers,
-        url: error.config?.url
+        url: error.config?.url,
+        fullURL: error.config ? `${error.config.baseURL}${error.config.url}` : 'unknown'
       });
       
-      // Handle 401 Unauthorized
       if (error.response.status === 401) {
-        console.warn('🔒 Unauthorized - clearing token and redirecting to login');
-        localStorage.removeItem('auth_token');
+        console.warn('🔒 Unauthorized - clearing token');
+        localStorage.removeItem('authToken');
         window.location.href = '/login';
       }
     } else if (error.request) {
-      // Request made but no response
-      console.error('🔴 Network Error - No Response:', {
+      console.error('🔴 Network Error:', {
         message: error.message,
-        request: error.request,
         baseURL: error.config?.baseURL,
         url: error.config?.url
       });
@@ -98,61 +89,31 @@ api.interceptors.response.use(
 // ============================================================================
 
 export const productAPI = {
-  /**
-   * Get all products with filters and pagination
-   * @param {Object} params - Query parameters
-   * @returns {Promise}
-   */
   getProducts: (params = {}) => {
     console.log('🛍️ Fetching products with params:', params);
     return api.get('/products', { params });
   },
 
-  /**
-   * Get single product by ID
-   * @param {number} id - Product ID
-   * @returns {Promise}
-   */
   getProduct: (id) => {
     console.log('🔍 Fetching product by ID:', id);
     return api.get(`/products/${id}`);
   },
 
-  /**
-   * Get product by slug
-   * @param {string} slug - Product slug
-   * @returns {Promise}
-   */
   getProductBySlug: (slug) => {
     console.log('🔍 Fetching product by slug:', slug);
     return api.get(`/products/slug/${slug}`);
   },
 
-  /**
-   * Search products
-   * @param {string} query - Search query
-   * @returns {Promise}
-   */
   searchProducts: (query) => {
     console.log('🔎 Searching products with query:', query);
     return api.get('/products', { params: { search: query } });
   },
 
-  /**
-   * Get products by category
-   * @param {number} categoryId - Category ID
-   * @returns {Promise}
-   */
   getProductsByCategory: (categoryId) => {
     console.log('📂 Fetching products by category:', categoryId);
     return api.get('/products', { params: { category_id: categoryId } });
   },
 
-  /**
-   * Get products by brand
-   * @param {string} brand - Brand name
-   * @returns {Promise}
-   */
   getProductsByBrand: (brand) => {
     console.log('🏷️ Fetching products by brand:', brand);
     return api.get('/products', { params: { brand } });
@@ -164,30 +125,16 @@ export const productAPI = {
 // ============================================================================
 
 export const categoryAPI = {
-  /**
-   * Get all categories
-   * @returns {Promise}
-   */
   getCategories: () => {
     console.log('📂 Fetching all categories');
     return api.get('/categories');
   },
 
-  /**
-   * Get single category
-   * @param {number} id - Category ID
-   * @returns {Promise}
-   */
   getCategory: (id) => {
     console.log('📂 Fetching category by ID:', id);
     return api.get(`/categories/${id}`);
   },
 
-  /**
-   * Get category products
-   * @param {number} id - Category ID
-   * @returns {Promise}
-   */
   getCategoryProducts: (id) => {
     console.log('📂 Fetching products for category:', id);
     return api.get(`/categories/${id}/products`);
@@ -199,39 +146,21 @@ export const categoryAPI = {
 // ============================================================================
 
 export const authAPI = {
-  /**
-   * Login user
-   * @param {Object} credentials - Email and password
-   * @returns {Promise}
-   */
   login: (credentials) => {
     console.log('🔐 Attempting login for:', credentials.email);
-    return api.post('/login', credentials);
+    return api.post('/auth/login', credentials);
   },
 
-  /**
-   * Register user
-   * @param {Object} userData - User registration data
-   * @returns {Promise}
-   */
   register: (userData) => {
     console.log('📝 Registering new user:', userData.email);
-    return api.post('/register', userData);
+    return api.post('/auth/register', userData);
   },
 
-  /**
-   * Logout user
-   * @returns {Promise}
-   */
   logout: () => {
     console.log('👋 Logging out user');
-    return api.post('/logout');
+    return api.post('/auth/logout');
   },
 
-  /**
-   * Get current user
-   * @returns {Promise}
-   */
   getCurrentUser: () => {
     console.log('👤 Fetching current user');
     return api.get('/user');
@@ -243,50 +172,26 @@ export const authAPI = {
 // ============================================================================
 
 export const cartAPI = {
-  /**
-   * Get cart
-   * @returns {Promise}
-   */
   getCart: () => {
     console.log('🛒 Fetching cart');
     return api.get('/cart');
   },
 
-  /**
-   * Add item to cart
-   * @param {Object} item - Cart item data
-   * @returns {Promise}
-   */
   addToCart: (item) => {
     console.log('➕ Adding item to cart:', item);
     return api.post('/cart/items', item);
   },
 
-  /**
-   * Update cart item
-   * @param {number} id - Cart item ID
-   * @param {Object} data - Updated data
-   * @returns {Promise}
-   */
   updateCartItem: (id, data) => {
     console.log('✏️ Updating cart item:', id, data);
     return api.put(`/cart/items/${id}`, data);
   },
 
-  /**
-   * Remove cart item
-   * @param {number} id - Cart item ID
-   * @returns {Promise}
-   */
   removeFromCart: (id) => {
     console.log('➖ Removing item from cart:', id);
     return api.delete(`/cart/items/${id}`);
   },
 
-  /**
-   * Clear cart
-   * @returns {Promise}
-   */
   clearCart: () => {
     console.log('🗑️ Clearing cart');
     return api.delete('/cart/clear');
