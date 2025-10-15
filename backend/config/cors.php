@@ -23,6 +23,7 @@ return [
         'http://localhost:3000',
         'http://localhost:3001',
         'http://127.0.0.1:3000',
+        'https://oshocks-junior-bike-shop-96s0lix0n.vercel.app/dashboard',
         'https://oshocks-junior-bike-shop-96s0lix0n.vercel.app',
         'https://oshocks-junior-bike-shop-3a1jdoket.vercel.app',
         'https://oshocks-junior-bike-shop-5p59pxaxn.vercel.app',

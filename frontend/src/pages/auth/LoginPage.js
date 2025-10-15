@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { useAuth } from '../../context/AuthContext';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader, CheckCircle } from 'lucide-react';
 
 const LoginPage = () => {
@@ -9,8 +10,8 @@ const LoginPage = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   
-  // Get auth state from Redux store
-  const { isAuthenticated, loading, error } = useSelector((state) => state.auth);
+  // Get auth state from AuthContext
+  const { login: loginUser, isAuthenticated, loading, error } = useAuth();
   
   // Form state
   const [formData, setFormData] = useState({
@@ -99,37 +100,21 @@ const LoginPage = () => {
       // Dispatch login action (you'll need to create this in your Redux auth slice)
       // Example: await dispatch(loginUser(formData)).unwrap();
       
-      // Simulate API call for demonstration
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Mock successful login - replace with actual API call
-      const response = {
-        success: true,
-        token: 'mock-jwt-token',
-        user: {
-          id: 1,
-          name: 'Zablon Bennett',
-          email: formData.email,
-          role: 'customer'
-        }
-      };
-      
-      if (response.success) {
-        // Store token and user data
-        if (formData.rememberMe) {
-          localStorage.setItem('authToken', response.token);
-          localStorage.setItem('user', JSON.stringify(response.user));
-        } else {
-          sessionStorage.setItem('authToken', response.token);
-          sessionStorage.setItem('user', JSON.stringify(response.user));
-        }
-        
-        // Update Redux state
-        // dispatch(setUser(response.user));
-        
+      // Call login from AuthContext
+      const result = await loginUser({
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password
+      });
+
+      if (result.success) {
         // Navigate to intended page or home
         const from = location.state?.from?.pathname || '/';
         navigate(from, { replace: true });
+      } else {
+        // Handle error from AuthContext
+        setValidationErrors({
+          general: result.error || 'Login failed. Please try again.'
+        });
       }
       
     } catch (err) {
