@@ -5,21 +5,24 @@
 import axios from 'axios';
 
 // Base API URL - Update this to match your Laravel backend
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://oshocks-junior-bike-shop-backend.onrender.com/api';
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://oshocks-junior-bike-shop-backend.onrender.com/api';
 
-console.log('🌐 API Service Initialized');
-console.log('📍 Base URL:', API_BASE_URL);
-console.log('🔧 Environment:', process.env.NODE_ENV);
+  // Remove any trailing /v1 if accidentally added
+  const cleanBaseURL = API_BASE_URL.replace(/\/v1$/, '');
 
-// Create axios instance with default config
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  },
-});
+  console.log('🌐 API Service Initialized');
+  console.log('📍 Base URL:', cleanBaseURL);
+  console.log('🔧 Environment:', process.env.NODE_ENV);
+
+  // Create axios instance with default config
+  const api = axios.create({
+    baseURL: cleanBaseURL,  // Use cleaned URL
+    timeout: 30000,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+  });
 
 // Request interceptor - Add auth token
 api.interceptors.request.use(
