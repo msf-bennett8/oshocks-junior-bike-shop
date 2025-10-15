@@ -1,68 +1,113 @@
 //frontend/src/pages/auth/StravaCallback.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Loader, AlertCircle } from 'lucide-react';
+import { Loader, AlertCircle, CheckCircle } from 'lucide-react';
 
 const StravaCallback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { stravaLogin } = useAuth();
   const [error, setError] = useState(null);
+  const [status, setStatus] = useState('processing'); // processing, success, error
+  const hasProcessed = useRef(false); // Prevent multiple calls
 
   useEffect(() => {
+    // Prevent multiple executions
+    if (hasProcessed.current) {
+      console.log('⏭️ Callback already processed, skipping...');
+      return;
+    }
+
     const handleCallback = async () => {
       const code = searchParams.get('code');
       const errorParam = searchParams.get('error');
 
+      // Handle OAuth errors
       if (errorParam) {
+        console.error('❌ OAuth error:', errorParam);
         setError('Strava authentication was cancelled or failed');
+        setStatus('error');
         setTimeout(() => navigate('/login'), 3000);
         return;
       }
 
+      // Check for authorization code
       if (!code) {
-        setError('No authorization code received');
+        console.error('❌ No authorization code received');
+        setError('No authorization code received from Strava');
+        setStatus('error');
         setTimeout(() => navigate('/login'), 3000);
         return;
       }
+
+      // Mark as processed BEFORE making the API call
+      hasProcessed.current = true;
 
       try {
-        console.log('🔄 Processing Strava OAuth callback...');
+        console.log('🔄 Processing Strava OAuth callback with code:', code.substring(0, 10) + '...');
+        setStatus('processing');
+
+        // Make the login request
         const result = await stravaLogin(code);
 
         if (result.success) {
-          console.log('✅ Strava login successful, redirecting...');
-          navigate('/', { replace: true });
+          console.log('✅ Strava login successful!');
+          setStatus('success');
+          
+          // Short delay before redirect to show success state
+          setTimeout(() => {
+            navigate('/', { replace: true });
+          }, 1500);
         } else {
+          console.error('❌ Strava login failed:', result.error);
           setError(result.error || 'Strava login failed');
+          setStatus('error');
           setTimeout(() => navigate('/login'), 3000);
         }
       } catch (err) {
         console.error('❌ Strava callback error:', err);
-        setError(err.response?.data?.message || 'Authentication failed');
+        setError(err.response?.data?.message || err.message || 'Authentication failed');
+        setStatus('error');
         setTimeout(() => navigate('/login'), 3000);
       }
     };
 
     handleCallback();
-  }, [searchParams, stravaLogin, navigate]);
+  }, []); // Empty dependency array - only run once
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8 text-center">
-        {error ? (
+        {status === 'error' && (
           <>
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Authentication Failed</h2>
             <p className="text-gray-600 mb-4">{error}</p>
             <p className="text-sm text-gray-500">Redirecting to login...</p>
           </>
-        ) : (
+        )}
+
+        {status === 'processing' && (
           <>
             <Loader className="w-16 h-16 text-orange-600 mx-auto mb-4 animate-spin" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Signing you in with Strava</h2>
             <p className="text-gray-600">Please wait while we complete the authentication...</p>
+            <div className="mt-4">
+              <div className="animate-pulse flex space-x-2 justify-center">
+                <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
+                <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
+                <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {status === 'success' && (
+          <>
+            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Success!</h2>
+            <p className="text-gray-600">You're all set. Redirecting to home page...</p>
           </>
         )}
       </div>

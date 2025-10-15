@@ -5,10 +5,11 @@ return [
     
     'allowed_methods' => ['*'],
     
-    'allowed_origins' => [
-        'http://localhost:3000',
-        'https://oshocks-junior-bike-shop.vercel.app',
-    ],
+    'allowed_origins' => array_filter([
+        env('FRONTEND_URL'), // Production: https://oshocks-junior-bike-shop.vercel.app
+        env('APP_ENV') === 'local' ? 'http://localhost:3000' : null,
+        env('APP_ENV') === 'production' ? 'http://localhost:3000' : null, // Allow localhost even in production for testing
+    ]),
     
     'allowed_origins_patterns' => [],
     

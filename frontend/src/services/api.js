@@ -4,7 +4,7 @@
 
 import axios from 'axios';
 
-// Base API URL - NO /v1/ because your Laravel routes don't have it
+// Base API URL
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://oshocks-junior-bike-shop-backend.onrender.com/api/v1';
 
 console.log('🌐 API Service Initialized');
@@ -15,6 +15,7 @@ console.log('🔧 Environment:', process.env.NODE_ENV);
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
+  withCredentials: true, // ✅ IMPORTANT: Enable credentials for CORS
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
