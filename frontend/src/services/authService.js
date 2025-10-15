@@ -51,12 +51,12 @@ const authService = {
 
     // Try different endpoint patterns
     const endpoints = [
-      '/auth/register',       // This works! (from your local success log)
-      '/v1/auth/register',    // Fallback
-      '/register',            // Simple fallback
-      '/auth/signup',         // Alternative
-      '/v1/register',         // Alternative
-      '/signup'               // Simplest fallback
+      '/v1/auth/register',    // Most common Laravel pattern
+      '/auth/register',       // Without version prefix
+      '/v1/auth/signup',      // Alternative naming
+      '/auth/signup',         // Without version
+      '/v1/register',         // Direct route
+      '/register'             // Simplest pattern
     ];
 
     for (const endpoint of endpoints) {
@@ -111,10 +111,10 @@ const authService = {
     console.log('🔐 Login attempt for:', requestData.email);
 
     const endpoints = [
-      '/auth/login',      // Match your working registration pattern
-      '/login',           // Fallback
-      '/v1/auth/login',   // Alternative
-      '/v1/login'         // Alternative
+      '/v1/auth/login',
+      '/auth/login',
+      '/v1/login',
+      '/login'
     ];
 
     for (const endpoint of endpoints) {
