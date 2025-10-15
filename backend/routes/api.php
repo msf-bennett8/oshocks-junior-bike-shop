@@ -24,18 +24,6 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\Api\SearchController;
 
-// Public authentication routes
-Route::post('/auth/register', [AuthController::class, 'register']);
-Route::post('/auth/login', [AuthController::class, 'login']);
-
-// Protected authentication routes
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/auth/me', [AuthController::class, 'me']);
-    Route::post('/auth/logout', [AuthController::class, 'logout']);
-    Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
-    Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
-});
-
 // Search Routes
 Route::prefix('search')->group(function () {
     Route::get('/', [SearchController::class, 'search']);
@@ -45,6 +33,10 @@ Route::prefix('search')->group(function () {
 
 // Public routes
 Route::prefix('v1')->group(function () {
+    
+    // Public authentication routes
+    Route::post('/auth/register', [AuthController::class, 'register']);
+    Route::post('/auth/login', [AuthController::class, 'login']);
     
     // Public product browsing
     Route::get('/products', [ProductController::class, 'index']);
@@ -67,6 +59,12 @@ Route::prefix('v1')->group(function () {
 
 // Protected routes (require authentication)
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
+    
+    // Protected authentication routes
+    Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
     
     // Auth user
     Route::get('/user', function (Request $request) {
