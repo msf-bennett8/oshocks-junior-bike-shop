@@ -181,6 +181,50 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Handle Google OAuth login
+  const googleLogin = async (code) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await authService.googleLogin(code);
+
+      // Update state
+      setUser(data.user);
+      setIsAuthenticated(true);
+
+      return { success: true, user: data.user };
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Google login failed';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Strava OAuth login
+  const stravaLogin = async (code) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await authService.stravaLogin(code);
+
+      // Update state
+      setUser(data.user);
+      setIsAuthenticated(true);
+
+      return { success: true, user: data.user };
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || 'Strava login failed';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Check if user has specific role
   const hasRole = (role) => {
     return user?.role === role;
@@ -205,7 +249,9 @@ export const AuthProvider = ({ children }) => {
     resetPassword,
     hasRole,
     hasAnyRole,
-    checkAuthStatus
+    checkAuthStatus, 
+    googleLogin, 
+    stravaLogin 
   };
 
   return (

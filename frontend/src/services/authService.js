@@ -345,7 +345,64 @@ const authService = {
     } catch (error) {
       return false;
     }
-  }
+  },
+
+  /**
+   * Handle Google OAuth callback
+   * @param {string} code - Authorization code from Google
+   * @returns {Promise<Object>} Auth response with token and user
+   */
+  googleLogin: async (code) => {
+    try {
+      console.log('🔐 Google OAuth login with code');
+
+      const response = await api.post('/auth/google', { code });
+
+      console.log('✅ Google login successful:', {
+        hasToken: !!response.data?.data?.token,
+        hasUser: !!response.data?.data?.user
+      });
+
+      // Store token
+      if (response.data?.data?.token) {
+        authService.setToken(response.data.data.token);
+      }
+
+      return response.data.data;
+    } catch (error) {
+      console.error('❌ Google login failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Handle Strava OAuth callback
+   * @param {string} code - Authorization code from Strava
+   * @returns {Promise<Object>} Auth response with token and user
+   */
+  stravaLogin: async (code) => {
+    try {
+      console.log('🚴 Strava OAuth login with code');
+
+      const response = await api.post('/auth/strava', { code });
+
+      console.log('✅ Strava login successful:', {
+        hasToken: !!response.data?.data?.token,
+        hasUser: !!response.data?.data?.user
+      });
+
+      // Store token
+      if (response.data?.data?.token) {
+        authService.setToken(response.data.data.token);
+      }
+
+      return response.data.data;
+    } catch (error) {
+      console.error('❌ Strava login failed:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
 };
 
 export default authService;

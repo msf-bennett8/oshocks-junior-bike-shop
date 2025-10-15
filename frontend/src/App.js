@@ -54,6 +54,8 @@ const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
+const GoogleCallback = lazy(() => import('./pages/auth/GoogleCallback'));
+const StravaCallback = lazy(() => import('./pages/auth/StravaCallback'));
 
 // User Dashboard
 const DashboardPage = lazy(() => import('./pages/user/UserDashboardPage'));
@@ -516,6 +518,9 @@ function App() {
                     </GuestRoute>
                   }
                 />
+                {/*Social registration and login*/}
+                <Route path="/auth/google/callback" element={<GoogleCallback />} />
+                <Route path="/auth/strava/callback" element={<StravaCallback />} />
 
                 {/* ============================================
                     USER DASHBOARD (Protected)

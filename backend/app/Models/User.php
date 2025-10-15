@@ -12,16 +12,20 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'phone',
-	'address',
-        'role',
-        'profile_image',
-        'is_active',
-        'email_verified_at',
-    ];
+    'name',
+    'email',
+    'password',
+    'phone',
+    'address',
+    'role',
+    'profile_image',
+    'google_id', 
+    'strava_id', 
+    'avatar', 
+    'provider', 
+    'is_active',
+    'email_verified_at',
+];
 
     protected $hidden = [
         'password',
@@ -29,10 +33,16 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-        'is_active' => 'boolean',
+    'email_verified_at' => 'datetime',
+    'password' => 'hashed',
+    'is_active' => 'boolean',
     ];
+
+    // ADD THIS METHOD at the bottom of the class
+    public function isOAuthUser()
+    {
+        return in_array($this->provider, ['google', 'strava']);
+    }
 
     // Relationships
     public function sellerProfile()

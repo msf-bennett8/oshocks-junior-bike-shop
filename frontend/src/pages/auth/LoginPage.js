@@ -11,7 +11,7 @@ const LoginPage = () => {
   const dispatch = useDispatch();
   
   // Get auth state from AuthContext
-  const { login: loginUser, isAuthenticated, loading, error } = useAuth();
+  const { login: loginUser, googleLogin, stravaLogin, isAuthenticated, loading, error } = useAuth();
   
   // Form state
   const [formData, setFormData] = useState({
@@ -130,10 +130,29 @@ const LoginPage = () => {
 
   // Handle social login (Google, Strava, etc.)
   const handleSocialLogin = (provider) => {
-    // Implement OAuth flow
-    console.log(`Login with ${provider}`);
-    // This would typically redirect to OAuth provider
-    // window.location.href = `${API_URL}/auth/${provider}`;
+    console.log(`🔄 Initiating ${provider} OAuth flow`);
+    
+    const redirectUri = window.location.origin + `/auth/${provider}/callback`;
+    
+    if (provider === 'google') {
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=1033846968989-8694tr0qe79fusd3jg1jtev0pqolirv1.apps.googleusercontent.com&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=code&` +
+        `scope=email profile&` +
+        `access_type=offline&` +
+        `prompt=consent`;
+      
+      window.location.href = googleAuthUrl;
+    } else if (provider === 'strava') {
+      const stravaAuthUrl = `https://www.strava.com/oauth/authorize?` +
+        `client_id=181136&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=code&` +
+        `scope=read,activity:read`;
+      
+      window.location.href = stravaAuthUrl;
+    }
   };
 
   return (

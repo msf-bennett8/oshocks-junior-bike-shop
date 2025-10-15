@@ -44,6 +44,10 @@ Route::prefix('v1')->group(function () {
     Route::get('/products/slug/{slug}', [ProductController::class, 'showBySlug']);
     Route::get('/products/{id}/variants', [ProductVariantController::class, 'getByProduct']);
     Route::get('/products/{id}/reviews', [ReviewController::class, 'getByProduct']);
+
+    // Socials Auth
+    Route::post('/auth/google', [\App\Http\Controllers\Api\SocialAuthController::class, 'handleGoogleCallback']);
+    Route::post('/auth/strava', [\App\Http\Controllers\Api\SocialAuthController::class, 'handleStravaCallback']);
     
     // Categories
     Route::get('/categories', [CategoryController::class, 'index']);
