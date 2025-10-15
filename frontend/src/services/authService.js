@@ -51,12 +51,9 @@ const authService = {
 
     // Try different endpoint patterns
     const endpoints = [
-      '/v1/auth/register',    // Most common Laravel pattern
-      '/auth/register',       // Without version prefix
-      '/v1/auth/signup',      // Alternative naming
-      '/auth/signup',         // Without version
-      '/v1/register',         // Direct route
-      '/register'             // Simplest pattern
+      '/auth/register',
+      '/auth/signup',
+      '/register'
     ];
 
     for (const endpoint of endpoints) {
@@ -111,9 +108,7 @@ const authService = {
     console.log('🔐 Login attempt for:', requestData.email);
 
     const endpoints = [
-      '/v1/auth/login',
       '/auth/login',
-      '/v1/login',
       '/login'
     ];
 
@@ -163,7 +158,7 @@ const authService = {
         console.log('👋 Logging out user');
         
         // Try multiple logout endpoints
-        const endpoints = ['/v1/auth/logout', '/auth/logout', '/v1/logout', '/logout'];
+        const endpoints = ['/auth/logout', '/logout'];
         
         for (const endpoint of endpoints) {
           try {
@@ -201,7 +196,7 @@ const authService = {
 
       console.log('👤 Fetching current user');
 
-      const endpoints = ['/v1/auth/me', '/auth/me', '/v1/user', '/user', '/v1/auth/user', '/auth/user'];
+      const endpoints = ['/auth/me', '/user', '/auth/user'];
 
       for (const endpoint of endpoints) {
         try {
@@ -241,7 +236,7 @@ const authService = {
       
       console.log('✏️ Updating user profile');
 
-      const response = await api.put('/v1/auth/profile', updates, {
+      const response = await api.put('/auth/profile', updates, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -265,7 +260,7 @@ const authService = {
       
       console.log('🔒 Changing password');
 
-      const response = await api.post('/v1/auth/change-password', {
+      const response = await api.post('/auth/change-password', {
         current_password: passwordData.currentPassword || passwordData.current_password,
         new_password: passwordData.newPassword || passwordData.new_password,
         new_password_confirmation: passwordData.newPasswordConfirmation || passwordData.new_password_confirmation
@@ -291,7 +286,7 @@ const authService = {
     try {
       console.log('📧 Requesting password reset for:', email);
 
-      const response = await api.post('/v1/auth/forgot-password', { email });
+      const response = await api.post('/auth/forgot-password', { email });
 
       console.log('✅ Password reset email sent');
 
@@ -311,7 +306,7 @@ const authService = {
     try {
       console.log('🔑 Resetting password');
 
-      const response = await api.post('/v1/auth/reset-password', {
+      const response = await api.post('/auth/reset-password', {
         email: resetData.email,
         token: resetData.token,
         password: resetData.password,
