@@ -1,11 +1,13 @@
 <?php
+
 return [
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'auth/*'],
     
     'allowed_methods' => ['*'],
     
     'allowed_origins' => [
         'http://localhost:3000',
+        'http://localhost:5173',
         'https://oshocks-junior-bike-shop.vercel.app',
     ],
     
@@ -13,7 +15,7 @@ return [
     
     'allowed_headers' => ['*'],
     
-    'exposed_headers' => [],
+    'exposed_headers' => ['Authorization'],
     
     'max_age' => 0,
     

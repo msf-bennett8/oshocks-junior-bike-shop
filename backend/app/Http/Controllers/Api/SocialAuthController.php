@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use Exception;
@@ -18,20 +19,43 @@ class SocialAuthController extends Controller
     public function handleGoogleCallback(Request $request)
     {
         try {
+            Log::info('🔵 Google OAuth Request:', [
+                'has_code' => $request->has('code'),
+                'code_length' => $request->code ? strlen($request->code) : 0
+            ]);
+
             $request->validate([
                 'code' => 'required|string',
             ]);
 
-            // Get user from Google using the authorization code
-            $googleUser = Socialite::driver('google')
+            // Exchange code for access token
+            Log::info('🔄 Exchanging Google code for token...');
+            
+            $tokenResponse = Socialite::driver('google')
                 ->stateless()
-                ->user();
+                ->getAccessTokenResponse($request->code);
+
+            Log::info('✅ Google token received');
+
+            // Get user info with the access token
+            $googleUser = Socialite::driver('google')
+                ->userFromToken($tokenResponse['access_token']);
+
+            Log::info('✅ Google user info retrieved:', [
+                'email' => $googleUser->getEmail(),
+                'name' => $googleUser->getName()
+            ]);
 
             // Find or create user
             $user = $this->findOrCreateUser($googleUser, 'google');
 
             // Generate Sanctum token
             $token = $user->createToken('auth_token')->plainTextToken;
+
+            Log::info('✅ Google authentication successful', [
+                'user_id' => $user->id,
+                'email' => $user->email
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -44,7 +68,12 @@ class SocialAuthController extends Controller
             ], 200);
 
         } catch (Exception $e) {
-            \Log::error('Google OAuth Error: ' . $e->getMessage());
+            Log::error('❌ Google OAuth Error:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             
             return response()->json([
                 'success' => false,
@@ -60,20 +89,43 @@ class SocialAuthController extends Controller
     public function handleStravaCallback(Request $request)
     {
         try {
+            Log::info('🟠 Strava OAuth Request:', [
+                'has_code' => $request->has('code'),
+                'code_length' => $request->code ? strlen($request->code) : 0
+            ]);
+
             $request->validate([
                 'code' => 'required|string',
             ]);
 
-            // Get user from Strava using the authorization code
-            $stravaUser = Socialite::driver('strava')
+            // Exchange code for access token
+            Log::info('🔄 Exchanging Strava code for token...');
+            
+            $tokenResponse = Socialite::driver('strava')
                 ->stateless()
-                ->user();
+                ->getAccessTokenResponse($request->code);
+
+            Log::info('✅ Strava token received');
+
+            // Get user info with the access token
+            $stravaUser = Socialite::driver('strava')
+                ->userFromToken($tokenResponse['access_token']);
+
+            Log::info('✅ Strava user info retrieved:', [
+                'id' => $stravaUser->getId(),
+                'name' => $stravaUser->getName()
+            ]);
 
             // Find or create user
             $user = $this->findOrCreateUser($stravaUser, 'strava');
 
             // Generate Sanctum token
             $token = $user->createToken('auth_token')->plainTextToken;
+
+            Log::info('✅ Strava authentication successful', [
+                'user_id' => $user->id,
+                'email' => $user->email
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -86,7 +138,12 @@ class SocialAuthController extends Controller
             ], 200);
 
         } catch (Exception $e) {
-            \Log::error('Strava OAuth Error: ' . $e->getMessage());
+            Log::error('❌ Strava OAuth Error:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             
             return response()->json([
                 'success' => false,
@@ -102,45 +159,56 @@ class SocialAuthController extends Controller
     private function findOrCreateUser($providerUser, $provider)
     {
         $providerIdField = $provider . '_id';
+        $email = $providerUser->getEmail();
+        $name = $providerUser->getName() ?? $providerUser->getNickname() ?? 'User';
+        $avatar = $providerUser->getAvatar() ?? null;
+
+        Log::info("🔍 Finding/creating user for {$provider}:", [
+            'email' => $email,
+            'provider_id' => $providerUser->getId()
+        ]);
 
         // Check if user exists by provider ID
-        $user = User::where($providerIdField, $providerUser->id)->first();
+        $user = User::where($providerIdField, $providerUser->getId())->first();
 
         if ($user) {
-            // Update user info
+            Log::info('✅ User found by provider ID, updating info');
             $user->update([
-                'name' => $providerUser->name ?? $providerUser->nickname ?? 'User',
-                'avatar' => $providerUser->avatar ?? $providerUser->avatar_original,
+                'name' => $name,
+                'avatar' => $avatar,
             ]);
             return $user;
         }
 
         // Check if user exists by email
-        $user = User::where('email', $providerUser->email)->first();
+        $user = User::where('email', $email)->first();
 
         if ($user) {
-            // Link OAuth account to existing user
+            Log::info('✅ User found by email, linking provider');
             $user->update([
-                $providerIdField => $providerUser->id,
+                $providerIdField => $providerUser->getId(),
                 'provider' => $provider,
-                'avatar' => $providerUser->avatar ?? $providerUser->avatar_original,
+                'avatar' => $avatar,
             ]);
             return $user;
         }
 
-        // Create new user - FIX: Add phone field with null value
+        // Create new user
+        Log::info('✨ Creating new user');
+        
         $user = User::create([
-            'name' => $providerUser->name ?? $providerUser->nickname ?? 'OAuth User',
-            'email' => $providerUser->email,
-            'password' => Hash::make(Str::random(32)), // Random password for OAuth users
-            'phone' => null, // OAuth users don't have phone initially
-            $providerIdField => $providerUser->id,
+            'name' => $name,
+            'email' => $email,
+            'password' => Hash::make(Str::random(32)),
+            $providerIdField => $providerUser->getId(),
             'provider' => $provider,
-            'avatar' => $providerUser->avatar ?? $providerUser->avatar_original,
-            'role' => 'buyer', // Default role
+            'avatar' => $avatar,
+            'role' => 'buyer',
             'is_active' => true,
-            'email_verified_at' => now(), // OAuth emails are verified
+            'email_verified_at' => now(),
         ]);
+
+        Log::info('✅ New user created:', ['user_id' => $user->id]);
 
         return $user;
     }
