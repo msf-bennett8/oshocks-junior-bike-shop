@@ -22,7 +22,7 @@ class SocialAuthController extends Controller
                 'code' => 'required|string',
             ]);
 
-            // Get user from Google
+            // Get user from Google using the authorization code
             $googleUser = Socialite::driver('google')
                 ->stateless()
                 ->user();
@@ -44,6 +44,8 @@ class SocialAuthController extends Controller
             ], 200);
 
         } catch (Exception $e) {
+            \Log::error('Google OAuth Error: ' . $e->getMessage());
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Google authentication failed',
@@ -62,7 +64,7 @@ class SocialAuthController extends Controller
                 'code' => 'required|string',
             ]);
 
-            // Get user from Strava
+            // Get user from Strava using the authorization code
             $stravaUser = Socialite::driver('strava')
                 ->stateless()
                 ->user();
@@ -84,6 +86,8 @@ class SocialAuthController extends Controller
             ], 200);
 
         } catch (Exception $e) {
+            \Log::error('Strava OAuth Error: ' . $e->getMessage());
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Strava authentication failed',
@@ -105,7 +109,7 @@ class SocialAuthController extends Controller
         if ($user) {
             // Update user info
             $user->update([
-                'name' => $providerUser->name ?? $providerUser->nickname,
+                'name' => $providerUser->name ?? $providerUser->nickname ?? 'User',
                 'avatar' => $providerUser->avatar ?? $providerUser->avatar_original,
             ]);
             return $user;
@@ -124,11 +128,12 @@ class SocialAuthController extends Controller
             return $user;
         }
 
-        // Create new user
+        // Create new user - FIX: Add phone field with null value
         $user = User::create([
-            'name' => $providerUser->name ?? $providerUser->nickname,
+            'name' => $providerUser->name ?? $providerUser->nickname ?? 'OAuth User',
             'email' => $providerUser->email,
             'password' => Hash::make(Str::random(32)), // Random password for OAuth users
+            'phone' => null, // OAuth users don't have phone initially
             $providerIdField => $providerUser->id,
             'provider' => $provider,
             'avatar' => $providerUser->avatar ?? $providerUser->avatar_original,
