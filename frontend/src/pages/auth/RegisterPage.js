@@ -166,7 +166,7 @@ const RegisterPage = () => {
         email: formData.email.trim().toLowerCase(),
         phone: formData.phone.replace(/\s/g, ''),
         password: formData.password,
-        passwordConfirmation: formData.confirmPassword,
+        password_confirmation: formData.confirmPassword,
         address: formData.city.trim()
       };
 
