@@ -159,7 +159,7 @@ class SocialAuthController extends Controller
     private function findOrCreateUser($providerUser, $provider)
     {
         $providerIdField = $provider . '_id';
-        $email = $providerUser->getEmail();
+        $email = $providerUser->getEmail() ?? null; // Explicitly set to null if missing
         $name = $providerUser->getName() ?? $providerUser->getNickname() ?? 'User';
         $avatar = $providerUser->getAvatar() ?? null;
 
@@ -180,17 +180,19 @@ class SocialAuthController extends Controller
             return $user;
         }
 
-        // Check if user exists by email
-        $user = User::where('email', $email)->first();
+        // Check if user exists by email (only if email is provided)
+        if ($email) {
+            $user = User::where('email', $email)->first();
 
-        if ($user) {
-            Log::info('✅ User found by email, linking provider');
-            $user->update([
-                $providerIdField => $providerUser->getId(),
-                'provider' => $provider,
-                'avatar' => $avatar,
-            ]);
-            return $user;
+            if ($user) {
+                Log::info('✅ User found by email, linking provider');
+                $user->update([
+                    $providerIdField => $providerUser->getId(),
+                    'provider' => $provider,
+                    'avatar' => $avatar,
+                ]);
+                return $user;
+            }
         }
 
         // Create new user
@@ -198,7 +200,7 @@ class SocialAuthController extends Controller
         
         $user = User::create([
             'name' => $name,
-            'email' => $email,
+            'email' => $email, // Will be null for Strava
             'password' => Hash::make(Str::random(32)),
             $providerIdField => $providerUser->getId(),
             'provider' => $provider,
