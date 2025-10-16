@@ -77,24 +77,37 @@ RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 # Expose port 80
 EXPOSE 80
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost/ || exit 1
+# Create entrypoint script that handles dynamic port
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+echo "=== Starting Laravel Application ==="\n\
+echo "Checking environment..."\n\
+php -v\n\
+\n\
+# Configure Apache to use Render'\''s dynamic PORT\n\
+echo "Configuring Apache for port ${PORT:-80}..."\n\
+sed -i "s/Listen 80/Listen ${PORT:-80}/" /etc/apache2/ports.conf\n\
+sed -i "s/:80/:${PORT:-80}/" /etc/apache2/sites-available/000-default.conf\n\
+\n\
+echo "Testing database connection..."\n\
+php artisan migrate:status || echo "Warning: Could not connect to database"\n\
+\n\
+echo "Caching configuration..."\n\
+php artisan config:cache\n\
+\n\
+echo "Caching routes..."\n\
+php artisan route:cache\n\
+\n\
+echo "Caching views (if possible)..."\n\
+php artisan view:cache || echo "View cache skipped - no views found"\n\
+\n\
+echo "Running migrations..."\n\
+php artisan migrate --force || echo "Warning: Migrations failed"\n\
+\n\
+echo "=== Starting Apache ==="\n\
+exec apache2-foreground\n\
+' > /entrypoint.sh && chmod +x /entrypoint.sh
 
-# Startup script with error handling
-CMD set -e && \
-    echo "=== Starting Laravel Application ===" && \
-    echo "Checking environment..." && \
-    php -v && \
-    echo "Testing database connection..." && \
-    php artisan migrate:status || echo "Warning: Could not connect to database" && \
-    echo "Caching configuration..." && \
-    php artisan config:cache && \
-    echo "Caching routes..." && \
-    php artisan route:cache && \
-    echo "Caching views (if possible)..." && \
-    (php artisan view:cache || echo "View cache skipped - no views found") && \
-    echo "Running migrations..." && \
-    (php artisan migrate --force || echo "Warning: Migrations failed") && \
-    echo "=== Starting Apache ===" && \
-    apache2-foreground
+# Use the entrypoint script
+CMD ["/entrypoint.sh"]
