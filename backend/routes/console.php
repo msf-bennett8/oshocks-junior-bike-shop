@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Artisan;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote')->isHidden();
+})->purpose('Display an inspiring quote');
 
 // Auto-run migrations on startup in production
 if (app()->environment('production')) {
