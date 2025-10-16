@@ -6,9 +6,9 @@ return [
     'allowed_methods' => ['*'],
     
     'allowed_origins' => [
+        'https://oshocks-junior-bike-shop.vercel.app',
         'http://localhost:3000',
         'http://localhost:5173',
-        'https://oshocks-junior-bike-shop.vercel.app',
     ],
     
     'allowed_origins_patterns' => [],
