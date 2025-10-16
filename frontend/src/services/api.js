@@ -14,8 +14,8 @@ console.log('🔧 Environment:', process.env.NODE_ENV);
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
-  withCredentials: true, // ✅ IMPORTANT: Enable credentials for CORS
+  timeout: 120000, // ✅ Increased to 120 seconds (2 minutes) for Render cold starts
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -31,6 +31,7 @@ api.interceptors.request.use(
       baseURL: config.baseURL,
       fullURL: `${config.baseURL}${config.url}`,
       params: config.params,
+      attempt: config._retryCount || 1,
     });
     
     const token = localStorage.getItem('authToken');
@@ -46,7 +47,7 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - Handle errors
+// Response interceptor - Handle errors and retry logic
 api.interceptors.response.use(
   (response) => {
     console.log('📥 Response received:', {
@@ -54,10 +55,36 @@ api.interceptors.response.use(
       statusText: response.statusText,
       url: response.config.url,
       fullURL: `${response.config.baseURL}${response.config.url}`,
+      attempt: response.config._retryCount || 1,
     });
     return response;
   },
-  (error) => {
+  async (error) => {
+    const config = error.config;
+
+    // Initialize retry count
+    if (!config._retryCount) {
+      config._retryCount = 0;
+    }
+
+    // Retry logic for timeout and network errors
+    const shouldRetry = 
+      (error.code === 'ECONNABORTED' || error.message.includes('timeout')) &&
+      config._retryCount < 2; // Retry up to 2 times (3 total attempts)
+
+    if (shouldRetry) {
+      config._retryCount += 1;
+      const retryDelay = config._retryCount * 2000; // 2s, 4s delays
+      
+      console.warn(`⏱️ Timeout on attempt ${config._retryCount}. Retrying in ${retryDelay/1000}s...`);
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+      
+      return api(config);
+    }
+
+    // Log errors
     if (error.response) {
       console.error('🔴 API Error Response:', {
         status: error.response.status,
@@ -75,8 +102,10 @@ api.interceptors.response.use(
     } else if (error.request) {
       console.error('🔴 Network Error:', {
         message: error.message,
+        code: error.code,
         baseURL: error.config?.baseURL,
-        url: error.config?.url
+        url: error.config?.url,
+        attempts: config._retryCount + 1,
       });
     } else {
       console.error('🔴 Request Setup Error:', error.message);

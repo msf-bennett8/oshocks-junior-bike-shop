@@ -7,6 +7,7 @@ const HomePage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSlowLoad, setIsSlowLoad] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -16,8 +17,16 @@ const HomePage = () => {
     try {
       setLoading(true);
       setError(null);
+      setIsSlowLoad(false);
+      
+      // Show "slow load" message after 5 seconds
+      const slowLoadTimer = setTimeout(() => {
+        setIsSlowLoad(true);
+      }, 5000);
       
       const response = await productAPI.getProducts({ limit: 12 });
+      
+      clearTimeout(slowLoadTimer);
       
       if (response.data && response.data.data) {
         setProducts(response.data.data);
@@ -28,18 +37,22 @@ const HomePage = () => {
       }
       
       setLoading(false);
+      setIsSlowLoad(false);
     } catch (err) {
       console.error('Error fetching products:', err);
       
-      if (err.response) {
+      if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
+        setError('Server is taking too long to respond. This might be due to server cold start on free hosting. Please try again.');
+      } else if (err.response) {
         setError(`Server error: ${err.response.status} - ${err.response.data?.message || 'Unknown error'}`);
       } else if (err.request) {
-        setError('No response from server. Please check if the backend is running at https://oshocks-junior-bike-shop-backend.onrender.com/api/v1');
+        setError('Cannot connect to server. Please check your internet connection or try again later.');
       } else {
-        setError(`Request setup error: ${err.message}`);
+        setError(`Request error: ${err.message}`);
       }
       
       setLoading(false);
+      setIsSlowLoad(false);
     }
   };
 
@@ -51,8 +64,7 @@ const HomePage = () => {
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Connection Error</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <p className="text-sm text-gray-500 mb-4">
-            Make sure your backend server is running at:<br />
-            <code className="bg-gray-100 px-2 py-1 rounded">https://oshocks-junior-bike-shop-backend.onrender.com/api/v1</code>
+            Backend server: <code className="bg-gray-100 px-2 py-1 rounded text-xs">oshocks-junior-bike-shop-backend.onrender.com</code>
           </p>
           <button
             onClick={fetchProducts}
@@ -109,33 +121,33 @@ const HomePage = () => {
           </div>
         </section>
 
-        {/* Key Features - Enhanced with Real Value Props */}
+        {/* Key Features */}
         <section className="py-12 md:py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
               <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-md hover:shadow-lg transition">
-                <div className="text-5xl mb-4"></div>
+                <div className="text-5xl mb-4">🚚</div>
                 <h3 className="text-xl font-bold mb-2 text-gray-800">Fast Delivery</h3>
                 <p className="text-gray-700 text-sm leading-relaxed">
                   Fast and reliable delivery in Nairobi Metropolitan. Track your order in real-time from our stores to your doorstep.
                 </p>
               </div>
               <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-md hover:shadow-lg transition">
-                <div className="text-5xl mb-4"></div>
+                <div className="text-5xl mb-4">💳</div>
                 <h3 className="text-xl font-bold mb-2 text-gray-800">Flexible Payments</h3>
                 <p className="text-gray-700 text-sm leading-relaxed">
                   Pay conveniently with M-Pesa, Airtel Money, bank cards, or cash on delivery. Secure transactions guaranteed.
                 </p>
               </div>
               <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-md hover:shadow-lg transition">
-                <div className="text-5xl mb-4"></div>
+                <div className="text-5xl mb-4">🔧</div>
                 <h3 className="text-xl font-bold mb-2 text-gray-800">Professional Repairs</h3>
                 <p className="text-gray-700 text-sm leading-relaxed">
                   Expert bike mechanics available for repairs, maintenance, and custom builds. Book appointments online easily.
                 </p>
               </div>
               <div className="p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-md hover:shadow-lg transition">
-                <div className="text-5xl mb-4"></div>
+                <div className="text-5xl mb-4">🏪</div>
                 <h3 className="text-xl font-bold mb-2 text-gray-800">Multi-Vendor Platform</h3>
                 <p className="text-gray-700 text-sm leading-relaxed">
                   Access products from multiple verified sellers. More choices, competitive prices, quality assured.
@@ -162,7 +174,7 @@ const HomePage = () => {
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2 text-gray-800">Buy & Sell</h3>
                     <p className="text-gray-600 text-sm mb-3">
-                      Browse bikes, parts, and accessories. Ask for delivery and it wll be delivered to your doorstep.
+                      Browse bikes, parts, and accessories. Ask for delivery and it will be delivered to your doorstep.
                     </p>
                     <Link to="/shop" className="text-purple-600 font-semibold text-sm hover:underline">
                       Start Shopping →
@@ -222,7 +234,7 @@ const HomePage = () => {
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2 text-gray-800">Trade-In Program</h3>
                     <p className="text-gray-600 text-sm mb-3">
-                      Upgrade your bike with our trade-in program. Get fair value for your old bike towards a new purchase and get your bike a new owner.
+                      Upgrade your bike with our trade-in program. Get fair value for your old bike towards a new purchase.
                     </p>
                     <Link to="/trade-in" className="text-purple-600 font-semibold text-sm hover:underline">
                       Learn More →
@@ -237,7 +249,7 @@ const HomePage = () => {
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2 text-gray-800">Expert Support</h3>
                     <p className="text-gray-600 text-sm mb-3">
-                      Connect, Get cycling advice, product recommendations, and technical support from our team and fellow cyclists.
+                      Get cycling advice, product recommendations, and technical support from our team.
                     </p>
                     <Link to="/contact" className="text-purple-600 font-semibold text-sm hover:underline">
                       Contact Us →
@@ -267,11 +279,34 @@ const HomePage = () => {
             </div>
 
             {loading ? (
-              // Loading Skeleton
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                  <ProductCardSkeleton key={i} delay={i} />
-                ))}
+              <div className="space-y-6">
+                {/* Loading message with animation */}
+                <div className="text-center py-8">
+                  <div className="inline-flex items-center justify-center space-x-3">
+                    <div className="w-3 h-3 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-3 h-3 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-3 h-3 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  </div>
+                  <p className="text-gray-700 mt-4 font-semibold text-lg">Loading products...</p>
+                  
+                  {isSlowLoad && (
+                    <div className="mt-4 max-w-md mx-auto">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p className="text-blue-800 text-sm">
+                          ⏱️ <strong>Server is waking up...</strong> This may take up to 2 minutes on free hosting. 
+                          Thanks for your patience!
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Loading Skeleton */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                    <ProductCardSkeleton key={i} delay={i} />
+                  ))}
+                </div>
               </div>
             ) : products.length === 0 ? (
               <div className="text-center py-16 md:py-20 bg-gray-50 rounded-xl shadow-inner">
@@ -392,37 +427,37 @@ const HomePage = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3"></div>
+                <div className="text-5xl mb-3">✅</div>
                 <h3 className="text-lg font-bold mb-2">Quality Verified</h3>
                 <p className="text-gray-600 text-sm">All our products are tested and undergo strict verification for authenticity and quality standards.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3"></div>
+                <div className="text-5xl mb-3">💰</div>
                 <h3 className="text-lg font-bold mb-2">Best Prices</h3>
-                <p className="text-gray-600 text-sm">Competitive pricing from multiple sellers to ensures you get the best deals on cycling products.</p>
+                <p className="text-gray-600 text-sm">Competitive pricing from multiple sellers ensures you get the best deals on cycling products.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3"></div>
+                <div className="text-5xl mb-3">🔒</div>
                 <h3 className="text-lg font-bold mb-2">Secure Shopping</h3>
                 <p className="text-gray-600 text-sm">Your transactions are protected with encrypted payments and buyer protection policies.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3"></div>
+                <div className="text-5xl mb-3">⚡</div>
                 <h3 className="text-lg font-bold mb-2">Fast Processing</h3>
-                <p className="text-gray-600 text-sm">Ypur orders are processed within 24 hours and shipped quickly to your preferred location as by our shipping policy.</p>
+                <p className="text-gray-600 text-sm">Your orders are processed within 24 hours and shipped quickly to your preferred location.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3"></div>
+                <div className="text-5xl mb-3">😊</div>
                 <h3 className="text-lg font-bold mb-2">Satisfaction Guarantee</h3>
-                <p className="text-gray-600 text-sm">Not happy with your purchase? Easy returns and refunds within 7 days of delivery as by our return and refund policy.</p>
+                <p className="text-gray-600 text-sm">Not happy with your purchase? Easy returns and refunds within 7 days of delivery.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3"></div>
+                <div className="text-5xl mb-3">📞</div>
                 <h3 className="text-lg font-bold mb-2">24/7 Support</h3>
                 <p className="text-gray-600 text-sm">Our customer support team is always available to help with your inquiries and concerns.</p>
               </div>

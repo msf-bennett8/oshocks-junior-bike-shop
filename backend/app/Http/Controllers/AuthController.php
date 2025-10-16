@@ -317,4 +317,80 @@ class AuthController extends Controller
             'message' => 'User deleted successfully'
         ]);
     }
+
+    /**
+     * Handle Google OAuth callback
+     */
+    public function handleGoogleCallback(Request $request)
+    {
+        try {
+            $code = $request->input('code');
+            
+            if (!$code) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Authorization code not provided'
+                ], 400);
+            }
+
+            $client = new \GuzzleHttp\Client();
+            $response = $client->post('https://oauth2.googleapis.com/token', [
+                'form_params' => [
+                    'client_id' => config('services.google.client_id'),
+                    'client_secret' => config('services.google.client_secret'),
+                    'code' => $code,
+                    'grant_type' => 'authorization_code',
+                    'redirect_uri' => config('services.google.redirect_uri'),
+                ]
+            ]);
+
+            $body = json_decode((string) $response->getBody());
+            $accessToken = $body->access_token;
+
+            // Get user info from Google
+            $userResponse = $client->get('https://www.googleapis.com/oauth2/v2/userinfo', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken
+                ]
+            ]);
+
+            $googleUser = json_decode((string) $userResponse->getBody());
+
+            // Find or create user
+            $user = User::firstOrCreate(
+                ['email' => $googleUser->email],
+                [
+                    'name' => $googleUser->name,
+                    'email' => $googleUser->email,
+                    'google_id' => $googleUser->id,
+                    'password' => Hash::make(uniqid()),
+                    'is_active' => true,
+                ]
+            );
+
+            // Create cart if doesn't exist
+            if (!$user->cart) {
+                Cart::create(['user_id' => $user->id]);
+            }
+
+            // Generate token
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Google login successful',
+                'data' => [
+                    'user' => $user,
+                    'token' => $token,
+                    'token_type' => 'Bearer'
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Google authentication failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

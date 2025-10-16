@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\SocialAuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoryController;
@@ -24,6 +25,15 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\Api\SearchController;
 
+// ============================================================================
+// OAUTH ROUTES - STATELESS (No CSRF, No Session)
+// These MUST be outside the main group to avoid Sanctum's stateful middleware
+// ============================================================================
+Route::prefix('v1/auth')->group(function () {
+    Route::post('/google', [SocialAuthController::class, 'handleGoogleCallback']);
+    Route::post('/strava', [SocialAuthController::class, 'handleStravaCallback']);
+});
+
 // Search Routes
 Route::prefix('search')->group(function () {
     Route::get('/', [SearchController::class, 'search']);
@@ -44,10 +54,6 @@ Route::prefix('v1')->group(function () {
     Route::get('/products/slug/{slug}', [ProductController::class, 'showBySlug']);
     Route::get('/products/{id}/variants', [ProductVariantController::class, 'getByProduct']);
     Route::get('/products/{id}/reviews', [ReviewController::class, 'getByProduct']);
-
-    // Socials Auth
-    Route::post('/auth/google', [\App\Http\Controllers\Api\SocialAuthController::class, 'handleGoogleCallback']);
-    Route::post('/auth/strava', [\App\Http\Controllers\Api\SocialAuthController::class, 'handleStravaCallback']);
     
     // Categories
     Route::get('/categories', [CategoryController::class, 'index']);

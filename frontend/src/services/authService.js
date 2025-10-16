@@ -1,4 +1,6 @@
 // frontend/src/services/authService.js
+import axios from 'axios';
+import { fetchCsrfCookie } from './csrfService';
 import api from './api';
 
 const TOKEN_KEY = 'authToken';
@@ -32,6 +34,8 @@ const authService = {
    * @returns {Promise<Object>} Registration response with token and user
    */
   register: async (userData) => {
+    await fetchCsrfCookie();
+    
     const requestData = {
       name: userData.name,
       email: userData.email,
@@ -100,6 +104,8 @@ const authService = {
    * @returns {Promise<Object>} Login response with token and user
    */
   login: async (credentials) => {
+    await fetchCsrfCookie();
+    
     const requestData = {
       email: credentials.email,
       password: credentials.password
@@ -347,61 +353,159 @@ const authService = {
     }
   },
 
-  /**
-   * Handle Google OAuth callback
-   * @param {string} code - Authorization code from Google
-   * @returns {Promise<Object>} Auth response with token and user
-   */
-  googleLogin: async (code) => {
-    try {
-      console.log('🔐 Google OAuth login with code');
+// ============================================================================
+// OAUTH AUTHENTICATION - Replace these functions in authService.js
+// ============================================================================
 
-      const response = await api.post('/auth/google', { code });
+/**
+ * Handle Google OAuth callback
+ * @param {string} code - Authorization code from Google
+ * @returns {Promise<Object>} Auth response with token and user
+ */
+googleLogin: async (code) => {
+  try {
+    console.log('🔐 Google OAuth login initiated');
+    console.log('📋 Authorization code:', code?.substring(0, 20) + '...');
 
-      console.log('✅ Google login successful:', {
-        hasToken: !!response.data?.data?.token,
-        hasUser: !!response.data?.data?.user
-      });
+   await fetchCsrfCookie();
+    console.log('🍪 CSRF cookie fetched');
 
-      // Store token
-      if (response.data?.data?.token) {
-        authService.setToken(response.data.data.token);
-      }
+    const response = await api.post('/auth/google', { code });
 
-      return response.data.data;
-    } catch (error) {
-      console.error('❌ Google login failed:', error.response?.data || error.message);
-      throw error;
+    console.log('✅ Google login API response:', {
+      status: response.status,
+      statusText: response.statusText,
+      hasData: !!response.data,
+      dataKeys: response.data ? Object.keys(response.data) : [],
+      fullResponse: response.data
+    });
+
+    // Handle different response structures
+    let authData;
+    if (response.data?.data) {
+      authData = response.data.data;
+    } else if (response.data?.token) {
+      authData = response.data;
+    } else {
+      console.error('❌ Unexpected response structure:', response.data);
+      throw new Error('Invalid response format from server');
     }
-  },
 
-  /**
-   * Handle Strava OAuth callback
-   * @param {string} code - Authorization code from Strava
-   * @returns {Promise<Object>} Auth response with token and user
-   */
-  stravaLogin: async (code) => {
-    try {
-      console.log('🚴 Strava OAuth login with code');
+    console.log('📦 Extracted auth data:', {
+      hasToken: !!authData?.token,
+      hasUser: !!authData?.user,
+      userName: authData?.user?.name,
+      userEmail: authData?.user?.email,
+    });
 
-      const response = await api.post('/auth/strava', { code });
-
-      console.log('✅ Strava login successful:', {
-        hasToken: !!response.data?.data?.token,
-        hasUser: !!response.data?.data?.user
-      });
-
-      // Store token
-      if (response.data?.data?.token) {
-        authService.setToken(response.data.data.token);
-      }
-
-      return response.data.data;
-    } catch (error) {
-      console.error('❌ Strava login failed:', error.response?.data || error.message);
-      throw error;
+    // Store token
+    if (authData?.token) {
+      authService.setToken(authData.token);
+      console.log('✅ Token stored successfully');
+    } else {
+      console.error('❌ No token in response');
+      throw new Error('No authentication token received');
     }
-  },
+
+    return authData;
+  } catch (error) {
+    console.error('❌ Google login failed');
+    console.error('📊 Error details:', {
+      message: error.message,
+      code: error.code,
+      hasResponse: !!error.response,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      responseData: error.response?.data,
+      responseHeaders: error.response?.headers,
+      requestURL: error.config?.url,
+      requestMethod: error.config?.method,
+      requestData: error.config?.data,
+    });
+
+    // Log the full error response body for debugging
+    if (error.response?.data) {
+      console.error('🔴 Full error response:', JSON.stringify(error.response.data, null, 2));
+    }
+
+    throw error;
+  }
+},
+
+/**
+ * Handle Strava OAuth callback
+ * @param {string} code - Authorization code from Strava
+ * @returns {Promise<Object>} Auth response with token and user
+ */
+stravaLogin: async (code) => {
+  try {
+    console.log('🚴 Strava OAuth login initiated');
+    console.log('📋 Authorization code:', code?.substring(0, 20) + '...');
+
+    await fetchCsrfCookie();
+    console.log('🍪 CSRF cookie fetched');
+
+    const response = await api.post('/auth/strava', { code });
+
+    console.log('✅ Strava login API response:', {
+      status: response.status,
+      statusText: response.statusText,
+      hasData: !!response.data,
+      dataKeys: response.data ? Object.keys(response.data) : [],
+      fullResponse: response.data
+    });
+
+    // Handle different response structures
+    let authData;
+    if (response.data?.data) {
+      authData = response.data.data;
+    } else if (response.data?.token) {
+      authData = response.data;
+    } else {
+      console.error('❌ Unexpected response structure:', response.data);
+      throw new Error('Invalid response format from server');
+    }
+
+    console.log('📦 Extracted auth data:', {
+      hasToken: !!authData?.token,
+      hasUser: !!authData?.user,
+      userName: authData?.user?.name,
+      userEmail: authData?.user?.email,
+    });
+
+    // Store token
+    if (authData?.token) {
+      authService.setToken(authData.token);
+      console.log('✅ Token stored successfully');
+    } else {
+      console.error('❌ No token in response');
+      throw new Error('No authentication token received');
+    }
+
+    return authData;
+  } catch (error) {
+    console.error('❌ Strava login failed');
+    console.error('📊 Error details:', {
+      message: error.message,
+      code: error.code,
+      hasResponse: !!error.response,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      responseData: error.response?.data,
+      responseHeaders: error.response?.headers,
+      requestURL: error.config?.url,
+      requestMethod: error.config?.method,
+      requestData: error.config?.data,
+    });
+
+    // Log the full error response body for debugging
+    if (error.response?.data) {
+      console.error('🔴 Full error response:', JSON.stringify(error.response.data, null, 2));
+    }
+
+    throw error;
+  }
+},
 
 };
 
