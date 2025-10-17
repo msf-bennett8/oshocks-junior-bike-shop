@@ -15,7 +15,7 @@ const LoginPage = () => {
   
   // Form state
   const [formData, setFormData] = useState({
-    email: '',
+    login: '',
     password: '',
     rememberMe: false
   });
@@ -64,12 +64,10 @@ const LoginPage = () => {
   const validateForm = () => {
     const errors = {};
     
-    // Email validation
-    if (!formData.email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Please enter a valid email address';
-    }
+    // Login field validation
+      if (!formData.login.trim()) {
+        errors.login = 'Email, phone, or username is required';
+      }
     
     // Password validation
     if (!formData.password) {
@@ -102,7 +100,7 @@ const LoginPage = () => {
       
       // Call login from AuthContext
       const result = await loginUser({
-        email: formData.email.trim().toLowerCase(),
+        login: formData.login.trim(),
         password: formData.password
       });
 
@@ -195,32 +193,32 @@ const LoginPage = () => {
         {/* Login Form */}
         <div className="bg-white py-8 px-6 shadow-xl rounded-lg">
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Email Input */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+            {/* Login Input - Supports Email, Phone, or Username */}
+              <div>
+                <label htmlFor="login" className="block text-sm font-medium text-gray-700 mb-2">
+                  Email, Phone, or Username
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="login"
+                    name="login"
+                    type="text"
+                    autoComplete="username"
+                    value={formData.login}
+                    onChange={handleChange}
+                    className={`block w-full pl-10 pr-3 py-2.5 border ${
+                      validationErrors.login ? 'border-red-300' : 'border-gray-300'
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+                    placeholder="email@example.com or username or +254712345678"
+                  />
                 </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`block w-full pl-10 pr-3 py-2.5 border ${
-                    validationErrors.email ? 'border-red-300' : 'border-gray-300'
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
-                  placeholder="you@example.com"
-                />
+                {validationErrors.login && (
+                  <p className="mt-1 text-xs text-red-600">{validationErrors.login}</p>
+                )}
               </div>
-              {validationErrors.email && (
-                <p className="mt-1 text-xs text-red-600">{validationErrors.email}</p>
-              )}
-            </div>
 
             {/* Password Input */}
             <div>

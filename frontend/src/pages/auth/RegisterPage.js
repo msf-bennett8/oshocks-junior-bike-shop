@@ -14,12 +14,13 @@ const RegisterPage = () => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    username: '',
     email: '',
     phone: '',
     password: '',
     confirmPassword: '',
     city: '',
-    userType: 'customer', // customer or seller
+    userType: 'customer',
     agreeToTerms: false,
     subscribeNewsletter: true
   });
@@ -163,6 +164,7 @@ const RegisterPage = () => {
       // Prepare registration data
       const registrationData = {
         name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+        username: formData.username.trim() || null,
         email: formData.email.trim().toLowerCase(),
         phone: formData.phone.replace(/\s/g, ''),
         password: formData.password,
@@ -399,6 +401,33 @@ const RegisterPage = () => {
                     )}
                   </div>
                 </div>
+
+                {/* Username (Optional) */}
+                  <div>
+                    <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+                      Username <span className="text-gray-500 text-xs">(optional)</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <User className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        id="username"
+                        name="username"
+                        type="text"
+                        value={formData.username}
+                        onChange={handleChange}
+                        className={`block w-full pl-10 pr-3 py-2.5 border ${
+                          validationErrors.username ? 'border-red-300' : 'border-gray-300'
+                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+                        placeholder="coolcyclist"
+                      />
+                    </div>
+                    {validationErrors.username && (
+                      <p className="mt-1 text-xs text-red-600">{validationErrors.username}</p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-500">Choose a unique username for easy login</p>
+                  </div>
 
                 {/* Email */}
                 <div>

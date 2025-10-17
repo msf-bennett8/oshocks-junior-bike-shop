@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { 
   Package, ShoppingBag, Heart, MapPin, Bell, User, TrendingUp, Clock, CheckCircle, 
   XCircle, Truck, Star, Eye, MessageSquare, CreditCard, Gift, Award, Zap, 
@@ -12,6 +13,7 @@ const UserDashboard = () => {
   const [timeFilter, setTimeFilter] = useState('7days');
   const [showOrderDetails, setShowOrderDetails] = useState(null);
   const [activeWidget, setActiveWidget] = useState('overview');
+  const { user } = useAuth();
 
   const [recentOrders] = useState([
     {
@@ -171,7 +173,7 @@ const UserDashboard = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 flex items-center gap-3">
-                Welcome back, John! 
+                Welcome back, {user?.name?.split(' ')[0]}! 
                 <span className="text-2xl">👋</span>
               </h1>
               <p className="text-sm sm:text-base text-gray-600 mt-2">

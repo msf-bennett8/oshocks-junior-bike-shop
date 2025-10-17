@@ -28,129 +28,135 @@ const authService = {
   // AUTHENTICATION ENDPOINTS
   // ============================================================================
 
-  /**
-   * Register new user - tries multiple endpoint patterns
-   * @param {Object} userData - User registration data
-   * @returns {Promise<Object>} Registration response with token and user
-   */
-  register: async (userData) => {
-    await fetchCsrfCookie();
-    
-    const requestData = {
-      name: userData.name,
-      email: userData.email,
-      password: userData.password,
-      password_confirmation: userData.passwordConfirmation || userData.password_confirmation,
-      phone: userData.phone,
-      address: userData.address || ''
-    };
+/**
+ * Register new user - tries multiple endpoint patterns
+ * @param {Object} userData - User registration data
+ * @returns {Promise<Object>} Registration response with token and user
+ */
+register: async (userData) => {
+  await fetchCsrfCookie();
+  
+  const requestData = {
+    name: userData.name,
+    username: userData.username || null,
+    email: userData.email || null,
+    password: userData.password,
+    password_confirmation: userData.passwordConfirmation || userData.password_confirmation,
+    phone: userData.phone || null,
+    address: userData.address || ''
+  };
 
-    console.log('📝 Registration request data:', {
-      name: requestData.name,
-      email: requestData.email,
-      phone: requestData.phone,
-      address: requestData.address,
-      hasPassword: !!requestData.password
-    });
+  console.log('📝 Registration request data:', {
+    name: requestData.name,
+    username: requestData.username,
+    email: requestData.email,
+    phone: requestData.phone,
+    address: requestData.address,
+    hasPassword: !!requestData.password
+  });
 
-    // Try different endpoint patterns
-    const endpoints = [
-      '/auth/register',
-      '/auth/signup',
-      '/register'
-    ];
+  // Try different endpoint patterns
+  const endpoints = [
+    '/auth/register',
+    '/auth/signup',
+    '/register'
+  ];
 
-    for (const endpoint of endpoints) {
-      try {
-        console.log(`🔄 Trying endpoint: ${endpoint}`);
-        
-        const response = await api.post(endpoint, requestData);
+  for (const endpoint of endpoints) {
+    try {
+      console.log(`🔄 Trying endpoint: ${endpoint}`);
+      
+      const response = await api.post(endpoint, requestData);
 
-        console.log('✅ Registration successful with endpoint:', endpoint, {
-          status: response.status,
-          hasToken: !!response.data?.token,
-          hasUser: !!response.data?.user
-        });
+      console.log('✅ Registration successful with endpoint:', endpoint, {
+        status: response.status,
+        hasToken: !!response.data?.token,
+        hasUser: !!response.data?.user
+      });
 
-        return response.data;
-      } catch (error) {
-        // If it's a 404, try next endpoint
-        if (error.response?.status === 404) {
-          console.log(`❌ 404 on ${endpoint}, trying next...`);
-          continue;
-        }
-        
-        // If it's any other error (validation, etc.), throw it
-        console.error('❌ Registration failed:', {
-          endpoint,
-          status: error.response?.status,
-          message: error.response?.data?.message,
-          errors: error.response?.data?.errors
-        });
-        throw error;
+      return response.data;
+    } catch (error) {
+      // If it's a 404, try next endpoint
+      if (error.response?.status === 404) {
+        console.log(`❌ 404 on ${endpoint}, trying next...`);
+        continue;
       }
+      
+      // If it's any other error (validation, etc.), throw it
+      console.error('❌ Registration failed:', {
+        endpoint,
+        status: error.response?.status,
+        message: error.response?.data?.message,
+        errors: error.response?.data?.errors
+      });
+      throw error;
     }
+  }
 
-    // If all endpoints failed with 404
-    throw new Error(
-      'Registration endpoint not found. Please contact support. ' +
-      'Tried endpoints: ' + endpoints.join(', ')
-    );
-  },
+  // If all endpoints failed with 404
+  throw new Error(
+    'Registration endpoint not found. Please contact support. ' +
+    'Tried endpoints: ' + endpoints.join(', ')
+  );
+},
 
-  /**
-   * Login user - tries multiple endpoint patterns
-   * @param {Object} credentials - Email and password
-   * @returns {Promise<Object>} Login response with token and user
-   */
-  login: async (credentials) => {
-    await fetchCsrfCookie();
-    
-    const requestData = {
-      email: credentials.email,
-      password: credentials.password
-    };
+/**
+ * Login user - tries multiple endpoint patterns
+ * Supports email, phone, or username + password
+ * @param {Object} credentials - Login identifier and password
+ * @returns {Promise<Object>} Login response with token and user
+ */
+login: async (credentials) => {
+  await fetchCsrfCookie();
+  
+  // Support both 'email' (legacy) and 'login' (new flexible field)
+  const loginIdentifier = credentials.login || credentials.email;
+  
+  const requestData = {
+    login: loginIdentifier,
+    password: credentials.password
+  };
 
-    console.log('🔐 Login attempt for:', requestData.email);
+  console.log('🔐 Login attempt with:', loginIdentifier);
 
-    const endpoints = [
-      '/auth/login',
-      '/login'
-    ];
+  const endpoints = [
+    '/auth/login',
+    '/login'
+  ];
 
-    for (const endpoint of endpoints) {
-      try {
-        console.log(`🔄 Trying login endpoint: ${endpoint}`);
-        
-        const response = await api.post(endpoint, requestData);
+  for (const endpoint of endpoints) {
+    try {
+      console.log(`🔄 Trying login endpoint: ${endpoint}`);
+      
+      const response = await api.post(endpoint, requestData);
 
-        console.log('✅ Login successful with endpoint:', endpoint, {
-          status: response.status,
-          hasToken: !!response.data?.token,
-          hasUser: !!response.data?.user
-        });
+      console.log('✅ Login successful with endpoint:', endpoint, {
+        status: response.status,
+        hasToken: !!response.data?.token,
+        hasUser: !!response.data?.user
+      });
 
-        return response.data;
-      } catch (error) {
-        if (error.response?.status === 404) {
-          console.log(`❌ 404 on ${endpoint}, trying next...`);
-          continue;
-        }
-        
-        console.error('❌ Login failed:', {
-          endpoint,
-          status: error.response?.status,
-          message: error.response?.data?.message
-        });
-        throw error;
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 404) {
+        console.log(`❌ 404 on ${endpoint}, trying next...`);
+        continue;
       }
+      
+      console.error('❌ Login failed:', {
+        endpoint,
+        status: error.response?.status,
+        message: error.response?.data?.message
+      });
+      throw error;
     }
+  }
 
-    throw new Error(
-      'Login endpoint not found. Please contact support. ' +
-      'Tried endpoints: ' + endpoints.join(', ')
-    );
-  },
+  throw new Error(
+    'Login endpoint not found. Please contact support. ' +
+    'Tried endpoints: ' + endpoints.join(', ')
+  );
+},
 
   /**
    * Logout user

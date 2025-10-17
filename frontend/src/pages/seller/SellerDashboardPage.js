@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import {
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, Package, Users,
   Eye, Star, AlertCircle, Clock, CheckCircle, XCircle, Truck, Heart,
@@ -20,6 +21,7 @@ const SellerDashboardPage = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState('revenue');
   const [showNotifications, setShowNotifications] = useState(false);
+  const { user } = useAuth();
 
   // Mock data - Replace with API calls
   const [stats, setStats] = useState({
@@ -357,10 +359,10 @@ const SellerDashboardPage = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                Seller Dashboard
+                Welcome back, {user?.name?.split(' ')[0]}! 👋
                 {refreshing && <RefreshCw className="w-6 h-6 text-orange-600 animate-spin" />}
               </h1>
-              <p className="text-gray-600 mt-1">Welcome back! Here's your business overview</p>
+              <p className="text-gray-600 mt-1">Here's your business overview for today</p>
               <div className="flex items-center gap-4 mt-2">
                 <span className="text-sm text-gray-500">Last updated: Just now</span>
                 <span className="text-sm text-green-600 flex items-center gap-1">

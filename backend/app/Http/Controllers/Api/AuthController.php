@@ -11,58 +11,71 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
     // Register
-    public function register(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'phone' => 'required|string|max:20|unique:users',
-            'address' => 'nullable|string',
-        ]);
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'phone' => $request->phone,
-            'address' => $request->address,
-            'role' => 'buyer',
-        ]);
-
-        $token = $user->createToken('auth-token')->plainTextToken;
-
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-            'message' => 'Registration successful'
-        ], 201);
-    }
-
-    // Login
-    public function login(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+        public function register(Request $request)
+        {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'username' => 'nullable|string|max:50|unique:users|regex:/^[a-zA-Z0-9_]+$/',
+                'email' => 'nullable|string|email|max:255|unique:users',
+                'password' => 'required|string|min:8|confirmed',
+                'phone' => 'nullable|string|max:20|unique:users',
+                'address' => 'nullable|string',
             ]);
+
+            // Ensure at least one of email, phone, or username is provided
+            if (!$request->email && !$request->phone && !$request->username) {
+                return response()->json([
+                    'message' => 'At least one of email, phone, or username is required'
+                ], 422);
+            }
+
+            $user = User::create([
+                'name' => $request->name,
+                'username' => $request->username,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'phone' => $request->phone,
+                'address' => $request->address,
+                'role' => 'buyer',
+            ]);
+
+            $token = $user->createToken('auth-token')->plainTextToken;
+
+            return response()->json([
+                'user' => $user,
+                'token' => $token,
+                'message' => 'Registration successful'
+            ], 201);
         }
 
-        $token = $user->createToken('auth-token')->plainTextToken;
+    // Login
+        public function login(Request $request)
+        {
+            $request->validate([
+                'login' => 'required|string',
+                'password' => 'required',
+            ]);
 
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-            'message' => 'Login successful'
-        ]);
-    }
+            // Determine if login is email, phone, or username
+            $loginField = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 
+                        (preg_match('/^[+]?[0-9]{10,15}$/', $request->login) ? 'phone' : 'username');
+
+            $user = User::where($loginField, $request->login)->first();
+
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                throw ValidationException::withMessages([
+                    'login' => ['The provided credentials are incorrect.'],
+                ]);
+            }
+
+            $token = $user->createToken('auth-token')->plainTextToken;
+
+            return response()->json([
+                'user' => $user,
+                'token' => $token,
+                'message' => 'Login successful'
+            ]);
+        }
 
     // Logout
     public function logout(Request $request)

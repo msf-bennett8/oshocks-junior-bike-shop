@@ -63,30 +63,36 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login user
-  const login = async (credentials) => {
-    try {
-      setLoading(true);
-      setError(null);
+// Login user
+const login = async (credentials) => {
+  try {
+    setLoading(true);
+    setError(null);
 
-      const data = await authService.login(credentials);
+    // Support flexible login: use 'login' field or fallback to 'email' for backward compatibility
+    const loginData = {
+      login: credentials.login || credentials.email,
+      password: credentials.password
+    };
 
-      // Store token
-      authService.setToken(data.token);
+    const data = await authService.login(loginData);
 
-      // Update state
-      setUser(data.user);
-      setIsAuthenticated(true);
+    // Store token
+    authService.setToken(data.token);
 
-      return { success: true, user: data.user };
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Login failed';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Update state
+    setUser(data.user);
+    setIsAuthenticated(true);
+
+    return { success: true, user: data.user };
+  } catch (err) {
+    const errorMessage = err.response?.data?.message || 'Login failed';
+    setError(errorMessage);
+    return { success: false, error: errorMessage };
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Logout user
   const logout = async () => {

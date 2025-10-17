@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { 
   TrendingUp, TrendingDown, ShoppingCart, Package, Users, DollarSign, 
   Eye, AlertCircle, CheckCircle, Clock, XCircle, Star, MapPin, 
@@ -12,6 +13,7 @@ const AdminDashboardPage = () => {
   const [timeRange, setTimeRange] = useState('7days');
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+  const { user } = useAuth();
 
   // Mock data for dashboard
   const [dashboardData ] = useState({
@@ -289,9 +291,11 @@ const AdminDashboardPage = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Welcome back, {user?.name?.split(' ')[0]}! 👋
+          </h1>
           <p className="text-gray-600">
-            Welcome back! Here's what's happening with Oshocks Junior Bike Shop today.
+            Here's what's happening with your Oshocks dashboard today.
           </p>
           <p className="text-sm text-gray-500 mt-1">
             Last updated: {lastUpdated.toLocaleTimeString()}
