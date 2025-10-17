@@ -35,7 +35,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 # Copy the rest of the application
 COPY . /var/www/html
 
-# Create .env from example if it doesn't exist
+# Create .env from example if it doesn't exist (environment variables will override)
 RUN cp .env.example .env 2>/dev/null || true
 
 # Create all necessary directories
@@ -56,14 +56,14 @@ RUN chown -R www-data:www-data \
 # Enable Apache modules
 RUN a2enmod rewrite headers
 
-# Configure Apache DocumentRoot
+# Configure Apache DocumentRoot to Laravel's public directory
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
 # Update Apache configuration
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Configure Laravel directory
+# Configure Laravel directory in Apache
 RUN echo '<Directory /var/www/html/public>\n\
     Options Indexes FollowSymLinks\n\
     AllowOverride All\n\
@@ -71,38 +71,30 @@ RUN echo '<Directory /var/www/html/public>\n\
 </Directory>' > /etc/apache2/conf-available/laravel.conf && \
     a2enconf laravel
 
-# Set ServerName
+# Set ServerName to suppress Apache warning
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # Expose port 80
 EXPOSE 80
 
-# Create migration script (runs in background)
-RUN echo '#!/bin/bash\n\
-# Run migrations in background (non-blocking)\n\
-(sleep 10 && php artisan migrate --force 2>&1 | logger -t migrations) &\n\
-' > /run-migrations.sh && chmod +x /run-migrations.sh
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost/ || exit 1
 
-# Create entrypoint script
-RUN echo '#!/bin/bash\n\
-set -e\n\
-\n\
-echo "=== Starting Laravel Application ==="\n\
-\n\
-# Configure Apache for dynamic port\n\
-echo "Configuring Apache for port ${PORT:-80}..."\n\
-sed -i "s/Listen 80/Listen ${PORT:-80}/" /etc/apache2/ports.conf\n\
-sed -i "s/:80/:${PORT:-80}/" /etc/apache2/sites-available/000-default.conf\n\
-\n\
-# Cache config and routes (ignore errors)\n\
-php artisan config:cache 2>/dev/null || true\n\
-php artisan route:cache 2>/dev/null || true\n\
-\n\
-# Start migrations in background\n\
-/run-migrations.sh\n\
-\n\
-echo "=== Starting Apache ==="\n\
-exec apache2-foreground\n\
-' > /entrypoint.sh && chmod +x /entrypoint.sh
-
-CMD ["/entrypoint.sh"]
+# Startup script with error handling
+CMD set -e && \
+    echo "=== Starting Laravel Application ===" && \
+    echo "Checking environment..." && \
+    php -v && \
+    echo "Testing database connection..." && \
+    php artisan migrate:status || echo "Warning: Could not connect to database" && \
+    echo "Caching configuration..." && \
+    php artisan config:cache && \
+    echo "Caching routes..." && \
+    php artisan route:cache && \
+    echo "Caching views (if possible)..." && \
+    (php artisan view:cache || echo "View cache skipped - no views found") && \
+    echo "Running migrations..." && \
+    (php artisan migrate --force || echo "Warning: Migrations failed") && \
+    echo "=== Starting Apache ===" && \
+    apache2-foreground
