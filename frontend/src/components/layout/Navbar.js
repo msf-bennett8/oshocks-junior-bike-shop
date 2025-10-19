@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import authService from '../../services/authService';
 import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowUp, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Star, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, UserCog, Users, Package2, BarChart3, FolderTree } from 'lucide-react';
 import SearchBar from '../common/SearchBar'; // ← IMPORT THE NEW SEARCHBAR
 
@@ -13,6 +14,15 @@ const Navbar = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+  const [lastClickTime, setLastClickTime] = useState(0);
+  const [showElevationModal, setShowElevationModal] = useState(false);
+  const [elevationMessage, setElevationMessage] = useState('');
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileMenuRef = useRef(null);
+  const [elevationPassword, setElevationPassword] = useState('');
+  const [isElevating, setIsElevating] = useState(false);
+  const [elevationError, setElevationError] = useState('');
 
   const { isAuthenticated, user, logout } = useAuth();
   const { cartItems } = useCart();
@@ -21,6 +31,20 @@ const Navbar = () => {
   const desktopMenuRef = useRef(null);
 
   const cartItemCount = cartItems?.length || 0;
+
+  // Close profile menu when clicking outside
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+      setShowProfileMenu(false);
+    }
+  };
+
+  if (showProfileMenu) {
+    document.addEventListener('mousedown', handleClickOutside);
+  }
+  return () => document.removeEventListener('mousedown', handleClickOutside);
+}, [showProfileMenu]);
 
   // Handle scroll to show/hide navbar and scroll-to-top button
   useEffect(() => {
@@ -66,6 +90,86 @@ const Navbar = () => {
   const isActiveRoute = (path) => {
     return location.pathname === path;
   };
+
+const handleUserIconClick = (e) => {
+  e.preventDefault();
+  const now = Date.now();
+  
+  // Reset if more than 3 seconds since last click
+  if (now - lastClickTime > 3000) {
+    setClickCount(1);
+    setLastClickTime(now);
+    setShowProfileMenu(!showProfileMenu); // Toggle on first click
+    return;
+  }
+  
+  const newCount = clickCount + 1;
+  setClickCount(newCount);
+  setLastClickTime(now);
+  
+  // If rapid clicking detected (5+ clicks in 3 seconds), don't toggle menu
+  if (newCount >= 5) {
+    setShowProfileMenu(false); // Close menu when admin mode starts
+  }
+  
+  // Show countdown messages
+  if (newCount === 7) {
+    setElevationMessage('4 more clicks to access admin settings...');
+  } else if (newCount === 8) {
+    setElevationMessage('3 more clicks...');
+  } else if (newCount === 9) {
+    setElevationMessage('2 more clicks...');
+  } else if (newCount === 10) {
+    setElevationMessage('1 more click...');
+  } else if (newCount === 11) {
+    setShowElevationModal(true);
+    setClickCount(0);
+    setElevationMessage('');
+  } else if (newCount < 5) {
+    // Less than 5 clicks - toggle profile menu normally
+    setShowProfileMenu(!showProfileMenu);
+  }
+};
+
+const handleElevation = async () => {
+  if (!elevationPassword.trim()) {
+    setElevationError('Please enter a password');
+    return;
+  }
+
+  setIsElevating(true);
+  setElevationError('');
+
+  try {
+    const response = await authService.secretElevate(elevationPassword);
+    
+    // Success! Refresh user data
+    const userData = await authService.getCurrentUser();
+    
+    // Close modal
+    setShowElevationModal(false);
+    setElevationPassword('');
+    
+    // Show success message
+    alert(`✅ Elevated to ${response.data.role.toUpperCase()}! Redirecting...`);
+    
+    // Redirect based on role
+    if (response.data.role === 'super_admin') {
+      navigate('/super-admin/dashboard');
+    } else if (response.data.role === 'admin') {
+      navigate('/admin/dashboard');
+    }
+    
+    // Reload to update UI
+    window.location.reload();
+  } catch (error) {
+    setElevationError(
+      error.response?.data?.message || 'Invalid password. Access denied.'
+    );
+  } finally {
+    setIsElevating(false);
+  }
+};
 
   const menuCategories = [
     {
@@ -329,30 +433,81 @@ const Navbar = () => {
                 <Search size={20} className="text-gray-700" />
               </button>
 
-              {/* User Account */}
-              {isAuthenticated ? (
-                <Link
-                  to="/dashboard"
-                  className="flex items-center gap-1 px-2 sm:px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <User size={20} className="text-gray-700" />
-                  <div className="hidden md:flex flex-col items-start">
-                    <span className="text-xs text-gray-600">Hello, {user?.name?.split(' ')[0] || 'User'}</span>
-                    <span className="text-sm font-semibold text-gray-900">Account</span>
+            {/* User Account */}
+{isAuthenticated ? (
+  <div className="relative" ref={profileMenuRef}>
+    <div
+      onClick={handleUserIconClick}
+      className="flex items-center gap-1 px-2 sm:px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+    >
+      <User size={20} className="text-gray-700" />
+      <div className="hidden md:flex flex-col items-start">
+        <span className="text-xs text-gray-600">Hello, {user?.name?.split(' ')[0] || 'User'}</span>
+        <span className="text-sm font-semibold text-gray-900">Account</span>
+      </div>
+    </div>
+    
+                {/* Profile Dropdown Menu */}
+                {showProfileMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 animate-fade-in">
+                    <Link
+                      to="/dashboard"
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors"
+                    >
+                      <LayoutDashboard size={18} className="text-gray-600" />
+                      <span className="text-gray-900">Dashboard</span>
+                    </Link>
+                    <Link
+                      to="/profile"
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors"
+                    >
+                      <User size={18} className="text-gray-600" />
+                      <span className="text-gray-900">Profile</span>
+                    </Link>
+                    <Link
+                      to="/orders"
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors"
+                    >
+                      <Package size={18} className="text-gray-600" />
+                      <span className="text-gray-900">Orders</span>
+                    </Link>
+                    <Link
+                      to="/settings"
+                      onClick={() => setShowProfileMenu(false)}
+                      className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors"
+                    >
+                      <Settings size={18} className="text-gray-600" />
+                      <span className="text-gray-900">Settings</span>
+                    </Link>
+                    <hr className="my-2" />
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setShowProfileMenu(false);
+                      }}
+                      className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors w-full text-left text-red-600"
+                    >
+                      <LogOut size={18} />
+                      <span>Logout</span>
+                    </button>
                   </div>
-                </Link>
-              ) : (
-                <Link
-                  to="/login"
-                  className="flex items-center gap-1 px-2 sm:px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <User size={20} className="text-gray-700" />
-                  <div className="hidden md:flex flex-col items-start">
-                    <span className="text-xs text-gray-600">Hello, Sign in</span>
-                    <span className="text-sm font-semibold text-gray-900">Account</span>
-                  </div>
-                </Link>
-              )}
+                )}
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="flex items-center gap-1 px-2 sm:px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <User size={20} className="text-gray-700" />
+                <div className="hidden md:flex flex-col items-start">
+                  <span className="text-xs text-gray-600">Hello, Sign in</span>
+                  <span className="text-sm font-semibold text-gray-900">Account</span>
+                </div>
+              </Link>
+            )}
 
               {/* Sign Up Button */}
               {!isAuthenticated && (
@@ -402,6 +557,83 @@ const Navbar = () => {
           </div>
         </div>
       </nav>
+
+      {/* Elevation Countdown Message */}
+      {elevationMessage && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
+          <div className="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg">
+            {elevationMessage}
+          </div>
+        </div>
+      )}
+
+      {/* Elevation Password Modal */}
+      {showElevationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Admin Access</h2>
+              <button
+                onClick={() => setShowElevationModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <p className="text-gray-600 mb-4">Enter admin password to elevate privileges</p>
+            
+            <input
+              type="password"
+              placeholder="Enter password"
+              value={elevationPassword}
+              onChange={(e) => setElevationPassword(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-2"
+              autoFocus
+              disabled={isElevating}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleElevation();
+                }
+              }}
+            />
+            
+            {elevationError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                {elevationError}
+              </div>
+            )}
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowElevationModal(false);
+                  setElevationPassword('');
+                  setElevationError('');
+                }}
+                disabled={isElevating}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleElevation}
+                disabled={isElevating}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isElevating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Verifying...</span>
+                  </>
+                ) : (
+                  'Submit'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Universal Search Overlay - NEW! */}
       {isSearchOpen && (

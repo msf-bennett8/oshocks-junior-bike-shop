@@ -513,6 +513,64 @@ stravaLogin: async (code) => {
   }
 },
 
+/**
+   * Elevate user to admin or super admin with secret password
+   * @param {string} password - Admin or super admin password
+   * @returns {Promise<Object>} Elevation response with new role
+   */
+  secretElevate: async (password) => {
+    try {
+      const token = authService.getToken();
+      
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      console.log('🔐 Attempting privilege elevation');
+
+      const response = await api.post('/auth/secret-elevate', 
+        { password }, 
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      console.log('✅ Elevation successful:', response.data.data?.role);
+
+      return response.data;
+    } catch (error) {
+      console.error('❌ Elevation failed:', error.response?.data?.message || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Revoke admin/super admin privileges back to buyer
+   * @returns {Promise<Object>} Success response
+   */
+  revokePrivileges: async () => {
+    try {
+      const token = authService.getToken();
+      
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      console.log('⬇️ Revoking admin privileges');
+
+      const response = await api.post('/auth/revoke-privileges', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      console.log('✅ Privileges revoked successfully');
+
+      return response.data;
+    } catch (error) {
+      console.error('❌ Privilege revocation failed:', error.message);
+      throw error;
+    }
+  },
+
 };
 
 export default authService;
