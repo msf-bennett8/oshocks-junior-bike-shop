@@ -31,12 +31,15 @@ class AuthController extends Controller
             ], 422);
         }
 
+        // Determine the actual role to assign
+        $assignedRole = $request->role === 'seller' ? 'pending_seller' : 'buyer';
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'phone' => $request->phone,
-            'role' => $request->role,
+            'role' => $assignedRole,
             'is_active' => true,
         ]);
 
@@ -46,9 +49,15 @@ class AuthController extends Controller
         // Generate token
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        // Prepare response message
+        $message = $assignedRole === 'pending_seller' 
+            ? 'Registration successful. Your seller account is pending approval.'
+            : 'Registration successful';
+
         return response()->json([
             'success' => true,
-            'message' => 'Registration successful',
+            'message' => $message,
+            'pending_seller_approval' => $assignedRole === 'pending_seller',
             'data' => [
                 'user' => $user,
                 'token' => $token,
@@ -392,5 +401,196 @@ class AuthController extends Controller
                 'message' => 'Google authentication failed: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Super Admin: Approve pending seller
+     */
+    public function approveSeller(Request $request, $id)
+    {
+        if (!$request->user()->hasSuperAdminAccess()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Super admin access required.'
+            ], 403);
+        }
+
+        $user = User::findOrFail($id);
+
+        if ($user->role !== 'pending_seller') {
+            return response()->json([
+                'success' => false,
+                'message' => 'User is not a pending seller'
+            ], 400);
+        }
+
+        $user->update(['role' => 'seller']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Seller approved successfully',
+            'data' => $user
+        ]);
+    }
+
+    /**
+     * Super Admin: Reject pending seller
+     */
+    public function rejectSeller(Request $request, $id)
+    {
+        if (!$request->user()->hasSuperAdminAccess()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Super admin access required.'
+            ], 403);
+        }
+
+        $user = User::findOrFail($id);
+
+        if ($user->role !== 'pending_seller') {
+            return response()->json([
+                'success' => false,
+                'message' => 'User is not a pending seller'
+            ], 400);
+        }
+
+        $user->update(['role' => 'buyer']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Seller request rejected. User reverted to buyer.',
+            'data' => $user
+        ]);
+    }
+
+    /**
+     * Super Admin: Get all pending sellers
+     */
+    public function getPendingSellers(Request $request)
+    {
+        if (!$request->user()->hasSuperAdminAccess()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Super admin access required.'
+            ], 403);
+        }
+
+        $pendingSellers = User::where('role', 'pending_seller')
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return response()->json([
+            'success' => true,
+            'data' => $pendingSellers
+        ]);
+    }
+
+    /**
+     * Secret endpoint: Elevate user to admin/super_admin
+     */
+    public function secretElevate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'password' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $adminPassword = env('ADMIN_PASSWORD');
+        $superAdminPassword = env('SUPER_ADMIN_PASSWORD');
+        $inputPassword = $request->password;
+
+        if ($inputPassword === $superAdminPassword) {
+            $request->user()->update(['role' => 'super_admin']);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Elevated to Super Admin',
+                'data' => ['role' => 'super_admin']
+            ]);
+        } elseif ($inputPassword === $adminPassword) {
+            $request->user()->update(['role' => 'admin']);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Elevated to Admin',
+                'data' => ['role' => 'admin']
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid password'
+            ], 403);
+        }
+    }
+
+    /**
+     * Admin/Super Admin: Revoke own privileges back to buyer
+     */
+    public function revokePrivileges(Request $request)
+    {
+        $user = $request->user();
+
+        if (!in_array($user->role, ['admin', 'super_admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not an admin or super admin'
+            ], 400);
+        }
+
+        $user->update(['role' => 'buyer']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Privileges revoked. You are now a buyer.',
+            'data' => $user
+        ]);
+    }
+
+    /**
+     * Super Admin: Change any user's role
+     */
+    public function changeUserRole(Request $request, $id)
+    {
+        if (!$request->user()->hasSuperAdminAccess()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Super admin access required.'
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'role' => 'required|in:buyer,seller,admin,pending_seller',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = User::findOrFail($id);
+
+        // Prevent changing own role via this endpoint
+        if ($user->id === $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot change your own role via this endpoint'
+            ], 400);
+        }
+
+        $user->update(['role' => $request->role]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User role updated successfully',
+            'data' => $user
+        ]);
     }
 }

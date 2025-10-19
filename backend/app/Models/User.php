@@ -101,4 +101,30 @@ class User extends Authenticatable
     {
         return $this->role === 'buyer';
     }
+
+    public function isPendingSeller()
+    {
+        return $this->role === 'pending_seller';
+    }
+
+    public function isSuperAdmin()
+    {
+        return $this->role === 'super_admin';
+    }
+
+    public function hasSellerAccess()
+    {
+        return in_array($this->role, ['seller', 'admin', 'super_admin']);
+    }
+
+    public function hasAdminAccess()
+    {
+        return in_array($this->role, ['admin', 'super_admin']);
+    }
+
+    public function hasSuperAdminAccess()
+    {
+        return $this->role === 'super_admin';
+    }
+    
 }

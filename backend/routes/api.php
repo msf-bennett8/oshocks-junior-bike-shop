@@ -162,7 +162,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         Route::get('/analytics/products', [ProductController::class, 'productAnalytics']);
     });
     
-    // Admin routes
+// Admin routes
     Route::prefix('admin')->middleware('role:admin')->group(function () {
         
         // User management
@@ -204,6 +204,24 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         Route::get('/activity-logs', [ActivityLogController::class, 'index']);
         Route::get('/activity-logs/{id}', [ActivityLogController::class, 'show']);
     });
+
+    // Super Admin routes
+    Route::prefix('super-admin')->group(function () {
+        
+        // Pending seller management
+        Route::get('/pending-sellers', [AuthController::class, 'getPendingSellers']);
+        Route::put('/sellers/{id}/approve', [AuthController::class, 'approveSeller']);
+        Route::put('/sellers/{id}/reject', [AuthController::class, 'rejectSeller']);
+        
+        // User role management
+        Route::put('/users/{id}/role', [AuthController::class, 'changeUserRole']);
+    });
+
+    // Secret elevation endpoint (works for any authenticated user)
+    Route::post('/auth/secret-elevate', [AuthController::class, 'secretElevate']);
+    
+    // Admin/Super Admin privilege revocation
+    Route::post('/auth/revoke-privileges', [AuthController::class, 'revokePrivileges']);
 });
 
 // M-Pesa callback (public - called by Safaricom)
