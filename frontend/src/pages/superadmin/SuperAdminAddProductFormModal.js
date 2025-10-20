@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, ImageIcon, Loader, AlertCircle, Check } from 'lucide-react';
 
-const ProductFormModal = ({ 
+const SuperAdminProductFormModal = ({ 
   isOpen, 
   onClose, 
   mode = 'create', // 'create' or 'edit'
@@ -506,4 +506,4 @@ const ProductFormModal = ({
   );
 };
 
-export default ProductFormModal;
+export default SuperAdminProductFormModal;

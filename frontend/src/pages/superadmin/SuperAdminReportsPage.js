@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TrendingUp, DollarSign, ShoppingCart, Users, Package, Star, Download, Calendar } from 'lucide-react';
 
-const AdminReportsPage = () => {
+const SuperAdminReportsPage = () => {
   const [dateRange, setDateRange] = useState('30days');
   const [reportType, setReportType] = useState('overview');
 
@@ -290,4 +290,4 @@ const AdminReportsPage = () => {
   );
 };
 
-export default AdminReportsPage;
+export default SuperAdminReportsPage;

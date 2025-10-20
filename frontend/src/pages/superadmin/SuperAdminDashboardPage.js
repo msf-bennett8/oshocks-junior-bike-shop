@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const AdminDashboardPage = () => {
+const SuperAdminDashboardPage = () => {
   const [timeRange, setTimeRange] = useState('7days');
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -929,4 +929,4 @@ const AdminDashboardPage = () => {
   );
 };
 
-export default AdminDashboardPage;
+export default SuperAdminDashboardPage;

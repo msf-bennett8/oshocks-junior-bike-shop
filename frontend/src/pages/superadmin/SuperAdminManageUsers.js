@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Edit2, Trash2, Search, Filter, Mail, Phone, MapPin, ShoppingBag, DollarSign, Calendar, Eye, Ban, CheckCircle, X, Save, UserPlus, Download, Upload } from 'lucide-react';
 
-const ManageUsers = () => {
+const SuperAdminManageUsers = () => {
   const [users, setUsers] = useState([
     {
       id: 1,
@@ -795,4 +795,4 @@ const ManageUsers = () => {
   );
 };
 
-export default ManageUsers;
+export default SuperAdminManageUsers;

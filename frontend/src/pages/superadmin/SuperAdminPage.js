@@ -8,7 +8,7 @@ import {
   Home, ChevronRight, Percent, Gift, Image, Folder
 } from 'lucide-react';
 
-const AdminPage = () => {
+const SuperAdminPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [darkMode, setDarkMode] = useState(false);
@@ -639,4 +639,4 @@ const AdminPage = () => {
   );
 };
 
-export default AdminPage;
+export default SuperAdminPage;

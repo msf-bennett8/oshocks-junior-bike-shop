@@ -3,7 +3,7 @@ import { Search, Filter, UserPlus, MoreVertical, Mail, Phone, MapPin, Calendar, 
 import { useAuth } from '../../context/AuthContext';
 import userService from '../../services/userService';
 
-const AdminUsersPage = () => {
+const SuperAdminAdminUsersPage = () => {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -497,4 +497,4 @@ const AdminUsersPage = () => {
   );
 };
 
-export default AdminUsersPage;
+export default SuperAdminAdminUsersPage;

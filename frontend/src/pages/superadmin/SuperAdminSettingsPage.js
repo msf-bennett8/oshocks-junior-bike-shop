@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Settings, Store, Bell, CreditCard, Truck, Mail, Shield, Globe, Image, DollarSign, Package, Users, Save, Upload, Eye, EyeOff, AlertCircle, CheckCircle, Smartphone } from 'lucide-react';
 
-const AdminSettingsPage = () => {
+const SuperAdminSettingsPage = () => {
   const [activeTab, setActiveTab] = useState('general');
   const [showApiKey, setShowApiKey] = useState(false);
   const [showSecretKey, setShowSecretKey] = useState(false);
@@ -952,4 +952,4 @@ const AdminSettingsPage = () => {
   );
 };
 
-export default AdminSettingsPage;
+export default SuperAdminSettingsPage;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import ProductFormModal from './ProductFormModal'; 
+import ProductFormModal from './AdminAddProductFormModal'; 
 import { 
   Search, Filter, Plus, Edit2, Trash2, Eye, Copy, MoreVertical,
   Package, DollarSign, TrendingUp, AlertCircle, Star, Image as ImageIcon,

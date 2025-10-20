@@ -85,6 +85,16 @@ const AdminCategoriesPage = lazy(() => import('./pages/admin/AdminCategoriesPage
 const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'));
 
+// Super Admin Dashboard
+const SuperAdminDashboardPage = lazy(() => import('./pages/superadmin/SuperAdminDashboardPage'));
+const SuperAdminUsersPage = lazy(() => import('./pages/superadmin/SuperAdminUsersPage'));
+const SuperAdminProductsPage = lazy(() => import('./pages/superadmin/SuperAdminProductsPage'));
+const SuperAdminOrdersPage = lazy(() => import('./pages/superadmin/SuperAdminOrdersPage'));
+const SuperAdminCategoriesPage = lazy(() => import('./pages/superadmin/SuperAdminCategoriesPage'));
+const SuperAdminAnalytics = lazy(() => import('./pages/superadmin/SuperAdminAnalytics'));
+const SuperAdminReportsPage = lazy(() => import('./pages/superadmin/SuperAdminReportsPage'));
+const SuperAdminSettingsPage = lazy(() => import('./pages/superadmin/SuperAdminSettingsPage'));
+
 // Legal & Policy Pages
 const PrivacyPolicyPage = lazy(() => import('./pages/legal/PrivacyPolicyPage'));
 const TermsPage = lazy(() => import('./pages/legal/TermsPage'));
@@ -190,6 +200,28 @@ const AdminRoute = ({ children }) => {
   }
 
   if (user?.role !== 'admin') {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return children;
+};
+
+/**
+ * Super Admin Route - Requires Super Admin Role
+ */
+const SuperAdminRoute = ({ children }) => {
+  const { user, isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return <LoadingSpinner fullScreen />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (user?.role !== 'super_admin') {
     return <Navigate to="/unauthorized" replace />;
   }
 
@@ -714,6 +746,82 @@ function App() {
                     <AdminRoute>
                       <AdminSettingsPage />
                     </AdminRoute>
+                  }
+                />
+
+                {/* ============================================
+                    SUPER ADMIN DASHBOARD (Super Admin Only)
+                    ============================================ */}
+
+                <Route
+                  path="/super-admin/dashboard"
+                  element={
+                    <SuperAdminRoute>
+                      <SuperAdminDashboardPage />
+                    </SuperAdminRoute>
+                  }
+                />
+
+                <Route
+                  path="/super-admin/users"
+                  element={
+                    <SuperAdminRoute>
+                      <SuperAdminUsersPage />
+                    </SuperAdminRoute>
+                  }
+                />
+
+                <Route
+                  path="/super-admin/products"
+                  element={
+                    <SuperAdminRoute>
+                      <SuperAdminProductsPage />
+                    </SuperAdminRoute>
+                  }
+                />
+
+                <Route
+                  path="/super-admin/orders"
+                  element={
+                    <SuperAdminRoute>
+                      <SuperAdminOrdersPage />
+                    </SuperAdminRoute>
+                  }
+                />
+
+                <Route
+                  path="/super-admin/categories"
+                  element={
+                    <SuperAdminRoute>
+                      <SuperAdminCategoriesPage />
+                    </SuperAdminRoute>
+                  }
+                />
+
+                <Route
+                  path="/super-admin/analytics"
+                  element={
+                    <SuperAdminRoute>
+                      <SuperAdminAnalytics />
+                    </SuperAdminRoute>
+                  }
+                />
+
+                <Route
+                  path="/super-admin/reports"
+                  element={
+                    <SuperAdminRoute>
+                      <SuperAdminReportsPage />
+                    </SuperAdminRoute>
+                  }
+                />
+
+                <Route
+                  path="/super-admin/settings"
+                  element={
+                    <SuperAdminRoute>
+                      <SuperAdminSettingsPage />
+                    </SuperAdminRoute>
                   }
                 />
 

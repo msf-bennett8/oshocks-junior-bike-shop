@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Edit2, Trash2, Eye, EyeOff, Search, Filter, ChevronDown, ChevronRight, Package, Image, Save, X } from 'lucide-react';
 
-const ManageCategories = () => {
+const SuperAdminManageCategories = () => {
   const [categories, setCategories] = useState([
     {
       id: 1,
@@ -561,4 +561,4 @@ const ManageCategories = () => {
   );
 };
 
-export default ManageCategories;
+export default SuperAdminManageCategories;

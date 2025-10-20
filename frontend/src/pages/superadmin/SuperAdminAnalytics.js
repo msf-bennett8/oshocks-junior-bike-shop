@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Package, Eye, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
-const Analytics = () => {
+const SuperAdminAnalytics = () => {
   const [timeRange, setTimeRange] = useState('7days');
 
   // Mock data for revenue trends
@@ -89,7 +89,7 @@ const Analytics = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Super Admin Analytics Dashboard</h1>
           <p className="text-gray-600">Monitor your marketplace performance and insights</p>
         </div>
 
@@ -320,4 +320,4 @@ const Analytics = () => {
   );
 };
 
-export default Analytics;
+export default SuperAdminAnalytics;

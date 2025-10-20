@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import ProductFormModal from './ProductFormModal'; 
+import ProductFormModal from './SuperAdminAddProductFormModal'; 
 import { 
   Search, Filter, Plus, Edit2, Trash2, Eye, Copy, MoreVertical,
   Package, DollarSign, TrendingUp, AlertCircle, Star, Image as ImageIcon,
@@ -8,7 +8,7 @@ import {
   Clock, CheckCircle, XCircle, Zap, Percent, Gift
 } from 'lucide-react';
 
-const AdminProductsPage = () => {
+const SuperAdminProductsPage = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -1202,4 +1202,4 @@ const AdminProductsPage = () => {
   );
 };
 
-export default AdminProductsPage;
+export default SuperAdminProductsPage;

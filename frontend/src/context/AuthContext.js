@@ -241,6 +241,21 @@ const login = async (credentials) => {
     return roles.includes(user?.role);
   };
 
+  // Refresh current user data (useful after role changes)
+  const refreshUser = async () => {
+    try {
+      setLoading(true);
+      const data = await authService.getCurrentUser();
+      setUser(data.user);
+      return { success: true, user: data.user };
+    } catch (err) {
+      console.error('Failed to refresh user:', err);
+      return { success: false, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     user,
     isAuthenticated,
@@ -257,7 +272,8 @@ const login = async (credentials) => {
     hasAnyRole,
     checkAuthStatus, 
     googleLogin, 
-    stravaLogin 
+    stravaLogin,
+    refreshUser   
   };
 
   return (

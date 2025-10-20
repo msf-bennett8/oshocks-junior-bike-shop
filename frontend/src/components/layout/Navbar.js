@@ -143,25 +143,21 @@ const handleElevation = async () => {
   try {
     const response = await authService.secretElevate(elevationPassword);
     
-    // Success! Refresh user data
-    const userData = await authService.getCurrentUser();
+    // Success! Get fresh user data
+    await authService.getCurrentUser();
     
     // Close modal
     setShowElevationModal(false);
     setElevationPassword('');
     
-    // Show success message
-    alert(`✅ Elevated to ${response.data.role.toUpperCase()}! Redirecting...`);
+    const newRole = response.data.role;
     
-    // Redirect based on role
-    if (response.data.role === 'super_admin') {
-      navigate('/super-admin/dashboard');
-    } else if (response.data.role === 'admin') {
-      navigate('/admin/dashboard');
+    // Redirect based on role BEFORE reload
+    if (newRole === 'super_admin') {
+      window.location.href = '/super-admin/dashboard';
+    } else if (newRole === 'admin') {
+      window.location.href = '/admin/dashboard';
     }
-    
-    // Reload to update UI
-    window.location.reload();
   } catch (error) {
     setElevationError(
       error.response?.data?.message || 'Invalid password. Access denied.'
@@ -171,64 +167,88 @@ const handleElevation = async () => {
   }
 };
 
-  const menuCategories = [
-    {
-      title: 'Shop Categories',
-      items: [
-        { name: 'Mountain Bikes', link: '/shop?category=mountain', icon: Mountain },
-        { name: 'Road Bikes', link: '/shop?category=road', icon: Bike },
-        { name: 'Electric Bikes', link: '/shop?category=electric', icon: Zap },
-        { name: 'Kids Bikes', link: '/shop?category=kids', icon: Baby },
-        { name: 'Accessories', link: '/shop?category=accessories', icon: Backpack },
-        { name: 'Spare Parts', link: '/spare-parts-accessories', icon: SettingsIcon },
-      ]
-    },
-    {
-      title: 'Quick Links',
-      items: [
-        { name: 'New Arrivals', link: '/new-arrivals', icon: Sparkles },
-        { name: 'Best Sellers', link: '/best-sellers', icon: Flame },
-        { name: 'Special Offers', link: '/special-offers', icon: DollarSign },
-        { name: 'Clearance Sale', link: '/clearance-sale', icon: Tag },
-        { name: 'Bike Finder', link: '/bike-finder', icon: Search },
-        { name: 'Gift Cards', link: '/gift-cards', icon: Gift },
-      ]
-    },
-    {
-      title: 'Admin',
-      items: [
-        { name: 'Dashboard', link: '/admin/dashboard', icon: LayoutDashboard },
-        { name: 'Manage Users', link: '/admin/users', icon: Users },
-        { name: 'Manage Products', link: '/admin/products', icon: Package2 },
-        { name: 'Orders', link: '/admin/orders', icon: Package },
-        { name: 'Categories', link: '/admin/categories', icon: FolderTree },
-        { name: 'Analytics', link: '/admin/analytics', icon: BarChart3 },
-        { name: 'Reports', link: '/admin/reports', icon: BarChart3 },
-        { name: 'Settings', link: '/admin/settings', icon: Settings },
-      ],
-      requiresAuth: true,
-      requiresRole: 'admin'
-    },
-    {
-      title: 'Resources',
-      items: [
-        { name: 'Size Guide', link: '/size-guide', icon: Ruler },
-        { name: 'Bike Maintenance', link: '/bike-maintenance', icon: Wrench },
-        { name: 'Warranty Info', link: '/warranty-information', icon: Shield },
-        { name: 'Safety Tips', link: '/safety', icon: AlertTriangle },
-        { name: 'Store Locations', link: '/store-locations', icon: MapPin },
-      ]
-    },
-    {
-      title: 'Company',
-      items: [
-        { name: 'About Us', link: '/about', icon: Info },
-        { name: 'Careers', link: '/careers', icon: Briefcase },
-        { name: 'Become a Seller', link: '/become-a-seller', icon: Store },
-        { name: 'Partner With Us', link: '/partner-with-us', icon: Handshake },
-      ]
+// Role-based menu categories
+  const menuCategories = React.useMemo(() => {
+    const categories = [
+      {
+        title: 'Shop Categories',
+        items: [
+          { name: 'Mountain Bikes', link: '/shop?category=mountain', icon: Mountain },
+          { name: 'Road Bikes', link: '/shop?category=road', icon: Bike },
+          { name: 'Electric Bikes', link: '/shop?category=electric', icon: Zap },
+          { name: 'Kids Bikes', link: '/shop?category=kids', icon: Baby },
+          { name: 'Accessories', link: '/shop?category=accessories', icon: Backpack },
+          { name: 'Spare Parts', link: '/spare-parts-accessories', icon: SettingsIcon },
+        ]
+      },
+      {
+        title: 'Quick Links',
+        items: [
+          { name: 'New Arrivals', link: '/new-arrivals', icon: Sparkles },
+          { name: 'Best Sellers', link: '/best-sellers', icon: Flame },
+          { name: 'Special Offers', link: '/special-offers', icon: DollarSign },
+          { name: 'Clearance Sale', link: '/clearance-sale', icon: Tag },
+          { name: 'Bike Finder', link: '/bike-finder', icon: Search },
+          { name: 'Gift Cards', link: '/gift-cards', icon: Gift },
+        ]
+      },
+      {
+        title: 'Resources',
+        items: [
+          { name: 'Size Guide', link: '/size-guide', icon: Ruler },
+          { name: 'Bike Maintenance', link: '/bike-maintenance', icon: Wrench },
+          { name: 'Warranty Info', link: '/warranty-information', icon: Shield },
+          { name: 'Safety Tips', link: '/safety', icon: AlertTriangle },
+          { name: 'Store Locations', link: '/store-locations', icon: MapPin },
+        ]
+      },
+      {
+        title: 'Company',
+        items: [
+          { name: 'About Us', link: '/about', icon: Info },
+          { name: 'Careers', link: '/careers', icon: Briefcase },
+          { name: 'Become a Seller', link: '/become-a-seller', icon: Store },
+          { name: 'Partner With Us', link: '/partner-with-us', icon: Handshake },
+        ]
+      }
+    ];
+
+    // Add Super Admin section if user is super admin
+    if (user?.role === 'super_admin') {
+      categories.push({
+        title: 'Super Admin',
+        items: [
+          { name: 'Dashboard', link: '/super-admin/dashboard', icon: LayoutDashboard },
+          { name: 'Manage Users', link: '/super-admin/users', icon: Users },
+          { name: 'Manage Products', link: '/super-admin/products', icon: Package2 },
+          { name: 'Orders', link: '/super-admin/orders', icon: Package },
+          { name: 'Categories', link: '/super-admin/categories', icon: FolderTree },
+          { name: 'Analytics', link: '/super-admin/analytics', icon: BarChart3 },
+          { name: 'Reports', link: '/super-admin/reports', icon: BarChart3 },
+          { name: 'Settings', link: '/super-admin/settings', icon: Settings },
+        ]
+      });
     }
-  ];
+    
+    // Add Admin section if user is admin (but not super admin)
+    else if (user?.role === 'admin') {
+      categories.push({
+        title: 'Admin',
+        items: [
+          { name: 'Dashboard', link: '/admin/dashboard', icon: LayoutDashboard },
+          { name: 'Manage Users', link: '/admin/users', icon: Users },
+          { name: 'Manage Products', link: '/admin/products', icon: Package2 },
+          { name: 'Orders', link: '/admin/orders', icon: Package },
+          { name: 'Categories', link: '/admin/categories', icon: FolderTree },
+          { name: 'Analytics', link: '/admin/analytics', icon: BarChart3 },
+          { name: 'Reports', link: '/admin/reports', icon: BarChart3 },
+          { name: 'Settings', link: '/admin/settings', icon: Settings },
+        ]
+      });
+    }
+
+    return categories;
+  }, [user?.role]);
 
   return (
     <>

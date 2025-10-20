@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, Eye, EyeOff, ChevronRight, ChevronDown, Filter, Download, Upload, AlertCircle, Check, X } from 'lucide-react';
 
-const AdminCategoriesPage = () => {
+const SuperAdminCategoriesPage = () => {
   const [categories, setCategories] = useState([]);
   const [filteredCategories, setFilteredCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -928,4 +928,4 @@ const AdminCategoriesPage = () => {
   );
 };
 
-export default AdminCategoriesPage;
+export default SuperAdminCategoriesPage;

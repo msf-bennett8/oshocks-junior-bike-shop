@@ -7,7 +7,7 @@ import {
   Printer, Send, RefreshCw, ArrowUpDown, X, Check
 } from 'lucide-react';
 
-const AdminOrdersPage = () => {
+const SuperAdminOrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -1135,4 +1135,4 @@ const AdminOrdersPage = () => {
   );
 };
 
-export default AdminOrdersPage;
+export default SuperAdminOrdersPage;
