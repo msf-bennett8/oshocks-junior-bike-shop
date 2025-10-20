@@ -132,6 +132,10 @@ const productSlice = createSlice({
       total: 0,
       hasMore: false,
     },
+  searchResults: null,
+  searchLoading: false,
+  searchError: null,
+
   },
   reducers: {
     clearCurrentProduct: (state) => {
@@ -203,7 +207,10 @@ const productSlice = createSlice({
       .addCase(searchProducts.fulfilled, (state, action) => {
         console.log('✅ Search fulfilled:', action.payload);
         state.searchLoading = false;
-        state.searchResults = action.payload.data || action.payload;
+        
+        // Store the entire payload which includes { success, data, query }
+        state.searchResults = action.payload;
+        
         console.log('📦 Search results stored:', state.searchResults);
       })
       .addCase(searchProducts.rejected, (state, action) => {

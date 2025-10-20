@@ -42,7 +42,7 @@ class SearchController extends Controller
                       ->orWhere('brand', 'like', "%{$query}%")
                       ->orWhere('sku', 'like', "%{$query}%");
                 })
-                ->with(['category', 'images'])
+                ->with(['category'])
                 ->limit(10)
                 ->get()
                 ->map(function($product) {
@@ -53,7 +53,6 @@ class SearchController extends Controller
                         'description' => $product->description,
                         'price' => $product->price,
                         'stock_quantity' => $product->stock_quantity,
-                        'image' => $product->images->first()->image_url ?? null,
                         'category' => $product->category->name ?? null,
                     ];
                 });
@@ -62,7 +61,6 @@ class SearchController extends Controller
         // Search Categories
         if ($type === 'all' || $type === 'categories') {
             $results['categories'] = Category::where('name', 'like', "%{$query}%")
-                ->orWhere('description', 'like', "%{$query}%")
                 ->limit(5)
                 ->get()
                 ->map(function($category) {
@@ -70,18 +68,20 @@ class SearchController extends Controller
                         'id' => $category->id,
                         'type' => 'category',
                         'name' => $category->name,
-                        'description' => $category->description,
-                        'slug' => $category->slug,
-                        'product_count' => $category->products()->count(),
+                        'description' => $category->description ?? '',
+                        'slug' => $category->slug ?? null,
+                        'product_count' => Product::where('category_id', $category->id)->count(),
                     ];
                 });
         }
 
         // Search Sellers
         if ($type === 'all' || $type === 'sellers') {
-            $results['sellers'] = SellerProfile::where('shop_name', 'like', "%{$query}%")
-                ->orWhere('business_name', 'like', "%{$query}%")
-                ->orWhere('description', 'like', "%{$query}%")
+            $results['sellers'] = SellerProfile::where(function($q) use ($query) {
+                    $q->where('business_name', 'like', "%{$query}%")
+                      ->orWhere('business_description', 'like', "%{$query}%");
+                })
+                ->where('status', 'approved')
                 ->with('user')
                 ->limit(5)
                 ->get()
@@ -89,22 +89,23 @@ class SearchController extends Controller
                     return [
                         'id' => $seller->user_id,
                         'type' => 'seller',
-                        'name' => $seller->shop_name,
-                        'description' => $seller->description,
+                        'name' => $seller->business_name,
+                        'description' => $seller->business_description ?? '',
                         'business_name' => $seller->business_name,
-                        'rating' => $seller->rating,
-                        'total_sales' => $seller->total_sales,
+                        'rating' => $seller->rating ?? 0,
+                        'total_sales' => $seller->total_sales ?? 0,
                     ];
                 });
         }
 
-        // Search Users (only if admin is searching or limit to public profiles)
+        // Search Users
         if ($type === 'all' || $type === 'users') {
             $results['users'] = User::where('role', 'user')
                 ->where(function($q) use ($query) {
-                    $q->where('name', 'like', "%{$query}%")
-                      ->orWhere('username', 'like', "%{$query}%")
-                      ->orWhere('email', 'like', "%{$query}%");
+                    $q->where('name', 'like', "%{$query}%");
+                    if (strpos($query, '@') !== false) {
+                        $q->orWhere('email', 'like', "%{$query}%");
+                    }
                 })
                 ->limit(5)
                 ->get()
@@ -113,7 +114,7 @@ class SearchController extends Controller
                         'id' => $user->id,
                         'type' => 'user',
                         'name' => $user->name,
-                        'username' => $user->username,
+                        'username' => $user->username ?? '',
                         'email' => $user->email,
                         'role' => $user->role,
                     ];
@@ -170,8 +171,6 @@ class SearchController extends Controller
      */
     public function trending()
     {
-        // For now, return static trending items
-        // Later you can track this in a database table
         $trending = [
             'Mountain Bikes',
             'Road Bikes',

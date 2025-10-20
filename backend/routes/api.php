@@ -24,6 +24,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\Seller\ProductController as SellerProductController;
 
 // ============================================================================
 // OAUTH ROUTES - STATELESS (No CSRF, No Session)
@@ -128,7 +129,9 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::put('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
     
-    // Seller routes
+    // ============================================================================
+    // SELLER ROUTES WITH CLOUDINARY SUPPORT
+    // ============================================================================
     Route::prefix('seller')->group(function () {
         
         // Seller profile
@@ -136,18 +139,20 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         Route::post('/profile', [SellerProfileController::class, 'createProfile']);
         Route::put('/profile', [SellerProfileController::class, 'updateProfile']);
         
-        // Seller products
-        Route::get('/products', [ProductController::class, 'myProducts']);
-        Route::post('/products', [ProductController::class, 'store']);
-        Route::put('/products/{id}', [ProductController::class, 'update']);
-        Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+        // Seller products (NEW - Cloudinary enabled)
+        Route::get('/products', [SellerProductController::class, 'index']);
+        Route::post('/products', [SellerProductController::class, 'store']);
+        Route::get('/products/{id}', [SellerProductController::class, 'show']);
+        Route::put('/products/{id}', [SellerProductController::class, 'update']);
+        Route::post('/products/{id}', [SellerProductController::class, 'update']); // For FormData with _method=PUT
+        Route::delete('/products/{id}', [SellerProductController::class, 'destroy']);
         
-        // Product variants
+        // Product variants (keep existing)
         Route::post('/products/{id}/variants', [ProductVariantController::class, 'store']);
         Route::put('/variants/{id}', [ProductVariantController::class, 'update']);
         Route::delete('/variants/{id}', [ProductVariantController::class, 'destroy']);
         
-        // Product images
+        // Product images (keep existing for backward compatibility)
         Route::post('/products/{id}/images', [ProductImageController::class, 'store']);
         Route::delete('/images/{id}', [ProductImageController::class, 'destroy']);
         Route::put('/images/{id}/set-primary', [ProductImageController::class, 'setPrimary']);
@@ -162,7 +167,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     });
     
     // Admin routes
-        Route::prefix('admin')->group(function () {
+    Route::prefix('admin')->group(function () {
         
         // User management
         Route::get('/users', [AuthController::class, 'getAllUsers']);

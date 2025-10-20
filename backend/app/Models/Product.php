@@ -16,10 +16,14 @@ class Product extends Model
         'name',
         'slug',
         'description',
+        'brand_id',
         'type',
         'price',
         'compare_price',
+        'stock_quantity',
+        'tags',
         'cost_price',
+        'condition',
         'quantity',
         'sku',
         'barcode',
@@ -32,11 +36,16 @@ class Product extends Model
         'specifications',
         'meta_title',
         'meta_description',
+        'allow_backorder',
+        'low_stock_threshold',
+        'rating',
+        'is_new_arrival',
         'meta_keywords',
         'is_active',
         'is_featured',
         'views_count',
         'rating',
+        'sales'
     ];
 
     protected $casts = [
@@ -45,11 +54,18 @@ class Product extends Model
         'cost_price' => 'decimal:2',
         'stock_quantity' => 'integer',
         'year' => 'integer',
+        'tags' => 'array',
         'specifications' => 'array',
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
         'view_count' => 'integer',
+        'dimensions' => 'array',
         'sales_count' => 'integer',
+        'is_new_arrival' => 'boolean',
+        'allow_backorder' => 'boolean',
+        'rating' => 'decimal:1',
+        'sales' => 'integer',
+        'low_stock_threshold' => 'integer',
     ];
 
     /**
@@ -81,7 +97,15 @@ class Product extends Model
      */
     public function images()
     {
-        return $this->hasMany(ProductImage::class);
+        return $this->hasMany(ProductImage::class)->ordered();
+    }
+
+    /**
+     * Get primary image
+     */
+    public function primaryImage()
+    {
+        return $this->hasOne(ProductImage::class)->where('is_primary', true);
     }
 
     /**
@@ -183,6 +207,27 @@ class Product extends Model
         return $this->stock_quantity > 0;
     }
 
+     /**
+     * Check if product is low on stock
+     */
+    public function isLowStock()
+    {
+        return $this->stock_quantity > 0 && $this->stock_quantity <= $this->low_stock_threshold;
+    }
+
+    /**
+     * Get stock status
+     */
+    public function getStockStatusAttribute()
+    {
+        if ($this->stock_quantity === 0) {
+            return 'out_of_stock';
+        } elseif ($this->isLowStock()) {
+            return 'low_stock';
+        }
+        return 'in_stock';
+    }
+
     /**
      * Increment view count
      */
@@ -218,4 +263,27 @@ class Product extends Model
     {
         $this->increment('stock_quantity', $quantity);
     }
+
+    /**
+     * Boot method to handle cascading deletes
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($product) {
+            // Delete all images from Cloudinary
+            $cloudinary = app(\App\Services\CloudinaryService::class);
+            foreach ($product->images as $image) {
+                if ($image->public_id) {
+                    $cloudinary->deleteImage($image->public_id);
+                }
+            }
+            
+            // Delete database records (cascaded by foreign key)
+            $product->images()->delete();
+            $product->variants()->delete();
+        });
+    }
+    
 }

@@ -273,12 +273,14 @@ const SuperAdminAddProductFormModal = ({
       formData.colors.forEach((color, colorIndex) => {
         submitFormData.append(`colors[${colorIndex}][name]`, color.name);
         
-        color.images.forEach((image, imageIndex) => {
+        // Count to track image index
+        let imageCount = 0;
+        
+        color.images.forEach((image) => {
           if (image.isNew && image.file) {
-            submitFormData.append(`colors[${colorIndex}][images][${imageIndex}]`, image.file);
-          } else if (image.url) {
-            // For existing images during edit
-            submitFormData.append(`colors[${colorIndex}][existing_images][${imageIndex}]`, image.url);
+            // Send new images with proper array indexing
+            submitFormData.append(`colors[${colorIndex}][images][]`, image.file);
+            imageCount++;
           }
         });
       });
