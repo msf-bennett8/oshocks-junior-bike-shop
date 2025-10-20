@@ -50,6 +50,16 @@ api.interceptors.request.use(
 // Response interceptor - Handle errors and retry logic
 api.interceptors.response.use(
   (response) => {
+
+    if (response.config.url.includes('/search')) {
+      console.log('🔍 Search Response:', {
+        url: response.config.url,
+        params: response.config.params,
+        status: response.status,
+        data: response.data
+      });
+    }
+
     console.log('📥 Response received:', {
       status: response.status,
       statusText: response.statusText,
@@ -60,6 +70,16 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
+
+    if (error.config?.url.includes('/search')) {
+      console.error('🔍 Search Error:', {
+        url: error.config?.url,
+        params: error.config?.params,
+        status: error.response?.status,
+        data: error.response?.data
+      });
+    }
+    
     const config = error.config;
 
     // Initialize retry count

@@ -1,45 +1,42 @@
-// frontend/src/components/common/SearchBar.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Clock, X, TrendingUp, Package, FileText, Wrench, User, Tag } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Search, X, TrendingUp, Clock, Package, Tag, Store, User as UserIcon } from 'lucide-react';
+import { searchProducts } from '../../redux/slices/productSlice';
 
 const SearchBar = ({ 
-  placeholder = 'Search for bikes, accessories, parts, blogs...',
+  placeholder = 'Search for bikes, accessories, categories, sellers...',
   onClose,
   autoFocus = true,
   variant = 'overlay' // 'overlay' | 'inline'
 }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  
   const inputRef = useRef(null);
   const resultsRef = useRef(null);
   const searchTimeoutRef = useRef(null);
+
+  // Get search results from Redux
+  const { searchResults, searchLoading, searchError } = useSelector((state) => state.products);
 
   // Search filters/categories
   const filters = [
     { id: 'all', label: 'All', icon: Search },
     { id: 'products', label: 'Products', icon: Package },
-    { id: 'blogs', label: 'Blogs', icon: FileText },
-    { id: 'services', label: 'Services', icon: Wrench },
-    { id: 'sellers', label: 'Sellers', icon: User },
-    { id: 'categories', label: 'Categories', icon: Tag }
+    { id: 'categories', label: 'Categories', icon: Tag },
+    { id: 'sellers', label: 'Sellers', icon: Store },
+    { id: 'users', label: 'Users', icon: UserIcon }
   ];
 
-  // Load recent searches from localStorage
+  // Load recent searches (using state instead of localStorage)
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('oshocks_recent_searches');
-      if (saved) {
-        setRecentSearches(JSON.parse(saved));
-      }
-    } catch (error) {
-      console.error('Failed to load recent searches:', error);
-    }
+    setRecentSearches([]);
   }, []);
 
   // Auto-focus input
@@ -50,54 +47,33 @@ const SearchBar = ({
   }, [autoFocus]);
 
   // Debounced search function
-  const performSearch = useCallback(async (searchQuery, filter) => {
-    if (!searchQuery.trim()) {
-      setResults(null);
-      return;
-    }
+// Debounced search function
+const performSearch = useCallback(async (searchQuery) => {
+  if (!searchQuery.trim()) {
+    console.log('🔍 Search aborted: Empty query');
+    return;
+  }
 
-    setIsLoading(true);
-    
-    try {
-      // API endpoint for universal search
-      const response = await fetch(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/search?q=${encodeURIComponent(searchQuery)}&type=${filter}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            // Add auth token if needed
-            // 'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      );
+  console.log('🔍 Performing search:', {
+    query: searchQuery,
+    filter: activeFilter,
+    timestamp: new Date().toISOString()
+  });
 
-      if (!response.ok) throw new Error('Search failed');
-
-      const data = await response.json();
-      setResults(data);
-    } catch (error) {
-      console.error('Search error:', error);
-      // Fallback to mock data for development
-      setResults(getMockResults(searchQuery, filter));
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  // Dispatch Redux action to search with type filter
+  dispatch(searchProducts({ query: searchQuery, type: activeFilter }));
+}, [dispatch, activeFilter]);
 
   // Handle query change with debouncing
   useEffect(() => {
-    // Clear previous timeout
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
 
-    // Set new timeout for search
     if (query.length > 0) {
       searchTimeoutRef.current = setTimeout(() => {
-        performSearch(query, activeFilter);
-      }, 300); // 300ms debounce
-    } else {
-      setResults(null);
+        performSearch(query);
+      }, 300);
     }
 
     return () => {
@@ -105,9 +81,16 @@ const SearchBar = ({
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [query, activeFilter, performSearch]);
+  }, [query, performSearch]);
 
-  // Save to recent searches
+  // Re-search when filter changes
+  useEffect(() => {
+    if (query.trim()) {
+      performSearch(query);
+    }
+  }, [activeFilter]);
+
+  // Save to recent searches (in memory only)
   const saveRecentSearch = (searchText) => {
     const updated = [
       searchText,
@@ -115,33 +98,24 @@ const SearchBar = ({
     ].slice(0, 10);
     
     setRecentSearches(updated);
-    try {
-      localStorage.setItem('oshocks_recent_searches', JSON.stringify(updated));
-    } catch (error) {
-      console.error('Failed to save search:', error);
-    }
   };
 
-  // Handle result click
+  // Handle result click - navigate based on type
   const handleResultClick = (result) => {
     saveRecentSearch(query);
     
-    // Navigate based on result type
     switch (result.type) {
       case 'product':
         navigate(`/product/${result.id}`);
         break;
-      case 'blog':
-        navigate(`/blog/${result.slug || result.id}`);
-        break;
-      case 'service':
-        navigate(`/services#${result.slug || result.id}`);
+      case 'category':
+        navigate(`/shop?category=${result.id}`);
         break;
       case 'seller':
         navigate(`/seller/${result.id}`);
         break;
-      case 'category':
-        navigate(`/shop?category=${result.slug || result.id}`);
+      case 'user':
+        navigate(`/profile/${result.id}`);
         break;
       default:
         navigate(`/search?q=${encodeURIComponent(query)}`);
@@ -153,26 +127,33 @@ const SearchBar = ({
   // Handle recent search click
   const handleRecentClick = (search) => {
     setQuery(search);
-    performSearch(search, activeFilter);
+    performSearch(search);
   };
 
   // Clear recent searches
   const clearRecentSearches = () => {
     setRecentSearches([]);
-    try {
-      localStorage.removeItem('oshocks_recent_searches');
-    } catch (error) {
-      console.error('Failed to clear searches:', error);
-    }
+  };
+
+  // Get all results as flat array for keyboard navigation
+  const getAllResultsFlat = () => {
+    if (!searchResults?.data) return [];
+    
+    const flat = [];
+    Object.values(searchResults.data).forEach(category => {
+      if (Array.isArray(category)) {
+        flat.push(...category);
+      }
+    });
+    return flat;
   };
 
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (!results) return;
+      const allResults = getAllResultsFlat();
+      if (allResults.length === 0) return;
 
-      const allResults = getAllResultsFlat(results);
-      
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault();
@@ -200,35 +181,22 @@ const SearchBar = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [results, selectedIndex, onClose]);
-
-  // Get all results as flat array for keyboard navigation
-  const getAllResultsFlat = (resultsData) => {
-    if (!resultsData) return [];
-    const flat = [];
-    Object.values(resultsData).forEach(category => {
-      if (Array.isArray(category)) {
-        flat.push(...category);
-      }
-    });
-    return flat;
-  };
+  }, [searchResults, selectedIndex, onClose]);
 
   // Get icon for result type
   const getResultIcon = (type) => {
     const icons = {
       product: Package,
-      blog: FileText,
-      service: Wrench,
-      seller: User,
-      category: Tag
+      category: Tag,
+      seller: Store,
+      user: UserIcon
     };
     return icons[type] || Package;
   };
 
   // Highlight matching text
   const highlightText = (text, query) => {
-    if (!query.trim()) return text;
+    if (!query.trim() || !text) return text;
     
     const parts = text.split(new RegExp(`(${query})`, 'gi'));
     return parts.map((part, i) => 
@@ -262,82 +230,105 @@ const SearchBar = ({
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-medium text-sm sm:text-base text-gray-900 truncate">
-            {highlightText(item.title || item.name, query)}
+            {highlightText(item.name, query)}
           </div>
-         {item.description && (
-          <div className="text-xs sm:text-sm text-gray-600 truncate mt-0.5">
-            {item.description}
-          </div>
-        )}
-        {item.price && (
-          <div className="text-sm sm:text-base font-semibold text-green-600 mt-1">
-            KSh {item.price.toLocaleString()}
-          </div>
-        )}
+          {item.description && (
+            <div className="text-xs sm:text-sm text-gray-600 truncate mt-0.5">
+              {item.description.substring(0, 80)}...
+            </div>
+          )}
+          {item.type === 'product' && item.price && (
+            <div className="text-sm sm:text-base font-semibold text-green-600 mt-1">
+              KSh {parseFloat(item.price).toLocaleString()}
+            </div>
+          )}
+          {item.type === 'category' && item.product_count !== undefined && (
+            <div className="text-xs sm:text-sm text-gray-500 mt-1">
+              {item.product_count} products
+            </div>
+          )}
+          {item.type === 'seller' && item.rating && (
+            <div className="text-xs sm:text-sm text-gray-500 mt-1">
+              ⭐ {item.rating} • {item.total_sales || 0} sales
+            </div>
+          )}
         </div>
-        {item.badge && (
+        {item.type === 'product' && item.stock_quantity === 0 && (
+          <span className="flex-shrink-0 text-[10px] sm:text-xs bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium">
+            Out of Stock
+          </span>
+        )}
+        {item.type === 'product' && item.stock_quantity > 0 && item.stock_quantity < 5 && (
           <span className="flex-shrink-0 text-[10px] sm:text-xs bg-orange-100 text-orange-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium">
-            {item.badge}
+            Low Stock
           </span>
         )}
       </button>
     );
   };
 
+  // Get total results count
+  const getTotalCount = () => {
+    if (!searchResults?.data) return 0;
+    return Object.values(searchResults.data).reduce((total, arr) => {
+      return total + (Array.isArray(arr) ? arr.length : 0);
+    }, 0);
+  };
+
   return (
-  <div className={variant === 'overlay' ? 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center p-4 animate-fade-in' : ''}>
-    <div className={
-      variant === 'overlay' 
-        ? 'bg-white w-full max-w-3xl mt-12 sm:mt-16 md:mt-20 rounded-xl shadow-2xl overflow-hidden animate-slide-down'
-        : 'w-full'
-    }>
+    <div className={variant === 'overlay' ? 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center p-4 animate-fade-in' : ''}>
+      <div className={
+        variant === 'overlay' 
+          ? 'bg-white w-full max-w-3xl mt-12 sm:mt-16 md:mt-20 rounded-xl shadow-2xl overflow-hidden animate-slide-down'
+          : 'w-full'
+      }>
         
         {/* Search Header */}
-          <div className="border-b border-gray-200 p-3 sm:p-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="flex-1 flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 rounded-lg border-2 border-gray-300 focus-within:border-blue-500 focus-within:bg-white transition-all">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={placeholder}
-                  className="flex-1 outline-none text-base sm:text-lg placeholder:text-gray-400 placeholder:text-sm sm:placeholder:text-base bg-transparent focus:ring-0 focus:outline-none"
-                  style={{ boxShadow: 'none' }}
-                />
-                {query && (
-                  <button
-                    onClick={() => setQuery('')}
-                    className="p-1 hover:bg-gray-200 rounded transition-colors flex-shrink-0"
-                    aria-label="Clear search"
-                  >
-                    <X size={18} className="text-gray-400" />
-                  </button>
-                )}
+        <div className="border-b border-gray-200 p-3 sm:p-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex-1 flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 rounded-lg border-2 border-gray-300 focus-within:border-blue-500 focus-within:bg-white transition-all">
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={placeholder}
+                className="flex-1 outline-none text-base sm:text-lg placeholder:text-gray-400 placeholder:text-sm sm:placeholder:text-base bg-transparent focus:ring-0 focus:outline-none"
+                style={{ boxShadow: 'none' }}
+              />
+              {query && (
                 <button
-                  onClick={() => {
-                    if (query.trim()) {
-                      performSearch(query, activeFilter);
-                    }
-                  }}
-                  className="flex items-center gap-1.5 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg transition-all font-medium text-sm sm:text-base shadow-md hover:shadow-lg flex-shrink-0"
-                  aria-label="Search"
+                  onClick={() => setQuery('')}
+                  className="p-1 hover:bg-gray-200 rounded transition-colors flex-shrink-0"
+                  aria-label="Clear search"
                 >
-                  <Search size={18} className="md:hidden" />
-                  <Search size={16} className="hidden md:inline md:w-[18px] md:h-[18px]" />
-                  <span className="hidden md:inline">Search</span>
-                </button>
-              </div>
-              {onClose && variant === 'overlay' && (
-                <button
-                  onClick={onClose}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
-                  aria-label="Close search"
-                >
-                  <X size={20} className="text-gray-600" />
+                  <X size={18} className="text-gray-400" />
                 </button>
               )}
+              <button
+                onClick={() => {
+                  if (query.trim()) {
+                    performSearch(query);
+                  }
+                }}
+                className="flex items-center gap-1.5 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg transition-all font-medium text-sm sm:text-base shadow-md hover:shadow-lg flex-shrink-0"
+                aria-label="Search"
+              >
+                <Search size={18} className="md:hidden" />
+                <Search size={16} className="hidden md:inline md:w-[18px] md:h-[18px]" />
+                <span className="hidden md:inline">Search</span>
+              </button>
             </div>
+            {onClose && variant === 'overlay' && (
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+                aria-label="Close search"
+              >
+                <X size={20} className="text-gray-600" />
+              </button>
+            )}
+          </div>
 
           {/* Filters */}
           <div className="flex gap-1.5 sm:gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">
@@ -354,8 +345,7 @@ const SearchBar = ({
                   }`}
                 >
                   <Icon size={14} className="sm:w-4 sm:h-4" />
-                  <span className="hidden xs:inline sm:inline">{filter.label}</span>
-                  <span className="xs:hidden sm:hidden">{filter.label.slice(0, 3)}</span>
+                  <span>{filter.label}</span>
                 </button>
               );
             })}
@@ -364,14 +354,38 @@ const SearchBar = ({
 
         {/* Results Area */}
         <div ref={resultsRef} className="max-h-[50vh] sm:max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-          {isLoading && (
+          {/* ADD THIS LOGGING EFFECT */}
+            {(() => {
+              console.log('🔍 Search State:', {
+                loading: searchLoading,
+                error: searchError,
+                hasResults: !!searchResults,
+                resultsData: searchResults?.data,
+                totalCount: getTotalCount(),
+                query: query
+              });
+              return null;
+            })()}
+          {searchLoading && (
             <div className="p-8 text-center">
               <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
               <p className="text-gray-600 mt-3">Searching...</p>
             </div>
           )}
 
-          {!query && !isLoading && (
+          {searchError && (
+            <div className="p-8 text-center">
+              <div className="text-4xl mb-3">⚠️</div>
+              <p className="text-red-600 font-medium">Search failed</p>
+              <p className="text-sm text-gray-500 mt-1">
+                {typeof searchError === 'string' 
+                  ? searchError 
+                  : searchError.message || 'An error occurred while searching'}
+              </p>
+            </div>
+          )}
+
+          {!query && !searchLoading && (
             <div className="p-4">
               {/* Recent Searches */}
               {recentSearches.length > 0 && (
@@ -433,86 +447,71 @@ const SearchBar = ({
             </div>
           )}
 
-          {results && !isLoading && (
+          {searchResults?.data && getTotalCount() > 0 && !searchLoading && (
             <div>
               {/* Products */}
-              {results.products && results.products.length > 0 && (
+              {searchResults.data.products && searchResults.data.products.length > 0 && (
                 <div className="border-b border-gray-200">
                   <h3 className="px-3 sm:px-4 py-2 text-[10px] sm:text-xs font-bold text-gray-500 uppercase bg-gray-50 tracking-wide">
-                    Products ({results.products.length})
+                    Products ({searchResults.data.products.length})
                   </h3>
                   <div>
-                    {results.products.map((item, idx) => 
+                    {searchResults.data.products.map((item, idx) => 
                       renderResultItem(item, idx)
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Blogs */}
-              {results.blogs && results.blogs.length > 0 && (
+              {/* Categories */}
+              {searchResults.data.categories && searchResults.data.categories.length > 0 && (
                 <div className="border-b border-gray-200">
-                  <h3 className="px-4 py-2 text-xs font-bold text-gray-500 uppercase bg-gray-50">
-                    Blog Posts ({results.blogs.length})
+                  <h3 className="px-3 sm:px-4 py-2 text-[10px] sm:text-xs font-bold text-gray-500 uppercase bg-gray-50 tracking-wide">
+                    Categories ({searchResults.data.categories.length})
                   </h3>
                   <div>
-                    {results.blogs.map((item, idx) => 
-                      renderResultItem(item, idx + (results.products?.length || 0))
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Services */}
-              {results.services && results.services.length > 0 && (
-                <div className="border-b border-gray-200">
-                  <h3 className="px-4 py-2 text-xs font-bold text-gray-500 uppercase bg-gray-50">
-                    Services ({results.services.length})
-                  </h3>
-                  <div>
-                    {results.services.map((item, idx) => 
-                      renderResultItem(item, idx + (results.products?.length || 0) + (results.blogs?.length || 0))
+                    {searchResults.data.categories.map((item, idx) => 
+                      renderResultItem(item, idx + (searchResults.data.products?.length || 0))
                     )}
                   </div>
                 </div>
               )}
 
               {/* Sellers */}
-              {results.sellers && results.sellers.length > 0 && (
+              {searchResults.data.sellers && searchResults.data.sellers.length > 0 && (
                 <div className="border-b border-gray-200">
-                  <h3 className="px-4 py-2 text-xs font-bold text-gray-500 uppercase bg-gray-50">
-                    Sellers ({results.sellers.length})
+                  <h3 className="px-3 sm:px-4 py-2 text-[10px] sm:text-xs font-bold text-gray-500 uppercase bg-gray-50 tracking-wide">
+                    Sellers ({searchResults.data.sellers.length})
                   </h3>
                   <div>
-                    {results.sellers.map((item, idx) => 
-                      renderResultItem(item, idx + (results.products?.length || 0) + (results.blogs?.length || 0) + (results.services?.length || 0))
+                    {searchResults.data.sellers.map((item, idx) => 
+                      renderResultItem(item, idx + (searchResults.data.products?.length || 0) + (searchResults.data.categories?.length || 0))
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Categories */}
-              {results.categories && results.categories.length > 0 && (
-                <div>
-                  <h3 className="px-4 py-2 text-xs font-bold text-gray-500 uppercase bg-gray-50">
-                    Categories ({results.categories.length})
+              {/* Users */}
+              {searchResults.data.users && searchResults.data.users.length > 0 && (
+                <div className="border-b border-gray-200">
+                  <h3 className="px-3 sm:px-4 py-2 text-[10px] sm:text-xs font-bold text-gray-500 uppercase bg-gray-50 tracking-wide">
+                    Users ({searchResults.data.users.length})
                   </h3>
                   <div>
-                    {results.categories.map((item, idx) => 
-                      renderResultItem(item, idx + (results.products?.length || 0) + (results.blogs?.length || 0) + (results.services?.length || 0) + (results.sellers?.length || 0))
+                    {searchResults.data.users.map((item, idx) => 
+                      renderResultItem(item, idx + (searchResults.data.products?.length || 0) + (searchResults.data.categories?.length || 0) + (searchResults.data.sellers?.length || 0))
                     )}
                   </div>
                 </div>
               )}
+            </div>
+          )}
 
-              {/* No results */}
-              {Object.values(results).every(arr => !arr || arr.length === 0) && (
-                <div className="p-8 text-center">
-                  <div className="text-4xl mb-3">🔍</div>
-                  <p className="text-gray-600 font-medium">No results found for "{query}"</p>
-                  <p className="text-sm text-gray-500 mt-1">Try different keywords or browse categories</p>
-                </div>
-              )}
+          {searchResults?.data && getTotalCount() === 0 && !searchLoading && query && (
+            <div className="p-8 text-center">
+              <div className="text-4xl mb-3">🔍</div>
+              <p className="text-gray-600 font-medium">No results found for "{query}"</p>
+              <p className="text-sm text-gray-500 mt-1">Try different keywords or browse categories</p>
             </div>
           )}
         </div>
@@ -526,44 +525,14 @@ const SearchBar = ({
               <span>ESC Close</span>
             </div>
             <span className="text-[10px] sm:text-xs">
-              <span className="hidden sm:inline">Searching: </span>
-              {activeFilter}
+              <span className="hidden sm:inline">Filter: </span>
+              {filters.find(f => f.id === activeFilter)?.label || 'All'}
             </span>
           </div>
         )}
       </div>
     </div>
   );
-};
-
-// Mock results for development
-const getMockResults = (query, filter) => {
-  const mockData = {
-    products: [
-      { id: 1, type: 'product', title: 'Mountain Bike Pro X', description: '27.5" Aluminum Frame', price: 45000, badge: 'New' },
-      { id: 2, type: 'product', title: 'Road Bike Elite', description: 'Carbon Fiber, 21 Speed', price: 85000 },
-      { id: 3, type: 'product', title: 'Electric Bike City', description: '250W Motor, 50km Range', price: 120000, badge: 'Hot' }
-    ],
-    blogs: [
-      { id: 1, type: 'blog', title: 'Top 10 Mountain Bikes in Kenya', description: 'Complete buyer\'s guide for 2024', slug: 'top-10-mountain-bikes' },
-      { id: 2, type: 'blog', title: 'Bike Maintenance Tips', description: 'Keep your bike running smoothly', slug: 'maintenance-tips' }
-    ],
-    services: [
-      { id: 1, type: 'service', title: 'Bike Repair Service', description: 'Professional repairs and maintenance', price: 2000 },
-      { id: 2, type: 'service', title: 'Custom Bike Build', description: 'Build your dream bike', price: 15000 }
-    ],
-    sellers: [
-      { id: 1, type: 'seller', name: 'Oshocks Junior', description: 'Verified Seller • 500+ Sales' },
-      { id: 2, type: 'seller', name: 'Bike Master Kenya', description: 'Premium Bikes • 200+ Sales' }
-    ],
-    categories: [
-      { id: 1, type: 'category', name: 'Mountain Bikes', description: '150 products', slug: 'mountain' },
-      { id: 2, type: 'category', name: 'Accessories', description: '300+ products', slug: 'accessories' }
-    ]
-  };
-
-  if (filter === 'all') return mockData;
-  return { [filter]: mockData[filter] || [] };
 };
 
 export default SearchBar;

@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import ProductFormModal from './AdminAddProductFormModal'; 
+import { useDispatch, useSelector } from 'react-redux';
+import { 
+  fetchProducts, 
+  fetchCategories,
+  deleteProductAction,
+  createProductAction,
+  updateProductAction,
+  bulkDeleteProductsAction,
+  bulkUpdateProductsAction
+} from '../../redux/slices/productSlice';
 import { 
   Search, Filter, Plus, Edit2, Trash2, Eye, Copy, MoreVertical,
   Package, DollarSign, TrendingUp, AlertCircle, Star, Image as ImageIcon,
@@ -9,7 +19,7 @@ import {
 } from 'lucide-react';
 
 const AdminProductsPage = () => {
-  const [products, setProducts] = useState([]);
+  const [ setProducts ] = useState([]); // Products now come from Redux, no local state needed for them
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -54,359 +64,28 @@ const AdminProductsPage = () => {
     specifications: []
   });
 
-  // Mock categories
-  const categories = [
-    { id: 1, name: 'Bicycles' },
-    { id: 2, name: 'Mountain Bikes' },
-    { id: 3, name: 'Road Bikes' },
-    { id: 4, name: 'Kids Bikes' },
-    { id: 5, name: 'Accessories' },
-    { id: 6, name: 'Helmets' },
-    { id: 7, name: 'Lights' },
-    { id: 8, name: 'Spare Parts' },
-    { id: 9, name: 'Tires & Tubes' },
-    { id: 10, name: 'Brakes' }
-  ];
+  // Actual categories
+const dispatch = useDispatch();
+const { items: products, categories, loading, error } = useSelector(
+  (state) => state.products
+);
 
-  // Mock products data
+
+  // Fetch categories on component mount
   useEffect(() => {
-    const mockProducts = [
-      {
-        id: 1,
-        name: 'Mountain Bike Pro X5',
-        slug: 'mountain-bike-pro-x5',
-        description: 'Professional mountain bike with advanced suspension system and durable frame.',
-        shortDescription: 'Professional mountain bike',
-        sku: 'MTB-PRO-X5-001',
-        price: 125000,
-        comparePrice: 150000,
-        costPrice: 90000,
-        categoryId: 2,
-        categoryName: 'Mountain Bikes',
-        brand: 'ProRide',
-        stock: 12,
-        lowStockThreshold: 5,
-        sales: 145,
-        views: 2345,
-        rating: 4.8,
-        reviews: 67,
-        weight: 13.5,
-        dimensions: { length: 180, width: 65, height: 110 },
-        images: [
-          'https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=400',
-          'https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=400'
-        ],
-        tags: ['mountain', 'professional', 'suspension'],
-        isActive: true,
-        isFeatured: true,
-        isNewArrival: false,
-        allowBackorder: false,
-        createdAt: '2024-09-15',
-        updatedAt: '2025-10-05',
-        status: 'active'
-      },
-      {
-        id: 2,
-        name: 'Road Racer Elite',
-        slug: 'road-racer-elite',
-        description: 'High-performance road bike designed for speed and endurance racing.',
-        shortDescription: 'Speed racing road bike',
-        sku: 'RDB-ELT-001',
-        price: 145000,
-        comparePrice: 180000,
-        costPrice: 105000,
-        categoryId: 3,
-        categoryName: 'Road Bikes',
-        brand: 'SpeedMax',
-        stock: 8,
-        lowStockThreshold: 5,
-        sales: 132,
-        views: 1987,
-        rating: 4.9,
-        reviews: 54,
-        weight: 8.2,
-        dimensions: { length: 175, width: 55, height: 105 },
-        images: [
-          'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400'
-        ],
-        tags: ['road', 'racing', 'lightweight'],
-        isActive: true,
-        isFeatured: true,
-        isNewArrival: true,
-        allowBackorder: false,
-        createdAt: '2024-10-01',
-        updatedAt: '2025-10-08',
-        status: 'active'
-      },
-      {
-        id: 3,
-        name: 'Kids Explorer Bike',
-        slug: 'kids-explorer-bike',
-        description: 'Safe and fun bicycle designed specifically for children aged 5-10 years.',
-        shortDescription: 'Children\'s bicycle',
-        sku: 'KID-EXP-001',
-        price: 18000,
-        comparePrice: 22000,
-        costPrice: 12000,
-        categoryId: 4,
-        categoryName: 'Kids Bikes',
-        brand: 'JuniorRide',
-        stock: 23,
-        lowStockThreshold: 10,
-        sales: 98,
-        views: 1456,
-        rating: 4.7,
-        reviews: 43,
-        weight: 9.5,
-        dimensions: { length: 140, width: 50, height: 85 },
-        images: [
-          'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400'
-        ],
-        tags: ['kids', 'safe', 'colorful'],
-        isActive: true,
-        isFeatured: false,
-        isNewArrival: false,
-        allowBackorder: true,
-        createdAt: '2024-08-20',
-        updatedAt: '2025-09-25',
-        status: 'active'
-      },
-      {
-        id: 4,
-        name: 'Safety Helmet Pro',
-        slug: 'safety-helmet-pro',
-        description: 'Professional-grade cycling helmet with advanced impact protection.',
-        shortDescription: 'Professional cycling helmet',
-        sku: 'HLM-PRO-001',
-        price: 5000,
-        comparePrice: 6500,
-        costPrice: 3000,
-        categoryId: 6,
-        categoryName: 'Helmets',
-        brand: 'SafeGuard',
-        stock: 56,
-        lowStockThreshold: 20,
-        sales: 234,
-        views: 3421,
-        rating: 4.6,
-        reviews: 89,
-        weight: 0.3,
-        dimensions: { length: 30, width: 25, height: 20 },
-        images: [
-          'https://images.unsplash.com/photo-1562955779-e6be6c4a7c4e?w=400'
-        ],
-        tags: ['helmet', 'safety', 'protection'],
-        isActive: true,
-        isFeatured: true,
-        isNewArrival: false,
-        allowBackorder: true,
-        createdAt: '2024-07-10',
-        updatedAt: '2025-09-28',
-        status: 'active'
-      },
-      {
-        id: 5,
-        name: 'LED Bike Light Set',
-        slug: 'led-bike-light-set',
-        description: 'Ultra-bright LED light set with front and rear lights for safe night riding.',
-        shortDescription: 'Front and rear bike lights',
-        sku: 'LGT-LED-001',
-        price: 1500,
-        comparePrice: 2000,
-        costPrice: 800,
-        categoryId: 7,
-        categoryName: 'Lights',
-        brand: 'BrightPath',
-        stock: 89,
-        lowStockThreshold: 30,
-        sales: 187,
-        views: 2876,
-        rating: 4.5,
-        reviews: 112,
-        weight: 0.15,
-        dimensions: { length: 10, width: 5, height: 5 },
-        images: [
-          'https://images.unsplash.com/photo-1616422285623-13ff0162193c?w=400'
-        ],
-        tags: ['lights', 'led', 'safety', 'night'],
-        isActive: true,
-        isFeatured: false,
-        isNewArrival: true,
-        allowBackorder: true,
-        createdAt: '2024-09-05',
-        updatedAt: '2025-10-02',
-        status: 'active'
-      },
-      {
-        id: 6,
-        name: 'Mountain Bike Tires',
-        slug: 'mountain-bike-tires',
-        description: 'Durable all-terrain mountain bike tires with excellent grip.',
-        shortDescription: 'All-terrain MTB tires',
-        sku: 'TIR-MTB-001',
-        price: 4500,
-        comparePrice: 5500,
-        costPrice: 2800,
-        categoryId: 9,
-        categoryName: 'Tires & Tubes',
-        brand: 'TrailGrip',
-        stock: 5,
-        lowStockThreshold: 15,
-        sales: 145,
-        views: 1987,
-        rating: 4.4,
-        reviews: 78,
-        weight: 0.85,
-        dimensions: { length: 68, width: 68, height: 7 },
-        images: [
-          'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400'
-        ],
-        tags: ['tires', 'mountain', 'grip'],
-        isActive: true,
-        isFeatured: false,
-        isNewArrival: false,
-        allowBackorder: false,
-        createdAt: '2024-06-15',
-        updatedAt: '2025-09-30',
-        status: 'low_stock'
-      },
-      {
-        id: 7,
-        name: 'Bike Repair Kit',
-        slug: 'bike-repair-kit',
-        description: 'Complete bike repair kit with essential tools for on-the-go maintenance.',
-        shortDescription: 'Essential repair tools',
-        sku: 'KIT-REP-001',
-        price: 5000,
-        comparePrice: 6000,
-        costPrice: 3200,
-        categoryId: 8,
-        categoryName: 'Spare Parts',
-        brand: 'FixIt',
-        stock: 34,
-        lowStockThreshold: 10,
-        sales: 76,
-        views: 1234,
-        rating: 4.3,
-        reviews: 45,
-        weight: 0.6,
-        dimensions: { length: 20, width: 15, height: 8 },
-        images: [
-          'https://images.unsplash.com/photo-1581256106164-7b1b3a5f97e8?w=400'
-        ],
-        tags: ['tools', 'repair', 'maintenance'],
-        isActive: true,
-        isFeatured: false,
-        isNewArrival: false,
-        allowBackorder: true,
-        createdAt: '2024-05-20',
-        updatedAt: '2025-09-15',
-        status: 'active'
-      },
-      {
-        id: 8,
-        name: 'Hydraulic Disc Brakes',
-        slug: 'hydraulic-disc-brakes',
-        description: 'High-performance hydraulic disc brake system for superior stopping power.',
-        shortDescription: 'Premium disc brakes',
-        sku: 'BRK-HYD-001',
-        price: 12000,
-        comparePrice: 15000,
-        costPrice: 8000,
-        categoryId: 10,
-        categoryName: 'Brakes',
-        brand: 'StopMax',
-        stock: 18,
-        lowStockThreshold: 8,
-        sales: 87,
-        views: 1654,
-        rating: 4.7,
-        reviews: 56,
-        weight: 0.45,
-        dimensions: { length: 15, width: 10, height: 8 },
-        images: [
-          'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=400'
-        ],
-        tags: ['brakes', 'hydraulic', 'safety'],
-        isActive: true,
-        isFeatured: false,
-        isNewArrival: false,
-        allowBackorder: false,
-        createdAt: '2024-07-01',
-        updatedAt: '2025-10-01',
-        status: 'active'
-      },
-      {
-        id: 9,
-        name: 'Cycling Jersey Pro',
-        slug: 'cycling-jersey-pro',
-        description: 'Professional cycling jersey with moisture-wicking fabric and aerodynamic fit.',
-        shortDescription: 'Pro cycling apparel',
-        sku: 'CLT-JER-001',
-        price: 3500,
-        comparePrice: 4500,
-        costPrice: 2000,
-        categoryId: 5,
-        categoryName: 'Accessories',
-        brand: 'RideStyle',
-        stock: 0,
-        lowStockThreshold: 15,
-        sales: 23,
-        views: 876,
-        rating: 4.2,
-        reviews: 12,
-        weight: 0.18,
-        dimensions: { length: 35, width: 30, height: 2 },
-        images: [
-          'https://images.unsplash.com/photo-1556906781-9a412961c28c?w=400'
-        ],
-        tags: ['clothing', 'jersey', 'apparel'],
-        isActive: false,
-        isFeatured: false,
-        isNewArrival: false,
-        allowBackorder: true,
-        createdAt: '2024-08-10',
-        updatedAt: '2025-09-20',
-        status: 'out_of_stock'
-      },
-      {
-        id: 10,
-        name: 'Electric Bike City Cruiser',
-        slug: 'electric-bike-city-cruiser',
-        description: 'Premium electric bike with powerful motor and long-range battery.',
-        shortDescription: 'Premium e-bike',
-        sku: 'EBK-CRU-001',
-        price: 185000,
-        comparePrice: 220000,
-        costPrice: 135000,
-        categoryId: 1,
-        categoryName: 'Bicycles',
-        brand: 'E-Motion',
-        stock: 6,
-        lowStockThreshold: 3,
-        sales: 34,
-        views: 3456,
-        rating: 4.9,
-        reviews: 28,
-        weight: 22.5,
-        dimensions: { length: 180, width: 70, height: 115 },
-        images: [
-          'https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=400'
-        ],
-        tags: ['electric', 'e-bike', 'motor', 'battery'],
-        isActive: true,
-        isFeatured: true,
-        isNewArrival: true,
-        allowBackorder: false,
-        createdAt: '2024-09-25',
-        updatedAt: '2025-10-09',
-        status: 'active'
-      }
-    ];
+    dispatch(fetchCategories());
+  }, [dispatch]);
 
-    setProducts(mockProducts);
-    setFilteredProducts(mockProducts);
-  }, []);
+  // Fetch products when filters change
+  useEffect(() => {
+    const params = {
+      category: categoryFilter !== 'all' ? categoryFilter : '',
+      search: searchTerm,
+      sort: sortField === 'createdAt' ? 'latest' : sortField,
+      page: currentPage,
+    };
+    dispatch(fetchProducts(params));
+  }, [dispatch, searchTerm, categoryFilter, sortField, currentPage]);
 
   // Filter and search
   useEffect(() => {
@@ -537,32 +216,35 @@ const AdminProductsPage = () => {
   // Delete product
   const deleteProduct = (productId) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
-      setProducts(products.filter(p => p.id !== productId));
+      // Dispatch delete to backend
+      dispatch(deleteProductAction(productId));
       showNotification('Product deleted successfully');
     }
   };
 
   // Duplicate product
   const duplicateProduct = (product) => {
-    const newProduct = {
+    // Dispatch duplicate/create action to backend
+    dispatch(createProductAction({
       ...product,
-      id: Math.max(...products.map(p => p.id)) + 1,
+      id: undefined, // Let backend generate new ID
       name: `${product.name} (Copy)`,
       slug: `${product.slug}-copy`,
       sku: `${product.sku}-COPY`,
-      createdAt: new Date().toISOString().split('T')[0]
-    };
-    setProducts([...products, newProduct]);
+    }));
     showNotification('Product duplicated successfully');
   };
 
   // Toggle product status
   const toggleProductStatus = (productId) => {
-    const updatedProducts = products.map(p =>
-      p.id === productId ? { ...p, isActive: !p.isActive } : p
-    );
-    setProducts(updatedProducts);
-    showNotification('Product status updated');
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      dispatch(updateProductAction({ 
+        productId, 
+        updates: { isActive: !product.isActive }
+      }));
+      showNotification('Product status updated');
+    }
   };
 
   // Bulk delete
@@ -570,7 +252,8 @@ const AdminProductsPage = () => {
     if (selectedProducts.size === 0) return;
     
     if (window.confirm(`Delete ${selectedProducts.size} selected products?`)) {
-      setProducts(products.filter(p => !selectedProducts.has(p.id)));
+      // Dispatch bulk delete to backend
+      dispatch(bulkDeleteProductsAction(Array.from(selectedProducts)));
       setSelectedProducts(new Set());
       showNotification(`${selectedProducts.size} products deleted`);
     }
@@ -580,10 +263,10 @@ const AdminProductsPage = () => {
   const bulkToggleStatus = (activate) => {
     if (selectedProducts.size === 0) return;
     
-    const updatedProducts = products.map(p =>
-      selectedProducts.has(p.id) ? { ...p, isActive: activate } : p
-    );
-    setProducts(updatedProducts);
+    dispatch(bulkUpdateProductsAction({ 
+      productIds: Array.from(selectedProducts), 
+      updates: { isActive: activate }
+    }));
     setSelectedProducts(new Set());
     showNotification(`${selectedProducts.size} products ${activate ? 'activated' : 'deactivated'}`);
   };
@@ -637,6 +320,22 @@ const AdminProductsPage = () => {
         } text-white`}>
           {notification.type === 'success' ? <Check size={20} /> : <X size={20} />}
           {notification.message}
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && products.length === 0 && (
+        <div className="text-center py-12">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading products...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+          <p className="font-semibold">Error loading products</p>
+          <p className="text-sm">{error.message || error}</p>
         </div>
       )}
 
@@ -935,6 +634,7 @@ const AdminProductsPage = () => {
                     </div>
 
                     {/* Stats */}
+                    
                     <div className="grid grid-cols-3 gap-2 mb-3 text-xs">
                       <div className="text-center p-2 bg-gray-50 rounded">
                         <Package size={14} className="mx-auto mb-1 text-gray-600" />
@@ -1188,15 +888,15 @@ const AdminProductsPage = () => {
   mode={modalMode === 'view' ? 'view' : modalMode}
   product={selectedProduct}
   onSuccess={(newProduct) => {
-    // Refresh products list
-    if (modalMode === 'create') {
-      setProducts([newProduct, ...products]);
-      showNotification('Product created successfully!');
-    } else {
-      setProducts(products.map(p => p.id === newProduct.id ? newProduct : p));
-      showNotification('Product updated successfully!');
-    }
-  }}
+  // Dispatch refresh/refetch
+  dispatch(fetchProducts({ 
+    category: categoryFilter !== 'all' ? categoryFilter : '',
+    search: searchTerm,
+    sort: sortField,
+    page: currentPage 
+  }));
+  showNotification(modalMode === 'create' ? 'Product created successfully!' : 'Product updated successfully!');
+}}
 />
     </div>
   );

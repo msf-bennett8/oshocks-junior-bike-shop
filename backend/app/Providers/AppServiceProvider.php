@@ -12,7 +12,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register CloudinaryService as singleton
+        $this->app->singleton(CloudinaryService::class, function ($app) {
+            return new CloudinaryService();
+        });
     }
 
     /**

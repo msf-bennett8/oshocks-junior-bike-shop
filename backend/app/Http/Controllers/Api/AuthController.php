@@ -315,4 +315,60 @@ class AuthController extends Controller
             'data' => $user
         ]);
     }
+
+    /**
+     * Admin: Get all users
+     */
+    public function getAllUsers(Request $request)
+    {
+        $users = User::with(['sellerProfile', 'orders'])
+            ->paginate(20);
+
+        return response()->json([
+            'success' => true,
+            'data' => $users
+        ]);
+    }
+
+    /**
+     * Admin: Update user status
+     */
+    public function updateUserStatus(Request $request, $id)
+    {
+        $request->validate([
+            'is_active' => 'required|boolean',
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->update(['is_active' => $request->is_active]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User status updated successfully',
+            'data' => $user
+        ]);
+    }
+
+    /**
+     * Admin: Delete user
+     */
+    public function deleteUser($id)
+    {
+        $user = User::findOrFail($id);
+        
+        if (in_array($user->role, ['admin', 'super_admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete admin user'
+            ], 403);
+        }
+
+        $user->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User deleted successfully'
+        ]);
+    }
+
 }

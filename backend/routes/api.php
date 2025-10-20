@@ -34,13 +34,6 @@ Route::prefix('v1/auth')->group(function () {
     Route::post('/strava', [SocialAuthController::class, 'handleStravaCallback']);
 });
 
-// Search Routes
-Route::prefix('search')->group(function () {
-    Route::get('/', [SearchController::class, 'search']);
-    Route::get('/suggestions', [SearchController::class, 'suggestions']);
-    Route::get('/trending', [SearchController::class, 'trending']);
-});
-
 // Public routes
 Route::prefix('v1')->group(function () {
     
@@ -49,6 +42,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/login', [AuthController::class, 'login']);
     
     // Public product browsing
+    Route::get('/products/search', [ProductController::class, 'search']);
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{id}', [ProductController::class, 'show']);
     Route::get('/products/slug/{slug}', [ProductController::class, 'showBySlug']);
@@ -59,6 +53,11 @@ Route::prefix('v1')->group(function () {
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/categories/{id}', [CategoryController::class, 'show']);
     Route::get('/categories/{id}/products', [CategoryController::class, 'getProducts']);
+    
+    // search
+    Route::get('/search', [SearchController::class, 'search']);
+    Route::get('/search/suggestions', [SearchController::class, 'suggestions']);
+    Route::get('/search/trending', [SearchController::class, 'trending']);
     
     // Seller profiles (public view)
     Route::get('/sellers', [SellerProfileController::class, 'index']);
@@ -130,7 +129,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
     
     // Seller routes
-    Route::prefix('seller')->middleware('role:seller')->group(function () {
+    Route::prefix('seller')->group(function () {
         
         // Seller profile
         Route::get('/profile', [SellerProfileController::class, 'myProfile']);
@@ -162,8 +161,8 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         Route::get('/analytics/products', [ProductController::class, 'productAnalytics']);
     });
     
-// Admin routes
-    Route::prefix('admin')->middleware('role:admin')->group(function () {
+    // Admin routes
+        Route::prefix('admin')->group(function () {
         
         // User management
         Route::get('/users', [AuthController::class, 'getAllUsers']);

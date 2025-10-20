@@ -67,6 +67,39 @@ class ProductController extends Controller
     }
 
     /**
+     * Search Funtionality
+     */
+        public function search(Request $request)
+    {
+        $query = $request->input('q', '');
+        
+        if (empty($query)) {
+            return response()->json([
+                'success' => true,
+                'data' => []
+            ]);
+        }
+
+        // Search products by name, description, brand
+        $products = Product::where('is_active', true)
+            ->where(function($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%")
+                ->orWhere('description', 'like', "%{$query}%")
+                ->orWhere('brand', 'like', "%{$query}%")
+                ->orWhere('sku', 'like', "%{$query}%");
+            })
+            ->with(['category', 'images'])
+            ->limit(10)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $products,
+            'count' => $products->count()
+        ]);
+    }
+
+    /**
      * Display a single product by ID
      */
     public function show($id)

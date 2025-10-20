@@ -12,6 +12,27 @@ const productService = {
     }
   },
 
+  // Universal search across all entities
+    searchProducts: async (query, type = 'all') => {
+      console.log('🔍 ProductService.searchProducts called:', { query, type });
+      
+      try {
+        const response = await api.get('/search', {  // CHANGED FROM /products/search
+          params: { q: query, type: type }
+        });
+        
+        console.log('✅ Search API response:', response.data);
+        return response.data;
+      } catch (error) {
+        console.error('❌ Search products error:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status
+        });
+        throw error;
+      }
+    },
+
   // Get single product by ID
   getProductById: async (id) => {
     try {
@@ -30,19 +51,6 @@ const productService = {
       return response.data;
     } catch (error) {
       console.error('Error fetching category products:', error);
-      throw error;
-    }
-  },
-
-  // Search products
-  searchProducts: async (query, params = {}) => {
-    try {
-      const response = await api.get('/products/search', {
-        params: { q: query, ...params }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error searching products:', error);
       throw error;
     }
   },
