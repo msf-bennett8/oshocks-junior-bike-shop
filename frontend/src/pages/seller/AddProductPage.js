@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   X, Save, Eye, ArrowLeft,
   Check, Plus, Minus, Tag, Package, DollarSign, MapPin,
@@ -13,11 +13,29 @@ const AddProductPage = () => {
   const fileInputRef = useRef(null);
   const [previewColorIndex, setPreviewColorIndex] = useState(0);
   const [error, setError] = useState(null);
+  const [categories, setCategories] = useState([]);
+
+  
+
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/categories`);
+        const data = await response.json();
+        setCategories(data.data || data);
+      } catch (err) {
+        console.error('Failed to load categories:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Form state
   const [formData, setFormData] = useState({
     // Basic Information
     productName: '',
+    type: 'bike',
     category: '',
     subCategory: '',
     brand: '',
@@ -77,13 +95,13 @@ const AddProductPage = () => {
   ],
   });
 
-  const categories = {
-    'Bicycles': ['Mountain Bikes', 'Road Bikes', 'Electric Bikes', 'Kids Bikes', 'BMX Bikes', 'Hybrid Bikes'],
-    'Accessories': ['Helmets', 'Lights', 'Locks', 'Bags & Panniers', 'Bottles & Cages', 'Bells & Horns'],
-    'Parts': ['Brakes', 'Gears & Shifters', 'Chains', 'Pedals', 'Saddles', 'Wheels & Tires', 'Handlebars'],
-    'Clothing': ['Jerseys', 'Shorts', 'Gloves', 'Shoes', 'Jackets', 'Socks'],
-    'Tools & Maintenance': ['Repair Kits', 'Pumps', 'Cleaners', 'Lubricants', 'Tools']
-  };
+  // const categories = {
+  //  'Bicycles': ['Mountain Bikes', 'Road Bikes', 'Electric Bikes', 'Kids Bikes', 'BMX Bikes', 'Hybrid Bikes'],
+  //  'Accessories': ['Helmets', 'Lights', 'Locks', 'Bags & Panniers', 'Bottles & Cages', 'Bells & Horns'],
+  //  'Parts': ['Brakes', 'Gears & Shifters', 'Chains', 'Pedals', 'Saddles', 'Wheels & Tires', 'Handlebars'],
+  //  'Clothing': ['Jerseys', 'Shorts', 'Gloves', 'Shoes', 'Jackets', 'Socks'],
+  //  'Tools & Maintenance': ['Repair Kits', 'Pumps', 'Cleaners', 'Lubricants', 'Tools']
+  //};
 
   // Handle form field changes
   const handleChange = (field, value) => {
@@ -279,7 +297,7 @@ const validateStep = (step) => {
   // Submit form
 const handleSubmit = async () => {
   if (!validateStep(currentStep)) return;
-  
+
   setLoading(true);
   setError(null);
 
@@ -312,7 +330,7 @@ const handleSubmit = async () => {
       throw new Error('Please login first');
     }
 
-    // Clean up specifications
+    // Clean up specifications - add key_features and sizes here
     const cleanedSpecs = {};
     if (formData.specifications && typeof formData.specifications === 'object') {
       Object.entries(formData.specifications).forEach(([key, value]) => {
@@ -322,24 +340,48 @@ const handleSubmit = async () => {
       });
     }
 
-    // Prepare FormData for file upload
+    // Add key features to specifications
+    const filteredFeatures = formData.keyFeatures.filter(f => f.text.trim());
+    if (filteredFeatures.length > 0) {
+      cleanedSpecs.key_features = filteredFeatures;
+    }
+
+    // Add sizes to specifications
+    if (formData.sizes && formData.sizes.length > 0) {
+      cleanedSpecs.sizes = formData.sizes;
+    }
+
+    // Prepare FormData - ONLY SEND WHAT BACKEND EXPECTS
     const submitFormData = new FormData();
-    submitFormData.append('name', formData.productName);
-    submitFormData.append('description', formData.fullDescription);
-    submitFormData.append('type', 'bike'); // or formData.type if you add it
+    
+    // ✅ Required fields (validated by backend)
+    submitFormData.append('name', formData.productName.trim());
+    submitFormData.append('description', formData.fullDescription.trim());
+    submitFormData.append('type', formData.type); // 'bike' or 'accessory'
     submitFormData.append('category_id', formData.category);
-    submitFormData.append('brand_id', formData.brand || '');
     submitFormData.append('price', parseFloat(formData.discountPrice || formData.basePrice));
     submitFormData.append('quantity', parseInt(formData.quantity));
     submitFormData.append('condition', formData.condition);
-    submitFormData.append('year', formData.year ? parseInt(formData.year) : new Date().getFullYear());
-    submitFormData.append('specifications', JSON.stringify(Object.keys(cleanedSpecs).length > 0 ? cleanedSpecs : null));
-    submitFormData.append('sizes', JSON.stringify(formData.sizes));
-    submitFormData.append('keyFeatures', JSON.stringify(formData.keyFeatures.filter(f => f.text.trim())));
+    
+    // ✅ Optional fields (only send if they have values)
+    if (formData.brand && formData.brand.trim()) {
+      submitFormData.append('brand_id', formData.brand.trim());
+    }
+    
+    if (formData.year) {
+      submitFormData.append('year', parseInt(formData.year));
+    } else {
+      submitFormData.append('year', new Date().getFullYear());
+    }
+    
+    // ✅ Specifications as JSON (includes key_features and sizes)
+    if (Object.keys(cleanedSpecs).length > 0) {
+      submitFormData.append('specifications', JSON.stringify(cleanedSpecs));
+    }
 
-    // Append color variants and their images
+    // ✅ Color variants with images (CRITICAL FORMAT)
     formData.colors.forEach((color, colorIndex) => {
-      submitFormData.append(`colors[${colorIndex}][name]`, color.name);
+      submitFormData.append(`colors[${colorIndex}][name]`, color.name.trim());
       
       color.images.forEach((image) => {
         if (image.isNew && image.file) {
@@ -348,28 +390,56 @@ const handleSubmit = async () => {
       });
     });
 
-    const response = await fetch('https://oshocks-junior-bike-shop-backend.onrender.com/api/v1/seller/products', {
+    // Debug: Log what we're sending
+    console.log('=== SUBMITTING TO BACKEND ===');
+    console.log('Product Name:', formData.productName);
+    console.log('Category ID:', formData.category);
+    console.log('Price:', formData.discountPrice || formData.basePrice);
+    console.log('Quantity:', formData.quantity);
+    console.log('Colors:', formData.colors.map(c => ({
+      name: c.name,
+      images: c.images.length
+    })));
+    console.log('Specifications:', cleanedSpecs);
+
+    
+
+    // 🔍 DEBUG: Log the exact FormData being sent
+    console.log('=== DEBUGGING FORMDATA ===');
+    for (let pair of submitFormData.entries()) {
+      console.log(pair[0], ':', pair[1]);
+    }
+    console.log('=== END DEBUG ===');
+
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/seller/products`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Accept': 'application/json'
+        // DON'T set Content-Type - browser will set it with boundary
       },
       body: submitFormData
     });
 
+    const result = await response.json();
+
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to save product');
+      console.error('Backend error:', result);
+      throw new Error(result.message || 'Failed to save product');
     }
 
-    const result = await response.json();
     alert('Product added successfully!');
-    // Reset form or redirect
-    window.location.href = '/seller/products'; // or use navigate
+    console.log('✅ Created product:', result);
+    
+    // Optional: Reset form or redirect
+    // window.location.href = '/seller/products';
+
+    
     
   } catch (err) {
+    setError(err.message);
     alert(err.message);
-    console.error('Error saving product:', err);
+    console.error('❌ Error saving product:', err);
   } finally {
     setLoading(false);
   }
@@ -713,15 +783,15 @@ const handleSubmit = async () => {
                     }`}
                   >
                     <option value="">Select Category</option>
-                    {Object.keys(categories).map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
                   </select>
                   {errors.category && <p className="text-red-600 text-sm mt-1">{errors.category}</p>}
                 </div>
 
                 {/* Sub Category */}
-                <div>
+              {/*}  <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Sub Category
                   </label>
@@ -736,7 +806,7 @@ const handleSubmit = async () => {
                       <option key={sub} value={sub}>{sub}</option>
                     ))}
                   </select>
-                </div>
+                </div> *}
 
                 {/* Brand */}
                 <div>

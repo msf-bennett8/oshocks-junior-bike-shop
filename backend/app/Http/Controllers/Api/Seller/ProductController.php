@@ -176,11 +176,12 @@ class ProductController extends Controller
                 'type' => $request->type,
                 'category_id' => $request->category_id,
                 'brand_id' => $request->brand_id,
-                'seller_id' => $user->role === 'seller' ? $user->id : null,
+                'seller_id' => $user->role === 'seller' ? $user->sellerProfile->id : null,
                 'price' => $request->price,
                 'quantity' => $request->quantity,
                 'condition' => $request->condition,
                 'year' => $request->year,
+                'sku' => $request->sku ?? $request->name . '-' . Str::random(6),
                 'specifications' => !empty($specifications) ? $specifications : null,
                 'is_active' => true,
             ]);
