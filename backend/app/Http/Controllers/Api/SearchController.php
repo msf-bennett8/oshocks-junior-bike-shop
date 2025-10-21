@@ -52,7 +52,7 @@ class SearchController extends Controller
                         'name' => $product->name,
                         'description' => $product->description,
                         'price' => $product->price,
-                        'stock_quantity' => $product->stock_quantity,
+                        'quantity' => $product->quantity,
                         'category' => $product->category->name ?? null,
                     ];
                 });

@@ -20,7 +20,6 @@ class Product extends Model
         'type',
         'price',
         'compare_price',
-        'stock_quantity',
         'tags',
         'cost_price',
         'condition',
@@ -52,7 +51,7 @@ class Product extends Model
         'price' => 'decimal:2',
         'compare_at_price' => 'decimal:2',
         'cost_price' => 'decimal:2',
-        'stock_quantity' => 'integer',
+        'quantity' => 'integer',
         'year' => 'integer',
         'tags' => 'array',
         'specifications' => 'array',
@@ -177,7 +176,7 @@ class Product extends Model
      */
     public function scopeInStock($query)
     {
-        return $query->where('stock_quantity', '>', 0);
+        return $query->where('quantity', '>', 0);
     }
 
     /**
@@ -204,7 +203,7 @@ class Product extends Model
      */
     public function isInStock()
     {
-        return $this->stock_quantity > 0;
+        return $this->quantity > 0;
     }
 
      /**
@@ -212,7 +211,7 @@ class Product extends Model
      */
     public function isLowStock()
     {
-        return $this->stock_quantity > 0 && $this->stock_quantity <= $this->low_stock_threshold;
+        return $this->quantity > 0 && $this->quantity <= $this->low_stock_threshold;
     }
 
     /**
@@ -220,7 +219,7 @@ class Product extends Model
      */
     public function getStockStatusAttribute()
     {
-        if ($this->stock_quantity === 0) {
+        if ($this->quantity === 0) {
             return 'out_of_stock';
         } elseif ($this->isLowStock()) {
             return 'low_stock';
@@ -249,8 +248,8 @@ class Product extends Model
      */
     public function decreaseStock($quantity)
     {
-        if ($this->stock_quantity >= $quantity) {
-            $this->decrement('stock_quantity', $quantity);
+        if ($this->quantity >= $quantity) {
+            $this->decrement('quantity', $quantity);
             return true;
         }
         return false;
@@ -261,7 +260,7 @@ class Product extends Model
      */
     public function increaseStock($quantity)
     {
-        $this->increment('stock_quantity', $quantity);
+        $this->increment('quantity', $quantity);
     }
 
     /**

@@ -177,7 +177,7 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'nullable|exists:brands,id',
             'price' => 'required|numeric|min:0',
-            'stock_quantity' => 'required|integer|min:0',
+            'quantity' => 'required|integer|min:0',
             'condition' => 'required|in:new,used,refurbished',
             'year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
             'specifications' => 'nullable|array',
@@ -208,7 +208,7 @@ class ProductController extends Controller
             'category_id' => 'sometimes|exists:categories,id',
             'brand_id' => 'nullable|exists:brands,id',
             'price' => 'sometimes|numeric|min:0',
-            'stock_quantity' => 'sometimes|integer|min:0',
+            'quantity' => 'sometimes|integer|min:0',
             'condition' => 'sometimes|in:new,used,refurbished',
             'year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
             'specifications' => 'nullable|array',
@@ -274,8 +274,8 @@ class ProductController extends Controller
         $analytics = [
             'total_products' => Product::where('seller_id', $sellerId)->count(),
             'active_products' => Product::where('seller_id', $sellerId)->where('is_active', true)->count(),
-            'out_of_stock' => Product::where('seller_id', $sellerId)->where('stock_quantity', 0)->count(),
-            'total_value' => Product::where('seller_id', $sellerId)->sum(\DB::raw('price * stock_quantity')),
+            'out_of_stock' => Product::where('seller_id', $sellerId)->where('quantity', 0)->count(),
+            'total_value' => Product::where('seller_id', $sellerId)->sum(\DB::raw('price * quantity')),
             'products_by_type' => Product::where('seller_id', $sellerId)
                 ->select('type', \DB::raw('count(*) as count'))
                 ->groupBy('type')

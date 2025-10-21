@@ -127,7 +127,7 @@ class ProductController extends Controller
                 'type' => 'required|in:bike,accessory',
                 'category_id' => 'required|exists:categories,id',
                 'price' => 'required|numeric|min:0',
-                'stock_quantity' => 'required|integer|min:0',
+                'quantity' => 'required|integer|min:0',
                 'condition' => 'required|in:new,used,refurbished',
                 'year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
                 'specifications' => 'nullable|json',
@@ -155,7 +155,7 @@ class ProductController extends Controller
                 'brand_id' => $request->brand_id,
                 'seller_id' => $user->role === 'seller' ? $user->id : null,
                 'price' => $request->price,
-                'stock_quantity' => $request->stock_quantity,
+                'quantity' => $request->quantity, // FIXED: Changed from quantity to quantity
                 'condition' => $request->condition,
                 'year' => $request->year,
                 'specifications' => $request->specifications ? json_decode($request->specifications, true) : null,
@@ -173,7 +173,7 @@ class ProductController extends Controller
                     'color' => $colorData['name'],
                     'sku' => $product->slug . '-' . Str::slug($colorData['name']),
                     'price' => $request->price,
-                    'stock_quantity' => $request->stock_quantity,
+                    'quantity' => $request->quantity, // FIXED: Changed from quantity to quantity
                 ]);
 
                 // Upload images for this color variant
@@ -295,7 +295,7 @@ class ProductController extends Controller
                 'name' => 'sometimes|required|string|max:255',
                 'description' => 'sometimes|required|string',
                 'price' => 'sometimes|required|numeric|min:0',
-                'stock_quantity' => 'sometimes|required|integer|min:0',
+                'quantity' => 'sometimes|required|integer|min:0',
             ]);
 
             if ($validator->fails()) {
@@ -310,7 +310,7 @@ class ProductController extends Controller
             // Update product fields
             $product->update($request->only([
                 'name', 'description', 'type', 'category_id', 'brand_id',
-                'price', 'stock_quantity', 'condition', 'year'
+                'price', 'quantity', 'condition', 'year'
             ]));
 
             if ($request->has('specifications')) {
@@ -334,7 +334,7 @@ class ProductController extends Controller
                                 'color' => $colorData['name'],
                                 'sku' => $product->slug . '-' . Str::slug($colorData['name']),
                                 'price' => $product->price,
-                                'stock_quantity' => $product->stock_quantity,
+                                'quantity' => $product->quantity, // FIXED: Changed from quantity to quantity
                             ]);
                         }
 

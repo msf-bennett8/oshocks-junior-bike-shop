@@ -253,12 +253,12 @@ const performSearch = useCallback(async (searchQuery) => {
             </div>
           )}
         </div>
-        {item.type === 'product' && item.stock_quantity === 0 && (
+        {item.type === 'product' && item.quantity === 0 && (
           <span className="flex-shrink-0 text-[10px] sm:text-xs bg-red-100 text-red-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium">
             Out of Stock
           </span>
         )}
-        {item.type === 'product' && item.stock_quantity > 0 && item.stock_quantity < 5 && (
+        {item.type === 'product' && item.quantity > 0 && item.quantity < 5 && (
           <span className="flex-shrink-0 text-[10px] sm:text-xs bg-orange-100 text-orange-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium">
             Low Stock
           </span>

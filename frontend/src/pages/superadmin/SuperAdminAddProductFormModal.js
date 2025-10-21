@@ -20,7 +20,7 @@ const SuperAdminAddProductFormModal = ({
     category_id: '',
     brand_id: '',
     price: '',
-    stock_quantity: '',
+    quantity: '',
     condition: 'new',
     year: new Date().getFullYear(),
     specifications: {
@@ -56,7 +56,7 @@ const SuperAdminAddProductFormModal = ({
         category_id: product.category_id || '',
         brand_id: product.brand_id || '',
         price: product.price || '',
-        stock_quantity: product.stock_quantity || product.quantity || '',
+        quantity: product.quantity || product.quantity || '',
         condition: product.condition || 'new',
         year: product.year || new Date().getFullYear(),
         specifications: product.specifications || {
@@ -218,7 +218,7 @@ const SuperAdminAddProductFormModal = ({
       if (!formData.price || parseFloat(formData.price) <= 0) {
         throw new Error('Please enter valid price');
       }
-      if (!formData.stock_quantity || parseInt(formData.stock_quantity) < 0) {
+      if (!formData.quantity || parseInt(formData.quantity) < 0) {
         throw new Error('Please enter valid stock quantity');
       }
 
@@ -233,15 +233,15 @@ const SuperAdminAddProductFormModal = ({
       }
 
       // Get auth token
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('authToken');
       
       if (!token) {
         throw new Error('Please login first');
       }
 
       const url = mode === 'edit' 
-        ? `${process.env.REACT_APP_API_URL}/api/v1/seller/products/${product.id}`
-        : `${process.env.REACT_APP_API_URL}/api/v1/seller/products`;
+        ? `${process.env.REACT_APP_API_URL}/seller/products/${product.id}`
+        : `${process.env.REACT_APP_API_URL}/seller/products`;
 
       const method = mode === 'edit' ? 'PUT' : 'POST';
 
@@ -262,7 +262,7 @@ const SuperAdminAddProductFormModal = ({
       submitFormData.append('category_id', formData.category_id);
       submitFormData.append('brand_id', formData.brand_id || '');
       submitFormData.append('price', parseFloat(formData.price));
-      submitFormData.append('stock_quantity', parseInt(formData.stock_quantity));
+      submitFormData.append('quantity', parseInt(formData.quantity));
       submitFormData.append('condition', formData.condition);
       submitFormData.append('year', formData.year ? parseInt(formData.year) : null);
       submitFormData.append('specifications', JSON.stringify(Object.keys(cleanedSpecs).length > 0 ? cleanedSpecs : null));
@@ -324,7 +324,7 @@ const SuperAdminAddProductFormModal = ({
       category_id: '',
       brand_id: '',
       price: '',
-      stock_quantity: '',
+      quantity: '',
       condition: 'new',
       year: new Date().getFullYear(),
       specifications: {
@@ -527,8 +527,8 @@ const SuperAdminAddProductFormModal = ({
                   </label>
                   <input
                     type="number"
-                    name="stock_quantity"
-                    value={formData.stock_quantity}
+                    name="quantity"
+                    value={formData.quantity}
                     onChange={handleChange}
                     required
                     min="0"
@@ -843,7 +843,7 @@ const SuperAdminAddProductFormModal = ({
                 <p className="text-sm text-gray-700 mb-4"><strong>Product Summary:</strong></p>
                 <div className="space-y-2 text-sm">
                   <p>📦 <strong>{formData.name || 'Product Name'}</strong> - {formData.type}</p>
-                  <p>💰 KES {formData.price || '0'} × {formData.stock_quantity || '0'} units in stock</p>
+                  <p>💰 KES {formData.price || '0'} × {formData.quantity || '0'} units in stock</p>
                   <p>📂 Category: {categories.find(c => c.id == formData.category_id)?.name || 'Not selected'}</p>
                   <p>🎨 Color Variants: {formData.colors.length}</p>
                   <p>📸 Total Images: {formData.colors.reduce((sum, c) => sum + c.images.length, 0)}</p>

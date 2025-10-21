@@ -948,7 +948,7 @@ const WishlistCard = ({
         {item.low_stock && item.in_stock && (
           <div className="flex items-center gap-1 text-orange-600 text-xs font-medium mb-2">
             <AlertCircle className="h-3 w-3" />
-            Only {item.stock_quantity} left
+            Only {item.quantity} left
           </div>
         )}
 
