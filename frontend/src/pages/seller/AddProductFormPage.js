@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, ImageIcon, Loader, AlertCircle, Check, Plus, Trash2 } from 'lucide-react';
 
-const AddProductFormModal = ({ 
+const AddProduct = ({ 
   isOpen, 
   onClose, 
   mode = 'create', // 'create' or 'edit'
@@ -233,15 +233,15 @@ const AddProductFormModal = ({
       }
 
       // Get auth token
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('authToken');
       
       if (!token) {
         throw new Error('Please login first');
       }
 
       const url = mode === 'edit' 
-        ? `${process.env.REACT_APP_API_URL}/api/v1/seller/products/${product.id}`
-        : `${process.env.REACT_APP_API_URL}/api/v1/seller/products`;
+        ? `${process.env.REACT_APP_API_URL}/seller/products/${product.id}`
+        : `${process.env.REACT_APP_API_URL}/seller/products`;
 
       const method = mode === 'edit' ? 'PUT' : 'POST';
 
@@ -273,12 +273,14 @@ const AddProductFormModal = ({
       formData.colors.forEach((color, colorIndex) => {
         submitFormData.append(`colors[${colorIndex}][name]`, color.name);
         
-        color.images.forEach((image, imageIndex) => {
+        // Count to track image index
+        let imageCount = 0;
+        
+        color.images.forEach((image) => {
           if (image.isNew && image.file) {
-            submitFormData.append(`colors[${colorIndex}][images][${imageIndex}]`, image.file);
-          } else if (image.url) {
-            // For existing images during edit
-            submitFormData.append(`colors[${colorIndex}][existing_images][${imageIndex}]`, image.url);
+            // Send new images with proper array indexing
+            submitFormData.append(`colors[${colorIndex}][images][]`, image.file);
+            imageCount++;
           }
         });
       });
@@ -884,4 +886,4 @@ const AddProductFormModal = ({
   );
 };
 
-export default AddProductFormModal;
+export default AddProduct;

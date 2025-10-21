@@ -213,6 +213,22 @@ const handleElevation = async () => {
       }
     ];
 
+    // ADD SELLER SECTION HERE (BEFORE SUPER ADMIN)
+    // Add Seller section if user is seller (but not admin or super_admin)
+    if (user?.role === 'seller') {
+      categories.push({
+        title: 'Seller Dashboard',
+        items: [
+          { name: 'Dashboard', link: '/seller/dashboard', icon: LayoutDashboard },
+          { name: 'My Products', link: '/seller/products', icon: Package2 },
+          { name: 'Add Product', link: '/seller/products/add', icon: Package },
+          { name: 'Orders', link: '/seller/orders', icon: Package },
+          { name: 'Analytics', link: '/seller/analytics', icon: BarChart3 },
+          { name: 'Settings', link: '/seller/settings', icon: Settings },
+        ]
+      });
+    }
+
     // Add Super Admin section if user is super admin
     if (user?.role === 'super_admin') {
       categories.push({

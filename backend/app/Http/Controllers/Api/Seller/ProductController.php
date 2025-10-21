@@ -131,6 +131,8 @@ class ProductController extends Controller
                 'condition' => 'required|in:new,used,refurbished',
                 'year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
                 'specifications' => 'nullable|json',
+                'keyFeatures' => 'nullable|json', 
+                'sizes' => 'nullable|json', 
                 'colors' => 'required|array|min:1',
                 'colors.*.name' => 'required|string',
             ]);
@@ -145,6 +147,27 @@ class ProductController extends Controller
 
             DB::beginTransaction();
 
+            // Prepare specifications with keyFeatures and sizes
+            $specifications = $request->specifications ? json_decode($request->specifications, true) : [];
+
+            // Add keyFeatures if provided
+            if ($request->has('keyFeatures')) {
+                $keyFeatures = json_decode($request->keyFeatures, true);
+                if (is_array($keyFeatures)) {
+                    $specifications['key_features'] = array_filter($keyFeatures, function($feature) {
+                        return isset($feature['text']) && !empty(trim($feature['text']));
+                    });
+                }
+            }
+
+            // Add sizes if provided
+            if ($request->has('sizes')) {
+                $sizes = json_decode($request->sizes, true);
+                if (is_array($sizes)) {
+                    $specifications['sizes'] = $sizes;
+                }
+            }
+
             // Create product
             $product = Product::create([
                 'name' => $request->name,
@@ -155,10 +178,10 @@ class ProductController extends Controller
                 'brand_id' => $request->brand_id,
                 'seller_id' => $user->role === 'seller' ? $user->id : null,
                 'price' => $request->price,
-                'quantity' => $request->quantity, // FIXED: Changed from quantity to quantity
+                'quantity' => $request->quantity,
                 'condition' => $request->condition,
                 'year' => $request->year,
-                'specifications' => $request->specifications ? json_decode($request->specifications, true) : null,
+                'specifications' => !empty($specifications) ? $specifications : null,
                 'is_active' => true,
             ]);
 
@@ -170,10 +193,13 @@ class ProductController extends Controller
                 // Create product variant for this color
                 $variant = ProductVariant::create([
                     'product_id' => $product->id,
-                    'color' => $colorData['name'],
+                    'name' => $colorData['name'],  // ✅ CORRECT: Use 'name' not 'color'
                     'sku' => $product->slug . '-' . Str::slug($colorData['name']),
                     'price' => $request->price,
-                    'quantity' => $request->quantity, // FIXED: Changed from quantity to quantity
+                    'quantity' => $request->quantity,
+                    'attributes' => [
+                        'color' => $colorData['name'],  // Store color in attributes JSON
+                    ],
                 ]);
 
                 // Upload images for this color variant
@@ -326,15 +352,18 @@ class ProductController extends Controller
                     $imageKey = "colors.{$index}.images";
                     
                     if ($request->hasFile($imageKey)) {
-                        $variant = $product->variants()->where('color', $colorData['name'])->first();
+                        $variant = $product->variants()->where('name', $colorData['name'])->first();
                         
                         if (!$variant) {
                             $variant = ProductVariant::create([
                                 'product_id' => $product->id,
-                                'color' => $colorData['name'],
+                                'name' => $colorData['name'], 
                                 'sku' => $product->slug . '-' . Str::slug($colorData['name']),
                                 'price' => $product->price,
-                                'quantity' => $product->quantity, // FIXED: Changed from quantity to quantity
+                                'quantity' => $product->quantity,
+                                'attributes' => [
+                                    'color' => $colorData['name'],
+                                ],
                             ]);
                         }
 
