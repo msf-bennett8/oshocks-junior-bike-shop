@@ -175,7 +175,7 @@ class ProductController extends Controller
                 'description' => $request->description,
                 'type' => $request->type,
                 'category_id' => $request->category_id,
-                'brand_id' => $request->brand_id,
+                'brand' => $request->brand,
                 'seller_id' => $user->role === 'seller' ? $user->sellerProfile->id : null,
                 'price' => $request->price,
                 'quantity' => $request->quantity,
