@@ -410,7 +410,7 @@ const handleSubmit = async () => {
       console.log(pair[0], ':', pair[1]);
     }
     console.log('=== END DEBUG ===');
-
+REACT_APP_API_URL
     const response = await fetch(`${process.env.REACT_APP_API_URL}/seller/products`, {
       method: 'POST',
       headers: {
