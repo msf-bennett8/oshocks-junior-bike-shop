@@ -418,6 +418,7 @@ const handleSubmit = async () => {
         'Accept': 'application/json'
         // DON'T set Content-Type - browser will set it with boundary
       },
+      credentials: 'omit', 
       body: submitFormData
     });
 
