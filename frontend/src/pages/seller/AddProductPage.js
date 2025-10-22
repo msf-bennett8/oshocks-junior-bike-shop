@@ -410,17 +410,17 @@ const handleSubmit = async () => {
       console.log(pair[0], ':', pair[1]);
     }
     console.log('=== END DEBUG ===');
-REACT_APP_API_URL
-    const response = await fetch(`${process.env.REACT_APP_API_URL}/seller/products`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
-        // DON'T set Content-Type - browser will set it with boundary
-      },
-      credentials: 'omit', 
-      body: submitFormData
-    });
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+      const response = await fetch(`${apiUrl}/seller/products`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+          // DON'T set Content-Type - browser will set it with boundary
+        },
+        credentials: 'omit', 
+        body: submitFormData
+      });
 
     const result = await response.json();
 
