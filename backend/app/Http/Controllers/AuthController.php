@@ -43,8 +43,13 @@ class AuthController extends Controller
             'is_active' => true,
         ]);
 
-        // Create a cart for the user
-        Cart::create(['user_id' => $user->id]);
+        // Create a cart for the user with error handling
+        try {
+            Cart::create(['user_id' => $user->id]);
+        } catch (\Exception $e) {
+            \Log::error('Cart creation failed during registration: ' . $e->getMessage());
+            // Continue anyway - cart will be created on first item add
+        }
 
         // Generate token
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -378,8 +383,13 @@ class AuthController extends Controller
             );
 
             // Create cart if doesn't exist
+            // Create cart if doesn't exist
             if (!$user->cart) {
-                Cart::create(['user_id' => $user->id]);
+                try {
+                    Cart::create(['user_id' => $user->id]);
+                } catch (\Exception $e) {
+                    \Log::error('Cart creation failed for Google user: ' . $e->getMessage());
+                }
             }
 
             // Generate token
