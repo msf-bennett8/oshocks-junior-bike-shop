@@ -44,73 +44,145 @@ export const CartProvider = ({ children }) => {
   };
 
   // Load cart from API (for authenticated users)
-  const loadCartFromAPI = async () => {
+const loadCartFromAPI = async () => {
+    console.log('🛒 ========================================');
+    console.log('🛒 LOADING CART FROM API');
+    console.log('🛒 ========================================');
+    console.log('🔐 isAuthenticated:', isAuthenticated);
+    
     try {
       setLoading(true);
+      console.log('⏳ Setting loading to true...');
+      
       const token = authService.getToken();
-      const response = await axios.get(`${API_URL}/cart`, {
+      console.log('🎫 Token retrieved:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
+      
+      const requestUrl = `${API_URL}/cart`;
+      console.log('📡 Request URL:', requestUrl);
+      console.log('📤 Request headers:', token ? { Authorization: `Bearer ${token.substring(0, 20)}...` } : 'NO AUTH HEADER');
+      
+      const response = await axios.get(requestUrl, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
 
-      // Map backend response to frontend cart structure
-      const mappedItems = (response.data.items || []).map(item => ({
-        id: item.id,
-        product_id: item.product_id,
-        name: item.name,
-        price: Number(item.price),
-        originalPrice: item.originalPrice ? Number(item.originalPrice) : null,
-        image: item.image,
-        thumbnail: item.thumbnail,
-        quantity: item.quantity,
-        stock: item.stock,
-        variant: item.variant,
-        seller: item.seller,
-        seller_name: item.seller,
-        category: item.category,
-        slug: item.slug
-      }));
+      console.log('✅ Response received!');
+      console.log('📊 Response status:', response.status);
+      console.log('📦 Response data:', JSON.stringify(response.data, null, 2));
+      console.log('📋 Items in response:', response.data.items?.length || 0);
 
+      // Map backend response to frontend cart structure
+      const mappedItems = (response.data.items || []).map((item, index) => {
+        console.log(`🔄 Mapping item ${index + 1}:`, {
+          id: item.id,
+          product_id: item.product_id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        });
+        
+        return {
+          id: item.id,
+          product_id: item.product_id,
+          name: item.name,
+          price: Number(item.price),
+          originalPrice: item.originalPrice ? Number(item.originalPrice) : null,
+          image: item.image,
+          thumbnail: item.thumbnail,
+          quantity: item.quantity,
+          stock: item.stock,
+          variant: item.variant,
+          seller: item.seller,
+          seller_name: item.seller,
+          category: item.category,
+          slug: item.slug
+        };
+      });
+
+      console.log('✨ Mapped items:', JSON.stringify(mappedItems, null, 2));
+      console.log('🎯 Setting cart items to state...');
       setCartItems(mappedItems);
+      console.log('✅ Cart items set successfully!');
+      console.log('🛒 ========================================');
     } catch (err) {
-      console.error('Failed to load cart from API:', err);
+      console.error('❌ ========================================');
+      console.error('❌ FAILED TO LOAD CART FROM API');
+      console.error('❌ ========================================');
+      console.error('❌ Error object:', err);
+      console.error('❌ Error message:', err.message);
+      console.error('❌ Error response:', err.response);
+      console.error('❌ Error response data:', err.response?.data);
+      console.error('❌ Error response status:', err.response?.status);
+      console.error('❌ Error response headers:', err.response?.headers);
+      console.error('❌ ========================================');
       setError('Failed to load cart');
     } finally {
+      console.log('🏁 Setting loading to false...');
       setLoading(false);
     }
   };
 
   // Add item to cart
 const addToCart = async (product, quantity = 1, variant = null, selectedSize = null) => {
+    console.log('➕ ========================================');
+    console.log('➕ ADD TO CART CALLED');
+    console.log('➕ ========================================');
+    console.log('📦 Product:', {
+      id: product?.id,
+      name: product?.name,
+      price: product?.price
+    });
+    console.log('🔢 Quantity:', quantity);
+    console.log('🎨 Variant:', variant);
+    console.log('📏 Selected Size:', selectedSize);
+    console.log('🔐 isAuthenticated:', isAuthenticated);
+    
     try {
       setLoading(true);
       setError(null);
+      console.log('⏳ Loading started...');
 
       // Sync with backend first (or guest cart)
       if (isAuthenticated) {
+        console.log('✅ User is authenticated - syncing with backend...');
         const token = authService.getToken();
-        await axios.post(`${API_URL}/cart/add`, {
+        console.log('🎫 Token:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN');
+        
+        const payload = {
           product_id: product.id,
           quantity,
           variant_id: variant?.id || null
-        }, {
+        };
+        console.log('📤 Request payload:', JSON.stringify(payload, null, 2));
+        console.log('📡 Request URL:', `${API_URL}/cart/add`);
+        
+        const response = await axios.post(`${API_URL}/cart/add`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
+        console.log('✅ Add to cart response:', JSON.stringify(response.data, null, 2));
+        console.log('🔄 Reloading cart from API...');
+        
         // Reload cart from API to get updated data
         await loadCartFromAPI();
+        console.log('✅ Cart reloaded successfully!');
       } else {
+        console.log('👤 Guest user - managing cart locally...');
         // For guest users, manage locally
         const existingItemIndex = cartItems.findIndex(
           item => item.product_id === product.id && 
           item.variant?.id === variant?.id
         );
+        console.log('🔍 Existing item index:', existingItemIndex);
 
         let updatedCart;
 
         if (existingItemIndex > -1) {
+          console.log('📝 Updating existing item quantity...');
           updatedCart = [...cartItems];
           updatedCart[existingItemIndex].quantity += quantity;
+          console.log('✅ New quantity:', updatedCart[existingItemIndex].quantity);
         } else {
+          console.log('🆕 Creating new cart item...');
           const newItem = {
             id: Date.now(),
             product_id: product.id,
@@ -127,18 +199,34 @@ const addToCart = async (product, quantity = 1, variant = null, selectedSize = n
             category: product.category?.name || 'Bikes',
             slug: product.slug
           };
+          console.log('🆕 New item created:', JSON.stringify(newItem, null, 2));
           updatedCart = [...cartItems, newItem];
         }
 
+        console.log('💾 Saving to state...');
         setCartItems(updatedCart);
+        console.log('✅ Guest cart updated!');
       }
 
+      console.log('✅ ========================================');
+      console.log('✅ ADD TO CART SUCCESSFUL');
+      console.log('✅ ========================================');
       return { success: true, message: 'Item added to cart' };
     } catch (err) {
+      console.error('❌ ========================================');
+      console.error('❌ ADD TO CART FAILED');
+      console.error('❌ ========================================');
+      console.error('❌ Error:', err);
+      console.error('❌ Error message:', err.message);
+      console.error('❌ Error response:', err.response?.data);
+      console.error('❌ Error status:', err.response?.status);
+      console.error('❌ ========================================');
+      
       const errorMessage = err.response?.data?.message || 'Failed to add item to cart';
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
+      console.log('🏁 Setting loading to false...');
       setLoading(false);
     }
   };
