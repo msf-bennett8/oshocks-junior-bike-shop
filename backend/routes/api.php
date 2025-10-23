@@ -55,6 +55,13 @@ Route::prefix('v1')->group(function () {
     Route::get('/categories/{id}', [CategoryController::class, 'show']);
     Route::get('/categories/{id}/products', [CategoryController::class, 'getProducts']);
     
+        // Cart routes - Public (supports both guest and authenticated users)
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart/add', [CartController::class, 'addItem']);
+    Route::put('/cart/items/{itemId}', [CartController::class, 'updateItem']);
+    Route::delete('/cart/items/{itemId}', [CartController::class, 'removeItem']);
+    Route::delete('/cart/clear', [CartController::class, 'clearCart']);
+    
     // search
     Route::get('/search', [SearchController::class, 'search']);
     Route::get('/search/suggestions', [SearchController::class, 'suggestions']);
@@ -80,13 +87,6 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-    
-    // Cart
-    Route::get('/cart', [CartController::class, 'show']);
-    Route::post('/cart/items', [CartItemController::class, 'store']);
-    Route::put('/cart/items/{id}', [CartItemController::class, 'update']);
-    Route::delete('/cart/items/{id}', [CartItemController::class, 'destroy']);
-    Route::delete('/cart/clear', [CartController::class, 'clear']);
     
     // Wishlist
     Route::get('/wishlist', [WishlistController::class, 'index']);

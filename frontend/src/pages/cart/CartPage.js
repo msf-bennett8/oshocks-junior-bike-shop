@@ -15,6 +15,7 @@ import {
 // Import your existing components
 import CartItem from './CartItem';
 import CartSummary from './CartSummary';
+import { useCart } from '../../context/CartContext';
 
 /**
  * CartPage Component
@@ -23,48 +24,21 @@ import CartSummary from './CartSummary';
  */
 const CartPage = () => {
   const navigate = useNavigate();
+  const { 
+    cartItems, 
+    loading, 
+    error, 
+    updateQuantity, 
+    removeFromCart, 
+    clearCart 
+  } = useCart();
   
-  // Cart state (in production, this would come from context/redux)
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: 'Mountain Bike Pro X1 - 21 Speed Shimano',
-      category: 'Mountain Bikes',
-      price: 45000,
-      originalPrice: 52000,
-      quantity: 1,
-      stock: 8,
-      seller: 'Oshocks Junior',
-      image: '/api/placeholder/200/200'
-    },
-    {
-      id: 2,
-      name: 'Professional Cycling Helmet - Safety Certified',
-      category: 'Safety Gear',
-      price: 2500,
-      quantity: 2,
-      stock: 3,
-      seller: 'BikeGear Kenya',
-      image: '/api/placeholder/200/200'
-    },
-    {
-      id: 3,
-      name: 'Heavy Duty U-Lock with Cable',
-      category: 'Security',
-      price: 1800,
-      quantity: 1,
-      stock: 15,
-      seller: 'SecureBikes',
-      image: '/api/placeholder/200/200'
-    }
-  ]);
-
   const [wishlist, setWishlist] = useState([]);
   const [notification, setNotification] = useState(null);
 
   // Calculate totals - with safe defaults
   const totalItems = cartItems?.reduce((sum, item) => sum + (item?.quantity || 0), 0) || 0;
-  const subtotal = cartItems?.reduce((sum, item) => sum + ((item?.price || 0) * (item?.quantity || 0)), 0) || 0;
+  const subtotal = cartItems?.reduce((sum, item) => sum + (Number(item?.price || 0) * (item?.quantity || 0)), 0) || 0;
 
   // Show notification
   const showNotification = (message, type = 'success') => {
@@ -73,19 +47,23 @@ const CartPage = () => {
   };
 
   // Handle quantity update
-  const handleUpdateQuantity = (id, newQuantity) => {
-    setCartItems(cartItems.map(item =>
-      item.id === id ? { ...item, quantity: newQuantity } : item
-    ));
-    showNotification('Quantity updated');
+  const handleUpdateQuantity = async (id, newQuantity) => {
+    const result = await updateQuantity(id, newQuantity);
+    if (result.success) {
+      showNotification('Quantity updated');
+    } else {
+      showNotification(result.error, 'error');
+    }
   };
 
   // Handle remove item
-  const handleRemoveItem = (id) => {
+  const handleRemoveItem = async (id) => {
     const item = cartItems.find(i => i.id === id);
-    setCartItems(cartItems.filter(item => item.id !== id));
-    if (item) {
+    const result = await removeFromCart(id);
+    if (result.success && item) {
       showNotification(`${item.name} removed from cart`, 'info');
+    } else if (!result.success) {
+      showNotification(result.error, 'error');
     }
   };
 
@@ -96,10 +74,14 @@ const CartPage = () => {
   };
 
   // Handle clear cart
-  const handleClearCart = () => {
+  const handleClearCart = async () => {
     if (window.confirm('Are you sure you want to clear your cart?')) {
-      setCartItems([]);
-      showNotification('Cart cleared', 'info');
+      const result = await clearCart();
+      if (result.success) {
+        showNotification('Cart cleared', 'info');
+      } else {
+        showNotification(result.error, 'error');
+      }
     }
   };
 
