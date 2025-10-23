@@ -29,6 +29,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const desktopMenuRef = useRef(null);
+  const desktopMenuPanelRef = useRef(null);
 
   const cartItemCount = cartItems?.length || 0;
 
@@ -68,18 +69,23 @@ useEffect(() => {
   }, [lastScrollY]);
 
   // Close desktop menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (desktopMenuRef.current && !desktopMenuRef.current.contains(event.target)) {
-        setIsDesktopMenuOpen(false);
-      }
-    };
-
-    if (isDesktopMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (
+      desktopMenuRef.current && 
+      !desktopMenuRef.current.contains(event.target) &&
+      desktopMenuPanelRef.current &&
+      !desktopMenuPanelRef.current.contains(event.target)
+    ) {
+      setIsDesktopMenuOpen(false);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isDesktopMenuOpen]);
+  };
+
+  if (isDesktopMenuOpen) {
+    document.addEventListener('mousedown', handleClickOutside);
+  }
+  return () => document.removeEventListener('mousedown', handleClickOutside);
+}, [isDesktopMenuOpen]);
 
   const handleLogout = () => {
     logout();
@@ -470,18 +476,18 @@ const handleElevation = async () => {
               </button>
 
             {/* User Account */}
-{isAuthenticated ? (
-  <div className="relative" ref={profileMenuRef}>
-    <div
-      onClick={handleUserIconClick}
-      className="flex items-center gap-1 px-2 sm:px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-    >
-      <User size={20} className="text-gray-700" />
-      <div className="hidden md:flex flex-col items-start">
-        <span className="text-xs text-gray-600">Hello, {user?.name?.split(' ')[0] || 'User'}</span>
-        <span className="text-sm font-semibold text-gray-900">Account</span>
-      </div>
-    </div>
+            {isAuthenticated ? (
+              <div className="relative" ref={profileMenuRef}>
+                <div
+                  onClick={handleUserIconClick}
+                  className="flex items-center gap-1 px-2 sm:px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                >
+                  <User size={20} className="text-gray-700" />
+                  <div className="hidden md:flex flex-col items-start">
+                    <span className="text-xs text-gray-600">Hello, {user?.name?.split(' ')[0] || 'User'}</span>
+                    <span className="text-sm font-semibold text-gray-900">Account</span>
+                  </div>
+                </div>
     
                 {/* Profile Dropdown Menu */}
                 {showProfileMenu && (
@@ -686,7 +692,8 @@ const handleElevation = async () => {
           onClick={() => setIsDesktopMenuOpen(false)}
         >
           <div
-            className="fixed top-0 left-0 h-full w-1/4 min-w-[300px] max-w-[400px] bg-white shadow-2xl overflow-y-auto animate-slide-in-left"
+            ref={desktopMenuPanelRef}
+            className="fixed top-16 left-0 h-[calc(100vh-4rem)] w-1/4 min-w-[300px] max-w-[400px] bg-white shadow-2xl overflow-y-auto animate-slide-in-left z-50"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 flex items-center justify-between">
