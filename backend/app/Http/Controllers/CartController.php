@@ -188,21 +188,15 @@ class CartController extends Controller
      */
     private function getOrCreateCart(Request $request)
     {
-        if (Auth::check()) {
-            // For authenticated users - each user gets their own cart
-            $cart = Cart::firstOrCreate([
-                'user_id' => Auth::id()
-            ]);
-        } else {
-            // For guest users - use session-based cart identification
-            $sessionId = $request->session()->getId();
-            
-            // Store session ID in a guest_session_id column or use a different strategy
-            // For now, prevent shared guest cart by returning error
-            return response()->json([
-                'message' => 'Please login to use cart functionality'
-            ], 401);
+        // Only allow authenticated users to have carts
+        if (!Auth::check()) {
+            abort(401, 'Authentication required to use cart');
         }
+
+        // Each authenticated user gets their own cart
+        $cart = Cart::firstOrCreate([
+            'user_id' => Auth::id()
+        ]);
 
         return $cart;
     }
