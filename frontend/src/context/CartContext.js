@@ -44,18 +44,13 @@ export const CartProvider = ({ children }) => {
   };
 
   // Load cart from API (for authenticated users)
-const loadCartFromAPI = async () => {
-    console.log('🛒 Loading cart from API...');
-    
+  const loadCartFromAPI = async () => {
     try {
       setLoading(true);
       const token = authService.getToken();
-      
       const response = await axios.get(`${API_URL}/cart`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
-
-      console.log(`✅ Cart loaded: ${response.data.items?.length || 0} items`);
 
       // Map backend response to frontend cart structure
       const mappedItems = (response.data.items || []).map(item => ({
@@ -77,7 +72,7 @@ const loadCartFromAPI = async () => {
 
       setCartItems(mappedItems);
     } catch (err) {
-      console.error('❌ Failed to load cart:', err.response?.data?.message || err.message);
+      console.error('Failed to load cart from API:', err);
       setError('Failed to load cart');
     } finally {
       setLoading(false);
@@ -86,8 +81,6 @@ const loadCartFromAPI = async () => {
 
   // Add item to cart
 const addToCart = async (product, quantity = 1, variant = null, selectedSize = null) => {
-    console.log(`➕ Adding to cart: ${product?.name} (qty: ${quantity})`);
-    
     try {
       setLoading(true);
       setError(null);
@@ -95,7 +88,6 @@ const addToCart = async (product, quantity = 1, variant = null, selectedSize = n
       // Sync with backend first (or guest cart)
       if (isAuthenticated) {
         const token = authService.getToken();
-        
         await axios.post(`${API_URL}/cart/add`, {
           product_id: product.id,
           quantity,
@@ -106,7 +98,6 @@ const addToCart = async (product, quantity = 1, variant = null, selectedSize = n
         
         // Reload cart from API to get updated data
         await loadCartFromAPI();
-        console.log('✅ Item added to cart successfully');
       } else {
         // For guest users, manage locally
         const existingItemIndex = cartItems.findIndex(
@@ -119,7 +110,6 @@ const addToCart = async (product, quantity = 1, variant = null, selectedSize = n
         if (existingItemIndex > -1) {
           updatedCart = [...cartItems];
           updatedCart[existingItemIndex].quantity += quantity;
-          console.log(`✅ Updated quantity: ${updatedCart[existingItemIndex].quantity}`);
         } else {
           const newItem = {
             id: Date.now(),
@@ -138,7 +128,6 @@ const addToCart = async (product, quantity = 1, variant = null, selectedSize = n
             slug: product.slug
           };
           updatedCart = [...cartItems, newItem];
-          console.log('✅ New item added to guest cart');
         }
 
         setCartItems(updatedCart);
@@ -146,8 +135,6 @@ const addToCart = async (product, quantity = 1, variant = null, selectedSize = n
 
       return { success: true, message: 'Item added to cart' };
     } catch (err) {
-      console.error('❌ Add to cart failed:', err.response?.data?.message || err.message);
-      
       const errorMessage = err.response?.data?.message || 'Failed to add item to cart';
       setError(errorMessage);
       return { success: false, error: errorMessage };
@@ -158,8 +145,6 @@ const addToCart = async (product, quantity = 1, variant = null, selectedSize = n
 
   // Remove item from cart
 const removeFromCart = async (itemId) => {
-    console.log(`🗑️ Removing item ${itemId} from cart...`);
-    
     try {
       setLoading(true);
       setError(null);
@@ -173,18 +158,14 @@ const removeFromCart = async (itemId) => {
         
         // Reload cart from API
         await loadCartFromAPI();
-        console.log('✅ Item removed from cart');
       } else {
         // For guest users, manage locally
         const updatedCart = cartItems.filter(item => item.id !== itemId);
         setCartItems(updatedCart);
-        console.log('✅ Item removed from guest cart');
       }
 
       return { success: true, message: 'Item removed from cart' };
     } catch (err) {
-      console.error('❌ Remove failed:', err.response?.data?.message || err.message);
-      
       const errorMessage = err.response?.data?.message || 'Failed to remove item';
       setError(errorMessage);
       return { success: false, error: errorMessage };
@@ -195,8 +176,6 @@ const removeFromCart = async (itemId) => {
 
   // Update item quantity
 const updateQuantity = async (itemId, newQuantity) => {
-    console.log(`🔄 Updating quantity for item ${itemId} to ${newQuantity}...`);
-    
     try {
       setLoading(true);
       setError(null);
@@ -216,20 +195,16 @@ const updateQuantity = async (itemId, newQuantity) => {
         
         // Reload cart from API
         await loadCartFromAPI();
-        console.log('✅ Quantity updated');
       } else {
         // For guest users, manage locally
         const updatedCart = cartItems.map(item =>
           item.id === itemId ? { ...item, quantity: newQuantity } : item
         );
         setCartItems(updatedCart);
-        console.log('✅ Guest cart quantity updated');
       }
 
       return { success: true, message: 'Quantity updated' };
     } catch (err) {
-      console.error('❌ Update quantity failed:', err.response?.data?.message || err.message);
-      
       const errorMessage = err.response?.data?.message || 'Failed to update quantity';
       setError(errorMessage);
       return { success: false, error: errorMessage };
@@ -239,9 +214,7 @@ const updateQuantity = async (itemId, newQuantity) => {
   };
 
   // Clear entire cart
-const clearCart = async () => {
-    console.log('🗑️ Clearing cart...');
-    
+  const clearCart = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -254,16 +227,12 @@ const clearCart = async () => {
         await axios.delete(`${API_URL}/cart/clear`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        console.log('✅ Cart cleared on backend');
       } else {
         localStorage.removeItem('cart');
-        console.log('✅ Guest cart cleared');
       }
 
       return { success: true, message: 'Cart cleared' };
     } catch (err) {
-      console.error('❌ Clear cart failed:', err.response?.data?.message || err.message);
-      
       const errorMessage = err.response?.data?.message || 'Failed to clear cart';
       setError(errorMessage);
       return { success: false, error: errorMessage };
@@ -320,13 +289,11 @@ const clearCart = async () => {
   };
 
   // Merge guest cart with user cart after login
-const mergeGuestCart = async () => {
+  const mergeGuestCart = async () => {
     try {
       const guestCart = JSON.parse(localStorage.getItem('cart') || '[]');
       
       if (guestCart.length > 0 && isAuthenticated) {
-        console.log(`🔄 Merging ${guestCart.length} guest cart items...`);
-        
         const token = authService.getToken();
         await axios.post(`${API_URL}/cart/merge`, {
           items: guestCart
@@ -339,17 +306,14 @@ const mergeGuestCart = async () => {
 
         // Reload cart from API
         await loadCartFromAPI();
-        console.log('✅ Guest cart merged successfully');
       }
     } catch (err) {
-      console.error('❌ Merge cart failed:', err.message);
+      console.error('Failed to merge guest cart:', err);
     }
   };
 
   // Validate cart items (check stock availability)
-const validateCart = async () => {
-    console.log('🔍 Validating cart...');
-    
+  const validateCart = async () => {
     try {
       setLoading(true);
       const token = authService.getToken();
@@ -364,16 +328,12 @@ const validateCart = async () => {
         headers: isAuthenticated ? { Authorization: `Bearer ${token}` } : {}
       });
 
-      console.log(response.data.valid ? '✅ Cart is valid' : '⚠️ Cart has issues');
-
       return {
         success: true,
         valid: response.data.valid,
         issues: response.data.issues || []
       };
     } catch (err) {
-      console.error('❌ Validate cart failed:', err.message);
-      
       return {
         success: false,
         error: 'Failed to validate cart'
@@ -384,9 +344,7 @@ const validateCart = async () => {
   };
 
   // Apply coupon code
-const applyCoupon = async (couponCode) => {
-    console.log(`🎟️ Applying coupon: ${couponCode}`);
-    
+  const applyCoupon = async (couponCode) => {
     try {
       setLoading(true);
       setError(null);
@@ -399,16 +357,12 @@ const applyCoupon = async (couponCode) => {
         headers: isAuthenticated ? { Authorization: `Bearer ${token}` } : {}
       });
 
-      console.log('✅ Coupon applied:', response.data.message);
-
       return {
         success: true,
         discount: response.data.discount,
         message: response.data.message
       };
     } catch (err) {
-      console.error('❌ Apply coupon failed:', err.response?.data?.message || err.message);
-      
       const errorMessage = err.response?.data?.message || 'Invalid coupon code';
       setError(errorMessage);
       return { success: false, error: errorMessage };
