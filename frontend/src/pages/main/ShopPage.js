@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { fetchProducts, fetchCategories } from '../../redux/slices/productSlice';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { useCart } from '../../context/CartContext';
 
 const ShopPage = () => {
   const dispatch = useDispatch();
@@ -520,6 +521,35 @@ const ProductCardSkeleton = ({ delay = 0 }) => {
 
 // Product Card Component
 const ProductCard = ({ product, onImageLoad, isImageLoaded }) => {
+  const { addToCart, loading: cartLoading } = useCart();
+  const [isAdding, setIsAdding] = useState(false);
+
+  const handleAddToCart = async (e) => {
+    e.preventDefault(); // Prevent navigation
+    e.stopPropagation();
+    
+    setIsAdding(true);
+    
+    try {
+      // Check if product has variants
+      const variant = product.variants?.[0] || product.colors?.[0];
+      
+      const result = await addToCart(product, 1, variant);
+      
+      if (result.success) {
+        // Optional: Show success toast/notification
+        alert('✅ Added to cart!');
+      } else {
+        alert('❌ ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('❌ Failed to add to cart');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
   return (
     <Link 
       to={`/product/${product.id}`} 
@@ -591,7 +621,7 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded }) => {
         )}
 
         {/* Price */}
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-3">
           <span className="text-2xl font-bold text-purple-600">
             KSh {Number(product.price).toLocaleString()}
           </span>
@@ -603,28 +633,55 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded }) => {
         </div>
 
         {/* Stock Status */}
-        {product.stock !== undefined && (
-          <div className="mt-2">
-            <span className={`text-xs px-2 py-1 rounded-full ${
-              product.stock > 10 
+        <div className="mb-3">
+          {product.quantity !== undefined && (
+            <span className={`inline-block text-xs px-3 py-1 rounded-full font-medium ${
+              product.quantity > 10 
                 ? 'bg-green-100 text-green-800' 
-                : product.stock > 0
+                : product.quantity > 0
                 ? 'bg-yellow-100 text-yellow-800'
                 : 'bg-red-100 text-red-800'
             }`}>
-              {product.stock > 10 
+              {product.quantity > 10 
                 ? 'In Stock' 
-                : product.stock > 0
-                ? `Only ${product.stock} left`
+                : product.quantity > 0
+                ? `Only ${product.quantity} left!`
                 : 'Out of Stock'
               }
             </span>
-          </div>
-        )}
+          )}
+        </div>
+
+        {/* Add to Cart Button */}
+        <button
+          onClick={handleAddToCart}
+          disabled={product.quantity === 0 || isAdding}
+          className={`w-full py-2.5 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
+            product.quantity === 0
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-purple-600 text-white hover:bg-purple-700 active:scale-95'
+          }`}
+        >
+          {isAdding ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>Adding...</span>
+            </>
+          ) : product.quantity === 0 ? (
+            <span>Out of Stock</span>
+          ) : (
+            <>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span>Add to Cart</span>
+            </>
+          )}
+        </button>
 
         {/* Brand */}
         {product.brand && (
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-gray-500 mt-3">
             Brand: <span className="font-medium">{product.brand}</span>
           </p>
         )}
@@ -632,5 +689,3 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded }) => {
     </Link>
   );
 };
-
-export default ShopPage;
