@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 vendor/
+product_images/
 
 # Environment files
 .env
