@@ -78,10 +78,13 @@ class Product extends Model
     /**
      * Relationship: Product belongs to a Brand
      */
-    public function brand()
-    {
-        return $this->belongsTo(Brand::class);
-    }
+   
+    //uncomment and work on it when setting brand later
+
+    // public function brand()
+    // {
+    //     return $this->belongsTo(Brand::class);
+    // }
 
     /**
      * Relationship: Product belongs to a Seller (User)

@@ -20,6 +20,12 @@ const ShopPage = () => {
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
 
+  const [loadedImages, setLoadedImages] = useState(new Set());
+
+  const handleImageLoad = (productId) => {
+    setLoadedImages(prev => new Set([...prev, productId]));
+  };
+
   // Helper function to safely extract error messages
   const getErrorMessage = (error) => {
     if (!error) return null;
@@ -301,7 +307,12 @@ const ShopPage = () => {
                   ) : (
                     // Show actual products
                     products.map((product) => (
-                      <ProductCard key={product.id} product={product} />
+                      <ProductCard 
+                        key={product.id} 
+                        product={product}
+                        onImageLoad={() => handleImageLoad(product.id)}
+                        isImageLoaded={loadedImages.has(product.id)}
+                      />
                     ))
                   )}
                 </div>
@@ -508,7 +519,7 @@ const ProductCardSkeleton = ({ delay = 0 }) => {
 };
 
 // Product Card Component
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, onImageLoad, isImageLoaded }) => {
   return (
     <Link 
       to={`/product/${product.id}`} 
@@ -516,16 +527,30 @@ const ProductCard = ({ product }) => {
     >
       {/* Product Image */}
       <div className="relative aspect-square overflow-hidden bg-gray-100">
-        {product.image_url || product.images?.[0] ? (
-          <img
-            src={product.image_url || product.images?.[0]}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-            onError={(e) => {
-              e.target.style.display = 'none';
-              e.target.parentElement.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-gray-400 text-6xl">🚴</div>';
-            }}
-          />
+        {product.image_url || product.images?.[0]?.image_url ? (
+          <>
+            {/* Thumbnail - loads first, blurred */}
+            {!isImageLoaded && (product.images?.[0]?.thumbnail_url || product.image_url) && (
+              <img
+                src={product.images?.[0]?.thumbnail_url || product.image_url}
+                alt={product.name}
+                className="absolute inset-0 w-full h-full object-cover blur-sm"
+              />
+            )}
+            {/* Full resolution - loads after, crisp */}
+            <img
+              src={product.images?.[0]?.image_url || product.image_url}
+              alt={product.name}
+              className={`absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-all duration-300 ${
+                isImageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+              onLoad={onImageLoad}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.parentElement.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-gray-400 text-6xl">🚴</div>';
+              }}
+            />
+          </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-6xl">
             🚴

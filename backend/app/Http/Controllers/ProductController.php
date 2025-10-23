@@ -12,7 +12,7 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Product::with(['category', 'seller']);
+        $query = Product::with(['category', 'seller', 'images', 'variants']);
 
         // Filter by type (bike or accessory)
         if ($request->has('type')) {
@@ -69,7 +69,7 @@ class ProductController extends Controller
     /**
      * Search Funtionality
      */
-        public function search(Request $request)
+    public function search(Request $request)
     {
         $query = $request->input('q', '');
         
@@ -106,7 +106,6 @@ class ProductController extends Controller
     {
         $product = Product::with([
             'category',
-            'brand',
             'seller.profile',
             'images',
             'variants',
@@ -123,7 +122,6 @@ class ProductController extends Controller
     {
         $product = Product::with([
             'category',
-            'brand',
             'seller.profile',
             'images',
             'variants',
@@ -138,7 +136,7 @@ class ProductController extends Controller
      */
     public function allProducts(Request $request)
     {
-        $query = Product::with(['category', 'brand', 'seller.profile']);
+        $query = Product::with(['category', 'seller.profile']);
 
         // Include inactive products for admin
         if ($request->has('status')) {
@@ -157,7 +155,7 @@ class ProductController extends Controller
     public function myProducts(Request $request)
     {
         $query = Product::where('seller_id', auth()->id())
-            ->with(['category', 'brand', 'images']);
+            ->with(['category', 'images']);
 
         $perPage = $request->get('per_page', 20);
         $products = $query->paginate($perPage);
@@ -185,7 +183,7 @@ class ProductController extends Controller
 
         $validated['seller_id'] = auth()->id();
         $validated['slug'] = \Str::slug($validated['name']) . '-' . time();
-	$validated['sku'] = 'SKU-' . strtoupper(uniqid());
+        $validated['sku'] = 'SKU-' . strtoupper(uniqid());
 
         $product = Product::create($validated);
 

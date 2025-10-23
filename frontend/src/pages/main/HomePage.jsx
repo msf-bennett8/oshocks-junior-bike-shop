@@ -9,6 +9,12 @@ const HomePage = () => {
   const [error, setError] = useState(null);
   const [isSlowLoad, setIsSlowLoad] = useState(false);
 
+  const [loadedImages, setLoadedImages] = useState(new Set());
+
+  const handleImageLoad = (productId) => {
+    setLoadedImages(prev => new Set([...prev, productId]));
+  };
+
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -324,16 +330,30 @@ const HomePage = () => {
                       className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100"
                     >
                       <div className="relative pb-[75%] bg-gray-100">
-                        {product.image_url ? (
-                          <img
-                            src={product.image_url}
-                            alt={product.name}
-                            className="absolute inset-0 w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.parentElement.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-gray-400 text-6xl">🚴</div>';
-                            }}
-                          />
+                        {product.image_url || product.images?.[0]?.image_url ? (
+                          <>
+                            {/* Thumbnail - loads first, blurred */}
+                            {!loadedImages.has(product.id) && (product.images?.[0]?.thumbnail_url || product.image_url) && (
+                              <img
+                                src={product.images?.[0]?.thumbnail_url || product.image_url}
+                                alt={product.name}
+                                className="absolute inset-0 w-full h-full object-cover blur-sm"
+                              />
+                            )}
+                            {/* Full resolution - loads after, crisp */}
+                            <img
+                              src={product.images?.[0]?.image_url || product.image_url}
+                              alt={product.name}
+                              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                                loadedImages.has(product.id) ? 'opacity-100' : 'opacity-0'
+                              }`}
+                              onLoad={() => handleImageLoad(product.id)}
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.parentElement.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-gray-400 text-6xl">🚴</div>';
+                              }}
+                            />
+                          </>
                         ) : (
                           <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-6xl">
                             🚴
