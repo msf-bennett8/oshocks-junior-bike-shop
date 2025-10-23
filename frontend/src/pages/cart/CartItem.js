@@ -28,8 +28,9 @@ const CartItem = ({
     }).format(price);
   };
 
-  // Calculate item total
-  const itemTotal = item.price * item.quantity;
+  // Calculate item total - ensure price is a number
+  const itemPrice = Number(item.price) || 0;
+  const itemTotal = itemPrice * item.quantity;
 
   // Handle quantity increase
   const handleIncrease = () => {
@@ -92,7 +93,7 @@ const CartItem = ({
       <div className={`flex gap-2 sm:gap-3 p-2 sm:p-3 bg-white rounded-lg border border-gray-200 transition-all duration-300 ${isRemoving ? 'opacity-0 scale-95' : 'opacity-100'}`}>
         <div className="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 bg-gray-100 rounded overflow-hidden">
           <img
-            src={item.image || '/api/placeholder/64/64'}
+            src={item.thumbnail || item.image || '/api/placeholder/64/64'}
             alt={item.name}
             className="w-full h-full object-cover"
           />
@@ -125,7 +126,7 @@ const CartItem = ({
           {/* Product Image */}
           <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 relative">
             <img
-              src={item.image || '/api/placeholder/128/128'}
+              src={item.thumbnail || item.image || '/api/placeholder/128/128'}
               alt={item.name}
               className="w-full h-full object-cover"
             />
@@ -148,11 +149,13 @@ const CartItem = ({
                 
                 {/* Category & Seller Info */}
                 <div className="flex flex-wrap gap-1.5 sm:gap-2 text-xs text-gray-500 mb-2">
-                  <span className="bg-gray-100 px-2 py-0.5 sm:py-1 rounded">{item.category}</span>
-                  {item.seller && (
+                  {item.category && (
+                    <span className="bg-gray-100 px-2 py-0.5 sm:py-1 rounded">{item.category}</span>
+                  )}
+                  {(item.seller || item.seller_name) && (
                     <span className="flex items-center gap-1">
                       <Package className="w-3 h-3" />
-                      <span className="hidden sm:inline">{item.seller}</span>
+                      <span className="hidden sm:inline">{item.seller_name || item.seller}</span>
                     </span>
                   )}
                 </div>
@@ -179,15 +182,15 @@ const CartItem = ({
                 {/* Price Info */}
                 <div className="mb-2 sm:mb-3">
                   <p className="text-blue-600 font-bold text-base sm:text-lg">
-                    {formatPrice(item.price)}
+                    {formatPrice(itemPrice)}
                   </p>
-                  {item.originalPrice && item.originalPrice > item.price && (
+                  {item.originalPrice && Number(item.originalPrice) > itemPrice && (
                     <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                       <span className="text-gray-400 line-through text-xs sm:text-sm">
-                        {formatPrice(item.originalPrice)}
+                        {formatPrice(Number(item.originalPrice))}
                       </span>
                       <span className="text-green-600 text-xs sm:text-sm font-medium">
-                        Save {formatPrice(item.originalPrice - item.price)}
+                        Save {formatPrice(Number(item.originalPrice) - itemPrice)}
                       </span>
                     </div>
                   )}
@@ -298,164 +301,6 @@ const CartItem = ({
   );
 };
 
-// Demo Component
-const CartItemDemo = () => {
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: 'Mountain Bike Pro X1 - 21 Speed Shimano',
-      category: 'Mountain Bikes',
-      price: 45000,
-      originalPrice: 52000,
-      quantity: 1,
-      stock: 8,
-      seller: 'Oshocks Junior',
-      image: '/api/placeholder/200/200'
-    },
-    {
-      id: 2,
-      name: 'Professional Cycling Helmet - Safety Certified',
-      category: 'Safety Gear',
-      price: 2500,
-      quantity: 2,
-      stock: 3,
-      seller: 'BikeGear Kenya',
-      image: '/api/placeholder/200/200'
-    },
-    {
-      id: 3,
-      name: 'Heavy Duty U-Lock with Cable',
-      category: 'Security',
-      price: 1800,
-      quantity: 1,
-      stock: 15,
-      seller: 'SecureBikes',
-      image: '/api/placeholder/200/200'
-    },
-    {
-      id: 4,
-      name: 'LED Bike Light Set (Front + Rear)',
-      category: 'Accessories',
-      price: 1200,
-      originalPrice: 1500,
-      quantity: 1,
-      stock: 0,
-      seller: 'Oshocks Junior',
-      image: '/api/placeholder/200/200'
-    }
-  ]);
 
-  const [wishlist, setWishlist] = useState([]);
 
-  const handleUpdateQuantity = (id, newQuantity) => {
-    setCartItems(cartItems.map(item =>
-      item.id === id ? { ...item, quantity: newQuantity } : item
-    ));
-  };
-
-  const handleRemoveItem = (id) => {
-    setCartItems(cartItems.filter(item => item.id !== id));
-  };
-
-  const handleAddToWishlist = (item) => {
-    setWishlist([...wishlist, item]);
-  };
-
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency: 'KES',
-      minimumFractionDigits: 0
-    }).format(price);
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-3 sm:p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-            Shopping Cart
-          </h1>
-          <p className="text-sm sm:text-base text-gray-600">
-            Oshocks Junior Bike Shop - {totalItems} items in cart
-          </p>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
-          {/* Cart Items */}
-          <div className="lg:col-span-2 space-y-3 sm:space-y-4">
-            {cartItems.map(item => (
-              <CartItem
-                key={item.id}
-                item={item}
-                onUpdateQuantity={handleUpdateQuantity}
-                onRemoveItem={handleRemoveItem}
-                onAddToWishlist={handleAddToWishlist}
-                showStock={true}
-                editable={true}
-              />
-            ))}
-
-            {cartItems.length === 0 && (
-              <div className="bg-white rounded-lg p-8 sm:p-12 text-center">
-                <Package className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-gray-300" />
-                <p className="text-lg sm:text-xl text-gray-600">Your cart is empty</p>
-              </div>
-            )}
-          </div>
-
-          {/* Order Summary */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 lg:sticky lg:top-4">
-              <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Order Summary</h2>
-              <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4 pb-3 sm:pb-4 border-b">
-                <div className="flex justify-between text-sm sm:text-base">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">{formatPrice(subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-sm sm:text-base">
-                  <span className="text-gray-600">Shipping</span>
-                  <span className="text-green-600 font-medium">
-                    {subtotal > 5000 ? 'FREE' : formatPrice(300)}
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-between text-base sm:text-lg font-bold mb-4 sm:mb-6">
-                <span>Total</span>
-                <span className="text-blue-600">
-                  {formatPrice(subtotal + (subtotal > 5000 ? 0 : 300))}
-                </span>
-              </div>
-              <button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-md">
-                Proceed to Checkout
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Wishlist Preview */}
-        {wishlist.length > 0 && (
-          <div className="mt-6 sm:mt-8 bg-white rounded-lg shadow-md p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Saved for Later ({wishlist.length})</h2>
-            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {wishlist.map(item => (
-                <CartItem
-                  key={item.id}
-                  item={item}
-                  compact={true}
-                  editable={false}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default CartItemDemo;
+export default CartItem;
