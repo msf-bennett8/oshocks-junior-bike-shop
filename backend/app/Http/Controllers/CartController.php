@@ -183,21 +183,39 @@ class CartController extends Controller
         ]);
     }
 
-    /**
+   /**
      * Get or create cart for current user/session
      */
     private function getOrCreateCart(Request $request)
     {
-        // Only allow authenticated users to have carts
-        if (!Auth::check()) {
-            abort(401, 'Authentication required to use cart');
+        // Try to authenticate via Sanctum token manually
+        $user = null;
+        
+        if ($request->bearerToken()) {
+            try {
+                // Manually authenticate using Sanctum
+                $token = \Laravel\Sanctum\PersonalAccessToken::findToken($request->bearerToken());
+                if ($token) {
+                    $user = $token->tokenable;
+                }
+            } catch (\Exception $e) {
+                // Token invalid, continue as guest
+            }
         }
-
-        // Each authenticated user gets their own cart
-        $cart = Cart::firstOrCreate([
-            'user_id' => Auth::id()
-        ]);
-
+        
+        // If we found a user via token, use their cart
+        if ($user) {
+            $cart = Cart::firstOrCreate([
+                'user_id' => $user->id
+            ]);
+        } else {
+            // For guest users - create a single guest cart
+            // In production, you'd use session or token-based identification
+            $cart = Cart::firstOrCreate([
+                'user_id' => null
+            ]);
+        }
+        
         return $cart;
     }
 }

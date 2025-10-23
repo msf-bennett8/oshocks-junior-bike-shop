@@ -55,7 +55,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/categories/{id}', [CategoryController::class, 'show']);
     Route::get('/categories/{id}/products', [CategoryController::class, 'getProducts']);
     
-        // Cart routes - Public (supports both guest and authenticated users)
+   // Cart routes - Public but checks for authentication if token provided
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart/add', [CartController::class, 'addItem']);
     Route::put('/cart/items/{itemId}', [CartController::class, 'updateItem']);
