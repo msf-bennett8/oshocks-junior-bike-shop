@@ -1,6 +1,7 @@
 //frontend/src/context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import authService from '../services/authService';
 import axios from 'axios';
 
 const CartContext = createContext();
@@ -9,7 +10,7 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { isAuthenticated, getToken } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   // API base URL
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
@@ -43,17 +44,40 @@ export const CartProvider = ({ children }) => {
   };
 
   // Load cart from API (for authenticated users)
-  const loadCartFromAPI = async () => {
+const loadCartFromAPI = async () => {
+    console.log('🛒 Loading cart from API...');
+    
     try {
       setLoading(true);
-      const token = getToken();
+      const token = authService.getToken();
+      
       const response = await axios.get(`${API_URL}/cart`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
 
-      setCartItems(response.data.items || []);
+      console.log(`✅ Cart loaded: ${response.data.items?.length || 0} items`);
+
+      // Map backend response to frontend cart structure
+      const mappedItems = (response.data.items || []).map(item => ({
+        id: item.id,
+        product_id: item.product_id,
+        name: item.name,
+        price: Number(item.price),
+        originalPrice: item.originalPrice ? Number(item.originalPrice) : null,
+        image: item.image,
+        thumbnail: item.thumbnail,
+        quantity: item.quantity,
+        stock: item.stock,
+        variant: item.variant,
+        seller: item.seller,
+        seller_name: item.seller,
+        category: item.category,
+        slug: item.slug
+      }));
+
+      setCartItems(mappedItems);
     } catch (err) {
-      console.error('Failed to load cart from API:', err);
+      console.error('❌ Failed to load cart:', err.response?.data?.message || err.message);
       setError('Failed to load cart');
     } finally {
       setLoading(false);
@@ -61,56 +85,69 @@ export const CartProvider = ({ children }) => {
   };
 
   // Add item to cart
-  const addToCart = async (product, quantity = 1, variant = null) => {
+const addToCart = async (product, quantity = 1, variant = null, selectedSize = null) => {
+    console.log(`➕ Adding to cart: ${product?.name} (qty: ${quantity})`);
+    
     try {
       setLoading(true);
       setError(null);
 
-      // Check if item already exists in cart
-      const existingItemIndex = cartItems.findIndex(
-        item => item.product_id === product.id && 
-        JSON.stringify(item.variant) === JSON.stringify(variant)
-      );
-
-      let updatedCart;
-
-      if (existingItemIndex > -1) {
-        // Update quantity if item exists
-        updatedCart = [...cartItems];
-        updatedCart[existingItemIndex].quantity += quantity;
-      } else {
-        // Add new item
-        const newItem = {
-          id: Date.now(), // Temporary ID for local state
-          product_id: product.id,
-          name: product.name,
-          price: variant?.price || product.price,
-          image: product.images?.[0] || product.image,
-          quantity,
-          variant,
-          seller_id: product.seller_id,
-          seller_name: product.seller_name,
-          stock: product.stock || variant?.stock
-        };
-        updatedCart = [...cartItems, newItem];
-      }
-
-      setCartItems(updatedCart);
-
-      // Sync with backend if authenticated
+      // Sync with backend first (or guest cart)
       if (isAuthenticated) {
-        const token = getToken();
+        const token = authService.getToken();
+        
         await axios.post(`${API_URL}/cart/add`, {
           product_id: product.id,
           quantity,
-          variant
+          variant_id: variant?.id || null
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        
+        // Reload cart from API to get updated data
+        await loadCartFromAPI();
+        console.log('✅ Item added to cart successfully');
+      } else {
+        // For guest users, manage locally
+        const existingItemIndex = cartItems.findIndex(
+          item => item.product_id === product.id && 
+          item.variant?.id === variant?.id
+        );
+
+        let updatedCart;
+
+        if (existingItemIndex > -1) {
+          updatedCart = [...cartItems];
+          updatedCart[existingItemIndex].quantity += quantity;
+          console.log(`✅ Updated quantity: ${updatedCart[existingItemIndex].quantity}`);
+        } else {
+          const newItem = {
+            id: Date.now(),
+            product_id: product.id,
+            name: product.name,
+            price: Number(variant?.price || product.price),
+            originalPrice: product.compare_price ? Number(product.compare_price) : null,
+            image: product.images?.[0]?.image_url || product.images?.[0]?.thumbnail_url || product.image,
+            thumbnail: product.images?.[0]?.thumbnail_url || product.images?.[0]?.image_url,
+            quantity,
+            variant: variant,
+            seller: product.seller?.name || 'Oshocks Junior',
+            seller_name: product.seller?.name || 'Oshocks Junior',
+            stock: product.quantity || 0,
+            category: product.category?.name || 'Bikes',
+            slug: product.slug
+          };
+          updatedCart = [...cartItems, newItem];
+          console.log('✅ New item added to guest cart');
+        }
+
+        setCartItems(updatedCart);
       }
 
       return { success: true, message: 'Item added to cart' };
     } catch (err) {
+      console.error('❌ Add to cart failed:', err.response?.data?.message || err.message);
+      
       const errorMessage = err.response?.data?.message || 'Failed to add item to cart';
       setError(errorMessage);
       return { success: false, error: errorMessage };
@@ -120,24 +157,34 @@ export const CartProvider = ({ children }) => {
   };
 
   // Remove item from cart
-  const removeFromCart = async (itemId) => {
+const removeFromCart = async (itemId) => {
+    console.log(`🗑️ Removing item ${itemId} from cart...`);
+    
     try {
       setLoading(true);
       setError(null);
 
-      const updatedCart = cartItems.filter(item => item.id !== itemId);
-      setCartItems(updatedCart);
-
       // Sync with backend if authenticated
       if (isAuthenticated) {
-        const token = getToken();
-        await axios.delete(`${API_URL}/cart/remove/${itemId}`, {
+        const token = authService.getToken();
+        await axios.delete(`${API_URL}/cart/items/${itemId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        
+        // Reload cart from API
+        await loadCartFromAPI();
+        console.log('✅ Item removed from cart');
+      } else {
+        // For guest users, manage locally
+        const updatedCart = cartItems.filter(item => item.id !== itemId);
+        setCartItems(updatedCart);
+        console.log('✅ Item removed from guest cart');
       }
 
       return { success: true, message: 'Item removed from cart' };
     } catch (err) {
+      console.error('❌ Remove failed:', err.response?.data?.message || err.message);
+      
       const errorMessage = err.response?.data?.message || 'Failed to remove item';
       setError(errorMessage);
       return { success: false, error: errorMessage };
@@ -147,7 +194,9 @@ export const CartProvider = ({ children }) => {
   };
 
   // Update item quantity
-  const updateQuantity = async (itemId, newQuantity) => {
+const updateQuantity = async (itemId, newQuantity) => {
+    console.log(`🔄 Updating quantity for item ${itemId} to ${newQuantity}...`);
+    
     try {
       setLoading(true);
       setError(null);
@@ -156,24 +205,31 @@ export const CartProvider = ({ children }) => {
         return removeFromCart(itemId);
       }
 
-      const updatedCart = cartItems.map(item =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      );
-
-      setCartItems(updatedCart);
-
       // Sync with backend if authenticated
       if (isAuthenticated) {
-        const token = getToken();
-        await axios.put(`${API_URL}/cart/update/${itemId}`, {
+        const token = authService.getToken();
+        await axios.put(`${API_URL}/cart/items/${itemId}`, {
           quantity: newQuantity
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        
+        // Reload cart from API
+        await loadCartFromAPI();
+        console.log('✅ Quantity updated');
+      } else {
+        // For guest users, manage locally
+        const updatedCart = cartItems.map(item =>
+          item.id === itemId ? { ...item, quantity: newQuantity } : item
+        );
+        setCartItems(updatedCart);
+        console.log('✅ Guest cart quantity updated');
       }
 
       return { success: true, message: 'Quantity updated' };
     } catch (err) {
+      console.error('❌ Update quantity failed:', err.response?.data?.message || err.message);
+      
       const errorMessage = err.response?.data?.message || 'Failed to update quantity';
       setError(errorMessage);
       return { success: false, error: errorMessage };
@@ -183,7 +239,9 @@ export const CartProvider = ({ children }) => {
   };
 
   // Clear entire cart
-  const clearCart = async () => {
+const clearCart = async () => {
+    console.log('🗑️ Clearing cart...');
+    
     try {
       setLoading(true);
       setError(null);
@@ -192,16 +250,20 @@ export const CartProvider = ({ children }) => {
 
       // Sync with backend if authenticated
       if (isAuthenticated) {
-        const token = getToken();
+        const token = authService.getToken();
         await axios.delete(`${API_URL}/cart/clear`, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        console.log('✅ Cart cleared on backend');
       } else {
         localStorage.removeItem('cart');
+        console.log('✅ Guest cart cleared');
       }
 
       return { success: true, message: 'Cart cleared' };
     } catch (err) {
+      console.error('❌ Clear cart failed:', err.response?.data?.message || err.message);
+      
       const errorMessage = err.response?.data?.message || 'Failed to clear cart';
       setError(errorMessage);
       return { success: false, error: errorMessage };
@@ -258,12 +320,14 @@ export const CartProvider = ({ children }) => {
   };
 
   // Merge guest cart with user cart after login
-  const mergeGuestCart = async () => {
+const mergeGuestCart = async () => {
     try {
       const guestCart = JSON.parse(localStorage.getItem('cart') || '[]');
       
       if (guestCart.length > 0 && isAuthenticated) {
-        const token = getToken();
+        console.log(`🔄 Merging ${guestCart.length} guest cart items...`);
+        
+        const token = authService.getToken();
         await axios.post(`${API_URL}/cart/merge`, {
           items: guestCart
         }, {
@@ -275,17 +339,20 @@ export const CartProvider = ({ children }) => {
 
         // Reload cart from API
         await loadCartFromAPI();
+        console.log('✅ Guest cart merged successfully');
       }
     } catch (err) {
-      console.error('Failed to merge guest cart:', err);
+      console.error('❌ Merge cart failed:', err.message);
     }
   };
 
   // Validate cart items (check stock availability)
-  const validateCart = async () => {
+const validateCart = async () => {
+    console.log('🔍 Validating cart...');
+    
     try {
       setLoading(true);
-      const token = getToken();
+      const token = authService.getToken();
       
       const response = await axios.post(`${API_URL}/cart/validate`, {
         items: cartItems.map(item => ({
@@ -297,12 +364,16 @@ export const CartProvider = ({ children }) => {
         headers: isAuthenticated ? { Authorization: `Bearer ${token}` } : {}
       });
 
+      console.log(response.data.valid ? '✅ Cart is valid' : '⚠️ Cart has issues');
+
       return {
         success: true,
         valid: response.data.valid,
         issues: response.data.issues || []
       };
     } catch (err) {
+      console.error('❌ Validate cart failed:', err.message);
+      
       return {
         success: false,
         error: 'Failed to validate cart'
@@ -313,12 +384,14 @@ export const CartProvider = ({ children }) => {
   };
 
   // Apply coupon code
-  const applyCoupon = async (couponCode) => {
+const applyCoupon = async (couponCode) => {
+    console.log(`🎟️ Applying coupon: ${couponCode}`);
+    
     try {
       setLoading(true);
       setError(null);
 
-      const token = getToken();
+      const token = authService.getToken();
       const response = await axios.post(`${API_URL}/cart/apply-coupon`, {
         code: couponCode,
         cart_total: getCartTotals().subtotal
@@ -326,12 +399,16 @@ export const CartProvider = ({ children }) => {
         headers: isAuthenticated ? { Authorization: `Bearer ${token}` } : {}
       });
 
+      console.log('✅ Coupon applied:', response.data.message);
+
       return {
         success: true,
         discount: response.data.discount,
         message: response.data.message
       };
     } catch (err) {
+      console.error('❌ Apply coupon failed:', err.response?.data?.message || err.message);
+      
       const errorMessage = err.response?.data?.message || 'Invalid coupon code';
       setError(errorMessage);
       return { success: false, error: errorMessage };
