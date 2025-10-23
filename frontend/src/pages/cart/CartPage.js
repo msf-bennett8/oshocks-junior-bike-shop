@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -95,34 +95,39 @@ const CartPage = () => {
     navigate('/shop');
   };
 
-  // Recommended products (mock data)
-  const recommendedProducts = [
-    {
-      id: 101,
-      name: 'Bike Water Bottle Holder',
-      price: 800,
-      image: '/api/placeholder/150/150'
-    },
-    {
-      id: 102,
-      name: 'LED Bike Light Set',
-      price: 1200,
-      originalPrice: 1500,
-      image: '/api/placeholder/150/150'
-    },
-    {
-      id: 103,
-      name: 'Bike Repair Kit',
-      price: 1500,
-      image: '/api/placeholder/150/150'
-    },
-    {
-      id: 104,
-      name: 'Cycling Gloves',
-      price: 1000,
-      image: '/api/placeholder/150/150'
-    }
-  ];
+// Fetch recommended products from API
+  const [recommendedProducts, setRecommendedProducts] = useState([]);
+  const [loadingRecommended, setLoadingRecommended] = useState(true);
+
+  useEffect(() => {
+    const fetchRecommendedProducts = async () => {
+      try {
+        setLoadingRecommended(true);
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+        
+        // Fetch top-selling or featured accessories
+        const response = await fetch(`${apiUrl}/products?category=accessories&limit=4&sort=popularity`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          const products = (data.data || data).slice(0, 4).map(product => ({
+            id: product.id,
+            name: product.name,
+            price: Number(product.price),
+            originalPrice: product.compare_price ? Number(product.compare_price) : null,
+            image: product.images?.[0]?.thumbnail_url || product.images?.[0]?.image_url || '/api/placeholder/150/150'
+          }));
+          setRecommendedProducts(products);
+        }
+      } catch (err) {
+        console.error('Error fetching recommended products:', err);
+      } finally {
+        setLoadingRecommended(false);
+      }
+    };
+
+    fetchRecommendedProducts();
+  }, []);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-KE', {
@@ -307,12 +312,22 @@ const CartPage = () => {
                   You Might Also Like
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                  {recommendedProducts.map((product) => (
-                    <Link
-                      key={product.id}
-                      to={`/product/${product.id}`}
-                      className="group"
-                    >
+                  {loadingRecommended ? (
+                    // Loading skeleton
+                    [1, 2, 3, 4].map((i) => (
+                      <div key={i} className="bg-gray-50 rounded-lg p-2 sm:p-3 animate-pulse">
+                        <div className="w-full h-24 sm:h-32 bg-gray-200 rounded mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded mb-1"></div>
+                        <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                      </div>
+                    ))
+                  ) : recommendedProducts.length > 0 ? (
+                    recommendedProducts.map((product) => (
+                      <Link
+                        key={product.id}
+                        to={`/product/${product.id}`}
+                        className="group"
+                      >
                       <div className="bg-gray-50 rounded-lg p-2 sm:p-3 hover:shadow-md transition-all">
                         <img
                           src={product.image}
@@ -334,7 +349,12 @@ const CartPage = () => {
                         </div>
                       </div>
                     </Link>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="col-span-4 text-center py-4 text-gray-500 text-sm">
+                      No recommendations available
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

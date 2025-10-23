@@ -70,8 +70,15 @@ const loadCartFromAPI = async () => {
       console.log('📦 Response data:', JSON.stringify(response.data, null, 2));
       console.log('📋 Items in response:', response.data.items?.length || 0);
 
+      // Validate response structure
+      if (!response.data || !Array.isArray(response.data.items)) {
+        console.warn('⚠️ Unexpected cart response structure');
+        setCartItems([]);
+        return;
+      }
+
       // Map backend response to frontend cart structure
-      const mappedItems = (response.data.items || []).map((item, index) => {
+      const mappedItems = response.data.items.map((item, index) => {
         console.log(`🔄 Mapping item ${index + 1}:`, {
           id: item.id,
           product_id: item.product_id,

@@ -36,6 +36,9 @@ const CartSummary = ({
   const [selectedPayment, setSelectedPayment] = useState('mpesa');
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
 
+  // TODO: In production, validate promo codes via API endpoint
+  // Example: POST /api/v1/cart/validate-promo with { code: promoCode, cart_total: subtotal }
+  
   // Mock promo codes (in production, validate via API)
   const promoCodes = {
     'BIKE10': { discount: 0.10, type: 'percentage', description: '10% off' },
@@ -44,8 +47,8 @@ const CartSummary = ({
     'BIKE2024': { discount: 0.15, type: 'percentage', description: '15% off', minOrder: 10000 }
   };
 
-  // Calculate pricing
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  // Calculate pricing - ensure all prices are numbers
+  const subtotal = cartItems.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   // Shipping calculation
@@ -78,7 +81,7 @@ const CartSummary = ({
 
   // Savings calculation
   const regularPriceTotal = cartItems.reduce((sum, item) => 
-    sum + ((item.originalPrice || item.price) * item.quantity), 0
+    sum + ((Number(item.originalPrice) || Number(item.price)) * item.quantity), 0
   );
   const priceSavings = regularPriceTotal - subtotal;
   const totalSavings = priceSavings + discount;
@@ -94,11 +97,19 @@ const CartSummary = ({
   };
 
   // Handle promo code application
-  const handleApplyPromo = () => {
+  const handleApplyPromo = async () => {
     setIsApplyingPromo(true);
     setPromoError('');
 
-    // Simulate API call
+    // TODO: Replace with actual API call
+    // Example:
+    // const response = await fetch(`${API_URL}/cart/validate-promo`, {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ code: promoCode, cart_total: subtotal })
+    // });
+    
+    // Simulate API call (remove this in production)
     setTimeout(() => {
       const promo = promoCodes[promoCode.toUpperCase()];
       
