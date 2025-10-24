@@ -3,17 +3,20 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { productAPI } from '../../services/api';
 import { useWishlist } from '../../context/WishlistContext';
+import { useCart } from '../../context/CartContext';
 import { Heart } from 'lucide-react';
 
 const HomePage = () => {
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { addToCart, loading: cartLoading } = useCart();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSlowLoad, setIsSlowLoad] = useState(false);
   const [togglingWishlist, setTogglingWishlist] = useState(null); 
-
+  const [addingToCart, setAddingToCart] = useState(null); 
   const [loadedImages, setLoadedImages] = useState(new Set());
+  const [checkingOut, setCheckingOut] = useState(null);
 
   const handleImageLoad = (productId) => {
     setLoadedImages(prev => new Set([...prev, productId]));
@@ -397,27 +400,83 @@ const HomePage = () => {
                             </span>
                           )}
 
-                          {/* Wishlist Heart Button */}
-                          <button
-                            onClick={(e) => handleWishlistToggle(e, product)}
-                            disabled={togglingWishlist === product.id}
-                            className={`absolute bottom-3 right-3 p-2 rounded-full transition-all duration-200 shadow-lg z-10 ${
-                              isInWishlist(product.id, null)
-                                ? 'bg-red-500 text-white hover:bg-red-600'
-                                : 'bg-white text-gray-600 hover:bg-gray-100'
-                            } ${togglingWishlist === product.id ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'}`}
-                            title={isInWishlist(product.id, null) ? 'Remove from wishlist' : 'Add to wishlist'}
-                          >
-                            {togglingWishlist === product.id ? (
-                              <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                            ) : (
-                              <Heart
-                                className="w-5 h-5"
-                                fill={isInWishlist(product.id, null) ? 'currentColor' : 'none'}
-                                strokeWidth={2}
-                              />
-                            )}
-                          </button>
+                          {/* Action Buttons - Wishlist & Cart */}
+                          <div className="absolute bottom-3 right-3 flex items-center gap-2 z-10">
+                            {/* Add to Cart Button */}
+                              <button
+                                onClick={async (e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  
+                                  setAddingToCart(product.id);
+                                  
+                                  try {
+                                    // Get first variant if available
+                                    const variant = product.variants?.[0] || product.colors?.[0] || null;
+                                    
+                                    const result = await addToCart(product, 1, variant);
+                                    
+                                    if (result.success) {
+                                      alert('✅ Added to cart!');
+                                    } else {
+                                      alert('❌ ' + result.error);
+                                    }
+                                  } catch (error) {
+                                    console.error('Error adding to cart:', error);
+                                    alert('❌ Failed to add to cart');
+                                  } finally {
+                                    setAddingToCart(null);
+                                  }
+                                }}
+                                disabled={!product.quantity || product.quantity === 0 || addingToCart === product.id}
+                                className={`p-2.5 rounded-full transition-all duration-200 shadow-lg ${
+                                  product.quantity > 0 && addingToCart !== product.id
+                                    ? 'bg-white text-gray-700 hover:bg-blue-500 hover:text-white hover:scale-110'
+                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                }`}
+                                title={product.quantity > 0 ? 'Add to cart' : 'Out of stock'}
+                              >
+                                {addingToCart === product.id ? (
+                                  <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                  <svg 
+                                    className="w-5 h-5" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path 
+                                      strokeLinecap="round" 
+                                      strokeLinejoin="round" 
+                                      strokeWidth={2} 
+                                      d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" 
+                                    />
+                                  </svg>
+                                )}
+                              </button>
+
+                            {/* Wishlist Button */}
+                            <button
+                              onClick={(e) => handleWishlistToggle(e, product)}
+                              disabled={togglingWishlist === product.id}
+                              className={`p-2.5 rounded-full transition-all duration-200 shadow-lg ${
+                                isInWishlist(product.id, null)
+                                  ? 'bg-red-500 text-white hover:bg-red-600'
+                                  : 'bg-white text-green-500 hover:bg-green-500 hover:text-white'
+                              } ${togglingWishlist === product.id ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'}`}
+                              title={isInWishlist(product.id, null) ? 'Remove from wishlist' : 'Add to wishlist'}
+                            >
+                              {togglingWishlist === product.id ? (
+                                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <Heart
+                                  className="w-5 h-5"
+                                  fill={isInWishlist(product.id, null) ? 'currentColor' : 'none'}
+                                  strokeWidth={2}
+                                />
+                              )}
+                            </button>
+                          </div>
                         </div>
 
                         <div className="p-4">
@@ -444,23 +503,70 @@ const HomePage = () => {
                             </div>
                           </div>
                           
-                          <div className="flex items-center justify-between mt-3">
+                          <div className="flex items-center justify-between gap-2 mt-3">
+                            {/* Left side - Condition (if exists) */}
                             {product.condition && (
-                              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-medium">
+                              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-medium whitespace-nowrap">
                                 {product.condition}
                               </span>
                             )}
-                            {product.quantity && product.quantity > 0 ? (
-                              <span className="text-xs text-green-600 font-semibold flex items-center">
-                                <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                                In Stock
-                              </span>
-                            ) : (
-                              <span className="text-xs text-red-600 font-semibold flex items-center">
-                                <span className="w-2 h-2 bg-red-500 rounded-full mr-1"></span>
-                                Out of Stock
-                              </span>
-                            )}
+                            
+                            {/* Right side - Stock Status + Checkout - Always aligned right */}
+                            <div className="flex items-center gap-2 ml-auto">
+                              {/* Stock Status - comes FIRST */}
+                              {product.quantity && product.quantity > 0 ? (
+                                <span className="text-xs text-green-600 font-semibold flex items-center whitespace-nowrap">
+                                  <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                                  In Stock
+                                </span>
+                              ) : (
+                                <span className="text-xs text-red-600 font-semibold flex items-center whitespace-nowrap">
+                                  <span className="w-2 h-2 bg-red-500 rounded-full mr-1"></span>
+                                  Out of Stock
+                                </span>
+                              )}
+                              
+                              {/* Checkout Chip - comes AFTER */}
+                              {product.quantity > 0 && (
+                                <button
+                                  onClick={async (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    
+                                    setCheckingOut(product.id);
+                                    
+                                    try {
+                                      const variant = product.variants?.[0] || product.colors?.[0] || null;
+                                      const result = await addToCart(product, 1, variant);
+                                      
+                                      if (result.success) {
+                                        window.location.href = '/checkout';
+                                      } else {
+                                        alert('❌ ' + result.error);
+                                        setCheckingOut(null);
+                                      }
+                                    } catch (error) {
+                                      console.error('Error:', error);
+                                      alert('❌ Failed to proceed to checkout');
+                                      setCheckingOut(null);
+                                    }
+                                  }}
+                                  disabled={checkingOut === product.id}
+                                  className={`text-xs bg-orange-500 text-white px-2 sm:px-3 py-1 rounded font-semibold hover:bg-orange-600 transition-colors whitespace-nowrap flex items-center gap-1 ${
+                                    checkingOut === product.id ? 'opacity-75 cursor-not-allowed' : ''
+                                  }`}
+                                >
+                                  {checkingOut === product.id ? (
+                                    <>
+                                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                      <span>Adding...</span>
+                                    </>
+                                  ) : (
+                                    'Checkout'
+                                  )}
+                                </button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </Link>

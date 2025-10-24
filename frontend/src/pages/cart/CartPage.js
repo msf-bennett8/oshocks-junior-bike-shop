@@ -16,6 +16,7 @@ import {
 import CartItem from './CartItem';
 import CartSummary from './CartSummary';
 import { useCart } from '../../context/CartContext';
+import { useWishlist } from '../../context/WishlistContext';
 
 /**
  * CartPage Component
@@ -30,12 +31,17 @@ const CartPage = () => {
     error, 
     updateQuantity, 
     removeFromCart, 
-    clearCart 
+    clearCart,
+    addToCart  
   } = useCart();
-  
+
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const [wishlist, setWishlist] = useState([]);
   const [notification, setNotification] = useState(null);
-
+  const [addingRecommendedToCart, setAddingRecommendedToCart] = useState(null);
+  const [togglingRecommendedWishlist, setTogglingRecommendedWishlist] = useState(null);
+  const [checkingOutRecommended, setCheckingOutRecommended] = useState(null);
+  
   // Calculate totals - with safe defaults
   const totalItems = cartItems?.reduce((sum, item) => sum + (item?.quantity || 0), 0) || 0;
   const subtotal = cartItems?.reduce((sum, item) => sum + (Number(item?.price || 0) * (item?.quantity || 0)), 0) || 0;
@@ -323,32 +329,206 @@ const CartPage = () => {
                     ))
                   ) : recommendedProducts.length > 0 ? (
                     recommendedProducts.map((product) => (
-                      <Link
+                      <div
                         key={product.id}
-                        to={`/product/${product.id}`}
-                        className="group"
+                        className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200 relative"
                       >
-                      <div className="bg-gray-50 rounded-lg p-2 sm:p-3 hover:shadow-md transition-all">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-24 sm:h-32 object-cover rounded mb-2"
-                        />
-                        <h3 className="text-xs sm:text-sm font-medium text-gray-800 mb-1 line-clamp-2 group-hover:text-blue-600">
-                          {product.name}
-                        </h3>
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2">
-                          <p className="text-blue-600 font-bold text-xs sm:text-sm">
-                            {formatPrice(product.price)}
-                          </p>
-                          {product.originalPrice && (
-                            <p className="text-gray-400 line-through text-xs">
-                              {formatPrice(product.originalPrice)}
-                            </p>
-                          )}
-                        </div>
+                        <Link to={`/product/${product.id}`}>
+                          <div className="relative pb-[75%] bg-gray-100">
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                            
+                            {product.originalPrice && (
+                              <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                                -{Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
+                              </span>
+                            )}
+
+                            {/* Action Buttons - Cart & Wishlist */}
+                            <div className="absolute bottom-2 right-2 flex items-center gap-1.5 z-10">
+                              {/* Add to Cart Button */}
+                              <button
+                                onClick={async (e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  
+                                  setAddingRecommendedToCart(product.id);
+                                  
+                                  try {
+                                    // Convert recommended product to cart item format
+                                    const cartProduct = {
+                                      id: product.id,
+                                      name: product.name,
+                                      price: product.price,
+                                      image: product.image
+                                    };
+                                    
+                                    const result = await addToCart(cartProduct, 1, null);
+                                    
+                                    if (result.success) {
+                                      showNotification('✅ Added to cart!');
+                                    } else {
+                                      showNotification(result.error, 'error');
+                                    }
+                                  } catch (error) {
+                                    console.error('Error adding to cart:', error);
+                                    showNotification('❌ Failed to add to cart', 'error');
+                                  } finally {
+                                    setAddingRecommendedToCart(null);
+                                  }
+                                }}
+                                disabled={addingRecommendedToCart === product.id}
+                                className={`p-2 rounded-full transition-all duration-200 shadow-lg ${
+                                  addingRecommendedToCart === product.id
+                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                    : cartItems.some(item => item.id === product.id || item.product_id === product.id)
+                                    ? 'bg-blue-500 text-white hover:bg-blue-600 hover:scale-110'
+                                    : 'bg-white text-gray-700 hover:bg-blue-100 hover:text-blue-600 hover:scale-110'
+                                }`}
+                                title={cartItems.some(item => item.id === product.id || item.product_id === product.id) ? 'In cart' : 'Add to cart'}
+                              >
+                                {addingRecommendedToCart === product.id ? (
+                                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                  </svg>
+                                )}
+                              </button>
+
+                              {/* Wishlist Button */}
+                              <button
+                                onClick={async (e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  
+                                  setTogglingRecommendedWishlist(product.id);
+                                  
+                                  try {
+                                    const wishlistProduct = {
+                                      id: product.id,
+                                      name: product.name,
+                                      price: product.price,
+                                      image: product.image
+                                    };
+                                    
+                                    // Check BEFORE toggling
+                                    const wasInWishlist = isInWishlist(product.id, null);
+
+                                    const result = await toggleWishlist(wishlistProduct, null);
+
+                                    if (result.success) {
+                                      showNotification(
+                                        wasInWishlist 
+                                          ? '💔 Removed from wishlist'
+                                          : '❤️ Added to wishlist!'
+                                      );
+                                    } else {
+                                      showNotification(result.error, 'error');
+                                    }
+                                  } catch (error) {
+                                    console.error('Error toggling wishlist:', error);
+                                    showNotification('❌ Failed to update wishlist', 'error');
+                                  } finally {
+                                    setTogglingRecommendedWishlist(null);
+                                  }
+                                }}
+                                disabled={togglingRecommendedWishlist === product.id}
+                                className={`p-2 rounded-full transition-all duration-200 shadow-lg ${
+                                  togglingRecommendedWishlist === product.id
+                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                    : isInWishlist(product.id, null)
+                                    ? 'bg-red-500 text-white hover:bg-red-600 hover:scale-110'
+                                    : 'bg-white text-green-500 hover:bg-green-100 hover:text-green-600 hover:scale-110'
+                                } hover:scale-110`}
+                                title={isInWishlist(product.id, null) ? 'In wishlist - Click to remove' : 'Add to wishlist'}
+                              >
+                                {togglingRecommendedWishlist === product.id ? (
+                                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                  <svg className="w-4 h-4" fill={isInWishlist(product.id, null) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                  </svg>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div className="p-2 sm:p-3">
+                            <h3 className="font-semibold text-xs sm:text-sm text-gray-900 mb-1 line-clamp-2 h-8 hover:text-blue-600 transition">
+                              {product.name}
+                            </h3>
+                            
+                            <div className="flex justify-between items-center mb-2">
+                              <div>
+                                <span className="text-sm sm:text-base font-bold text-blue-600">
+                                  {formatPrice(product.price)}
+                                </span>
+                                {product.originalPrice && (
+                                  <span className="text-xs text-gray-400 line-through ml-1">
+                                    {formatPrice(product.originalPrice)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs text-green-600 font-semibold flex items-center whitespace-nowrap">
+                                <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                                In Stock
+                              </span>
+                              
+                              {/* Checkout Button */}
+                              <button
+                                onClick={async (e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  
+                                  setCheckingOutRecommended(product.id);
+                                  
+                                  try {
+                                    const cartProduct = {
+                                      id: product.id,
+                                      name: product.name,
+                                      price: product.price,
+                                      image: product.image
+                                    };
+                                    
+                                    const result = await addToCart(cartProduct, 1, null);
+                                    
+                                    if (result.success) {
+                                      navigate('/checkout');
+                                    } else {
+                                      showNotification(result.error, 'error');
+                                      setCheckingOutRecommended(null);
+                                    }
+                                  } catch (error) {
+                                    console.error('Error:', error);
+                                    showNotification('❌ Failed to proceed to checkout', 'error');
+                                    setCheckingOutRecommended(null);
+                                  }
+                                }}
+                                disabled={checkingOutRecommended === product.id}
+                                className={`text-xs bg-orange-500 text-white px-2 py-1 rounded font-semibold hover:bg-orange-600 transition-colors whitespace-nowrap flex items-center gap-1 ${
+                                  checkingOutRecommended === product.id ? 'opacity-75 cursor-not-allowed' : ''
+                                }`}
+                              >
+                                {checkingOutRecommended === product.id ? (
+                                  <>
+                                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    <span>Adding...</span>
+                                  </>
+                                ) : (
+                                  'Checkout'
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </Link>
                       </div>
-                    </Link>
                     ))
                   ) : (
                     <div className="col-span-4 text-center py-4 text-gray-500 text-sm">

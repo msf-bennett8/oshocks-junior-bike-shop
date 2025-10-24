@@ -562,7 +562,7 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded }) => {
       className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
     >
       {/* Product Image */}
-      <div className="relative aspect-square overflow-hidden bg-gray-100">
+      <div className="relative pb-[75%] overflow-hidden bg-gray-100">
         {product.image_url || product.images?.[0]?.image_url ? (
           <>
             {/* Thumbnail - loads first, blurred */}
@@ -593,19 +593,73 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded }) => {
           </div>
         )}
 
-        {/* Featured Badge */}
+        {/* Badges - Top Left */}
+        <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex flex-col gap-2">
+          {product.is_new_arrival && (
+            <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-md shadow">NEW</span>
+          )}
+          {product.compare_at_price && Number(product.compare_at_price) > Number(product.price) && (
+            <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md shadow">
+              -{Math.round((1 - Number(product.price) / Number(product.compare_at_price)) * 100)}% OFF
+            </span>
+          )}
+        </div>
+
+        {/* Featured Badge - Top Right (below wishlist) */}
         {product.is_featured && (
-          <span className="absolute top-3 right-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full shadow">
+          <span className="absolute top-16 sm:top-20 right-2 sm:right-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full shadow">
             ⭐ Featured
           </span>
         )}
-        
-        {/* Discount Badge */}
-        {product.compare_at_price && Number(product.compare_at_price) > Number(product.price) && (
-          <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">
-            {Math.round((1 - Number(product.price) / Number(product.compare_at_price)) * 100)}% OFF
-          </span>
-        )}
+
+        {/* Wishlist Heart - Top Right Corner (like ProductDetails) */}
+        <button
+          onClick={async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            setIsTogglingWishlist(true);
+            
+            try {
+              const variant = product.variants?.[0] || product.colors?.[0];
+              const result = await toggleWishlist(product, variant);
+              
+              if (!result.success) {
+                alert('❌ ' + result.error);
+              }
+            } catch (error) {
+              console.error('Error toggling wishlist:', error);
+              alert('❌ Failed to update wishlist');
+            } finally {
+              setIsTogglingWishlist(false);
+            }
+          }}
+          disabled={isTogglingWishlist}
+          className={`absolute top-2 sm:top-3 right-2 sm:right-3 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all shadow-lg z-10 ${
+            inWishlist
+              ? 'bg-red-600 text-white'
+              : 'bg-white text-gray-700 hover:text-red-600 hover:bg-red-50'
+          } ${isTogglingWishlist ? 'opacity-50 cursor-not-allowed' : ''}`}
+          title={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+        >
+          {isTogglingWishlist ? (
+            <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            <svg 
+              className="w-5 h-5 sm:w-6 sm:h-6" 
+              fill={inWishlist ? 'currentColor' : 'none'} 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" 
+              />
+            </svg>
+          )}
+        </button>
       </div>
 
       {/* Product Info */}
@@ -659,70 +713,12 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded }) => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2">
-          {/* Add to Wishlist Button */}
-          <button
-            onClick={async (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              
-              setIsTogglingWishlist(true);
-              
-              try {
-                const variant = product.variants?.[0] || product.colors?.[0];
-                const result = await toggleWishlist(product, variant);
-                
-                if (result.success) {
-                  // Success - no alert needed, visual feedback from heart color change
-                } else {
-                  alert('❌ ' + result.error);
-                }
-              } catch (error) {
-                console.error('Error toggling wishlist:', error);
-                alert('❌ Failed to update wishlist');
-              } finally {
-                setIsTogglingWishlist(false);
-              }
-            }}
-            disabled={isTogglingWishlist}
-            className={`flex-1 py-2.5 px-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 ${
-              inWishlist
-                ? 'bg-red-500 text-white hover:bg-red-600'
-                : 'bg-green-500 text-white hover:bg-green-600'
-            } active:scale-95 disabled:opacity-50`}
-          >
-            {isTogglingWishlist ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span className="hidden sm:inline">...</span>
-              </>
-            ) : (
-              <>
-                <svg 
-                  className="w-5 h-5" 
-                  fill={inWishlist ? "currentColor" : "none"} 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" 
-                  />
-                </svg>
-                <span className="hidden sm:inline">
-                  {inWishlist ? 'In Wishlist' : 'Wishlist'}
-                </span>
-              </>
-            )}
-          </button>
-
+        <div className="flex flex-col sm:flex-row gap-2">
           {/* Add to Cart Button */}
           <button
             onClick={handleAddToCart}
             disabled={product.quantity === 0 || isAdding}
-            className={`flex-1 py-2.5 px-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 text-sm sm:text-base ${
               product.quantity === 0
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
@@ -730,19 +726,51 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded }) => {
           >
             {isAdding ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span className="hidden sm:inline">Adding...</span>
+                <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Adding...</span>
               </>
             ) : product.quantity === 0 ? (
               <span>Out of Stock</span>
             ) : (
               <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                <span className="hidden sm:inline">Add to Cart</span>
+                <span>Add to Cart</span>
               </>
             )}
+          </button>
+
+          {/* Buy Now / Checkout Button */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              
+              if (product.quantity === 0) {
+                alert('❌ Product is out of stock');
+                return;
+              }
+              
+              // Add to cart first, then go to checkout
+              handleAddToCart(e);
+              
+              // Navigate to checkout after a brief delay
+              setTimeout(() => {
+                window.location.href = '/checkout';
+              }, 500);
+            }}
+            disabled={product.quantity === 0}
+            className={`flex-1 py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 text-sm sm:text-base ${
+              product.quantity === 0
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-orange-600 text-white hover:bg-orange-700 active:scale-95'
+            }`}
+          >
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            <span>Buy Now</span>
           </button>
         </div>
 
