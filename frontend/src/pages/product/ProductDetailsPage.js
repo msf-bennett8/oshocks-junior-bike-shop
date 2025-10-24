@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useWishlist } from '../../context/WishlistContext';
 
 // ============================================================================
 // PRODUCT DETAIL COMPONENT
@@ -42,6 +43,7 @@ import { useCart } from '../../context/CartContext';
   
 const ProductDetails = () => {
   const { addToCart, loading: cartLoading } = useCart();
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -50,12 +52,13 @@ const ProductDetails = () => {
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [loadingRelated, setLoadingRelated] = useState(true);
-
+  const [addingRelatedToCart, setAddingRelatedToCart] = useState(null);
+  const [checkingOutRelated, setCheckingOutRelated] = useState(null);
+  const [togglingRelatedWishlist, setTogglingRelatedWishlist] = useState(null);
   const [loadedMainImage, setLoadedMainImage] = useState(false);
   const [loadedThumbnails, setLoadedThumbnails] = useState(new Set());
 
@@ -239,7 +242,7 @@ const ProductDetails = () => {
     }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (product.variants && product.variants.length > 0 && !selectedVariant) {
       alert('Please select a color');
       return;
@@ -248,7 +251,22 @@ const ProductDetails = () => {
       alert('Please select a frame size');
       return;
     }
-    alert('Proceeding to checkout...');
+    
+    try {
+      // Add to cart first
+      const selectedVariantData = product.variants?.find(v => v.id === selectedVariant);
+      const result = await addToCart(product, quantity, selectedVariantData, selectedSize);
+      
+      if (result.success) {
+        // Navigate to checkout
+        window.location.href = '/checkout';
+      } else {
+        alert('❌ ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('❌ Failed to add to cart. Please try again.');
+    }
   };
 
   const calculateTotal = () => Number(product?.price || 0) * quantity;
@@ -308,8 +326,37 @@ const ProductDetails = () => {
               )}
               </div>
 
-              <button onClick={() => setIsWishlisted(!isWishlisted)} className={`absolute top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg ${isWishlisted ? 'bg-red-600 text-white' : 'bg-white text-gray-700 hover:text-red-600'}`}>
-                <svg className="w-6 h-6" fill={isWishlisted ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+              <button 
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  
+                  try {
+                    // Use currently selected variant or first variant
+                    const currentVariant = product.variants?.find(v => v.id === selectedVariant) || product.variants?.[0];
+                    const result = await toggleWishlist(product, currentVariant);
+                    
+                    if (!result.success) {
+                      alert('❌ ' + result.error);
+                    }
+                  } catch (error) {
+                    console.error('Error toggling wishlist:', error);
+                    alert('❌ Failed to update wishlist');
+                  }
+                }}
+                className={`absolute top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg ${
+                  isInWishlist(product.id, selectedVariant) 
+                    ? 'bg-red-600 text-white' 
+                    : 'bg-white text-gray-700 hover:text-red-600 hover:bg-red-50'
+                }`}
+                title={isInWishlist(product.id, selectedVariant) ? 'Remove from wishlist' : 'Add to wishlist'}
+              >
+                <svg 
+                  className="w-6 h-6" 
+                  fill={isInWishlist(product.id, selectedVariant) ? 'currentColor' : 'none'} 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </button>
@@ -780,61 +827,212 @@ const ProductDetails = () => {
               ))}
             </div>
           ) : relatedProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               {relatedProducts.map((relatedProduct) => (
-                <a 
-                  key={relatedProduct.id} 
-                  href={`/product/${relatedProduct.id}`}
-                  className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                <div
+                  key={relatedProduct.id}
+                  className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 relative"
                 >
-                  <div className="relative aspect-square bg-gray-100">
-                    {relatedProduct.images?.[0]?.thumbnail_url || relatedProduct.images?.[0]?.image_url ? (
-                      <img 
-                        src={relatedProduct.images[0].thumbnail_url || relatedProduct.images[0].image_url} 
-                        alt={relatedProduct.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-4xl">
-                        🚴
-                      </div>
-                    )}
-                    
-                    {relatedProduct.compare_price && Number(relatedProduct.compare_price) > Number(relatedProduct.price) && (
-                      <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                        -{Math.round((1 - Number(relatedProduct.price) / Number(relatedProduct.compare_price)) * 100)}% OFF
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div className="p-4">
-                    <h3 className="font-semibold text-xs md:text-sm text-gray-900 mb-2 line-clamp-2 min-h-[2rem] md:min-h-[2.5rem]">
-                      {relatedProduct.name}
-                    </h3>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm md:text-base lg:text-lg font-bold text-purple-600">
-                        KES {Number(relatedProduct.price).toLocaleString()}
-                      </p>
-                      {relatedProduct.compare_price && Number(relatedProduct.compare_price) > Number(relatedProduct.price) && (
-                        <p className="text-xs text-gray-400 line-through">
-                          KES {Number(relatedProduct.compare_price).toLocaleString()}
-                        </p>
+                  <Link to={`/product/${relatedProduct.id}`}>
+                    <div className="relative pb-[75%] bg-gray-100">
+                      {relatedProduct.images?.[0]?.thumbnail_url || relatedProduct.images?.[0]?.image_url ? (
+                        <img 
+                          src={relatedProduct.images[0].thumbnail_url || relatedProduct.images[0].image_url} 
+                          alt={relatedProduct.name}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-4xl md:text-6xl">
+                          🚴
+                        </div>
                       )}
+                      
+                      {relatedProduct.is_featured && (
+                        <span className="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                          ⭐ Featured
+                        </span>
+                      )}
+                      
+                      {relatedProduct.compare_price && Number(relatedProduct.compare_price) > Number(relatedProduct.price) && (
+                        <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                          -{Math.round((1 - Number(relatedProduct.price) / Number(relatedProduct.compare_price)) * 100)}% OFF
+                        </span>
+                      )}
+
+                      {/* Action Buttons - Cart & Wishlist */}
+                      <div className="absolute bottom-2 right-2 flex items-center gap-1.5 z-10">
+                        {/* Add to Cart Button */}
+                        <button
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            setAddingRelatedToCart(relatedProduct.id);
+                            
+                            try {
+                              const variant = relatedProduct.variants?.[0] || null;
+                              const result = await addToCart(relatedProduct, 1, variant);
+                              
+                              if (result.success) {
+                                alert('✅ Added to cart!');
+                              } else {
+                                alert('❌ ' + result.error);
+                              }
+                            } catch (error) {
+                              console.error('Error adding to cart:', error);
+                              alert('❌ Failed to add to cart');
+                            } finally {
+                              setAddingRelatedToCart(null);
+                            }
+                          }}
+                          disabled={!relatedProduct.quantity || relatedProduct.quantity === 0 || addingRelatedToCart === relatedProduct.id}
+                          className={`p-2 rounded-full transition-all duration-200 shadow-lg ${
+                            relatedProduct.quantity > 0 && addingRelatedToCart !== relatedProduct.id
+                              ? 'bg-white text-gray-700 hover:bg-blue-500 hover:text-white hover:scale-110'
+                              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                          }`}
+                          title={relatedProduct.quantity > 0 ? 'Add to cart' : 'Out of stock'}
+                        >
+                          {addingRelatedToCart === relatedProduct.id ? (
+                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                          )}
+                        </button>
+
+                        {/* Wishlist Button */}
+                        <button
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            setTogglingRelatedWishlist(relatedProduct.id);
+                            
+                            try {
+                              const result = await toggleWishlist(relatedProduct, null);
+                              
+                              if (!result.success) {
+                                alert('❌ ' + result.error);
+                              }
+                            } catch (error) {
+                              console.error('Error toggling wishlist:', error);
+                              alert('❌ Failed to update wishlist');
+                            } finally {
+                              setTogglingRelatedWishlist(null);
+                            }
+                          }}
+                          disabled={togglingRelatedWishlist === relatedProduct.id}
+                          className={`p-2 rounded-full transition-all duration-200 shadow-lg ${
+                            togglingRelatedWishlist === relatedProduct.id
+                              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                              : isInWishlist(relatedProduct.id, null)
+                              ? 'bg-red-500 text-white hover:bg-red-600'
+                              : 'bg-white text-green-500 hover:bg-green-500 hover:text-white'
+                          } hover:scale-110`}
+                          title={isInWishlist(relatedProduct.id, null) ? 'Remove from wishlist' : 'Add to wishlist'}
+                        >
+                          {togglingRelatedWishlist === relatedProduct.id ? (
+                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <svg className="w-4 h-4" fill={isInWishlist(relatedProduct.id, null) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     </div>
                     
-                    {relatedProduct.quantity !== undefined && (
-                      <div className="mt-2">
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          relatedProduct.quantity > 0 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {relatedProduct.quantity > 0 ? 'In Stock' : 'Out of Stock'}
-                        </span>
+                    <div className="p-3">
+                      <h3 className="font-semibold text-xs md:text-sm text-gray-900 mb-2 line-clamp-2 h-10 hover:text-purple-600 transition">
+                        {relatedProduct.name}
+                      </h3>
+                      
+                      {relatedProduct.brand && (
+                        <p className="text-xs text-gray-500 mb-2">
+                          Brand: <span className="font-medium text-gray-700">{relatedProduct.brand}</span>
+                        </p>
+                      )}
+                      
+                      <div className="flex justify-between items-center mb-2">
+                        <div>
+                          <span className="text-base md:text-lg font-bold text-purple-600">
+                            KSh {Number(relatedProduct.price).toLocaleString()}
+                          </span>
+                          {relatedProduct.compare_price && Number(relatedProduct.compare_price) > Number(relatedProduct.price) && (
+                            <span className="text-xs text-gray-400 line-through ml-1">
+                              KSh {Number(relatedProduct.compare_price).toLocaleString()}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </a>
+                      
+                      <div className="flex items-center justify-between gap-2">
+                        {relatedProduct.condition && (
+                          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-medium whitespace-nowrap">
+                            {relatedProduct.condition}
+                          </span>
+                        )}
+                        
+                        <div className="flex items-center gap-2 ml-auto">
+                          {relatedProduct.quantity && relatedProduct.quantity > 0 ? (
+                            <span className="text-xs text-green-600 font-semibold flex items-center whitespace-nowrap">
+                              <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                              In Stock
+                            </span>
+                          ) : (
+                            <span className="text-xs text-red-600 font-semibold flex items-center whitespace-nowrap">
+                              <span className="w-2 h-2 bg-red-500 rounded-full mr-1"></span>
+                              Out of Stock
+                            </span>
+                          )}
+                          
+                          {/* Checkout Button */}
+                          {relatedProduct.quantity > 0 && (
+                            <button
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                setCheckingOutRelated(relatedProduct.id);
+                                
+                                try {
+                                  const variant = relatedProduct.variants?.[0] || null;
+                                  const result = await addToCart(relatedProduct, 1, variant);
+                                  
+                                  if (result.success) {
+                                    window.location.href = '/checkout';
+                                  } else {
+                                    alert('❌ ' + result.error);
+                                    setCheckingOutRelated(null);
+                                  }
+                                } catch (error) {
+                                  console.error('Error:', error);
+                                  alert('❌ Failed to proceed to checkout');
+                                  setCheckingOutRelated(null);
+                                }
+                              }}
+                              disabled={checkingOutRelated === relatedProduct.id}
+                              className={`text-xs bg-orange-500 text-white px-2 py-1 rounded font-semibold hover:bg-orange-600 transition-colors whitespace-nowrap flex items-center gap-1 ${
+                                checkingOutRelated === relatedProduct.id ? 'opacity-75 cursor-not-allowed' : ''
+                              }`}
+                            >
+                              {checkingOutRelated === relatedProduct.id ? (
+                                <>
+                                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  <span>Adding...</span>
+                                </>
+                              ) : (
+                                'Checkout'
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
               ))}
             </div>
           ) : (

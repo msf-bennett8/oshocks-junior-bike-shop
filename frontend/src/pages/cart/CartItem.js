@@ -10,6 +10,7 @@ const CartItem = ({
   item, 
   onUpdateQuantity, 
   onRemoveItem, 
+  onSaveForLater, 
   onAddToWishlist,
   showStock = true,
   compact = false,
