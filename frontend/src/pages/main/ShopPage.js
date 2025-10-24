@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { fetchProducts, fetchCategories } from '../../redux/slices/productSlice';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { useWishlist } from '../../context/WishlistContext';
 
 const ShopPage = () => {
   const dispatch = useDispatch();
@@ -522,7 +523,12 @@ const ProductCardSkeleton = ({ delay = 0 }) => {
 // Product Card Component
 const ProductCard = ({ product, onImageLoad, isImageLoaded }) => {
   const { addToCart, loading: cartLoading } = useCart();
+  const { toggleWishlist, isInWishlist, loading: wishlistLoading } = useWishlist();
   const [isAdding, setIsAdding] = useState(false);
+  const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
+
+  // Check if product is in wishlist
+  const inWishlist = isInWishlist(product.id, product.variants?.[0]?.id || product.colors?.[0]?.id);
 
   const handleAddToCart = async (e) => {
     e.preventDefault(); // Prevent navigation
@@ -652,32 +658,93 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded }) => {
           )}
         </div>
 
-        {/* Add to Cart Button */}
-        <button
-          onClick={handleAddToCart}
-          disabled={product.quantity === 0 || isAdding}
-          className={`w-full py-2.5 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
-            product.quantity === 0
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-purple-600 text-white hover:bg-purple-700 active:scale-95'
-          }`}
-        >
-          {isAdding ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              <span>Adding...</span>
-            </>
-          ) : product.quantity === 0 ? (
-            <span>Out of Stock</span>
-          ) : (
-            <>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <span>Add to Cart</span>
-            </>
-          )}
-        </button>
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          {/* Add to Wishlist Button */}
+          <button
+            onClick={async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              
+              setIsTogglingWishlist(true);
+              
+              try {
+                const variant = product.variants?.[0] || product.colors?.[0];
+                const result = await toggleWishlist(product, variant);
+                
+                if (result.success) {
+                  // Success - no alert needed, visual feedback from heart color change
+                } else {
+                  alert('❌ ' + result.error);
+                }
+              } catch (error) {
+                console.error('Error toggling wishlist:', error);
+                alert('❌ Failed to update wishlist');
+              } finally {
+                setIsTogglingWishlist(false);
+              }
+            }}
+            disabled={isTogglingWishlist}
+            className={`flex-1 py-2.5 px-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 ${
+              inWishlist
+                ? 'bg-red-500 text-white hover:bg-red-600'
+                : 'bg-green-500 text-white hover:bg-green-600'
+            } active:scale-95 disabled:opacity-50`}
+          >
+            {isTogglingWishlist ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span className="hidden sm:inline">...</span>
+              </>
+            ) : (
+              <>
+                <svg 
+                  className="w-5 h-5" 
+                  fill={inWishlist ? "currentColor" : "none"} 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" 
+                  />
+                </svg>
+                <span className="hidden sm:inline">
+                  {inWishlist ? 'In Wishlist' : 'Wishlist'}
+                </span>
+              </>
+            )}
+          </button>
+
+          {/* Add to Cart Button */}
+          <button
+            onClick={handleAddToCart}
+            disabled={product.quantity === 0 || isAdding}
+            className={`flex-1 py-2.5 px-3 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 ${
+              product.quantity === 0
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
+            }`}
+          >
+            {isAdding ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span className="hidden sm:inline">Adding...</span>
+              </>
+            ) : product.quantity === 0 ? (
+              <span>Out of Stock</span>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span className="hidden sm:inline">Add to Cart</span>
+              </>
+            )}
+          </button>
+        </div>
 
         {/* Brand */}
         {product.brand && (

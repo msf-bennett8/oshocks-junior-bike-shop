@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import authService from '../../services/authService';
-import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowUp, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Star, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, UserCog, Users, Package2, BarChart3, FolderTree } from 'lucide-react';
+import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowUp, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Star, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, UserCog, Users, Package2, BarChart3, FolderTree, Heart } from 'lucide-react';
 import SearchBar from '../common/SearchBar'; // ← IMPORT THE NEW SEARCHBAR
 
 const Navbar = () => {
@@ -459,6 +459,17 @@ const handleElevation = async () => {
                   <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></span>
                 )}
               </Link>
+              <Link 
+                to="/wishlist" 
+                className={`relative text-gray-700 hover:text-blue-600 font-medium transition-colors pb-1 ${
+                  isActiveRoute('/wishlist') ? 'text-blue-600' : ''
+                }`}
+              >
+                Wishlist
+                {isActiveRoute('/wishlist') && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></span>
+                )}
+              </Link>
               
             </div>
 
@@ -842,6 +853,14 @@ const handleElevation = async () => {
               >
                 <BookOpen size={20} className="text-gray-600" />
                 <span className="text-gray-900">Blog</span>
+              </Link>
+              <Link
+                to="/wishlist"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+              >
+                <Heart size={20} className="text-gray-600" />
+                <span className="text-gray-900">Wishlist</span>
               </Link>
               {/* Admin Dashboard Link - Only visible to admins */}
                 {isAuthenticated && user?.role === 'admin' && (

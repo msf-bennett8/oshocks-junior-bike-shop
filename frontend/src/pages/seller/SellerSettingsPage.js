@@ -961,7 +961,7 @@ export default function SellerSettingsPage() {
                       <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                         <div>
                           <div className="font-medium text-gray-900">Current Session</div>
-                          <div className="text-sm text-gray-600">Nairobi, Kenya • Chrome on Windows</div>
+                          <div className="text-sm text-gray-600">Nairobi, Kenya • Chrome on Linux</div>
                           <div className="text-xs text-gray-500 mt-1">Last active: Just now</div>
                         </div>
                         <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">

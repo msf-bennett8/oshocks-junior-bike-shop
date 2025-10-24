@@ -9,6 +9,8 @@ import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useSelector, useDispatch } from 'react-redux';
+import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
 
 // ============================================================================
 // CONTEXT IMPORTS
@@ -442,8 +444,10 @@ function App() {
   // ============================================================================
 
   return (
-    <ErrorBoundary>
-      <div className="App min-h-screen flex flex-col">
+  <CartProvider>
+    <WishlistProvider>
+      <ErrorBoundary>
+        <div className="App min-h-screen flex flex-col">
         {/* Global SEO */}
         <Helmet>
           <title>Oshocks Junior Bike Shop - Kenya's Premier Cycling Marketplace</title>
@@ -904,7 +908,9 @@ function App() {
         {/* Toast Notifications - REMOVED */}
         {/* ToastContainer is now automatically rendered by ToastProvider in index.js */}
       </div>
-    </ErrorBoundary>
+      </ErrorBoundary>
+    </WishlistProvider>
+  </CartProvider>
   );
 }
 
