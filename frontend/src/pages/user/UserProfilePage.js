@@ -963,7 +963,7 @@ if (!user || loading) {
                       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div>
                           <p className="text-sm font-semibold text-gray-900">Current Session</p>
-                          <p className="text-xs text-gray-600">Nairobi, Kenya • Chrome on Windows</p>
+                          <p className="text-xs text-gray-600">Nairobi, Kenya • Chrome on Linux</p>
                         </div>
                         <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded">Active</span>
                       </div>

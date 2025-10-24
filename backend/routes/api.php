@@ -62,6 +62,14 @@ Route::prefix('v1')->group(function () {
     Route::delete('/cart/items/{itemId}', [CartController::class, 'removeItem']);
     Route::delete('/cart/clear', [CartController::class, 'clearCart']);
     
+    // Wishlist routes - Public but checks for authentication if token provided
+    Route::get('/wishlist', [WishlistController::class, 'index']);
+    Route::post('/wishlist/add', [WishlistController::class, 'addItem']);
+    Route::post('/wishlist/check', [WishlistController::class, 'checkItem']);
+    Route::delete('/wishlist/items/{itemId}', [WishlistController::class, 'removeItem']);
+    Route::delete('/wishlist/remove-by-product', [WishlistController::class, 'removeByProduct']);
+    Route::delete('/wishlist/clear', [WishlistController::class, 'clearWishlist']);
+
     // search
     Route::get('/search', [SearchController::class, 'search']);
     Route::get('/search/suggestions', [SearchController::class, 'suggestions']);
@@ -88,10 +96,11 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
     
-    // Wishlist
-    Route::get('/wishlist', [WishlistController::class, 'index']);
-    Route::post('/wishlist', [WishlistController::class, 'store']);
-    Route::delete('/wishlist/{id}', [WishlistController::class, 'destroy']);
+    // Wishlist protected features (move to cart)
+    Route::prefix('wishlist')->group(function () {
+        Route::post('/move-to-cart/{itemId}', [WishlistController::class, 'moveToCart']);
+        Route::post('/move-all-to-cart', [WishlistController::class, 'moveAllToCart']);
+    });
     
     // Orders
     Route::get('/orders', [OrderController::class, 'index']);
