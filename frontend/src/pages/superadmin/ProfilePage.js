@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext'; 
 import { 
   User, Mail, Phone, MapPin, Calendar, Edit2, Save, X, Camera, 
   Shield, Bell, CreditCard, Package, Heart, Star, Settings, 
@@ -10,31 +11,31 @@ import {
 
 const ProfilePage = () => {
   const navigate = useNavigate();
+  const { user, isAuthenticated, updateProfile, changePassword, logout } = useAuth();
   
   // Active tab state
   const [activeTab, setActiveTab] = useState('overview');
   
-  // User data state
   const [userData, setUserData] = useState({
-    id: 1,
-    firstName: 'Zablon',
-    lastName: 'Bennett',
-    email: 'zablon.bennett@example.com',
-    phone: '+254 712 345 678',
-    city: 'Nairobi',
-    address: '123 Cycling Street, Westlands',
-    postalCode: '00100',
-    dateOfBirth: '1990-05-15',
-    gender: 'male',
-    bio: 'Passionate cyclist and mountain biking enthusiast. Love exploring trails and pushing my limits.',
-    avatar: null,
-    joinDate: '2023-01-15',
-    userType: 'customer',
-    emailVerified: true,
-    phoneVerified: true,
-    newsletter: true,
-    twoFactorEnabled: false
-  });
+  id: user?.id || '',
+  firstName: user?.name?.split(' ')[0] || '',
+  lastName: user?.name?.split(' ')[1] || '',
+  email: user?.email || '',
+  phone: user?.phone || '',
+  city: user?.address || '',
+  address: user?.address || '',
+  postalCode: '',
+  dateOfBirth: '',
+  gender: '',
+  bio: '',
+  avatar: null,
+  joinDate: user?.created_at || '',
+  userType: user?.role || 'customer',
+  emailVerified: user?.email_verified_at ? true : false,
+  phoneVerified: false,
+  newsletter: true,
+  twoFactorEnabled: false
+});
 
   // Profile stats
   const [profileStats, setProfileStats] = useState({
@@ -99,18 +100,36 @@ const ProfilePage = () => {
 
   // Load user data on mount (simulate API call)
   useEffect(() => {
-    loadUserProfile();
-  }, []);
-
-  const loadUserProfile = async () => {
-    try {
-      // API call to load user profile
-      // const response = await axios.get('/api/user/profile');
-      // setUserData(response.data);
-    } catch (err) {
-      console.error('Failed to load profile:', err);
+    if (user) {
+      setUserData({
+        id: user.id || '',
+        firstName: user.name?.split(' ')[0] || '',
+        lastName: user.name?.split(' ')[1] || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        city: user.address || '',
+        address: user.address || '',
+        postalCode: '',
+        dateOfBirth: '',
+        gender: '',
+        bio: '',
+        avatar: null,
+        joinDate: user.created_at || '',
+        userType: user.role || 'customer',
+        emailVerified: user.email_verified_at ? true : false,
+        phoneVerified: false,
+        newsletter: true,
+        twoFactorEnabled: false
+      });
     }
-  };
+  }, [user]);
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
 
   // Handle profile edit
   const handleEditClick = () => {
@@ -166,17 +185,25 @@ const ProfilePage = () => {
     setSaveSuccess('');
     
     try {
-      // API call to update profile
-      // await axios.put('/api/user/profile', editedData);
+      // Prepare data for API
+      const updates = {
+        name: `${editedData.firstName} ${editedData.lastName}`,
+        email: editedData.email,
+        phone: editedData.phone,
+        address: editedData.city || editedData.address
+      };
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Call AuthContext updateProfile
+      const result = await updateProfile(updates);
       
-      setUserData(editedData);
-      setIsEditingProfile(false);
-      setSaveSuccess('Profile updated successfully!');
-      
-      setTimeout(() => setSaveSuccess(''), 5000);
+      if (result.success) {
+        setUserData(editedData);
+        setIsEditingProfile(false);
+        setSaveSuccess('Profile updated successfully!');
+        setTimeout(() => setSaveSuccess(''), 5000);
+      } else {
+        setSaveError(result.error || 'Failed to update profile');
+      }
     } catch (err) {
       console.error('Failed to save profile:', err);
       setSaveError('Failed to update profile. Please try again.');
@@ -261,21 +288,26 @@ const ProfilePage = () => {
     setIsChangingPassword(true);
     
     try {
-      // API call to change password
-      // await axios.post('/api/user/change-password', passwordData);
-      
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setPasswordSuccess('Password changed successfully!');
-      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      
-      setTimeout(() => setPasswordSuccess(''), 5000);
-    } catch (err) {
-      console.error('Failed to change password:', err);
-      setPasswordError(err.response?.data?.message || 'Failed to change password. Please check your current password.');
-    } finally {
-      setIsChangingPassword(false);
-    }
+  // Call AuthContext changePassword
+  const result = await changePassword({
+    currentPassword: passwordData.currentPassword,
+    newPassword: passwordData.newPassword,
+    newPasswordConfirmation: passwordData.confirmPassword
+  });
+  
+  if (result.success) {
+    setPasswordSuccess('Password changed successfully!');
+    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    setTimeout(() => setPasswordSuccess(''), 5000);
+  } else {
+    setPasswordError(result.error || 'Failed to change password');
+  }
+} catch (err) {
+  console.error('Failed to change password:', err);
+  setPasswordError(err.response?.data?.message || 'Failed to change password. Please check your current password.');
+} finally {
+  setIsChangingPassword(false);
+}
   };
 
   // Handle notification preferences
@@ -314,12 +346,16 @@ const ProfilePage = () => {
   };
 
   // Handle logout
-  const handleLogout = () => {
-    // Clear auth data
-    localStorage.removeItem('authToken');
-    sessionStorage.removeItem('authToken');
+ const handleLogout = async () => {
+  try {
+    await logout();
     navigate('/login');
-  };
+  } catch (err) {
+    console.error('Logout failed:', err);
+    // Navigate anyway
+    navigate('/login');
+  }
+};
 
   // Render membership badge
   const renderMembershipBadge = () => {
@@ -336,6 +372,15 @@ const ProfilePage = () => {
       </span>
     );
   };
+
+  // Show loading while user data is being fetched
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
