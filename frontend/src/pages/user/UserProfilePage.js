@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Lock, CreditCard, Bell, ShoppingBag, Heart, Settings, Camera, Save, X, Edit2, Trash2, Plus, Home, Building, AlertCircle, CheckCircle, Eye, EyeOff, LogOut, Shield } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const ProfilePage = () => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated, updateProfile, changePassword, logout } = useAuth();
+  
   const [activeTab, setActiveTab] = useState('personal');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -9,20 +14,22 @@ const ProfilePage = () => {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [notification, setNotification] = useState(null);
+  const [isTabsStuck, setIsTabsStuck] = useState(false);
+  const [navbarVisible, setNavbarVisible] = useState(true);
 
   // User Data State
   const [userData, setUserData] = useState({
-    firstName: 'John',
-    lastName: 'Kamau',
-    email: 'john.kamau@email.com',
-    phone: '+254 712 345 678',
-    alternatePhone: '+254 789 012 345',
-    dateOfBirth: '1990-05-15',
-    gender: 'male',
-    profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400',
-    bio: 'Passionate cyclist and mountain biking enthusiast',
-    memberSince: '2023-08-15'
-  });
+  firstName: user?.name?.split(' ')[0] || '',
+  lastName: user?.name?.split(' ').slice(1).join(' ') || '',
+  email: user?.email || '',
+  phone: user?.phone || '',
+  alternatePhone: '',
+  dateOfBirth: '',
+  gender: '',
+  profileImage: null,
+  bio: '',
+  memberSince: user?.created_at || ''
+});
 
   const [addresses, setAddresses] = useState([
     {
@@ -109,12 +116,56 @@ const ProfilePage = () => {
     loyaltyPoints: 2845
   });
 
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-    }, 800);
-  }, []);
+  // Redirect if not authenticated
+useEffect(() => {
+  if (!isAuthenticated) {
+    navigate('/login');
+  }
+}, [isAuthenticated, navigate]);
+
+
+//sticky navigation header
+useEffect(() => {
+  let lastScrollY = window.scrollY;
+  
+  const handleScroll = () => {
+    const scrollPosition = window.scrollY;
+    const currentScrollY = window.scrollY;
+    
+    // Determine if navbar should be visible
+    if (currentScrollY < lastScrollY || currentScrollY < 10) {
+      setNavbarVisible(true);
+    } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+      setNavbarVisible(false);
+    }
+    
+    // Check if tabs should be stuck
+    setIsTabsStuck(scrollPosition > 150);
+    lastScrollY = currentScrollY;
+  };
+
+  window.addEventListener('scroll', handleScroll);
+  return () => window.removeEventListener('scroll', handleScroll);
+}, []);
+
+// Sync user data when user changes
+useEffect(() => {
+  if (user) {
+    setUserData({
+      firstName: user.name?.split(' ')[0] || '',
+      lastName: user.name?.split(' ').slice(1).join(' ') || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      alternatePhone: '',
+      dateOfBirth: '',
+      gender: '',
+      profileImage: null,
+      bio: '',
+      memberSince: user.created_at || ''
+    });
+    setLoading(false);
+  }
+}, [user]);
 
   const showNotification = (message, type = 'success') => {
     setNotification({ message, type });
@@ -122,14 +173,33 @@ const ProfilePage = () => {
   };
 
   const handleProfileUpdate = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    // Simulate API call
-    setTimeout(() => {
-      setSaving(false);
+  e.preventDefault();
+  setSaving(true);
+  
+  try {
+    // Prepare data for API
+    const updates = {
+      name: `${userData.firstName} ${userData.lastName}`.trim(),
+      email: userData.email,
+      phone: userData.phone,
+      address: userData.city || userData.address || ''
+    };
+    
+    // Call AuthContext updateProfile
+    const result = await updateProfile(updates);
+    
+    if (result.success) {
       showNotification('Profile updated successfully!');
-    }, 1000);
-  };
+    } else {
+      showNotification(result.error || 'Failed to update profile', 'error');
+    }
+  } catch (err) {
+    console.error('Failed to update profile:', err);
+    showNotification('Failed to update profile. Please try again.', 'error');
+  } finally {
+    setSaving(false);
+  }
+};
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -143,24 +213,43 @@ const ProfilePage = () => {
     }
   };
 
-  const handlePasswordChange = async (e) => {
-    e.preventDefault();
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      showNotification('Passwords do not match!', 'error');
-      return;
-    }
-    if (passwordData.newPassword.length < 8) {
-      showNotification('Password must be at least 8 characters!', 'error');
-      return;
-    }
-    setSaving(true);
-    setTimeout(() => {
-      setSaving(false);
+ const handlePasswordChange = async (e) => {
+  e.preventDefault();
+  
+  // Client-side validation
+  if (passwordData.newPassword !== passwordData.confirmPassword) {
+    showNotification('Passwords do not match!', 'error');
+    return;
+  }
+  if (passwordData.newPassword.length < 8) {
+    showNotification('Password must be at least 8 characters!', 'error');
+    return;
+  }
+  
+  setSaving(true);
+  
+  try {
+    // Call AuthContext changePassword
+    const result = await changePassword({
+      currentPassword: passwordData.currentPassword,
+      newPassword: passwordData.newPassword,
+      newPasswordConfirmation: passwordData.confirmPassword
+    });
+    
+    if (result.success) {
       setShowPasswordForm(false);
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       showNotification('Password changed successfully!');
-    }, 1000);
-  };
+    } else {
+      showNotification(result.error || 'Failed to change password', 'error');
+    }
+  } catch (err) {
+    console.error('Failed to change password:', err);
+    showNotification(err.response?.data?.message || 'Failed to change password. Please check your current password.', 'error');
+  } finally {
+    setSaving(false);
+  }
+};
 
   const handleAddressSubmit = (address) => {
     if (editingAddress) {
@@ -212,6 +301,18 @@ const ProfilePage = () => {
     }).format(amount);
   };
 
+  // Show loading while user data is being fetched
+if (!user || loading) {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-green-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600 font-medium">Loading profile...</p>
+      </div>
+    </div>
+  );
+}
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -237,114 +338,180 @@ const ProfilePage = () => {
         )}
 
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
           <p className="text-gray-600">Manage your account settings and preferences</p>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
-              {/* Profile Image */}
-              <div className="text-center mb-6">
-                <div className="relative inline-block">
+        <button
+          onClick={async () => {
+            try {
+              await logout();
+              navigate('/login');
+            } catch (err) {
+              console.error('Logout failed:', err);
+              navigate('/login');
+            }
+          }}
+          className="hidden md:flex items-center px-6 py-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-medium transition-colors"
+        >
+          <LogOut className="w-5 h-5 mr-2" />
+          Logout
+        </button>
+      </div>
+        <div className="space-y-6">
+        {/* Profile Header Card */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            {/* Profile Image and Info */}
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                {userData.profileImage ? (
                   <img
                     src={userData.profileImage}
                     alt={`${userData.firstName} ${userData.lastName}`}
-                    className="w-24 h-24 rounded-full object-cover border-4 border-green-100"
+                    className="w-20 h-20 md:w-24 md:h-24 rounded-full object-cover border-4 border-green-100"
                   />
-                  <label className="absolute bottom-0 right-0 bg-green-600 text-white p-2 rounded-full cursor-pointer hover:bg-green-700 transition-colors">
-                    <Camera className="w-4 h-4" />
-                    <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
-                  </label>
-                </div>
-                <h3 className="mt-4 text-lg font-bold text-gray-900">{userData.firstName} {userData.lastName}</h3>
+                ) : (
+                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-green-600 text-white flex items-center justify-center text-2xl md:text-3xl font-bold border-4 border-green-100">
+                    {userData.firstName?.[0]}{userData.lastName?.[0]}
+                  </div>
+                )}
+                <label className="absolute bottom-0 right-0 bg-green-600 text-white p-2 rounded-full cursor-pointer hover:bg-green-700 transition-colors">
+                  <Camera className="w-4 h-4" />
+                  <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                </label>
+              </div>
+              
+              <div>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900">
+                  {userData.firstName} {userData.lastName}
+                </h3>
                 <p className="text-sm text-gray-600">{userData.email}</p>
-                <p className="text-xs text-gray-500 mt-2">Member since {new Date(userData.memberSince).toLocaleDateString('en-KE', { month: 'long', year: 'numeric' })}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Member since {new Date(userData.memberSince).toLocaleDateString('en-KE', { month: 'long', year: 'numeric' })}
+                </p>
               </div>
+            </div>
 
-              {/* Quick Stats */}
-              <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Total Orders</span>
-                  <span className="font-bold text-gray-900">{stats.totalOrders}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Total Spent</span>
-                  <span className="font-bold text-green-600">{formatCurrency(stats.totalSpent)}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Wishlist Items</span>
-                  <span className="font-bold text-gray-900">{stats.wishlistItems}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Loyalty Points</span>
-                  <span className="font-bold text-yellow-600">{stats.loyaltyPoints}</span>
-                </div>
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-xl md:text-2xl font-bold text-gray-900">{stats.totalOrders}</div>
+                <div className="text-xs text-gray-600">Orders</div>
               </div>
-
-              {/* Navigation */}
-              <nav className="space-y-1">
-                <button
-                  onClick={() => setActiveTab('personal')}
-                  className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === 'personal' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <User className="w-5 h-5 mr-3" />
-                  Personal Info
-                </button>
-                <button
-                  onClick={() => setActiveTab('addresses')}
-                  className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === 'addresses' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <MapPin className="w-5 h-5 mr-3" />
-                  Addresses
-                </button>
-                <button
-                  onClick={() => setActiveTab('payments')}
-                  className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === 'payments' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <CreditCard className="w-5 h-5 mr-3" />
-                  Payment Methods
-                </button>
-                <button
-                  onClick={() => setActiveTab('security')}
-                  className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === 'security' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <Lock className="w-5 h-5 mr-3" />
-                  Security
-                </button>
-                <button
-                  onClick={() => setActiveTab('preferences')}
-                  className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${
-                    activeTab === 'preferences' ? 'bg-green-50 text-green-700 font-medium' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <Settings className="w-5 h-5 mr-3" />
-                  Preferences
-                </button>
-              </nav>
-
-              <button
-                onClick={() => alert('Logging out...')}
-                className="w-full mt-6 flex items-center justify-center px-4 py-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-medium transition-colors"
-              >
-                <LogOut className="w-5 h-5 mr-2" />
-                Logout
-              </button>
+              <div className="text-center">
+                <div className="text-xl md:text-2xl font-bold text-green-600">{formatCurrency(stats.totalSpent)}</div>
+                <div className="text-xs text-gray-600">Spent</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl md:text-2xl font-bold text-gray-900">{stats.wishlistItems}</div>
+                <div className="text-xs text-gray-600">Wishlist</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl md:text-2xl font-bold text-yellow-600">{stats.loyaltyPoints}</div>
+                <div className="text-xs text-gray-600">Points</div>
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-3">
+        {/* Horizontal Navigation Tabs - Sticky Below Navbar */}
+        <div 
+            className={`bg-white rounded-lg shadow-sm sticky z-40 transition-all duration-300 ${
+              isTabsStuck ? 'shadow-lg' : ''
+            }`}
+            style={{ 
+              top: navbarVisible ? '64px' : '0px',
+              transition: 'top 0.3s ease'
+            }}
+          >
+          <div className="overflow-x-auto scrollbar-hide">
+            <nav className="flex border-b border-gray-200 min-w-max">
+              <button
+                onClick={() => setActiveTab('personal')}
+                className={`flex items-center px-4 sm:px-6 py-4 text-sm font-medium whitespace-nowrap transition-all border-b-2 ${
+                  activeTab === 'personal'
+                    ? 'border-green-600 text-green-600 bg-green-50'
+                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <User className="w-5 h-5 mr-2" />
+                <span>Personal Info</span>
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('addresses')}
+                className={`flex items-center px-4 sm:px-6 py-4 text-sm font-medium whitespace-nowrap transition-all border-b-2 ${
+                  activeTab === 'addresses'
+                    ? 'border-green-600 text-green-600 bg-green-50'
+                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <MapPin className="w-5 h-5 mr-2" />
+                <span>Addresses</span>
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('payments')}
+                className={`flex items-center px-4 sm:px-6 py-4 text-sm font-medium whitespace-nowrap transition-all border-b-2 ${
+                  activeTab === 'payments'
+                    ? 'border-green-600 text-green-600 bg-green-50'
+                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <CreditCard className="w-5 h-5 mr-2" />
+                <span>Payment Methods</span>
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('security')}
+                className={`flex items-center px-4 sm:px-6 py-4 text-sm font-medium whitespace-nowrap transition-all border-b-2 ${
+                  activeTab === 'security'
+                    ? 'border-green-600 text-green-600 bg-green-50'
+                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <Lock className="w-5 h-5 mr-2" />
+                <span>Security</span>
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('preferences')}
+                className={`flex items-center px-4 sm:px-6 py-4 text-sm font-medium whitespace-nowrap transition-all border-b-2 ${
+                  activeTab === 'preferences'
+                    ? 'border-green-600 text-green-600 bg-green-50'
+                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <Settings className="w-5 h-5 mr-2" />
+                <span>Preferences</span>
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        {/* Logout Button - Mobile */}
+        <div className="md:hidden">
+          <button
+            onClick={async () => {
+              try {
+                await logout();
+                navigate('/login');
+              } catch (err) {
+                console.error('Logout failed:', err);
+                navigate('/login');
+              }
+            }}
+            className="w-full flex items-center justify-center px-4 py-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-medium transition-colors"
+          >
+            <LogOut className="w-5 h-5 mr-2" />
+            Logout
+          </button>
+        </div>
+
+        {/* Main Content */}
+        <div>
             {/* Personal Information */}
             {activeTab === 'personal' && (
               <div className="bg-white rounded-lg shadow-sm p-6">

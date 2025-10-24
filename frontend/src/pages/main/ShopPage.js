@@ -689,3 +689,5 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded }) => {
     </Link>
   );
 };
+
+export default ShopPage; 
