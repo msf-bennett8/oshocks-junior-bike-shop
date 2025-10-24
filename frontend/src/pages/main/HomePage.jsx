@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { productAPI } from '../../services/api';
+import { useWishlist } from '../../context/WishlistContext';
+import { Heart } from 'lucide-react';
 
 const HomePage = () => {
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSlowLoad, setIsSlowLoad] = useState(false);
+  const [togglingWishlist, setTogglingWishlist] = useState(null); 
 
   const [loadedImages, setLoadedImages] = useState(new Set());
 
@@ -59,6 +63,27 @@ const HomePage = () => {
       
       setLoading(false);
       setIsSlowLoad(false);
+    }
+  };
+
+  // Handle wishlist toggle
+  const handleWishlistToggle = async (e, product) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setTogglingWishlist(product.id);
+    
+    try {
+      const result = await toggleWishlist(product, null);
+      
+      if (!result.success) {
+        alert('❌ ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+      alert('❌ Failed to update wishlist');
+    } finally {
+      setTogglingWishlist(null);
     }
   };
 
@@ -324,99 +349,122 @@ const HomePage = () => {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                   {products.slice(0, 12).map((product) => (
-                    <Link
+                    <div
                       key={product.id}
-                      to={`/product/${product.id}`}
-                      className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100"
+                      className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 relative"
                     >
-                      <div className="relative pb-[75%] bg-gray-100">
-                        {product.image_url || product.images?.[0]?.image_url ? (
-                          <>
-                            {/* Thumbnail - loads first, blurred */}
-                            {!loadedImages.has(product.id) && (product.images?.[0]?.thumbnail_url || product.image_url) && (
+                      <Link to={`/product/${product.id}`}>
+                        <div className="relative pb-[75%] bg-gray-100">
+                          {product.image_url || product.images?.[0]?.image_url ? (
+                            <>
+                              {/* Thumbnail - loads first, blurred */}
+                              {!loadedImages.has(product.id) && (product.images?.[0]?.thumbnail_url || product.image_url) && (
+                                <img
+                                  src={product.images?.[0]?.thumbnail_url || product.image_url}
+                                  alt={product.name}
+                                  className="absolute inset-0 w-full h-full object-cover blur-sm"
+                                />
+                              )}
+                              {/* Full resolution - loads after, crisp */}
                               <img
-                                src={product.images?.[0]?.thumbnail_url || product.image_url}
+                                src={product.images?.[0]?.image_url || product.image_url}
                                 alt={product.name}
-                                className="absolute inset-0 w-full h-full object-cover blur-sm"
+                                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                                  loadedImages.has(product.id) ? 'opacity-100' : 'opacity-0'
+                                }`}
+                                onLoad={() => handleImageLoad(product.id)}
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.parentElement.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-gray-400 text-6xl">🚴</div>';
+                                }}
+                              />
+                            </>
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-6xl">
+                              🚴
+                            </div>
+                          )}
+                          
+                          {product.is_featured && (
+                            <span className="absolute top-3 right-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                              ⭐ Featured
+                            </span>
+                          )}
+                          
+                          {product.compare_price && Number(product.compare_price) > Number(product.price) && (
+                            <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
+                              {Math.round((1 - Number(product.price) / Number(product.compare_price)) * 100)}% OFF
+                            </span>
+                          )}
+
+                          {/* Wishlist Heart Button */}
+                          <button
+                            onClick={(e) => handleWishlistToggle(e, product)}
+                            disabled={togglingWishlist === product.id}
+                            className={`absolute bottom-3 right-3 p-2 rounded-full transition-all duration-200 shadow-lg z-10 ${
+                              isInWishlist(product.id, null)
+                                ? 'bg-red-500 text-white hover:bg-red-600'
+                                : 'bg-white text-gray-600 hover:bg-gray-100'
+                            } ${togglingWishlist === product.id ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'}`}
+                            title={isInWishlist(product.id, null) ? 'Remove from wishlist' : 'Add to wishlist'}
+                          >
+                            {togglingWishlist === product.id ? (
+                              <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <Heart
+                                className="w-5 h-5"
+                                fill={isInWishlist(product.id, null) ? 'currentColor' : 'none'}
+                                strokeWidth={2}
                               />
                             )}
-                            {/* Full resolution - loads after, crisp */}
-                            <img
-                              src={product.images?.[0]?.image_url || product.image_url}
-                              alt={product.name}
-                              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-                                loadedImages.has(product.id) ? 'opacity-100' : 'opacity-0'
-                              }`}
-                              onLoad={() => handleImageLoad(product.id)}
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.parentElement.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-gray-400 text-6xl">🚴</div>';
-                              }}
-                            />
-                          </>
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-6xl">
-                            🚴
-                          </div>
-                        )}
-                        
-                        {product.is_featured && (
-                          <span className="absolute top-3 right-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                            ⭐ Featured
-                          </span>
-                        )}
-                        
-                        {product.compare_price && Number(product.compare_price) > Number(product.price) && (
-                          <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
-                            {Math.round((1 - Number(product.price) / Number(product.compare_price)) * 100)}% OFF
-                          </span>
-                        )}
-                      </div>
+                          </button>
+                        </div>
 
-                      <div className="p-4">
-                        <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2 h-12 text-sm hover:text-purple-600 transition">
-                          {product.name}
-                        </h3>
-                        
-                        {product.brand && (
-                          <p className="text-xs text-gray-500 mb-2">
-                            Brand: <span className="font-medium text-gray-700">{product.brand}</span>
-                          </p>
-                        )}
-                        
-                        <div className="flex justify-between items-center mt-3">
-                          <div>
-                            <span className="text-xl font-bold text-purple-600">
-                              KSh {Number(product.price).toLocaleString()}
-                            </span>
-                            {product.compare_price && Number(product.compare_price) > Number(product.price) && (
-                              <span className="text-sm text-gray-400 line-through ml-2">
-                                KSh {Number(product.compare_price).toLocaleString()}
+                        <div className="p-4">
+                          <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2 h-12 text-sm hover:text-purple-600 transition">
+                            {product.name}
+                          </h3>
+                          
+                          {product.brand && (
+                            <p className="text-xs text-gray-500 mb-2">
+                              Brand: <span className="font-medium text-gray-700">{product.brand}</span>
+                            </p>
+                          )}
+                          
+                          <div className="flex justify-between items-center mt-3">
+                            <div>
+                              <span className="text-xl font-bold text-purple-600">
+                                KSh {Number(product.price).toLocaleString()}
+                              </span>
+                              {product.compare_price && Number(product.compare_price) > Number(product.price) && (
+                                <span className="text-sm text-gray-400 line-through ml-2">
+                                  KSh {Number(product.compare_price).toLocaleString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center justify-between mt-3">
+                            {product.condition && (
+                              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-medium">
+                                {product.condition}
+                              </span>
+                            )}
+                            {product.quantity && product.quantity > 0 ? (
+                              <span className="text-xs text-green-600 font-semibold flex items-center">
+                                <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                                In Stock
+                              </span>
+                            ) : (
+                              <span className="text-xs text-red-600 font-semibold flex items-center">
+                                <span className="w-2 h-2 bg-red-500 rounded-full mr-1"></span>
+                                Out of Stock
                               </span>
                             )}
                           </div>
                         </div>
-                        
-                        <div className="flex items-center justify-between mt-3">
-                          {product.condition && (
-                            <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-medium">
-                              {product.condition}
-                            </span>
-                          )}
-                          {product.quantity && product.quantity > 0 ? (
-                            <span className="text-xs text-green-600 font-semibold flex items-center">
-                              <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                              In Stock
-                            </span>
-                          ) : (
-                            <span className="text-xs text-red-600 font-semibold flex items-center">
-                              <span className="w-2 h-2 bg-red-500 rounded-full mr-1"></span>
-                              Out of Stock
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
+                      </Link>
+                    </div>
                   ))}
                 </div>
 
