@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
 import { Heart, ShoppingCart, Share2, X, Eye, Filter, SortAsc, Grid, List, Trash2, Tag, TrendingUp, Clock, DollarSign, Package, CheckCircle, AlertCircle, Copy, Facebook, Twitter, Mail, MessageCircle, Download, Plus, Minus, Star, ChevronDown, ChevronUp } from 'lucide-react';
+import { useCart } from '../../context/CartContext';
+import toast, { Toaster } from 'react-hot-toast';
 
 const Wishlist = () => {
+  const cartContext = useCart();
   const [viewMode, setViewMode] = useState('grid');
+  const [addingToCart, setAddingToCart] = useState(null); 
   const [sortBy, setSortBy] = useState('date-added');
   const [filterCategory, setFilterCategory] = useState('all');
   const [selectedItems, setSelectedItems] = useState([]);
@@ -200,15 +204,106 @@ const Wishlist = () => {
     setSelectedItems([]);
   };
 
-  // Add to cart
-  const addToCart = (itemId) => {
-    console.log('Adding to cart:', itemId);
-    // Add your cart logic here
+// Add to cart
+  const addToCart = async (item) => {
+    setAddingToCart(item.id);
+    
+    try {
+      const variant = item.variants?.[0] || item.colors?.[0] || null;
+      const result = await cartContext.addToCart(item, 1, variant);
+      
+      if (result.success) {
+        toast.success(`${item.name} moved to cart!`, {
+          duration: 3000,
+          icon: '🛒',
+          style: {
+            background: '#10B981',
+            color: '#fff',
+          },
+        });
+        
+        // Remove item from wishlist after successful cart addition
+        removeItem(item.id);
+      } else {
+        toast.error(result.error || 'Failed to add item to cart', {
+          duration: 4000,
+          style: {
+            background: '#EF4444',
+            color: '#fff',
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error('Failed to add item to cart. Please try again.', {
+        duration: 4000,
+        style: {
+          background: '#EF4444',
+          color: '#fff',
+        },
+      });
+    } finally {
+      setAddingToCart(null);
+    }
   };
 
-  const addSelectedToCart = () => {
-    console.log('Adding selected to cart:', selectedItems);
-    // Add your cart logic here
+const addSelectedToCart = async () => {
+    setAddingToCart('bulk');
+    
+    try {
+      const selectedItemsData = wishlistItems.filter(item => selectedItems.includes(item.id));
+      let successCount = 0;
+      let failCount = 0;
+      
+      for (const item of selectedItemsData) {
+        try {
+          const variant = item.variants?.[0] || item.colors?.[0] || null;
+          const result = await cartContext.addToCart(item, 1, variant);
+          
+          if (result.success) {
+            successCount++;
+            // Remove successfully added items from wishlist
+            removeItem(item.id);
+          } else {
+            failCount++;
+          }
+        } catch (error) {
+          failCount++;
+        }
+      }
+      
+      if (successCount > 0) {
+        toast.success(`${successCount} item${successCount > 1 ? 's' : ''} moved to cart!`, {
+          duration: 3000,
+          icon: '🛒',
+          style: {
+            background: '#10B981',
+            color: '#fff',
+          },
+        });
+      }
+      
+      if (failCount > 0) {
+        toast.error(`Failed to add ${failCount} item${failCount > 1 ? 's' : ''} to cart`, {
+          duration: 4000,
+          style: {
+            background: '#EF4444',
+            color: '#fff',
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error('Failed to add items to cart', {
+        duration: 4000,
+        style: {
+          background: '#EF4444',
+          color: '#fff',
+        },
+      });
+    } finally {
+      setAddingToCart(null);
+    }
   };
 
   // Share functionality
@@ -362,10 +457,24 @@ const Wishlist = () => {
                     </span>
                     <button
                       onClick={addSelectedToCart}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                      disabled={addingToCart === 'bulk'}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm ${
+                        addingToCart === 'bulk'
+                          ? 'bg-gray-400 text-white cursor-not-allowed'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
                     >
-                      <ShoppingCart className="w-4 h-4" />
-                      Add to Cart
+                      {addingToCart === 'bulk' ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Adding...</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingCart className="w-4 h-4" />
+                          <span>Add to Cart</span>
+                        </>
+                      )}
                     </button>
                     <button
                       onClick={removeSelectedItems}
@@ -571,16 +680,25 @@ const Wishlist = () => {
                       )}
 
                       <button
-                        onClick={() => addToCart(item.id)}
-                        disabled={!item.inStock}
+                        onClick={() => addToCart(item)}
+                        disabled={!item.inStock || addingToCart === item.id}
                         className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg font-medium transition-colors ${
-                          item.inStock
+                          item.inStock && addingToCart !== item.id
                             ? 'bg-blue-600 text-white hover:bg-blue-700'
                             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
                       >
-                        <ShoppingCart className="w-4 h-4" />
-                        {item.inStock ? 'Add to Cart' : 'Out of Stock'}
+                        {addingToCart === item.id ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <span>Adding...</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="w-4 h-4" />
+                            {item.inStock ? 'Add to Cart' : 'Out of Stock'}
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -683,16 +801,25 @@ const Wishlist = () => {
                           </div>
 
                           <button
-                            onClick={() => addToCart(item.id)}
-                            disabled={!item.inStock}
+                            onClick={() => addToCart(item)}
+                            disabled={!item.inStock || addingToCart === item.id}
                             className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors ${
-                              item.inStock
+                              item.inStock && addingToCart !== item.id
                                 ? 'bg-blue-600 text-white hover:bg-blue-700'
                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                             }`}
                           >
-                            <ShoppingCart className="w-4 h-4" />
-                            {item.inStock ? 'Add to Cart' : 'Out of Stock'}
+                            {addingToCart === item.id ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                <span>Adding...</span>
+                              </>
+                            ) : (
+                              <>
+                                <ShoppingCart className="w-4 h-4" />
+                                {item.inStock ? 'Add to Cart' : 'Out of Stock'}
+                              </>
+                            )}
                           </button>
                         </div>
                       </div>
@@ -720,10 +847,24 @@ const Wishlist = () => {
                   <div className="flex gap-2">
                     <button
                       onClick={addSelectedToCart}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      disabled={addingToCart === 'bulk'}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm ${
+                        addingToCart === 'bulk'
+                          ? 'bg-gray-400 text-white cursor-not-allowed'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
                     >
-                      <ShoppingCart className="w-4 h-4" />
-                      Add to Cart
+                      {addingToCart === 'bulk' ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Adding...</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingCart className="w-4 h-4" />
+                          <span>Add to Cart</span>
+                        </>
+                      )}
                     </button>
                     <button
                       onClick={removeSelectedItems}
@@ -825,6 +966,9 @@ const Wishlist = () => {
           </div>
         </div>
       )}
+      
+      {/* Toast Notifications */}
+      <Toaster position="top-right" />
     </div>
   );
 };
