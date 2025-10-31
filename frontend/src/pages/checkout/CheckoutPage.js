@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, Truck, MapPin, Phone, Mail, User, ShoppingBag, AlertCircle, CheckCircle, Loader, Shield } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../../context/CartContext';
 
 const CheckoutPage = () => {
   const { cartItems, clearCart } = useCart();

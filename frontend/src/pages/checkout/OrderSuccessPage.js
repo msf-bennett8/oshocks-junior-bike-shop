@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, Package, Truck, MapPin, Phone, Mail, Download, Share2, ArrowRight, Calendar, CreditCard, ShoppingBag, Home, MessageCircle } from 'lucide-react';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../../context/CartContext';
 import { useLocation } from 'react-router-dom';
 
 const OrderSuccessPage = () => {
