@@ -97,7 +97,7 @@ const OrderSuccessPage = () => {
     }, 1000);
     
     return () => clearInterval(timer);
-  }, []);
+  }, [location.state, cartItems]);
   
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-KE', {

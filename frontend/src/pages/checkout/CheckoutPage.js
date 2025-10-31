@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, Truck, MapPin, Phone, Mail, User, ShoppingBag, AlertCircle, CheckCircle, Loader, Shield } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 
 const CheckoutPage = () => {
-  const { cartItems } = useCart();
+  const { cartItems, clearCart } = useCart();
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [orderSuccess, setOrderSuccess] = useState(false);
   
   // Form state
   const [shippingInfo, setShippingInfo] = useState({
@@ -107,9 +107,43 @@ const CheckoutPage = () => {
     // Simulate API call - replace with actual API integration
     try {
       await new Promise(resolve => setTimeout(resolve, 3000));
-      setOrderSuccess(true);
-      setStep(3);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // Prepare order data to pass to success page
+      const orderData = {
+        orderNumber: `OS${Date.now().toString().slice(-8)}`,
+        orderDate: new Date().toISOString(),
+        status: 'confirmed',
+        customer: {
+          name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+          email: shippingInfo.email,
+          phone: shippingInfo.phone
+        },
+        shipping: {
+          address: shippingInfo.address,
+          city: shippingInfo.city,
+          county: shippingInfo.county,
+          postalCode: shippingInfo.postalCode
+        },
+        payment: {
+          method: paymentMethod === 'mpesa' ? 'M-Pesa' : 'Credit/Debit Card',
+          transactionId: `TXN${Date.now().toString().slice(-10)}`,
+          amount: total,
+          status: 'completed'
+        }
+      };
+      
+      // Navigate to success page with order data
+      navigate('/order-success', {
+        state: {
+          orderData: orderData,
+          items: cartItems,
+          discount: 0 // Add discount if you have it
+        }
+      });
+      
+      // Clear the cart after successful order
+      // clearCart(); // Uncomment this when you want to clear cart after order
+      
     } catch (error) {
       setErrors({ submit: 'Payment failed. Please try again.' });
     } finally {
@@ -139,7 +173,7 @@ const CheckoutPage = () => {
   };
   
   // Redirect if cart is empty
-  if (!loading && !orderSuccess && cartItems.length === 0) {
+  if (!loading && cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-2xl mx-auto px-4">
@@ -161,42 +195,7 @@ const CheckoutPage = () => {
     );
   }
   
-  if (orderSuccess) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="max-w-2xl mx-auto px-4">
-          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle className="w-12 h-12 text-green-600" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Order Placed Successfully!</h1>
-            <p className="text-gray-600 mb-2">Order #OS{Date.now().toString().slice(-8)}</p>
-            <p className="text-gray-600 mb-8">
-              Thank you for your purchase! We've sent a confirmation email to {shippingInfo.email}
-            </p>
-            <div className="bg-gray-50 rounded-lg p-6 mb-8">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-gray-600">Total Paid:</span>
-                <span className="text-2xl font-bold text-green-600">{formatCurrency(total)}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-600">Payment Method:</span>
-                <span className="font-medium">{paymentMethod === 'mpesa' ? 'M-Pesa' : 'Credit/Debit Card'}</span>
-              </div>
-            </div>
-            <div className="flex gap-4 justify-center">
-              <button className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition">
-                Track Order
-              </button>
-              <button className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition">
-                Continue Shopping
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  
   
   return (
     <div className="min-h-screen bg-gray-50 py-8">
