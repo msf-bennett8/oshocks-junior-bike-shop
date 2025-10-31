@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, Package, Truck, MapPin, Phone, Mail, Download, Share2, ArrowRight, Calendar, CreditCard, ShoppingBag, Home, MessageCircle } from 'lucide-react';
+import { useCart } from '../context/CartContext';
+import { useLocation } from 'react-router-dom';
 
 const OrderSuccessPage = () => {
+  const { cartItems } = useCart();
+  const location = useLocation();
   const [orderData, setOrderData] = useState(null);
   const [countdown, setCountdown] = useState(5);
   
-  // Mock order data - In production, this would come from URL params or API
+  // Get order data from location state or create from cart
   useEffect(() => {
     // Simulate fetching order data
     const mockOrder = {
@@ -34,34 +38,52 @@ const OrderSuccessPage = () => {
         amount: 52140,
         status: 'completed'
       },
-      items: [
-        {
-          id: 1,
-          name: 'Mountain Bike Pro X1 - 26" Aluminum Frame',
-          price: 45000,
-          quantity: 1,
-          image: 'https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=200&h=200&fit=crop',
-          seller: 'Oshocks Junior Bike Shop'
-        },
-        {
-          id: 2,
-          name: 'Cycling Helmet - Safety Plus with LED Light',
-          price: 3500,
-          quantity: 2,
-          image: 'https://images.unsplash.com/photo-1557803175-8e6eeeeaf4dd?w=200&h=200&fit=crop',
-          seller: 'Oshocks Junior Bike Shop'
-        }
-      ],
-      summary: {
-        subtotal: 52000,
-        shipping: 500,
-        tax: 8400,
-        discount: 0,
-        total: 52140
-      }
+      items: (location.state?.items || cartItems || []).map(item => ({
+        id: item.id,
+        name: item.name,
+        price: Number(item.price),
+        quantity: item.quantity,
+        image: item.thumbnail || item.image || '/api/placeholder/200/200',
+        seller: 'Oshocks Junior Bike Shop'
+      })),
+      summary: (() => {
+        const items = location.state?.items || cartItems || [];
+        const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
+        const shipping = 500;
+        const tax = Math.round(subtotal * 0.16); // 16% VAT
+        const discount = location.state?.discount || 0;
+        const total = subtotal + shipping + tax - discount;
+        
+        return { subtotal, shipping, tax, discount, total };
+      })()
     };
     
-    setOrderData(mockOrder);
+    // If order data was passed from checkout, use it; otherwise use mock
+    if (location.state?.orderData) {
+      setOrderData({
+        ...mockOrder,
+        ...location.state.orderData,
+        items: (location.state.items || cartItems || []).map(item => ({
+          id: item.id,
+          name: item.name,
+          price: Number(item.price),
+          quantity: item.quantity,
+          image: item.thumbnail || item.image || '/api/placeholder/200/200',
+          seller: 'Oshocks Junior Bike Shop'
+        })),
+        summary: (() => {
+          const items = location.state.items || cartItems || [];
+          const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
+          const shipping = 500;
+          const tax = Math.round(subtotal * 0.16);
+          const discount = location.state.discount || 0;
+          const total = subtotal + shipping + tax - discount;
+          return { subtotal, shipping, tax, discount, total };
+        })()
+      });
+    } else {
+      setOrderData(mockOrder);
+    }
     
     // Countdown for redirect suggestion
     const timer = setInterval(() => {
@@ -288,9 +310,10 @@ const OrderSuccessPage = () => {
                 {orderData.items.map(item => (
                   <div key={item.id} className="flex items-start gap-4 pb-4 border-b border-gray-200 last:border-0">
                     <img
-                      src={item.image}
+                      src={item.image || '/api/placeholder/96/96'}
                       alt={item.name}
                       className="w-24 h-24 object-cover rounded-lg border border-gray-200"
+                      onError={(e) => { e.target.src = '/api/placeholder/96/96'; }}
                     />
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900 mb-1">{item.name}</h3>
