@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, Truck, MapPin, Phone, Mail, User, ShoppingBag, AlertCircle, CheckCircle, Loader, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
 
 const CheckoutPage = () => {
+  const { cartItems } = useCart();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
@@ -31,23 +33,6 @@ const CheckoutPage = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [errors, setErrors] = useState({});
   
-  // Mock cart data - replace with Redux/Context in production
-  const [cartItems] = useState([
-    {
-      id: 1,
-      name: 'Mountain Bike Pro X1',
-      price: 45000,
-      quantity: 1,
-      image: 'https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=100&h=100&fit=crop'
-    },
-    {
-      id: 2,
-      name: 'Cycling Helmet - Safety Plus',
-      price: 3500,
-      quantity: 2,
-      image: 'https://images.unsplash.com/photo-1557803175-8e6eeeeaf4dd?w=100&h=100&fit=crop'
-    }
-  ]);
   
   const kenyanCounties = [
     'Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Thika', 'Malindi',
@@ -55,7 +40,7 @@ const CheckoutPage = () => {
   ];
   
   // Calculate totals
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = cartItems.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
   const shippingCost = shippingInfo.county === 'Nairobi' ? 500 : 1000;
   const tax = subtotal * 0.16; // 16% VAT
   const total = subtotal + shippingCost + tax;
@@ -152,6 +137,29 @@ const CheckoutPage = () => {
     
     return parts.length ? parts.join(' ') : value;
   };
+  
+  // Redirect if cart is empty
+  if (!loading && !orderSuccess && cartItems.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-2xl mx-auto px-4">
+          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+            <ShoppingBag className="w-20 h-20 mx-auto mb-6 text-gray-300" />
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Your Cart is Empty</h1>
+            <p className="text-gray-600 mb-8">
+              Add some items to your cart before checking out.
+            </p>
+            <Link
+              to="/shop"
+              className="inline-block px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition"
+            >
+              Continue Shopping
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   if (orderSuccess) {
     return (
@@ -619,7 +627,7 @@ const CheckoutPage = () => {
                 {cartItems.map(item => (
                   <div key={item.id} className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200 last:border-0">
                     <img 
-                      src={item.image} 
+                      src={item.thumbnail || item.image || '/api/placeholder/64/64'} 
                       alt={item.name}
                       className="w-16 h-16 object-cover rounded"
                     />
