@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Starting Oshocks Backend (Laravel)"
+echo "🚀 Starting Oshocks Frontend"
 echo "======================================"
 echo ""
 
@@ -11,67 +11,118 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Check if we're in a Laravel project
-if [ ! -f "artisan" ]; then
-    echo -e "${RED}❌ Error: artisan file not found!${NC}"
-    echo "Please run this script from your Laravel project root directory."
+# Check if we're in a Node.js project
+if [ ! -f "package.json" ]; then
+    echo -e "${RED}❌ Error: package.json not found!${NC}"
+    echo "Please run this script from your frontend project root directory."
     exit 1
 fi
 
 # Step 1: Clear all caches
-echo -e "${BLUE}📦 Clearing Laravel caches...${NC}"
+echo -e "${BLUE}📦 Clearing frontend caches...${NC}"
 
-echo "  ↳ Clearing application cache..."
-php artisan cache:clear
+echo "  ↳ Clearing npm cache..."
+npm cache clean --force
 
-echo "  ↳ Clearing config cache..."
-php artisan config:clear
+if [ -d "node_modules/.cache" ]; then
+    echo "  ↳ Removing build cache..."
+    rm -rf node_modules/.cache
+fi
 
-echo "  ↳ Clearing route cache..."
-php artisan route:clear
+if [ -d ".next" ]; then
+    echo "  ↳ Removing Next.js cache..."
+    rm -rf .next
+fi
 
-echo "  ↳ Clearing view cache..."
-php artisan view:clear
+if [ -d "dist" ]; then
+    echo "  ↳ Removing dist folder..."
+    rm -rf dist
+fi
 
-echo "  ↳ Clearing compiled classes..."
-php artisan clear-compiled
+if [ -d "build" ]; then
+    echo "  ↳ Removing build folder..."
+    rm -rf build
+fi
+
+if [ -d ".vite" ]; then
+    echo "  ↳ Removing Vite cache..."
+    rm -rf .vite
+fi
+
+if [ -d ".turbo" ]; then
+    echo "  ↳ Removing Turbo cache..."
+    rm -rf .turbo
+fi
 
 echo ""
 echo -e "${GREEN}✅ All caches cleared!${NC}"
 echo ""
 
-# Step 2: Optimize (optional but recommended)
-echo -e "${BLUE}⚡ Optimizing application...${NC}"
-php artisan optimize
-echo ""
-
-# Step 3: Check database connection
-echo -e "${BLUE}🗄️  Checking database connection...${NC}"
-if php artisan migrate:status > /dev/null 2>&1; then
-    echo -e "${GREEN}✅ Database connected${NC}"
+# Step 2: Check node_modules
+echo -e "${BLUE}📦 Checking dependencies...${NC}"
+if [ ! -d "node_modules" ]; then
+    echo -e "${YELLOW}⚠️  node_modules not found. Installing dependencies...${NC}"
+    npm install
+    echo -e "${GREEN}✅ Dependencies installed${NC}"
 else
-    echo -e "${YELLOW}⚠️  Database connection issue (check your .env file)${NC}"
+    echo -e "${GREEN}✅ Dependencies found${NC}"
 fi
 echo ""
 
-# Step 4: Display environment info
+# Step 3: Display environment info
 echo -e "${BLUE}📋 Environment Information:${NC}"
-echo "  ↳ Laravel Version: $(php artisan --version)"
-echo "  ↳ PHP Version: $(php -v | head -n 1 | cut -d ' ' -f 2)"
-echo "  ↳ Environment: $(grep APP_ENV .env | cut -d '=' -f2)"
+echo "  ↳ Node Version: $(node -v)"
+echo "  ↳ NPM Version: $(npm -v)"
+
+# Detect framework
+if [ -f "next.config.js" ] || [ -f "next.config.mjs" ]; then
+    FRAMEWORK="Next.js"
+elif [ -f "vite.config.js" ] || [ -f "vite.config.ts" ]; then
+    FRAMEWORK="Vite/React"
+elif grep -q "react-scripts" package.json 2>/dev/null; then
+    FRAMEWORK="Create React App"
+elif grep -q "vue" package.json 2>/dev/null; then
+    FRAMEWORK="Vue.js"
+else
+    FRAMEWORK="Unknown"
+fi
+
+echo "  ↳ Framework: $FRAMEWORK"
+
+if [ -f ".env.local" ]; then
+    if grep -q "NODE_ENV" .env.local; then
+        echo "  ↳ Environment: $(grep NODE_ENV .env.local | cut -d '=' -f2)"
+    fi
+fi
 echo ""
 
-# Step 5: Start the server
+# Step 4: Start the development server
 echo "======================================"
-echo -e "${GREEN}🚀 Starting Laravel Development Server${NC}"
+echo -e "${GREEN}🚀 Starting Development Server${NC}"
 echo "======================================"
 echo ""
 echo -e "${BLUE}Server will be available at:${NC}"
-echo "  🌐 http://localhost:8000"
-echo "  🌐 http://127.0.0.1:8000"
+
+# Detect port from package.json scripts or use defaults
+if grep -q "\"dev\".*--port" package.json; then
+    PORT=$(grep -o "port [0-9]*" package.json | head -1 | awk '{print $2}')
+    echo "  🌐 http://localhost:${PORT:-3000}"
+elif [ "$FRAMEWORK" = "Vite/React" ]; then
+    echo "  🌐 http://localhost:5173"
+else
+    echo "  🌐 http://localhost:3000"
+fi
+
 echo ""
 echo -e "${YELLOW}Press Ctrl+C to stop the server${NC}"
 echo ""
 
-# Start the server
-php artisan serve
+# Start the appropriate dev server
+if grep -q "\"dev\"" package.json; then
+    npm run dev
+elif grep -q "\"start\"" package.json; then
+    npm start
+else
+    echo -e "${RED}❌ No dev or start script found in package.json${NC}"
+    exit 1
+fi
