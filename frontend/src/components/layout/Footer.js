@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { 
   Facebook, 
@@ -18,7 +19,16 @@ import {
 } from 'lucide-react';
 
 const Footer = () => {
+  const { user } = useAuth();
   const currentYear = new Date().getFullYear();
+  const [email, setEmail] = useState('');
+
+  // Auto-fill email when user data becomes available
+  useEffect(() => {
+    if (user && user.email) {
+      setEmail(user.email);
+    }
+  }, [user]);
 
   const shopCategories = [
     { name: 'Mountain Bikes', link: '/shop?category=mountain' },
@@ -133,11 +143,13 @@ const Footer = () => {
               Subscribe to our newsletter for exclusive deals, new arrivals, and cycling tips!
             </p>
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
-              <input
-                type="email"
-                placeholder="Enter your email address"
-                className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-500"
-              />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email address"
+              className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-500"
+            />
               <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-medium whitespace-nowrap">
                 Subscribe Now
               </button>

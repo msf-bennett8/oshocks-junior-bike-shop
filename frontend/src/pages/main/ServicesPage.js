@@ -1,11 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext'; 
 import { 
   Wrench, Package, Zap, Shield, Clock, CheckCircle, 
   Calendar, MapPin, Phone, Mail, X 
 } from 'lucide-react';
 
 const ServicesPage = () => {
+  const { user } = useAuth();
   const [selectedService, setSelectedService] = useState(null);
+
+  const [bookingForm, setBookingForm] = useState({
+    fullName: '',
+    phone: '',
+    service: '',
+    details: ''
+  });
+
+  // Auto-fill booking form when user data becomes available
+    useEffect(() => {
+      if (user) {
+        setBookingForm(prev => ({
+          ...prev,
+          fullName: user.name || prev.fullName,
+          phone: user.phone || prev.phone
+        }));
+      }
+    }, [user]);
 
   const services = [
     {
@@ -419,15 +439,23 @@ const ServicesPage = () => {
                 <form className="space-y-4">
                   <input
                     type="text"
+                    value={bookingForm.fullName}
+                    onChange={(e) => setBookingForm({...bookingForm, fullName: e.target.value})}
                     placeholder="Your Name"
                     className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
                   />
                   <input
                     type="tel"
+                    value={bookingForm.phone}
+                    onChange={(e) => setBookingForm({...bookingForm, phone: e.target.value})}
                     placeholder="Phone Number"
                     className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
                   />
-                  <select className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                  <select 
+                        value={bookingForm.service}
+                        onChange={(e) => setBookingForm({...bookingForm, service: e.target.value})}
+                        className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                      >
                     <option>Select Service</option>
                     <option>Basic Maintenance</option>
                     <option>Repair Service</option>
@@ -436,6 +464,8 @@ const ServicesPage = () => {
                     <option>Express Service</option>
                   </select>
                   <textarea
+                    value={bookingForm.details}
+                    onChange={(e) => setBookingForm({...bookingForm, details: e.target.value})}
                     placeholder="Additional Details (Optional)"
                     rows="3"
                     className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
