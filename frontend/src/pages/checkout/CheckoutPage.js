@@ -412,40 +412,55 @@ const CheckoutPage = () => {
                 </div>
                 
                 <form onSubmit={handlePaymentSubmit}>
-                  {/* Payment Method Selection */}
-                  <div className="mb-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod('mpesa')}
-                        className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
-                          paymentMethod === 'mpesa' 
-                            ? 'border-orange-600 bg-orange-50' 
-                            : 'border-gray-300 hover:border-gray-400'
-                        }`}
-                      >
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-green-600 mb-1">M-PESA</div>
-                          <div className="text-sm text-gray-600">Pay with M-Pesa</div>
-                        </div>
-                      </button>
-                      
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod('card')}
-                        className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
-                          paymentMethod === 'card' 
-                            ? 'border-orange-600 bg-orange-50' 
-                            : 'border-gray-300 hover:border-gray-400'
-                        }`}
-                      >
-                        <div className="text-center">
-                          <CreditCard className="w-8 h-8 mx-auto mb-1 text-blue-600" />
-                          <div className="text-sm text-gray-600">Credit/Debit Card</div>
-                        </div>
-                      </button>
+                    {/* Payment Method Selection */}
+                    <div className="mb-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button
+                          type="button"
+                          onClick={() => setPaymentMethod('mpesa')}
+                          className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
+                            paymentMethod === 'mpesa' 
+                              ? 'border-orange-600 bg-orange-50' 
+                              : 'border-gray-300 hover:border-gray-400'
+                          }`}
+                        >
+                          <div className="text-center">
+                            <img 
+                              src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg" 
+                              alt="M-Pesa" 
+                              className="h-12 w-auto mx-auto mb-2 object-contain"
+                            />
+                            <div className="text-sm text-gray-600">Pay with M-Pesa</div>
+                          </div>
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={() => setPaymentMethod('card')}
+                          className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
+                            paymentMethod === 'card' 
+                              ? 'border-orange-600 bg-orange-50' 
+                              : 'border-gray-300 hover:border-gray-400'
+                          }`}
+                        >
+                          <div className="text-center">
+                            <div className="flex items-center justify-center gap-3 mb-2">
+                              <img 
+                                src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" 
+                                alt="Visa" 
+                                className="h-5 w-auto object-contain"
+                              />
+                              <img 
+                                src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
+                                alt="Mastercard" 
+                                className="h-8 w-auto object-contain"
+                              />
+                            </div>
+                            <div className="text-sm text-gray-600">Credit/Debit Card</div>
+                          </div>
+                        </button>
+                      </div>
                     </div>
-                  </div>
                   
                   {/* M-Pesa Payment */}
                   {paymentMethod === 'mpesa' && (
@@ -707,14 +722,26 @@ const CheckoutPage = () => {
               </div>
               
               {/* Accepted Payment Methods */}
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <p className="text-xs text-gray-600 mb-2">We accept:</p>
-                <div className="flex gap-2 flex-wrap">
-                  <div className="bg-gray-100 px-2 py-1 rounded text-xs font-semibold text-gray-700">M-PESA</div>
-                  <div className="bg-gray-100 px-2 py-1 rounded text-xs font-semibold text-gray-700">VISA</div>
-                  <div className="bg-gray-100 px-2 py-1 rounded text-xs font-semibold text-gray-700">Mastercard</div>
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <p className="text-xs text-gray-600 mb-2">We accept:</p>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <img 
+                      src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg" 
+                      alt="M-Pesa" 
+                      className="h-8 w-auto object-contain opacity-80"
+                    />
+                    <img 
+                      src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" 
+                      alt="Visa" 
+                      className="h-4 w-auto object-contain opacity-80"
+                    />
+                    <img 
+                      src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
+                      alt="Mastercard" 
+                      className="h-6 w-auto object-contain opacity-80"
+                    />
+                  </div>
                 </div>
-              </div>
               
              {/* Support Info */}
               <div className="mt-4 pt-4 border-t border-gray-200">

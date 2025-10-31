@@ -151,12 +151,44 @@ const CartSummary = ({
     });
   };
 
-  // Payment methods
-  const paymentMethods = [
-    { id: 'mpesa', name: 'M-Pesa', icon: '📱', description: 'Pay via mobile money' },
-    { id: 'card', name: 'Card', icon: '💳', description: 'Credit/Debit card' },
-    { id: 'cash', name: 'Cash on Delivery', icon: '💵', description: 'Pay when delivered' }
-  ];
+// Payment methods
+const paymentMethods = [
+  { 
+    id: 'mpesa', 
+    name: 'M-Pesa', 
+    icon: <img 
+      src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg" 
+      alt="M-Pesa" 
+      className="h-8 w-auto object-contain"
+    />,
+    description: 'Pay via mobile money' 
+  },
+  { 
+    id: 'card', 
+    name: 'Card', 
+    icon: <div className="flex items-center gap-2">
+      <img 
+        src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" 
+        alt="Visa" 
+        className="h-4 w-auto object-contain"
+      />
+      <img 
+        src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
+        alt="Mastercard" 
+        className="h-6 w-auto object-contain"
+      />
+    </div>,
+    description: 'Credit/Debit card' 
+  },
+  { 
+    id: 'cash', 
+    name: 'Cash on Delivery', 
+    icon: <div className="w-8 h-8 bg-orange-500 rounded flex items-center justify-center text-white font-bold text-sm">
+      KSh
+    </div>,
+    description: 'Pay when delivered' 
+  }
+];
 
   // If cart is empty
   if (cartItems.length === 0) {
@@ -369,7 +401,7 @@ const CartSummary = ({
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <span className="text-xl sm:text-2xl flex-shrink-0">{method.icon}</span>
+                  <div className="flex-shrink-0">{method.icon}</div>
                   <div className="flex-1 text-left min-w-0">
                     <p className="font-medium text-gray-800 text-sm sm:text-base">{method.name}</p>
                     <p className="text-xs text-gray-500 truncate">{method.description}</p>
