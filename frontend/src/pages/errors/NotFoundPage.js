@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Home, ShoppingBag, Bike, Package, Wrench, Shield, MapPin, ArrowRight, TrendingUp } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
+import SearchBar from '../common/SearchBar'; 
 import { fetchProducts, fetchCategories } from '../../redux/slices/productSlice';
 import { Link } from 'react-router-dom';
 
 const NotFoundPage = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false); // ← CHANGE: Use search overlay instead
   const dispatch = useDispatch();
     const { items: products, categories, loading } = useSelector(
       (state) => state.products
@@ -15,18 +16,6 @@ const NotFoundPage = () => {
     dispatch(fetchCategories());
     dispatch(fetchProducts({ sort: 'popular', page: 1, limit: 4 }));
   }, [dispatch]);
-
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      window.location.href = `/shop?search=${encodeURIComponent(searchQuery)}`;
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
 
   // Map categories from database with icons and colors
   const categoryIcons = {
@@ -47,11 +36,11 @@ const NotFoundPage = () => {
     color: categoryIcons[cat.name]?.color || 'bg-gray-500'
   }));
 
-  // Use real products from database (limit to 4)
+  // Use real products from database (limit to 4) - proper image handling
   const trendingProducts = products.slice(0, 4).map(product => ({
     name: product.name,
     price: `KSh ${Number(product.price).toLocaleString()}`,
-    image: product.image_url || product.images?.[0],
+    image: product.images?.[0]?.image_url || product.images?.[0]?.thumbnail_url || product.image_url,
     link: `/product/${product.id}`,
     id: product.id
   }));
@@ -104,26 +93,16 @@ const NotFoundPage = () => {
             Let's get you back on track.
           </p>
 
-          {/* Search Bar */}
-          <div className="max-w-2xl mx-auto mb-8">
-            <div className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Search for bikes, accessories, parts..."
-                className="w-full px-6 py-4 pr-32 text-lg border-2 border-gray-300 rounded-full focus:outline-none focus:border-orange-500 transition-colors shadow-lg"
-              />
-              <button
-                onClick={handleSearch}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-orange-500 text-white px-6 py-2 rounded-full hover:bg-orange-600 transition-colors flex items-center space-x-2"
-              >
-                <Search className="w-5 h-5" />
-                <span>Search</span>
-              </button>
-            </div>
-          </div>
+        {/* Search Bar - Opens Overlay */}
+        <div className="max-w-2xl mx-auto mb-8">
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="w-full px-6 py-4 pr-32 text-lg border-2 border-gray-300 rounded-full hover:border-orange-500 transition-colors shadow-lg bg-white text-left text-gray-500 flex items-center gap-3"
+          >
+            <Search className="w-5 h-5 text-gray-400" />
+            <span>Search for bikes, accessories, parts...</span>
+          </button>
+        </div>
         </div>
 
         {/* Popular Categories */}
@@ -185,23 +164,21 @@ const NotFoundPage = () => {
                   to={product.link}
                   className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer block"
                 >
-                  <div className="bg-gradient-to-br from-orange-100 to-orange-50 h-48 flex items-center justify-center overflow-hidden">
-                    {product.image && typeof product.image === 'string' && !product.image.startsWith('http') ? (
-                      <span className="text-7xl">{product.image}</span>
-                    ) : product.image ? (
-                      <img 
-                        src={product.image} 
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.parentElement.innerHTML = '<span class="text-7xl">🚴</span>';
-                        }}
-                      />
-                    ) : (
-                      <span className="text-7xl">🚴</span>
-                    )}
-                  </div>
+                  <div className="relative bg-gradient-to-br from-orange-100 to-orange-50 h-48 overflow-hidden">
+                  {product.image ? (
+                    <img 
+                      src={product.image} 
+                      alt={product.name}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-7xl">🚴</div>';
+                      }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-7xl">🚴</div>
+                  )}
+                </div>
                 <div className="p-4">
                   <h4 className="font-semibold text-gray-800 mb-2 group-hover:text-orange-500 transition-colors">
                     {product.name}
@@ -268,17 +245,25 @@ const NotFoundPage = () => {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-300 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
-            <p className="text-sm">© 2025 Oshocks Junior Bike Shop. All rights reserved.</p>
-            <p className="text-xs text-gray-500 mt-2">Kenya's Premier Cycling Marketplace</p>
-          </div>
+        {/* Footer */}
+          <footer className="bg-gray-900 text-gray-300 mt-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <div className="text-center">
+                <p className="text-sm">© 2025 Oshocks Junior Bike Shop. All rights reserved.</p>
+                <p className="text-xs text-gray-500 mt-2">Kenya's Premier Cycling Marketplace</p>
+              </div>
+            </div>
+          </footer>
+
+          {/* Universal Search Overlay - NEW! */}
+          {isSearchOpen && (
+            <SearchBar 
+              onClose={() => setIsSearchOpen(false)}
+              variant="overlay"
+            />
+          )}
         </div>
-      </footer>
-    </div>
-  );
-};
+      );
+    };
 
 export default NotFoundPage;
