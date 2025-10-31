@@ -14,6 +14,7 @@ import {
   AlertCircle,
   Info
 } from 'lucide-react';
+import { useCart } from '../../context/CartContext';
 
 /**
  * CartSummary Component - Production Ready
@@ -419,27 +420,7 @@ const CartSummary = ({
 
 // Demo Component
 const CartSummaryDemo = () => {
-  const [cartItems] = useState([
-    {
-      id: 1,
-      name: 'Mountain Bike Pro X1',
-      price: 45000,
-      originalPrice: 52000,
-      quantity: 1
-    },
-    {
-      id: 2,
-      name: 'Cycling Helmet',
-      price: 2500,
-      quantity: 2
-    },
-    {
-      id: 3,
-      name: 'Bike Lock',
-      price: 1800,
-      quantity: 1
-    }
-  ]);
+  const { cartItems } = useCart();
 
   const handleCheckout = () => {
     alert('Proceeding to checkout with selected payment method!');
