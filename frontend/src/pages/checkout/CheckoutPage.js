@@ -2,20 +2,22 @@ import { useState, useEffect } from 'react';
 import { CreditCard, Truck, MapPin, Phone, Mail, User, ShoppingBag, AlertCircle, CheckCircle, Loader, Shield } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 
 const CheckoutPage = () => {
   const { cartItems, clearCart } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
   // Form state
   const [shippingInfo, setShippingInfo] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    address: '',
+    firstName: user?.name?.split(' ')[0] || '',
+    lastName: user?.name?.split(' ').slice(1).join(' ') || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    address: user?.address || '',
     city: '',
     county: '',
     postalCode: ''
@@ -150,6 +152,20 @@ const CheckoutPage = () => {
       setLoading(false);
     }
   };
+
+  // Auto-fill shopping form when user data becomes available
+  useEffect(() => {
+    if (user) {
+      setShippingInfo(prev => ({
+        ...prev,
+        firstName: user.name?.split(' ')[0] || prev.firstName,
+        lastName: user.name?.split(' ').slice(1).join(' ') || prev.lastName,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone,
+        address: user.address || prev.address
+      }));
+    }
+  }, [user]);
   
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-KE', {
