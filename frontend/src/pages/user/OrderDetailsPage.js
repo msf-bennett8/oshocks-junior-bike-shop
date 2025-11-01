@@ -1,158 +1,202 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Package, Truck, CheckCircle, Clock, MapPin, Phone, Mail, Download, MessageSquare, AlertCircle, ChevronRight, Calendar, CreditCard, User, Home, Star, ArrowLeft, RefreshCw, XCircle } from 'lucide-react';
 
 const OrderDetails = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { orderNumber } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [trackingExpanded, setTrackingExpanded] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [activeImageIndex, setActiveImageIndex] = useState({});
 
-  // Mock data - Replace with actual API call
   useEffect(() => {
     const fetchOrderDetails = async () => {
       setLoading(true);
-      // Simulate API call - Replace with: const response = await fetch(`/api/orders/${orderId}`);
-      setTimeout(() => {
-        setOrder({
-          id: 'ORD-2024-10-1234',
-          orderNumber: 'ORD-2024-10-1234',
-          status: 'in_transit',
-          placedDate: '2024-10-10T10:30:00',
-          estimatedDelivery: '2024-10-16T18:00:00',
-          deliveredDate: null,
-          totalAmount: 45800,
-          subtotal: 42000,
-          shipping: 1800,
-          tax: 2000,
-          discount: 0,
-          paymentMethod: 'M-Pesa',
-          paymentStatus: 'paid',
-          mpesaCode: 'QK7P9M4NXZ',
-          canCancel: false,
-          canReturn: false,
-          items: [
-            {
-              id: 1,
-              name: 'Mountain Bike - Trek Marlin 7 29" Aluminum Frame',
-              image: 'https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=400',
-              price: 35000,
-              quantity: 1,
-              seller: 'Oshocks Junior',
-              sku: 'MTB-TRK-ML7-BLK',
-              color: 'Matte Black',
-              size: 'Large (19.5")',
-              reviewable: false
-            },
-            {
-              id: 2,
-              name: 'Bike Helmet - Bell Z20 MIPS Safety Certified',
-              image: 'https://images.unsplash.com/photo-1557536713-89f8f6b47e2e?w=400',
-              price: 4500,
-              quantity: 1,
-              seller: 'Oshocks Junior',
-              sku: 'HLM-BLL-Z20-RED',
-              color: 'Racing Red',
-              size: 'Medium',
-              reviewable: false
-            },
-            {
-              id: 3,
-              name: 'Bike Lock - Kryptonite Evolution U-Lock Series 4',
-              image: 'https://images.unsplash.com/photo-1589118949245-7d38baf380d6?w=400',
-              price: 2500,
-              quantity: 1,
-              seller: 'SafeCycle Kenya',
-              sku: 'LCK-KRP-U12-BLK',
-              color: 'Black',
-              size: 'Standard',
-              reviewable: false
-            }
-          ],
-          shippingAddress: {
-            fullName: 'John Kamau',
-            phone: '+254 712 345 678',
-            alternatePhone: '+254 789 012 345',
-            email: 'john.kamau@email.com',
-            street: 'Ngong Road, ABC Place',
-            building: 'Building C, 3rd Floor, Apartment C304',
-            city: 'Nairobi',
-            county: 'Nairobi County',
-            postalCode: '00100',
-            deliveryInstructions: 'Please call before delivery. Security gate code: 1234'
-          },
-          trackingNumber: 'OSH2024101234KE',
-          courierName: 'Oshocks Express',
-          courierPhone: '+254 700 123 456',
-          trackingHistory: [
-            {
-              status: 'Order Placed',
-              date: '2024-10-10T10:30:00',
-              location: 'Nairobi, Kenya',
-              description: 'Your order has been received and confirmed',
-              completed: true
-            },
-            {
-              status: 'Payment Confirmed',
-              date: '2024-10-10T10:32:00',
-              location: 'Nairobi, Kenya',
-              description: 'M-Pesa payment successfully processed',
-              completed: true
-            },
-            {
-              status: 'Processing',
-              date: '2024-10-10T14:20:00',
-              location: 'Oshocks Warehouse, Industrial Area',
-              description: 'Items picked and quality checked',
-              completed: true
-            },
-            {
-              status: 'Packaged',
-              date: '2024-10-11T08:00:00',
-              location: 'Oshocks Warehouse, Industrial Area',
-              description: 'Order securely packaged for shipping',
-              completed: true
-            },
-            {
-              status: 'Shipped',
-              date: '2024-10-11T09:15:00',
-              location: 'Oshocks Warehouse, Industrial Area',
-              description: 'Package handed over to Oshocks Express courier',
-              completed: true
-            },
-            {
-              status: 'In Transit',
-              date: '2024-10-12T11:45:00',
-              location: 'Nairobi Distribution Hub',
-              description: 'Package is on route to your delivery location',
-              completed: true,
-              current: true
-            },
-            {
-              status: 'Out for Delivery',
-              date: null,
-              location: 'Westlands Delivery Station',
-              description: 'Package will be delivered today',
-              completed: false
-            },
-            {
-              status: 'Delivered',
-              date: null,
-              location: 'Your Address',
-              description: 'Package delivered and signed for',
-              completed: false
-            }
-          ],
-          invoiceUrl: '/invoices/ORD-2024-10-1234.pdf',
-          customerNotes: 'Please handle with care - bicycle parts inside',
-          sellerNotes: 'Bike has been assembled and tested before shipping'
-        });
+      
+      // Check if order data was passed via navigation state
+      if (location.state?.orderData) {
+        const passedOrder = location.state.orderData;
+        const items = location.state.items || [];
+        const discount = location.state.discount || 0;
+        
+        // Transform the data to match OrderDetails format
+        const transformedOrder = transformOrderData(passedOrder, items, discount);
+        setOrder(transformedOrder);
         setLoading(false);
-      }, 800);
+      } else {
+        // Try to fetch from API using order number
+        try {
+          const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+          const response = await fetch(`${apiUrl}/orders/${orderNumber}`);
+          
+          if (response.ok) {
+            const data = await response.json();
+            const transformedOrder = transformOrderData(
+              data.order, 
+              data.items || [], 
+              data.discount || 0
+            );
+            setOrder(transformedOrder);
+          } else {
+            setOrder(null);
+          }
+        } catch (err) {
+          console.error('Error fetching order:', err);
+          setOrder(null);
+        } finally {
+          setLoading(false);
+        }
+      }
     };
 
     fetchOrderDetails();
-  }, []);
+  }, [location.state, orderNumber]);
+
+  const transformOrderData = (orderInfo, items, discount = 0) => {
+    const orderDate = new Date(orderInfo.orderDate);
+    const estimatedDelivery = new Date(orderDate);
+    
+    // Calculate delivery estimate based on county
+    const county = orderInfo.shipping?.county || orderInfo.shipping?.city || 'Unknown';
+    const deliveryDays = county === 'Nairobi County' ? 1 : 3;
+    estimatedDelivery.setDate(orderDate.getDate() + deliveryDays);
+
+    // Calculate order summary
+    const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
+    const shippingCost = orderInfo.payment?.shippingCost || 0;
+    // const tax = Math.round(subtotal * 0.16); // 16% VAT - Commented out (business under KSh 5M threshold)
+    const tax = 0; // No VAT charged for small businesses
+    const total = subtotal + shippingCost + tax - discount;
+
+    // Determine order status
+    const isPending = orderInfo.payment?.status === 'pending';
+    const orderStatus = isPending ? 'pending' : 
+                       orderInfo.status === 'confirmed' ? 'processing' : 
+                       orderInfo.status || 'processing';
+
+    // Build tracking history
+    const trackingHistory = [
+      {
+        status: 'Order Placed',
+        date: orderInfo.orderDate,
+        location: `${county}, Kenya`,
+        description: 'Your order has been received and confirmed',
+        completed: true
+      },
+      {
+        status: 'Payment Confirmed',
+        date: isPending ? null : orderInfo.orderDate,
+        location: `${county}, Kenya`,
+        description: `${orderInfo.payment?.method || 'Payment'} ${isPending ? 'pending' : 'successfully processed'}`,
+        completed: !isPending
+      },
+      {
+        status: 'Processing',
+        date: isPending ? null : orderInfo.orderDate,
+        location: 'Oshocks Warehouse, Nairobi',
+        description: 'Items picked and quality checked',
+        completed: !isPending,
+        current: !isPending && orderStatus === 'processing'
+      },
+      {
+        status: 'Packaged',
+        date: null,
+        location: 'Oshocks Warehouse, Nairobi',
+        description: 'Order securely packaged for shipping',
+        completed: false
+      },
+      {
+        status: 'Shipped',
+        date: null,
+        location: 'Oshocks Warehouse, Nairobi',
+        description: 'Package handed over to courier',
+        completed: false
+      },
+      {
+        status: 'In Transit',
+        date: null,
+        location: 'Distribution Hub',
+        description: 'Package is on route to your delivery location',
+        completed: false,
+        current: orderStatus === 'in_transit'
+      },
+      {
+        status: 'Out for Delivery',
+        date: null,
+        location: `${county} Delivery Station`,
+        description: 'Package will be delivered today',
+        completed: false,
+        current: orderStatus === 'out_for_delivery'
+      },
+      {
+        status: 'Delivered',
+        date: null,
+        location: 'Your Address',
+        description: 'Package delivered and signed for',
+        completed: false,
+        current: orderStatus === 'delivered'
+      }
+    ];
+
+    // Format full address
+    const fullAddress = orderInfo.shipping?.zone 
+      ? `${orderInfo.shipping.zone.includes(' - ') ? orderInfo.shipping.zone.split(' - ')[1] : orderInfo.shipping.zone}, ${county}`
+      : county;
+
+    return {
+      id: orderInfo.orderNumber,
+      orderNumber: orderInfo.orderNumber,
+      status: orderStatus,
+      placedDate: orderInfo.orderDate,
+      estimatedDelivery: estimatedDelivery.toISOString(),
+      deliveredDate: orderStatus === 'delivered' ? new Date().toISOString() : null,
+      totalAmount: total,
+      subtotal: subtotal,
+      shipping: shippingCost,
+      tax: tax, // Set to 0 as per VAT exemption
+      discount: discount,
+      paymentMethod: orderInfo.payment?.method || 'N/A',
+      paymentStatus: isPending ? 'pending' : 'paid',
+      mpesaCode: orderInfo.payment?.transactionId || 'N/A',
+      canCancel: !isPending && (orderStatus === 'processing' || orderStatus === 'pending'),
+      canReturn: orderStatus === 'delivered',
+      items: items.map(item => ({
+        id: item.id || item.product_id,
+        name: item.name || 'Unknown Product',
+        image: item.image || item.thumbnail || '/api/placeholder/400/400',
+        price: Number(item.price) || 0,
+        quantity: item.quantity || 1,
+        seller: 'Oshocks Junior Bike Shop',
+        sku: item.sku || `SKU-${item.id}`,
+        color: item.color || 'N/A',
+        size: item.size || 'N/A',
+        reviewable: orderStatus === 'delivered'
+      })),
+      shippingAddress: {
+        fullName: orderInfo.customer?.name || 'N/A',
+        phone: orderInfo.customer?.phone || 'N/A',
+        alternatePhone: orderInfo.customer?.alternatePhone || null,
+        email: orderInfo.customer?.email || 'N/A',
+        street: orderInfo.shipping?.address || 'N/A',
+        building: orderInfo.shipping?.zone?.includes(' - ') 
+          ? orderInfo.shipping.zone.split(' - ')[1] 
+          : 'N/A',
+        city: county,
+        county: county,
+        postalCode: orderInfo.shipping?.postalCode || 'N/A',
+        deliveryInstructions: orderInfo.deliveryInstructions || null
+      },
+      trackingNumber: `OSH-TRK-${orderInfo.orderNumber.slice(-6)}`,
+      courierName: 'Oshocks Express',
+      courierPhone: '+254 700 000 000',
+      trackingHistory: trackingHistory,
+      invoiceUrl: `/invoices/${orderInfo.orderNumber}.pdf`,
+      customerNotes: orderInfo.customerNotes || null,
+      sellerNotes: null
+    };
+  };
 
   const getStatusConfig = (status) => {
     const configs = {
@@ -190,15 +234,11 @@ const OrderDetails = () => {
   };
 
   const handleDownloadInvoice = () => {
-    window.open(order.invoiceUrl, '_blank');
+    alert('Invoice download functionality will be implemented with PDF generation');
   };
 
   const handleContactSupport = () => {
-    if (window.Tawk_API) {
-      window.Tawk_API.maximize();
-    } else {
-      alert('Live chat will open here. Support available 24/7.');
-    }
+    navigate('/contact-support');
   };
 
   const handleCancelOrder = () => {
@@ -207,11 +247,17 @@ const OrderDetails = () => {
   };
 
   const handleTrackPackage = () => {
-    window.open(`https://track.oshocks.co.ke/${order.trackingNumber}`, '_blank');
+    navigate(`/orders/${order.orderNumber}`, {
+      state: {
+        orderData: location.state?.orderData,
+        items: location.state?.items,
+        discount: location.state?.discount
+      }
+    });
   };
 
   const handleReorder = () => {
-    alert('Items added to cart. Redirecting to checkout...');
+    alert('Items will be added to cart. Redirecting to checkout...');
   };
 
   const handleLeaveReview = (itemId) => {
@@ -222,7 +268,7 @@ const OrderDetails = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-green-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-600 mx-auto"></div>
           <p className="mt-4 text-gray-600 font-medium">Loading order details...</p>
         </div>
       </div>
@@ -237,8 +283,8 @@ const OrderDetails = () => {
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Order Not Found</h2>
           <p className="text-gray-600 mb-6">We couldn't find the order you're looking for. Please check your order number and try again.</p>
           <button
-            onClick={() => window.location.href = '/orders'}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
+            onClick={() => navigate('/orders')}
+            className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors"
           >
             View All Orders
           </button>
@@ -256,11 +302,11 @@ const OrderDetails = () => {
         {/* Header */}
         <div className="mb-6">
           <button
-            onClick={() => window.history.back()}
+            onClick={() => navigate(-1)}
             className="flex items-center text-gray-600 hover:text-gray-900 mb-4 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Orders
+            Back
           </button>
           
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
@@ -287,7 +333,7 @@ const OrderDetails = () => {
               </button>
               <button
                 onClick={handleContactSupport}
-                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
+                className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors"
               >
                 <MessageSquare className="w-5 h-5 mr-2" />
                 Support
@@ -336,7 +382,7 @@ const OrderDetails = () => {
                 <h2 className="text-xl font-bold text-gray-900">Order Tracking</h2>
                 <button
                   onClick={() => setTrackingExpanded(!trackingExpanded)}
-                  className="text-green-600 hover:text-green-700 text-sm font-medium transition-colors"
+                  className="text-orange-600 hover:text-orange-700 text-sm font-medium transition-colors"
                 >
                   {trackingExpanded ? 'Show Less' : 'View Full History'}
                 </button>
@@ -347,8 +393,8 @@ const OrderDetails = () => {
                   <div key={idx} className="flex">
                     <div className="flex flex-col items-center mr-4">
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-                        track.completed ? 'bg-green-600 shadow-lg shadow-green-200' : 'bg-gray-300'
-                      } ${track.current ? 'ring-4 ring-green-200 animate-pulse' : ''}`}>
+                        track.completed ? 'bg-orange-600 shadow-lg shadow-orange-200' : 'bg-gray-300'
+                      } ${track.current ? 'ring-4 ring-orange-200 animate-pulse' : ''}`}>
                         {track.completed ? (
                           <CheckCircle className="w-6 h-6 text-white" />
                         ) : (
@@ -356,12 +402,12 @@ const OrderDetails = () => {
                         )}
                       </div>
                       {idx < order.trackingHistory.length - 1 && (
-                        <div className={`w-1 flex-1 min-h-[60px] ${track.completed ? 'bg-green-600' : 'bg-gray-300'}`}></div>
+                        <div className={`w-1 flex-1 min-h-[60px] ${track.completed ? 'bg-orange-600' : 'bg-gray-300'}`}></div>
                       )}
                     </div>
                     <div className="flex-1 pb-2">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                        <h3 className={`font-bold text-lg ${track.completed ? 'text-gray-900' : 'text-gray-500'} ${track.current ? 'text-green-600' : ''}`}>
+                        <h3 className={`font-bold text-lg ${track.completed ? 'text-gray-900' : 'text-gray-500'} ${track.current ? 'text-orange-600' : ''}`}>
                           {track.status}
                         </h3>
                         {track.date && (
@@ -382,7 +428,7 @@ const OrderDetails = () => {
                 <div className="mt-6 pt-6 border-t border-gray-200">
                   <p className="text-sm text-gray-600">
                     <Phone className="w-4 h-4 inline mr-2" />
-                    Contact Courier: <a href={`tel:${order.courierPhone}`} className="font-semibold text-green-600 hover:text-green-700">{order.courierPhone}</a>
+                    Contact Courier: <a href={`tel:${order.courierPhone}`} className="font-semibold text-orange-600 hover:text-orange-700">{order.courierPhone}</a>
                   </p>
                 </div>
               )}
@@ -399,27 +445,29 @@ const OrderDetails = () => {
                         src={item.image}
                         alt={item.name}
                         className="w-28 h-28 object-cover rounded-lg border border-gray-200"
+                        onError={(e) => { e.target.src = '/api/placeholder/400/400'; }}
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 hover:text-green-600 cursor-pointer mb-2 line-clamp-2">
+                      <h3 className="font-bold text-gray-900 hover:text-orange-600 cursor-pointer mb-2 line-clamp-2">
                         {item.name}
                       </h3>
                       <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-2">
                         <p>SKU: <span className="font-mono text-xs">{item.sku}</span></p>
                         <p>Qty: <span className="font-semibold">{item.quantity}</span></p>
-                        {item.color && <p>Color: <span className="font-medium">{item.color}</span></p>}
-                        {item.size && <p>Size: <span className="font-medium">{item.size}</span></p>}
+                        {item.color !== 'N/A' && <p>Color: <span className="font-medium">{item.color}</span></p>}
+                        {item.size !== 'N/A' && <p>Size: <span className="font-medium">{item.size}</span></p>}
                       </div>
                       <p className="text-sm text-gray-600 mb-3">
                         <span className="font-medium">Sold by:</span> {item.seller}
                       </p>
                       <div className="flex flex-wrap items-center gap-3">
-                        <span className="text-lg font-bold text-gray-900">{formatCurrency(item.price)}</span>
+                        <span className="text-lg font-bold text-gray-900">{formatCurrency(item.price * item.quantity)}</span>
+                        <span className="text-sm text-gray-600">({formatCurrency(item.price)} each)</span>
                         {order.status === 'delivered' && item.reviewable && (
                           <button
                             onClick={() => handleLeaveReview(item.id)}
-                            className="text-sm px-3 py-1 border border-green-600 text-green-600 rounded-lg hover:bg-green-50 font-medium transition-colors"
+                            className="text-sm px-3 py-1 border border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 font-medium transition-colors"
                           >
                             <Star className="w-4 h-4 inline mr-1" />
                             Write Review
@@ -434,7 +482,7 @@ const OrderDetails = () => {
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <button
                   onClick={handleReorder}
-                  className="w-full sm:w-auto px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
+                  className="w-full sm:w-auto px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors"
                 >
                   <RefreshCw className="w-5 h-5 inline mr-2" />
                   Reorder These Items
@@ -453,10 +501,10 @@ const OrderDetails = () => {
                   </div>
                   <span className="font-bold text-gray-900">{order.paymentMethod}</span>
                 </div>
-                {order.mpesaCode && (
+                {order.mpesaCode && order.mpesaCode !== 'N/A' && (
                   <div className="flex items-center justify-between py-3 border-b border-gray-100">
                     <span className="text-gray-700 font-medium">Transaction Code</span>
-                    <span className="font-mono font-bold text-green-600 bg-green-50 px-3 py-1 rounded">{order.mpesaCode}</span>
+                    <span className="font-mono font-bold text-orange-600 bg-orange-50 px-3 py-1 rounded">{order.mpesaCode}</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between py-3 border-b border-gray-100">
@@ -490,9 +538,9 @@ const OrderDetails = () => {
                   </div>
                 )}
                 {order.sellerNotes && (
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-sm font-semibold text-green-900 mb-1">Seller Notes:</p>
-                    <p className="text-sm text-green-800">{order.sellerNotes}</p>
+                  <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                    <p className="text-sm font-semibold text-orange-900 mb-1">Seller Notes:</p>
+                    <p className="text-sm text-orange-800">{order.sellerNotes}</p>
                   </div>
                 )}
               </div>
@@ -513,10 +561,12 @@ const OrderDetails = () => {
                   <span>Shipping Fee</span>
                   <span className="font-semibold">{formatCurrency(order.shipping)}</span>
                 </div>
+                {/* VAT display removed - business under KSh 5M annual turnover threshold
                 <div className="flex justify-between text-gray-700">
                   <span>Tax (VAT 16%)</span>
                   <span className="font-semibold">{formatCurrency(order.tax)}</span>
                 </div>
+                */}
                 {order.discount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Discount</span>
@@ -526,7 +576,7 @@ const OrderDetails = () => {
                 <div className="border-t-2 border-gray-200 pt-3 mt-3">
                   <div className="flex justify-between text-xl font-bold text-gray-900">
                     <span>Total</span>
-                    <span>{formatCurrency(order.totalAmount)}</span>
+                    <span className="text-orange-600">{formatCurrency(order.totalAmount)}</span>
                   </div>
                 </div>
               </div>
@@ -559,9 +609,13 @@ const OrderDetails = () => {
                   <Home className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0 text-gray-400" />
                   <div>
                     <p className="font-semibold">{order.shippingAddress.street}</p>
-                    <p>{order.shippingAddress.building}</p>
+                    {order.shippingAddress.building !== 'N/A' && (
+                      <p>{order.shippingAddress.building}</p>
+                    )}
                     <p>{order.shippingAddress.city}, {order.shippingAddress.county}</p>
-                    <p className="text-sm text-gray-500">Postal Code: {order.shippingAddress.postalCode}</p>
+                    {order.shippingAddress.postalCode !== 'N/A' && (
+                      <p className="text-sm text-gray-500">Postal Code: {order.shippingAddress.postalCode}</p>
+                    )}
                   </div>
                 </div>
                 {order.shippingAddress.deliveryInstructions && (
@@ -588,7 +642,7 @@ const OrderDetails = () => {
                 )}
                 <button
                   onClick={handleContactSupport}
-                  className="w-full px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 font-medium transition-colors flex items-center justify-center"
+                  className="w-full px-4 py-3 bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 font-medium transition-colors flex items-center justify-center"
                 >
                   <MessageSquare className="w-5 h-5 mr-2" />
                   Contact Support

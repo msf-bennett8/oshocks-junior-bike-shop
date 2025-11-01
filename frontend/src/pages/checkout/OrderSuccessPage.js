@@ -1,14 +1,20 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, Package, Truck, MapPin, Phone, Mail, Download, Share2, ArrowRight, Calendar, CreditCard, ShoppingBag, Home, MessageCircle } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 
 const OrderSuccessPage = () => {
   const { cartItems } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
   const [orderData, setOrderData] = useState(null);
   const [countdown, setCountdown] = useState(5);
-  
+  const [recommendedProducts, setRecommendedProducts] = useState([]);
+  const [loadingRecommended, setLoadingRecommended] = useState(true);
+  const [showReceivedModal, setShowReceivedModal] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoveredStar, setHoveredStar] = useState(0);
+
   // Get order data from location state or create from cart
   useEffect(() => {
     // Simulate fetching order data
@@ -33,10 +39,12 @@ const OrderSuccessPage = () => {
         postalCode: '00100'
       },
       payment: {
-        method: 'M-Pesa',
-        transactionId: 'QGH7X9K2M1',
+        method: location.state?.orderData?.payment?.method || 'M-Pesa',
+        transactionId: location.state?.orderData?.payment?.method === 'Cash on Delivery' 
+          ? `COD-${Date.now().toString().slice(-8)}-${new Date().toISOString().replace(/[-:]/g, '').slice(0, 14)}`
+          : location.state?.orderData?.payment?.transactionId || 'QGH7X9K2M1',
         amount: 52140,
-        status: 'completed'
+        status: location.state?.orderData?.payment?.method === 'Cash on Delivery' ? 'pending' : 'completed'
       },
       items: (location.state?.items || cartItems || []).map(item => ({
         id: item.id,
@@ -49,8 +57,12 @@ const OrderSuccessPage = () => {
       summary: (() => {
         const items = location.state?.items || cartItems || [];
         const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
-        const shipping = 500;
-        const tax = Math.round(subtotal * 0.16); // 16% VAT
+        
+        // Get shipping cost from orderData if available, otherwise default to 500
+        const shipping = location.state?.orderData?.payment?.shippingCost || 500;
+        
+        // const tax = Math.round(subtotal * 0.16); // 16% VAT - Commented out (business under KSh 5M threshold)
+        const tax = 0; // No VAT charged for small businesses
         const discount = location.state?.discount || 0;
         const total = subtotal + shipping + tax - discount;
         
@@ -59,28 +71,38 @@ const OrderSuccessPage = () => {
     };
     
     // If order data was passed from checkout, use it; otherwise use mock
-    if (location.state?.orderData) {
-      setOrderData({
-        ...mockOrder,
-        ...location.state.orderData,
-        items: (location.state.items || cartItems || []).map(item => ({
-          id: item.id,
-          name: item.name,
-          price: Number(item.price),
-          quantity: item.quantity,
-          image: item.thumbnail || item.image || '/api/placeholder/200/200',
-          seller: 'Oshocks Junior Bike Shop'
-        })),
-        summary: (() => {
-          const items = location.state.items || cartItems || [];
-          const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
-          const shipping = 500;
-          const tax = Math.round(subtotal * 0.16);
-          const discount = location.state.discount || 0;
-          const total = subtotal + shipping + tax - discount;
-          return { subtotal, shipping, tax, discount, total };
-        })()
-      });
+      if (location.state?.orderData) {
+        setOrderData({
+          ...mockOrder,
+          ...location.state.orderData,
+          payment: {
+            ...location.state.orderData.payment,
+            // Generate proper transaction ID for COD orders
+            transactionId: location.state.orderData.payment?.method === 'Cash on Delivery'
+              ? `COD-${mockOrder.orderNumber}-${new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14)}`
+              : location.state.orderData.payment?.transactionId || mockOrder.payment.transactionId
+          },
+          items: (location.state.items || cartItems || []).map(item => ({
+            id: item.id,
+            name: item.name,
+            price: Number(item.price),
+            quantity: item.quantity,
+            image: item.thumbnail || item.image || '/api/placeholder/200/200',
+            seller: 'Oshocks Junior Bike Shop'
+          })),
+          summary: (() => {
+            const items = location.state.items || cartItems || [];
+            const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
+            const shipping = location.state?.orderData?.payment?.shippingCost || 500;
+            
+            // const tax = subtotal * 0.16; // 16% VAT - Commented out (business under KSh 5M threshold)
+            const tax = 0; // No VAT charged for small businesses
+            const discount = location.state.discount || 0;
+            const total = subtotal + shipping + tax - discount;
+            
+            return { subtotal, shipping, tax, discount, total };
+          })()
+        });
     } else {
       setOrderData(mockOrder);
     }
@@ -98,6 +120,37 @@ const OrderSuccessPage = () => {
     
     return () => clearInterval(timer);
   }, [location.state, cartItems]);
+
+  // Fetch recommended products from API
+  useEffect(() => {
+    const fetchRecommendedProducts = async () => {
+      try {
+        setLoadingRecommended(true);
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+        
+        // Fetch top-selling or featured accessories
+        const response = await fetch(`${apiUrl}/products?category=accessories&limit=4&sort=popularity`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          const products = (data.data || data).slice(0, 4).map(product => ({
+            id: product.id,
+            name: product.name,
+            price: Number(product.price),
+            originalPrice: product.compare_price ? Number(product.compare_price) : null,
+            image: product.images?.[0]?.thumbnail_url || product.images?.[0]?.image_url || '/api/placeholder/150/150'
+          }));
+          setRecommendedProducts(products);
+        }
+      } catch (err) {
+        console.error('Error fetching recommended products:', err);
+      } finally {
+        setLoadingRecommended(false);
+      }
+    };
+
+    fetchRecommendedProducts();
+  }, []);
   
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-KE', {
@@ -126,14 +179,21 @@ const OrderSuccessPage = () => {
   };
   
   const handleTrackOrder = () => {
-    // Navigate to order tracking page
-    window.location.href = `/orders/${orderData?.orderNumber}`;
+    // ✅ CORRECT WAY - Pass state data
+    navigate(`/orders/${orderData?.orderNumber}`, {
+      state: {
+        orderData: orderData,
+        items: orderData.items,
+        discount: orderData.summary?.discount || 0
+      }
+    });
   };
   
   const handleContinueShopping = () => {
-    window.location.href = '/';
+    // ✅ Also fix this one
+    navigate('/');
   };
-  
+
   if (!orderData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -172,39 +232,47 @@ const OrderSuccessPage = () => {
         </div>
         
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <button
-            onClick={handleTrackOrder}
-            className="bg-orange-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-orange-700 transition flex items-center justify-center"
-          >
-            <Truck className="w-5 h-5 mr-2" />
-            Track Order
-          </button>
-          
-          <button
-            onClick={handleDownloadInvoice}
-            className="bg-gray-800 text-white py-3 px-4 rounded-lg font-semibold hover:bg-gray-900 transition flex items-center justify-center"
-          >
-            <Download className="w-5 h-5 mr-2" />
-            Download Invoice
-          </button>
-          
-          <button
-            onClick={handleShareOrder}
-            className="bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center"
-          >
-            <Share2 className="w-5 h-5 mr-2" />
-            Share Order
-          </button>
-          
-          <button
-            onClick={handleContinueShopping}
-            className="bg-white border-2 border-gray-300 text-gray-800 py-3 px-4 rounded-lg font-semibold hover:border-gray-400 transition flex items-center justify-center"
-          >
-            <Home className="w-5 h-5 mr-2" />
-            Continue Shopping
-          </button>
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+            <button
+              onClick={handleTrackOrder}
+              className="bg-orange-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-orange-700 transition flex items-center justify-center"
+            >
+              <Truck className="w-5 h-5 mr-2" />
+              Track Order
+            </button>
+
+            <button
+              onClick={() => setShowReceivedModal(true)}
+              className="bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center"
+            >
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Order Delivered
+            </button>
+            
+            <button
+              onClick={handleDownloadInvoice}
+              className="bg-gray-800 text-white py-3 px-4 rounded-lg font-semibold hover:bg-gray-900 transition flex items-center justify-center"
+            >
+              <Download className="w-5 h-5 mr-2" />
+              Download Invoice
+            </button>
+            
+            <button
+              onClick={handleShareOrder}
+              className="bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center"
+            >
+              <Share2 className="w-5 h-5 mr-2" />
+              Share Order
+            </button>
+            
+            <button
+              onClick={handleContinueShopping}
+              className="bg-white border-2 border-gray-300 text-gray-800 py-3 px-4 rounded-lg font-semibold hover:border-gray-400 transition flex items-center justify-center"
+            >
+              <Home className="w-5 h-5 mr-2" />
+              Continue Shopping
+            </button>
+          </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
@@ -295,6 +363,12 @@ const OrderSuccessPage = () => {
                     <Phone className="w-4 h-4 mr-1" />
                     {orderData.customer.phone}
                   </div>
+                  {orderData.deliveryInstructions && (
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <p className="text-xs font-semibold text-gray-700 mb-1">Delivery Instructions:</p>
+                      <p className="text-sm text-gray-600">{orderData.deliveryInstructions}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -390,12 +464,14 @@ const OrderSuccessPage = () => {
                   </span>
                 </div>
                 
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">VAT (16%)</span>
-                  <span className="font-medium text-gray-900">
-                    {formatCurrency(orderData.summary.tax)}
-                  </span>
-                </div>
+                {/* VAT display removed - business under KSh 5M annual turnover threshold
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">VAT (16%)</span>
+                    <span className="font-medium text-gray-900">
+                      {formatCurrency(orderData.summary.tax)}
+                    </span>
+                  </div>
+                  */}
                 
                 {orderData.summary.discount > 0 && (
                   <div className="flex justify-between text-sm">
@@ -415,24 +491,40 @@ const OrderSuccessPage = () => {
               </div>
               
               {/* Payment Info */}
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-green-900">Payment Status</span>
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-200 text-green-900">
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Confirmed
-                  </span>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center text-sm text-green-800">
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    <span>{orderData.payment.method}</span>
+                <div className={`${
+                  orderData.payment.status === 'pending' 
+                    ? 'bg-yellow-50 border-yellow-200' 
+                    : 'bg-green-50 border-green-200'
+                } border rounded-lg p-4`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-sm font-semibold ${
+                      orderData.payment.status === 'pending' ? 'text-yellow-900' : 'text-green-900'
+                    }`}>
+                      Payment Status
+                    </span>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
+                      orderData.payment.status === 'pending'
+                        ? 'bg-yellow-200 text-yellow-900'
+                        : 'bg-green-200 text-green-900'
+                    }`}>
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      {orderData.payment.status === 'pending' ? 'Pending' : 'Confirmed'}
+                    </span>
                   </div>
-                  <p className="text-xs text-green-700 ml-6">
-                    Transaction ID: {orderData.payment.transactionId}
-                  </p>
+                  <div className="space-y-1">
+                    <div className={`flex items-center text-sm ${
+                      orderData.payment.status === 'pending' ? 'text-yellow-800' : 'text-green-800'
+                    }`}>
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      <span>{orderData.payment.method}</span>
+                    </div>
+                    <p className={`text-xs ml-6 ${
+                      orderData.payment.status === 'pending' ? 'text-yellow-700' : 'text-green-700'
+                    }`}>
+                      Transaction ID: {orderData.payment.transactionId}
+                    </p>
+                  </div>
                 </div>
-              </div>
             </div>
             
             {/* Need Help */}
@@ -492,44 +584,167 @@ const OrderSuccessPage = () => {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">You Might Also Like</h2>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              {
-                name: 'Bike Lock - Heavy Duty',
-                price: 2500,
-                image: 'https://images.unsplash.com/photo-1589118949245-7d38baf380d6?w=300&h=300&fit=crop'
-              },
-              {
-                name: 'Water Bottle Holder',
-                price: 800,
-                image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=300&h=300&fit=crop'
-              },
-              {
-                name: 'Cycling Gloves Pro',
-                price: 1500,
-                image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=300&h=300&fit=crop'
-              },
-              {
-                name: 'Bike Repair Kit',
-                price: 3200,
-                image: 'https://images.unsplash.com/photo-1593764379523-3b28c4077b7e?w=300&h=300&fit=crop'
-              }
-            ].map((product, index) => (
-              <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-lg transition cursor-pointer">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-40 object-cover rounded-lg mb-3"
-                />
-                <h3 className="font-semibold text-gray-900 mb-2 text-sm">{product.name}</h3>
-                <p className="text-orange-600 font-bold">{formatCurrency(product.price)}</p>
-                <button className="w-full mt-3 bg-orange-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-orange-700 transition">
-                  Add to Cart
-                </button>
+            {loadingRecommended ? (
+              // Loading skeleton
+              [1, 2, 3, 4].map((i) => (
+                <div key={i} className="border border-gray-200 rounded-lg p-4 animate-pulse">
+                  <div className="w-full h-40 bg-gray-200 rounded-lg mb-3"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-5 bg-gray-200 rounded w-2/3 mb-3"></div>
+                  <div className="h-10 bg-gray-200 rounded"></div>
+                </div>
+              ))
+            ) : recommendedProducts.length > 0 ? (
+              recommendedProducts.map((product) => (
+                <Link
+                  key={product.id}
+                  to={`/product/${product.id}`}
+                  className="border border-gray-200 rounded-lg p-4 hover:shadow-lg transition cursor-pointer block"
+                >
+                  <div className="relative">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-40 object-cover rounded-lg mb-3"
+                      onError={(e) => { e.target.src = '/api/placeholder/300/300'; }}
+                    />
+                    {product.originalPrice && (
+                      <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                        -{Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-2 text-sm line-clamp-2 h-10">
+                    {product.name}
+                  </h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-orange-600 font-bold">{formatCurrency(product.price)}</p>
+                      {product.originalPrice && (
+                        <p className="text-xs text-gray-400 line-through">
+                          {formatCurrency(product.originalPrice)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      // Add to cart functionality can be added here
+                      window.location.href = `/product/${product.id}`;
+                    }}
+                    className="w-full bg-orange-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-orange-700 transition"
+                  >
+                    View Product
+                  </button>
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-4 text-center py-8 text-gray-500">
+                <p>No recommendations available at the moment</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
+      {/* Order Received Modal */}
+      {showReceivedModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-fadeIn">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowReceivedModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Success Icon */}
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-12 h-12 text-green-600" />
+            </div>
+
+            {/* Content */}
+            <h2 className="text-2xl font-bold text-gray-900 text-center mb-3">
+              Thank You! 🎉
+            </h2>
+            <p className="text-gray-600 text-center mb-2">
+              Thank you for confirming delivery of your order!
+            </p>
+            <p className="text-sm text-gray-500 text-center mb-6">
+              We hope you enjoy your purchase from Oshocks Junior Bike Shop.
+            </p>
+
+            {/* Rating Section */}
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+                <p className="text-sm font-semibold text-orange-900 mb-2 text-center">
+                  How was your experience?
+                </p>
+                <div className="flex justify-center gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      className={`transition-colors ${
+                        star <= (hoveredStar || rating)
+                          ? 'text-yellow-400'
+                          : 'text-gray-300'
+                      } hover:text-yellow-400`}
+                      onMouseEnter={() => setHoveredStar(star)}
+                      onMouseLeave={() => setHoveredStar(0)}
+                      onClick={() => {
+                        setRating(star);
+                        // Handle rating - you can add API call here
+                        setTimeout(() => {
+                          alert(`Thank you for rating us ${star} star${star > 1 ? 's' : ''}!`);
+                        }, 100);
+                      }}
+                    >
+                      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    </button>
+                  ))}
+                </div>
+                {rating > 0 && (
+                  <p className="text-xs text-center text-gray-600 mt-2">
+                    You rated: {rating} star{rating > 1 ? 's' : ''}
+                  </p>
+                )}
+              </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowReceivedModal(false)}
+                className="flex-1 bg-gray-200 text-gray-800 py-3 px-4 rounded-lg font-semibold hover:bg-gray-300 transition"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setShowReceivedModal(false);
+                  navigate('/');
+                }}
+                className="flex-1 bg-orange-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-orange-700 transition"
+              >
+                Continue Shopping
+              </button>
+            </div>
+
+            {/* Support Link */}
+            <div className="text-center mt-4">
+              <Link
+                to="/contact"
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Need help? Contact Support
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

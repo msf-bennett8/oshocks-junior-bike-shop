@@ -18,10 +18,18 @@ const CheckoutPage = () => {
     email: user?.email || '',
     phone: user?.phone || '',
     address: user?.address || '',
-    city: '',
-    county: '',
-    postalCode: ''
+    city: '', // This will now be county/city
+    zone: '', // This will be the selected zone
+    postalCode: '',
+    deliveryInstructions: '' 
   });
+
+  // Add state for available zones based on selected county
+  const [availableZones, setAvailableZones] = useState([]);
+  // Add state for zone selection modal
+  const [showZoneModal, setShowZoneModal] = useState(false);
+  const [selectedZoneForModal, setSelectedZoneForModal] = useState(null);
+  const [showCountyModal, setShowCountyModal] = useState(false);
   
   const [paymentMethod, setPaymentMethod] = useState('mpesa');
   const [mpesaPhone, setMpesaPhone] = useState('');
@@ -36,15 +44,149 @@ const CheckoutPage = () => {
   const [errors, setErrors] = useState({});
   
   
-  const kenyanCounties = [
-    'Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Thika', 'Malindi',
-    'Kiambu', 'Machakos', 'Kajiado', 'Nyeri', 'Meru', 'Kakamega', 'Bungoma'
-  ];
+  // County/City options with their zones
+    const countyZones = {
+      'Nairobi County': [
+    { 
+      name: 'Kasarani Area (0-5km)', 
+      locations: 'Kahawa West, Kahawa Sukari, Kahawa Wendani, Kasarani (parts near Mwiki), Mwiki',
+      cost: 150 
+    },
+    { 
+      name: 'Roysambu Area (5-10km)', 
+      locations: 'Roysambu, Garden Estate, Thome, Ruaraka, Kasarani (central), Lucky Summer, Clay City',
+      cost: 250 
+    },
+    { 
+      name: 'Parklands Area (10-15km)', 
+      locations: 'Pangani, Muthaiga, Parklands, Highridge, Ngara, Eastleigh, Huruma, Mathare, Kariobangi',
+      cost: 350 
+    },
+    { 
+      name: 'CBD & Westlands (15-25km)', 
+      locations: 'CBD, Westlands, Kilimani, Kileleshwa, Lavington, Upper Hill, South B, South C, Buru Buru, Donholm, Umoja, Embakasi, Starehe, Hurlingham, Spring Valley, Madaraka, Industrial Area, Dagoretti, Kariokor, Loresho',
+      cost: 500 
+    },
+    { 
+      name: 'Karen & Suburbs (25-40km)', 
+      locations: 'Karen, Langata, Runda, Gigiri, Kitisuru, Nairobi West, Ruai, Utawala, Syokimau',
+      cost: 700 
+    },
+    { 
+      name: 'Outer Limits (40-50km)', 
+      locations: 'Ngong (Nairobi side), Mlolongo (Nairobi side)',
+      cost: 1000 
+    }
+  ],
+    'Machakos County': [
+      { 
+        name: 'Zone 1 (40-60km)', 
+        locations: 'Mlolongo (Machakos side), Athi River (Machakos side), Katani',
+        cost: 1000 
+      },
+      { 
+        name: 'Zone 2 (60-80km)', 
+        locations: 'Machakos Town, Tala, Kangundo',
+        cost: 1500 
+      }
+    ],
+    'Kiambu County': [
+      { 
+        name: 'Githurai Area (0-10km)', 
+        locations: 'Githurai 44, Githurai 45, Zimmerman, Kiambu Town, Thindigua, Ridgeways',
+        cost: 200 
+      },
+      { 
+        name: 'Ruiru Area (10-20km)', 
+        locations: 'Ruiru Town, Juja Road, Bypass (Kiambu Road), Cianda, Village Market area, Ndumberi, Membley',
+        cost: 350 
+      },
+      { 
+        name: 'Ruaka & Kikuyu (20-30km)', 
+        locations: 'Ruaka, Rosslyn, Limuru, Kikuyu, Kabete, Banana Hill, Wangige',
+        cost: 500 
+      },
+      { 
+        name: 'Thika Town (30-45km)', 
+        locations: 'Thika Town, Juja Town, Kalimoni, Gatuanyaga, Makongeni (Thika), Gatundu',
+        cost: 700 
+      },
+      { 
+        name: 'Far Kiambu (45km+)', 
+        locations: 'Gatanga, Githunguri, Lari, Karuri (far areas)',
+        cost: 1000 
+      }
+    ],
+    'Kajiado County': [
+      { 
+        name: 'Zone 1 (35-50km)', 
+        locations: 'Kitengela, Ongata Rongai',
+        cost: 800 
+      },
+      { 
+        name: 'Zone 2 (50-70km)', 
+        locations: 'Ngong (Kajiado side), Kiserian, Kajiado Town',
+        cost: 1200 
+      }
+    ],
+    'Other (Arrange own courier)': [
+      { 
+        name: 'Self-arranged courier service', 
+        locations: 'Contact us at +254 700 000 000 for packaging assistance and courier recommendations',
+        cost: 0 
+      }
+    ]
+  };
+
+  // County information with descriptions
+const countyInfo = {
+  'Nairobi County': {
+    icon: '🏙️',
+    description: 'Capital city with same-day delivery available',
+    zones: 6,
+    startingFrom: 150
+  },
+  'Kiambu County': {
+    icon: '🌳',
+    description: 'Neighboring county with reliable delivery',
+    zones: 5,
+    startingFrom: 200
+  },
+  'Machakos County': {
+    icon: '⛰️',
+    description: 'Eastern region with 2-3 day delivery',
+    zones: 2,
+    startingFrom: 1000
+  },
+  'Kajiado County': {
+    icon: '🦁',
+    description: 'Southern region with scheduled delivery',
+    zones: 2,
+    startingFrom: 800
+  },
+  'Other (Arrange own courier)': {
+    icon: '📦',
+    description: 'Nationwide coverage - arrange your own courier',
+    zones: 1,
+    startingFrom: 0
+  }
+};
   
   // Calculate totals
   const subtotal = cartItems.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
-  const shippingCost = shippingInfo.county === 'Nairobi' ? 500 : 1000;
-  const tax = subtotal * 0.16; // 16% VAT
+
+  // Calculate shipping cost based on selected zone
+  const shippingCost = (() => {
+    if (!shippingInfo.zone || !shippingInfo.city) return 0;
+    const zones = countyZones[shippingInfo.city];
+    // Extract just the zone name part (e.g., "Zone 1 (0-5km)") from the full selection
+    const zoneName = shippingInfo.zone.split(' - ')[0];
+    const selectedZone = zones?.find(z => z.name === zoneName);
+    return selectedZone?.cost || 0;
+  })();
+
+  // const tax = subtotal * 0.16; // 16% VAT - Commented out (business under KSh 5M threshold)
+  const tax = 0; // No VAT charged for small businesses
   const total = subtotal + shippingCost + tax;
   
   // Validation functions
@@ -60,8 +202,8 @@ const CheckoutPage = () => {
       newErrors.phone = 'Enter valid Kenyan phone number';
     }
     if (!shippingInfo.address.trim()) newErrors.address = 'Address is required';
-    if (!shippingInfo.city.trim()) newErrors.city = 'City is required';
-    if (!shippingInfo.county) newErrors.county = 'County is required';
+    if (!shippingInfo.city) newErrors.city = 'County/City is required';
+    if (!shippingInfo.zone) newErrors.zone = 'Zone is required';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -122,16 +264,20 @@ const CheckoutPage = () => {
         },
         shipping: {
           address: shippingInfo.address,
-          city: shippingInfo.city,
-          county: shippingInfo.county,
+          county: shippingInfo.city, // Now contains the county
+          zone: shippingInfo.zone,
           postalCode: shippingInfo.postalCode
         },
         payment: {
-          method: paymentMethod === 'mpesa' ? 'M-Pesa' : 'Credit/Debit Card',
-          transactionId: `TXN${Date.now().toString().slice(-10)}`,
+          method: paymentMethod === 'mpesa' ? 'M-Pesa' : 
+                  paymentMethod === 'cod' ? 'Cash on Delivery' : 
+                  'Credit/Debit Card',
+          transactionId: paymentMethod === 'cod' ? 'COD-PENDING' : `TXN${Date.now().toString().slice(-10)}`,
           amount: total,
-          status: 'completed'
-        }
+          status: paymentMethod === 'cod' ? 'pending' : 'completed',
+          shippingCost: shippingCost // Pass the actual shipping cost
+        },
+        deliveryInstructions: shippingInfo.deliveryInstructions || '' // Add this line
       };
       
       // Navigate to success page with order data
@@ -348,51 +494,102 @@ const CheckoutPage = () => {
                     {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        City/Town *
-                      </label>
-                      <input
-                        type="text"
-                        value={shippingInfo.city}
-                        onChange={(e) => setShippingInfo({...shippingInfo, city: e.target.value})}
-                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.city ? 'border-red-500' : 'border-gray-300'}`}
-                        placeholder="Nairobi"
-                      />
-                      {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        County *
-                      </label>
-                      <select
-                        value={shippingInfo.county}
-                        onChange={(e) => setShippingInfo({...shippingInfo, county: e.target.value})}
-                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.county ? 'border-red-500' : 'border-gray-300'}`}
-                      >
-                        <option value="">Select County</option>
-                        {kenyanCounties.map(county => (
-                          <option key={county} value={county}>{county}</option>
-                        ))}
-                      </select>
-                      {errors.county && <p className="text-red-500 text-xs mt-1">{errors.county}</p>}
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Postal Code
-                      </label>
-                      <input
-                        type="text"
-                        value={shippingInfo.postalCode}
-                        onChange={(e) => setShippingInfo({...shippingInfo, postalCode: e.target.value})}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                        placeholder="00100"
-                      />
-                    </div>
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      County/City *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowCountyModal(true)}
+                      className={`w-full px-4 py-2 border rounded-lg text-left focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.city ? 'border-red-500' : 'border-gray-300'} hover:border-orange-400 text-gray-900`}
+                    >
+                      {shippingInfo.city ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{countyInfo[shippingInfo.city]?.icon}</span>
+                          <span className="truncate">{shippingInfo.city}</span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">Click to select county</span>
+                      )}
+                    </button>
+                    {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
                   </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Zone *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (shippingInfo.city) {
+                          setShowZoneModal(true);
+                        }
+                      }}
+                      disabled={!shippingInfo.city}
+                      className={`w-full px-4 py-2 border rounded-lg text-left focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.zone ? 'border-red-500' : 'border-gray-300'} ${!shippingInfo.city ? 'bg-gray-100 cursor-not-allowed text-gray-400' : 'hover:border-orange-400 text-gray-900'}`}
+                    >
+                      {shippingInfo.zone ? (
+                        <div className="flex flex-col gap-1">
+                          <div className="flex justify-between items-center">
+                            <span className="font-semibold text-gray-900">
+                              {shippingInfo.zone.includes(' - ') 
+                                ? shippingInfo.zone.split(' - ')[1] 
+                                : shippingInfo.zone}
+                            </span>
+                            <span className="text-orange-600 font-semibold ml-2">
+                              KSh {(() => {
+                                const zoneName = shippingInfo.zone.split(' - ')[0];
+                                const zone = availableZones.find(z => z.name === zoneName);
+                                return zone?.cost.toLocaleString() || '0';
+                              })()}
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {shippingInfo.zone.split(' - ')[0]}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">Click to select location</span>
+                      )}
+                    </button>
+                    {errors.zone && <p className="text-red-500 text-xs mt-1">{errors.zone}</p>}
+                    {shippingInfo.city === 'Other (Arrange own courier)' && (
+                      <p className="text-xs text-gray-600 mt-1">
+                        Contact us at +254 700 000 000 for courier assistance
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Postal Code
+                  </label>
+                  <input
+                    type="text"
+                    value={shippingInfo.postalCode}
+                    onChange={(e) => setShippingInfo({...shippingInfo, postalCode: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="00100"
+                  />
+                </div>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Delivery Instructions (Optional)
+                  </label>
+                  <textarea
+                    value={shippingInfo.deliveryInstructions || ''}
+                    onChange={(e) => setShippingInfo({...shippingInfo, deliveryInstructions: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="e.g., Please call before delivery, gate code is 1234, leave with security..."
+                    rows="3"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Any special instructions for the delivery person (e.g., gate codes, building access, preferred delivery time)
+                  </p>
+                </div>
+                </div>
                   
                   <button
                     type="submit"
@@ -414,7 +611,7 @@ const CheckoutPage = () => {
                 <form onSubmit={handlePaymentSubmit}>
                     {/* Payment Method Selection */}
                     <div className="mb-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <button
                           type="button"
                           onClick={() => setPaymentMethod('mpesa')}
@@ -457,6 +654,25 @@ const CheckoutPage = () => {
                               />
                             </div>
                             <div className="text-sm text-gray-600">Credit/Debit Card</div>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setPaymentMethod('cod')}
+                          className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
+                            paymentMethod === 'cod' 
+                              ? 'border-orange-600 bg-orange-50' 
+                              : 'border-gray-300 hover:border-gray-400'
+                          }`}
+                        >
+                          <div className="text-center">
+                            <div className="w-12 h-12 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center">
+                              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
+                            </div>
+                            <div className="text-sm text-gray-600">Cash on Delivery</div>
                           </div>
                         </button>
                       </div>
@@ -559,6 +775,38 @@ const CheckoutPage = () => {
                             placeholder="123"
                           />
                           {errors.cvv && <p className="text-red-500 text-xs mt-1">{errors.cvv}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cash on Delivery */}
+                  {paymentMethod === 'cod' && (
+                    <div className="mb-6">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h3 className="font-semibold text-blue-900 mb-2 flex items-center">
+                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Cash on Delivery Information
+                        </h3>
+                        <ul className="text-sm text-blue-800 space-y-2 list-disc list-inside">
+                          <li>Pay with cash when your order is delivered</li>
+                          <li>Please have exact change ready for the delivery person</li>
+                          <li>Inspect your items before making payment</li>
+                          <li>COD fee: KSh 50 (included in total)</li>
+                        </ul>
+                      </div>
+                      
+                      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-start">
+                          <CheckCircle className="w-5 h-5 text-green-600 mr-2 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Order Confirmation</p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              Your order will be confirmed immediately. Our delivery team will contact you to schedule delivery.
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -683,13 +931,15 @@ const CheckoutPage = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Shipping</span>
                   <span className="font-medium text-gray-900">
-                    {shippingInfo.county ? formatCurrency(shippingCost) : 'TBD'}
+                    {shippingInfo.city && shippingInfo.zone ? formatCurrency(shippingCost) : 'TBD'}
                   </span>
                 </div>
+                {/* VAT display removed - business under KSh 5M annual turnover threshold
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">VAT (16%)</span>
                   <span className="font-medium text-gray-900">{formatCurrency(tax)}</span>
                 </div>
+                */}
               </div>
               
               {/* Total */}
@@ -699,16 +949,23 @@ const CheckoutPage = () => {
               </div>
               
               {/* Shipping Info Display */}
-              {shippingInfo.county && (
+              {shippingInfo.city && shippingInfo.zone && (
                 <div className="bg-orange-50 rounded-lg p-3 mb-4">
                   <div className="flex items-center text-sm text-orange-800 mb-1">
                     <Truck className="w-4 h-4 mr-1" />
                     <span className="font-semibold">
-                      {shippingInfo.county === 'Nairobi' ? 'Same-day delivery available' : 'Delivery in 2-3 days'}
+                      {shippingInfo.city === 'Nairobi County' ? 'Same-day delivery available' : 'Delivery in 2-3 days'}
                     </span>
                   </div>
                   <p className="text-xs text-orange-700">
-                    Shipping to {shippingInfo.city}, {shippingInfo.county}
+                    Shipping to: <span className="font-semibold">
+                      {shippingInfo.zone.includes(' - ') 
+                        ? shippingInfo.zone.split(' - ')[1] 
+                        : shippingInfo.zone}
+                    </span>
+                  </p>
+                  <p className="text-xs text-orange-600">
+                    {shippingInfo.city} ({shippingInfo.zone.split(' - ')[0]})
                   </p>
                 </div>
               )}
@@ -722,26 +979,31 @@ const CheckoutPage = () => {
               </div>
               
               {/* Accepted Payment Methods */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <p className="text-xs text-gray-600 mb-2">We accept:</p>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <img 
-                      src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg" 
-                      alt="M-Pesa" 
-                      className="h-8 w-auto object-contain opacity-80"
-                    />
-                    <img 
-                      src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" 
-                      alt="Visa" 
-                      className="h-4 w-auto object-contain opacity-80"
-                    />
-                    <img 
-                      src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
-                      alt="Mastercard" 
-                      className="h-6 w-auto object-contain opacity-80"
-                    />
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <p className="text-xs text-gray-600 mb-2">We accept:</p>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <img 
+                    src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg" 
+                    alt="M-Pesa" 
+                    className="h-8 w-auto object-contain opacity-80"
+                  />
+                  <img 
+                    src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" 
+                    alt="Visa" 
+                    className="h-4 w-auto object-contain opacity-80"
+                  />
+                  <img 
+                    src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
+                    alt="Mastercard" 
+                    className="h-6 w-auto object-contain opacity-80"
+                  />
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center opacity-80" title="Cash on Delivery">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
                   </div>
                 </div>
+              </div>
               
              {/* Support Info */}
               <div className="mt-4 pt-4 border-t border-gray-200">
@@ -808,6 +1070,192 @@ const CheckoutPage = () => {
           </div>
         </div>
       </div>
+
+      {/* County Selection Modal */}
+      {showCountyModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-2xl font-bold">Select County/City</h3>
+                  <p className="text-orange-100 text-sm mt-1">Choose your delivery location</p>
+                </div>
+                <button
+                  onClick={() => setShowCountyModal(false)}
+                  className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+              <div className="space-y-3">
+                {Object.keys(countyZones).map((county, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => {
+                      setShippingInfo({
+                        ...shippingInfo, 
+                        city: county,
+                        zone: '' // Reset zone when county changes
+                      });
+                      setAvailableZones(countyZones[county] || []);
+                      setShowCountyModal(false);
+                    }}
+                    className={`w-full text-left p-5 border-2 rounded-xl transition-all hover:border-orange-500 hover:shadow-lg ${
+                      shippingInfo.city === county
+                        ? 'border-orange-500 bg-orange-50'
+                        : 'border-gray-200 hover:bg-orange-50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* Icon */}
+                      <div className="text-4xl flex-shrink-0">
+                        {countyInfo[county]?.icon}
+                      </div>
+                      
+                      {/* Content */}
+                      <div className="flex-1">
+                        <h4 className="font-bold text-gray-900 text-lg mb-1">{county}</h4>
+                        <p className="text-sm text-gray-600 mb-2">{countyInfo[county]?.description}</p>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {countyInfo[county]?.zones} {countyInfo[county]?.zones === 1 ? 'zone' : 'zones'}
+                          </span>
+                          {countyInfo[county]?.startingFrom > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Truck className="w-3 h-3" />
+                              From KSh {countyInfo[county]?.startingFrom.toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Selected Indicator */}
+                      {shippingInfo.city === county && (
+                        <div className="flex-shrink-0">
+                          <CheckCircle className="w-6 h-6 text-orange-600" />
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="border-t border-gray-200 p-4 bg-gray-50">
+              <button
+                onClick={() => setShowCountyModal(false)}
+                className="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition"
+              >
+                {shippingInfo.city ? 'Continue' : 'Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Zone Selection Modal */}
+      {showZoneModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-2xl font-bold">Select Delivery Zone</h3>
+                  <p className="text-orange-100 text-sm mt-1">{shippingInfo.city}</p>
+                </div>
+                <button
+                  onClick={() => setShowZoneModal(false)}
+                  className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+              <div className="space-y-3">
+                {availableZones.map((zone, index) => {
+                  const locationList = zone.locations.split(',').map(loc => loc.trim());
+                  const isZoneSelected = shippingInfo.zone?.startsWith(zone.name);
+                  
+                  return (
+                    <div
+                      key={index}
+                      className={`border-2 rounded-xl transition-all ${
+                        isZoneSelected
+                          ? 'border-orange-500 bg-orange-50'
+                          : 'border-gray-200'
+                      }`}
+                    >
+                      <div className="p-4 border-b border-gray-200">
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-bold text-gray-900 text-lg">{zone.name}</h4>
+                          <div className="bg-orange-100 text-orange-700 px-4 py-2 rounded-lg font-bold text-lg whitespace-nowrap">
+                            KSh {zone.cost.toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="p-4">
+                        <p className="text-xs text-gray-500 mb-3 font-medium">Click on your specific location:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {locationList.map((location, locIndex) => {
+                            const fullZoneValue = `${zone.name} - ${location}`;
+                            const isSelected = shippingInfo.zone === fullZoneValue;
+                            
+                            return (
+                              <button
+                                key={locIndex}
+                                type="button"
+                                onClick={() => {
+                                  setShippingInfo({...shippingInfo, zone: fullZoneValue});
+                                  setShowZoneModal(false);
+                                }}
+                                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                  isSelected
+                                    ? 'bg-orange-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-orange-100 hover:text-orange-700'
+                                }`}
+                              >
+                                {location}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="border-t border-gray-200 p-4 bg-gray-50">
+              <button
+                onClick={() => setShowZoneModal(false)}
+                className="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition"
+              >
+                {shippingInfo.zone ? 'Confirm Selection' : 'Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

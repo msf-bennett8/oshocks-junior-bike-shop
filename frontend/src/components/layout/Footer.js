@@ -304,6 +304,14 @@ const Footer = () => {
               alt="Mastercard" 
               className="h-10 object-contain opacity-80 hover:opacity-100 transition-opacity"
             />
+            {/* Cash on Delivery */}
+            <div className="opacity-80 hover:opacity-100 transition-opacity" title="Cash on Delivery">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
       </div>
