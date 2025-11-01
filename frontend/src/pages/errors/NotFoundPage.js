@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Home, ShoppingBag, Bike, Package, Wrench, Shield, MapPin, ArrowRight, TrendingUp } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import SearchBar from '../common/SearchBar'; 
+import SearchBar from '../../components/common/SearchBar'; 
 import { fetchProducts, fetchCategories } from '../../redux/slices/productSlice';
 import { Link } from 'react-router-dom';
 

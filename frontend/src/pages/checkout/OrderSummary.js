@@ -23,6 +23,7 @@ import {
   ArrowLeft,
   ExternalLink
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * OrderSummary Component
@@ -40,6 +41,7 @@ const OrderSummary = ({
   const [expandedItems, setExpandedItems] = useState(false);
   const [showShippingDetails, setShowShippingDetails] = useState(true);
   const [showPaymentDetails, setShowPaymentDetails] = useState(true);
+  const navigate = useNavigate();
 
   // Format currency
   const formatPrice = (price) => {
@@ -665,8 +667,15 @@ const OrderSummaryDemo = () => {
     alert('Navigating back to shop...');
   };
 
+  const navigate = useNavigate(); 
+
   const handleTrackOrder = () => {
-    alert('Opening order tracking...');
+    navigate('/track-order', {
+      state: {
+        orderData: demoOrder, 
+        items: demoOrder.items
+      }
+    });
   };
 
   return (
