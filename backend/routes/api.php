@@ -25,10 +25,12 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\Seller\ProductController as SellerProductController;
+use App\Http\Controllers\Dashboard\OwnerDashboardController;
+use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\Dashboard\PayoutController;
 
 // ============================================================================
 // OAUTH ROUTES - STATELESS (No CSRF, No Session)
-// These MUST be outside the main group to avoid Sanctum's stateful middleware
 // ============================================================================
 Route::prefix('v1/auth')->group(function () {
     Route::post('/google', [SocialAuthController::class, 'handleGoogleCallback']);
@@ -90,6 +92,12 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
+    
+    // Secret elevation endpoint (works for any authenticated user)
+    Route::post('/auth/secret-elevate', [AuthController::class, 'secretElevate']);
+    
+    // Admin/Super Admin privilege revocation
+    Route::post('/auth/revoke-privileges', [AuthController::class, 'revokePrivileges']);
     
     // Payment Recording (requires authentication and payment recorder permission)
     Route::post('/payments/record', [PaymentController::class, 'recordPayment']);
@@ -178,7 +186,45 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         Route::get('/analytics/products', [ProductController::class, 'productAnalytics']);
     });
     
-    // Admin routes
+    // ============================================================================
+    // PLATFORM OWNER DASHBOARD (Super Admin Only)
+    // ============================================================================
+    Route::prefix('dashboard/owner')->middleware('role:super_admin')->group(function () {
+        Route::get('/overview', [OwnerDashboardController::class, 'overview']);
+        Route::get('/payment-methods-breakdown', [OwnerDashboardController::class, 'paymentMethodsBreakdown']);
+        Route::get('/sale-channels-breakdown', [OwnerDashboardController::class, 'saleChannelsBreakdown']);
+        Route::get('/top-sellers', [OwnerDashboardController::class, 'topSellers']);
+    });
+
+    // ============================================================================
+    // PAYOUT MANAGEMENT (Super Admin Only)
+    // ============================================================================
+    Route::prefix('payouts')->middleware('role:super_admin')->group(function () {
+        Route::get('/pending', [\App\Http\Controllers\Dashboard\PayoutController::class, 'pending']);
+        Route::get('/seller/{seller_id}/pending-payments', [\App\Http\Controllers\Dashboard\PayoutController::class, 'sellerPendingPayments']);
+        Route::post('/process', [\App\Http\Controllers\Dashboard\PayoutController::class, 'process']);
+        Route::get('/history', [\App\Http\Controllers\Dashboard\PayoutController::class, 'history']);
+    });
+
+    // ============================================================================
+    // SELLER DASHBOARD (Sellers can only see their own data)
+    // ============================================================================
+    Route::prefix('dashboard/seller')->middleware('role:seller')->group(function () {
+        Route::get('/overview', [\App\Http\Controllers\Dashboard\SellerDashboardController::class, 'overview']);
+        Route::get('/transactions', [\App\Http\Controllers\Dashboard\SellerDashboardController::class, 'transactions']);
+        Route::get('/commission-breakdown', [\App\Http\Controllers\Dashboard\SellerDashboardController::class, 'commissionBreakdown']);
+        Route::get('/payouts', [\App\Http\Controllers\Dashboard\SellerDashboardController::class, 'payouts']);
+    });
+    
+    // Transactions (Super Admin Only)
+    Route::prefix('transactions')->middleware('role:super_admin')->group(function () {
+        Route::get('/', [TransactionController::class, 'index']);
+        Route::get('/{id}', [TransactionController::class, 'show']);
+    });
+    
+    // ============================================================================
+    // ADMIN ROUTES
+    // ============================================================================
     Route::prefix('admin')->group(function () {
         
         // User management
@@ -221,7 +267,9 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         Route::get('/activity-logs/{id}', [ActivityLogController::class, 'show']);
     });
 
-    // Super Admin routes
+    // ============================================================================
+    // SUPER ADMIN ROUTES
+    // ============================================================================
     Route::prefix('super-admin')->group(function () {
         
         // Pending seller management
@@ -232,12 +280,6 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         // User role management
         Route::put('/users/{id}/role', [AuthController::class, 'changeUserRole']);
     });
-
-    // Secret elevation endpoint (works for any authenticated user)
-    Route::post('/auth/secret-elevate', [AuthController::class, 'secretElevate']);
-    
-    // Admin/Super Admin privilege revocation
-    Route::post('/auth/revoke-privileges', [AuthController::class, 'revokePrivileges']);
 });
 
 // M-Pesa callback (public - called by Safaricom)
