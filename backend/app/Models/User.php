@@ -86,6 +86,21 @@ class User extends Authenticatable
         return $this->hasMany(ActivityLog::class);
     }
 
+    public function paymentRecorder()
+    {
+        return $this->hasOne(PaymentRecorder::class);
+    }
+
+    public function recordedPayments()
+    {
+        return $this->hasMany(Payment::class, 'recorded_by_user_id');
+    }
+
+    public function processedPayouts()
+    {
+        return $this->hasMany(SellerPayout::class, 'processed_by');
+    }
+
     // Helper methods
     public function isSeller()
     {
@@ -125,6 +140,21 @@ class User extends Authenticatable
     public function hasSuperAdminAccess()
     {
         return $this->role === 'super_admin';
+    }
+
+    public function isDeliveryAgent()
+    {
+        return $this->role === 'delivery_agent';
+    }
+
+    public function isShopAttendant()
+    {
+        return $this->role === 'shop_attendant';
+    }
+
+    public function canRecordPayments()
+    {
+        return in_array($this->role, ['delivery_agent', 'shop_attendant', 'seller', 'admin', 'super_admin']);
     }
     
 }
