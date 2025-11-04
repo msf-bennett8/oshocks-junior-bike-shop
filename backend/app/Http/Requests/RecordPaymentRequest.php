@@ -26,7 +26,8 @@ class RecordPaymentRequest extends FormRequest
             'amount' => 'required|numeric|min:0.01',
             'county' => 'required|string|max:100',
             'zone' => 'required|string|max:255',
-            'customer_phone' => 'nullable|string|regex:/^(254|0)[17]\d{8}$/',
+            'customer_phone' => ['nullable', 'string', 'regex:/^(254[71][0-9]{8}|0[71][0-9]{8})$/'],
+            //'customer_phone' => 'nullable|string|min:10|max:13'   use this for minimal regrex check
             'notes' => 'nullable|string|max:1000',
         ];
 

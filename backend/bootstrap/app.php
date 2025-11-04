@@ -16,15 +16,17 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\HandleCors::class,
         ]);
         
-        // REMOVE statefulApi() - it's causing CSRF issues
-        // $middleware->statefulApi();
-        
         // Exclude ALL API routes from CSRF
         $middleware->validateCsrfTokens(except: [
             'api/*',
+        ]);
+        
+        // Register middleware aliases (Laravel 11 style)
+        $middleware->alias([
+            'role' => \App\Http\Middleware\CheckRole::class,
+            'optional' => \App\Http\Middleware\OptionalAuth::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();
-    
