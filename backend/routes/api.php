@@ -91,6 +91,9 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
     
+    // Payment Recording (requires authentication and payment recorder permission)
+    Route::post('/payments/record', [PaymentController::class, 'recordPayment']);
+
     // Auth user
     Route::get('/user', function (Request $request) {
         return $request->user();
