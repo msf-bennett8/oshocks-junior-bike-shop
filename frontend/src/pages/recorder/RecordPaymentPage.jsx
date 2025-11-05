@@ -13,29 +13,29 @@ const RecordPaymentPage = () => {
   const [success, setSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
-    payment_method: 'cash',
-    external_reference: '',
-    external_transaction_id: '',
-    customer_phone: '',
-    notes: ''
-  });
+  payment_method: 'cash',
+  external_reference: '',
+  external_transaction_id: '',
+  customer_phone: '',
+  notes: ''
+});
 
-  useEffect(() => {
-    loadOrderDetails();
-  }, [orderNumber]);
+useEffect(() => {
+  loadOrderDetails();
+}, [orderNumber]);
 
-  const loadOrderDetails = async () => {
-    try {
-      setLoading(true);
-      const response = await recorderService.getOrderDetails(orderNumber);
-      
-      if (response.success) {
-        setOrder(response.data.order);
-        setFormData(prev => ({
-          ...prev,
-          customer_phone: response.data.order.customer_phone || ''
-        }));
-      }
+const loadOrderDetails = async () => {
+  try {
+    setLoading(true);
+    const response = await recorderService.getOrderDetails(orderNumber);
+    
+    if (response.success) {
+      setOrder(response.data);  // Changed from response.data.order
+      setFormData(prev => ({
+        ...prev,
+        customer_phone: response.data.customer_phone || ''  // Changed from response.data.order.customer_phone
+      }));
+    }
     } catch (err) {
       setError('Failed to load order details');
     } finally {
@@ -78,7 +78,7 @@ const RecordPaymentPage = () => {
       const paymentData = {
         order_id: order.id,
         payment_method: formData.payment_method,
-        amount: parseFloat(order.total),
+        amount_received: parseFloat(order.total),
         county: order.address?.county || 'Unknown',
         zone: order.delivery_zone,
         customer_phone: formData.customer_phone || null,
@@ -87,14 +87,13 @@ const RecordPaymentPage = () => {
         notes: formData.notes || null
       };
 
+      console.log('🔍 Sending payment data:', paymentData);
+
       const response = await recorderService.recordPayment(orderNumber, paymentData);
 
         if (response.success) {
         setSuccess(true);
-        // Redirect after 2 seconds
-        setTimeout(() => {
-          navigate('/recorder');
-        }, 2000);
+        // Don't auto-redirect - let user review summary
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to record payment. Please try again.');
@@ -145,17 +144,99 @@ const RecordPaymentPage = () => {
   }
 
   if (success) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment Recorded Successfully!</h2>
-          <p className="text-gray-600 mb-6">Redirecting to dashboard...</p>
-          <Loader className="w-6 h-6 text-blue-600 animate-spin mx-auto" />
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="max-w-2xl w-full bg-white rounded-lg shadow-lg p-8">
+        {/* Success Icon */}
+        <div className="text-center mb-6">
+          <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-4" />
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Payment Recorded!</h2>
+          <p className="text-gray-600">The payment has been successfully recorded</p>
+        </div>
+
+        {/* Payment Summary */}
+        <div className="bg-gray-50 rounded-lg p-6 mb-6 space-y-4">
+          <div className="flex justify-between items-center pb-3 border-b">
+            <span className="text-gray-600">Order Number</span>
+            <span className="font-semibold text-gray-900">{order.order_number}</span>
+          </div>
+          
+          <div className="flex justify-between items-center pb-3 border-b">
+            <span className="text-gray-600">Customer</span>
+            <span className="font-semibold text-gray-900">{order.customer_name}</span>
+          </div>
+          
+          <div className="flex justify-between items-center pb-3 border-b">
+            <span className="text-gray-600">Amount Collected</span>
+            <span className="font-bold text-green-600 text-xl">
+              KES {parseFloat(order.total).toLocaleString('en-KE', { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+          
+          <div className="flex justify-between items-center pb-3 border-b">
+            <span className="text-gray-600">Payment Method</span>
+            <span className="font-semibold text-gray-900 capitalize">
+              {formData.payment_method === 'mpesa_manual' ? 'M-Pesa' : 
+               formData.payment_method === 'bank_transfer' ? 'Bank Transfer' : 'Cash'}
+            </span>
+          </div>
+          
+          {formData.external_transaction_id && (
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Transaction ID</span>
+              <span className="font-mono text-sm text-gray-900">{formData.external_transaction_id}</span>
+            </div>
+          )}
+          
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Recorded At</span>
+            <span className="text-sm text-gray-900">
+              {new Date().toLocaleString('en-KE', {
+                dateStyle: 'medium',
+                timeStyle: 'short'
+              })}
+            </span>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            onClick={() => {
+              const summaryText = `
+          PAYMENT RECEIPT
+          =====================================
+
+          Order Number: ${order.order_number}
+          Customer: ${order.customer_name}
+          Amount Collected: KES ${parseFloat(order.total).toLocaleString('en-KE', { minimumFractionDigits: 2 })}
+          Payment Method: ${formData.payment_method === 'mpesa_manual' ? 'M-Pesa' : formData.payment_method === 'bank_transfer' ? 'Bank Transfer' : 'Cash'}
+          ${formData.external_transaction_id ? `Transaction ID: ${formData.external_transaction_id}` : ''}
+          Recorded At: ${new Date().toLocaleString('en-KE', { dateStyle: 'medium', timeStyle: 'short' })}
+
+          =====================================
+              `.trim();
+              
+              navigator.clipboard.writeText(summaryText);
+              alert('Payment details copied to clipboard!');
+            }}
+            className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-semibold flex items-center justify-center gap-2"
+          >
+            <DollarSign className="w-5 h-5" />
+            Copy Details
+          </button>
+          
+          <button
+            onClick={() => navigate('/recorder')}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold"
+          >
+            Back to Dashboard
+          </button>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   const requiresReference = ['mpesa_manual', 'bank_transfer'].includes(formData.payment_method);
 

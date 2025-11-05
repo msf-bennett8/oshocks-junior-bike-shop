@@ -90,6 +90,12 @@ class OrderController extends Controller
                     throw new \Exception("Product not found: {$item['id']}");
                 }
 
+                // Check stock availability (handle both stock_quantity and quantity fields)
+                $availableStock = $product->stock_quantity ?? $product->quantity ?? 0;
+                if ($availableStock < $item['quantity']) {
+                    throw new \Exception("Insufficient stock for product: {$product->name}. Available: {$availableStock}, Requested: {$item['quantity']}");
+                }
+
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $product->id,
@@ -101,9 +107,11 @@ class OrderController extends Controller
                     'total' => $item['price'] * $item['quantity'],
                 ]);
 
-                // Reduce product stock
+                // Reduce product stock (handle both stock_quantity and quantity columns)
                 if ($product->stock_quantity !== null) {
                     $product->decrement('stock_quantity', $item['quantity']);
+                } elseif ($product->quantity !== null) {
+                    $product->decrement('quantity', $item['quantity']);
                 }
             }
 
@@ -184,8 +192,7 @@ class OrderController extends Controller
      */
     private function createOrGetAddress(Request $request, $user = null)
     {
-        // Extract first name and last name from customer_name
-        $nameParts = explode(' ', $request->customer_name, 2);
+        // Extract full name from customer_name
         $fullName = $request->customer_name;
 
         $addressData = [
@@ -217,7 +224,8 @@ class OrderController extends Controller
     }
 
     /**
-     * Get all pending COD payments
+     * Get pending payment orders (for payment recorders)
+     * GET /api/v1/orders/pending-payments
      */
     public function getPendingPayments()
     {
@@ -251,18 +259,35 @@ class OrderController extends Controller
     /**
      * Search order by order number
      */
-    public function searchByOrderNumber($orderNumber)
+    public function searchByOrderNumber(Request $request)
     {
+        \Log::info('🔍 searchByOrderNumber called');
+        \Log::info('🔍 Query params:', $request->all());
+        
+        $orderNumber = $request->query('order_number');
+        
+        if (!$orderNumber) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order number is required'
+            ], 400);
+        }
+
+        \Log::info('🔍 Searching for order:', ['order_number' => $orderNumber]);
+
         $order = Order::where('order_number', $orderNumber)
             ->with(['user', 'orderItems.product', 'address'])
             ->first();
 
         if (!$order) {
+            \Log::info('❌ Order not found:', ['order_number' => $orderNumber]);
             return response()->json([
                 'success' => false,
                 'message' => 'Order not found'
             ], 404);
         }
+
+        \Log::info('✅ Order found:', ['order_number' => $orderNumber]);
 
         return response()->json([
             'success' => true,
@@ -272,13 +297,19 @@ class OrderController extends Controller
 
     /**
      * Record payment for COD order
+     * POST /api/v1/orders/{orderNumber}/record-payment
      */
     public function recordPayment(Request $request, $orderNumber)
     {
         $validator = Validator::make($request->all(), [
             'amount_received' => 'required|numeric|min:0',
-            'payment_method' => 'required|in:cash,mpesa,card',
+            'payment_method' => 'required|in:cash,mpesa_manual,bank_transfer',
+            'customer_phone' => 'nullable|string|max:20',
+            'external_reference' => 'nullable|string|max:255',
+            'external_transaction_id' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:500',
+            'county' => 'nullable|string|max:100',
+            'zone' => 'nullable|string|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -305,15 +336,45 @@ class OrderController extends Controller
             ], 400);
         }
 
-        // Update order
+        // Prepare payment notes with all context
+        $paymentNotesData = [
+            'recorded_by' => $request->user()->name ?? 'Unknown',
+            'recorded_at' => now()->toDateTimeString(),
+            'payment_method' => $request->payment_method,
+            'county' => $request->county,
+            'zone' => $request->zone,
+        ];
+
+        if ($request->customer_phone) {
+            $paymentNotesData['customer_phone'] = $request->customer_phone;
+        }
+
+        if ($request->external_reference) {
+            $paymentNotesData['customer_reference'] = $request->external_reference;
+        }
+
+        if ($request->external_transaction_id) {
+            $paymentNotesData['transaction_id'] = $request->external_transaction_id;
+        }
+
+        if ($request->notes) {
+            $paymentNotesData['notes'] = $request->notes;
+        }
+
+        // Update order with all payment details
         $order->update([
             'payment_status' => 'paid',
-            'payment_method' => $request->payment_method,
             'amount_received' => $request->amount_received,
-            'payment_notes' => $request->notes,
+            'payment_notes' => json_encode($paymentNotesData, JSON_PRETTY_PRINT),
+            'customer_phone' => $request->customer_phone ?? $order->customer_phone,
+            'external_reference' => $request->external_reference,
+            'external_transaction_id' => $request->external_transaction_id,
             'paid_at' => now(),
             'recorded_by' => $request->user()->id,
         ]);
+
+        // Reload to get fresh data
+        $order->refresh();
 
         return response()->json([
             'success' => true,

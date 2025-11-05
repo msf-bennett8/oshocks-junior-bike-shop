@@ -260,91 +260,138 @@ class OrderController extends Controller
      * Search order by order number
      */
     public function searchByOrderNumber(Request $request)
-        {
-            \Log::info('🔍 searchByOrderNumber called');
-            \Log::info('🔍 Query params:', $request->all());
-            
-            $orderNumber = $request->query('order_number');
-            
-            if (!$orderNumber) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Order number is required'
-                ], 400);
-            }
-
-            \Log::info('🔍 Searching for order:', ['order_number' => $orderNumber]);
-
-            $order = Order::where('order_number', $orderNumber)
-                ->with(['user', 'orderItems.product', 'address'])
-                ->first();
-
-            if (!$order) {
-                \Log::info('❌ Order not found:', ['order_number' => $orderNumber]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Order not found'
-                ], 404);
-            }
-
-            \Log::info('✅ Order found:', ['order_number' => $orderNumber]);
-
+    {
+        \Log::info('🔍 searchByOrderNumber called');
+        \Log::info('🔍 Query params:', $request->all());
+        
+        $orderNumber = $request->query('order_number');
+        
+        if (!$orderNumber) {
             return response()->json([
-                'success' => true,
-                'data' => $order
-            ]);
+                'success' => false,
+                'message' => 'Order number is required'
+            ], 400);
         }
-    
+
+        \Log::info('🔍 Searching for order:', ['order_number' => $orderNumber]);
+
+        $order = Order::where('order_number', $orderNumber)
+            ->with(['user', 'orderItems.product', 'address'])
+            ->first();
+
+        if (!$order) {
+            \Log::info('❌ Order not found:', ['order_number' => $orderNumber]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        \Log::info('✅ Order found:', ['order_number' => $orderNumber]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $order
+        ]);
+    }
 
     /**
      * Record payment for COD order
      */
     public function recordPayment(Request $request, $orderNumber)
-{
-    $validator = Validator::make($request->all(), [
-        'amount_received' => 'required|numeric|min:0',
-        'payment_method' => 'required|in:cash,mpesa_manual,bank_transfer',
-        'notes' => 'nullable|string|max:500',
-    ]);
+    {
+        \Log::info('🔍 Recording payment', [
+            'order_number' => $orderNumber,
+            'request_data' => $request->all()
+        ]);
 
-    if ($validator->fails()) {
+        $validator = Validator::make($request->all(), [
+            'amount_received' => 'required|numeric|min:0',
+            'payment_method' => 'required|in:cash,mpesa_manual,bank_transfer',
+            'customer_phone' => 'nullable|string|max:20',
+            'external_reference' => 'nullable|string|max:255',
+            'external_transaction_id' => 'nullable|string|max:255',
+            'notes' => 'nullable|string|max:500',
+            'county' => 'nullable|string|max:100',
+            'zone' => 'nullable|string|max:100',
+        ]);
+
+        if ($validator->fails()) {
+            \Log::error('❌ Validation failed', $validator->errors()->toArray());
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $order = Order::where('order_number', $orderNumber)->first();
+
+        if (!$order) {
+            \Log::error('❌ Order not found', ['order_number' => $orderNumber]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        if ($order->payment_status !== 'pending') {
+            \Log::warning('⚠️ Payment already recorded', ['order_number' => $orderNumber]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment already recorded for this order'
+            ], 400);
+        }
+
+        // Prepare payment notes with all context
+        $paymentNotesData = [
+            'recorded_by' => $request->user()->name ?? 'Unknown',
+            'recorded_at' => now()->toDateTimeString(),
+            'payment_method' => $request->payment_method,
+            'county' => $request->county,
+            'zone' => $request->zone,
+        ];
+
+        if ($request->customer_phone) {
+            $paymentNotesData['customer_phone'] = $request->customer_phone;
+        }
+
+        if ($request->external_reference) {
+            $paymentNotesData['customer_reference'] = $request->external_reference;
+        }
+
+        if ($request->external_transaction_id) {
+            $paymentNotesData['transaction_id'] = $request->external_transaction_id;
+        }
+
+        if ($request->notes) {
+            $paymentNotesData['notes'] = $request->notes;
+        }
+
+        // Update order with all payment details
+        $order->update([
+            'payment_status' => 'paid',
+            'amount_received' => $request->amount_received,
+            'payment_notes' => json_encode($paymentNotesData, JSON_PRETTY_PRINT),
+            'customer_phone' => $request->customer_phone ?? $order->customer_phone,
+            'external_reference' => $request->external_reference,
+            'external_transaction_id' => $request->external_transaction_id,
+            'paid_at' => now(),
+            'recorded_by' => $request->user()->id,
+        ]);
+
+        // Reload to get fresh data
+        $order->refresh();
+
+        \Log::info('✅ Payment recorded successfully', [
+            'order_number' => $orderNumber,
+            'amount' => $request->amount_received
+        ]);
+
         return response()->json([
-            'success' => false,
-            'message' => 'Validation failed',
-            'errors' => $validator->errors()
-        ], 422);
+            'success' => true,
+            'message' => 'Payment recorded successfully',
+            'data' => $order
+        ]);
     }
-
-    $order = Order::where('order_number', $orderNumber)->first();
-
-    if (!$order) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Order not found'
-        ], 404);
-    }
-
-    if ($order->payment_status !== 'pending') {
-        return response()->json([
-            'success' => false,
-            'message' => 'Payment already recorded for this order'
-        ], 400);
-    }
-
-    // Update order - DON'T change payment_method (keep 'cod')
-    $order->update([
-        'payment_status' => 'paid',
-        // 'payment_method' stays as 'cod' - don't change it!
-        'amount_received' => $request->amount_received,
-        'payment_notes' => $request->notes,
-        'paid_at' => now(),
-        'recorded_by' => $request->user()->id,
-    ]);
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Payment recorded successfully',
-        'data' => $order
-    ]);
-}
 }
