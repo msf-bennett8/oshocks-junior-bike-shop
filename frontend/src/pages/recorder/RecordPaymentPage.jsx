@@ -87,9 +87,9 @@ const RecordPaymentPage = () => {
         notes: formData.notes || null
       };
 
-      const response = await recorderService.recordPayment(paymentData);
+      const response = await recorderService.recordPayment(orderNumber, paymentData);
 
-      if (response.success) {
+        if (response.success) {
         setSuccess(true);
         // Redirect after 2 seconds
         setTimeout(() => {
