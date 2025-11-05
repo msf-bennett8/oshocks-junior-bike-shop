@@ -20,7 +20,7 @@ const OrderDetailsPage = () => {
       const response = await recorderService.getOrderDetails(orderNumber);
       
       if (response.success) {
-        setOrder(response.data.order);
+        setOrder(response.data);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load order details');
