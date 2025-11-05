@@ -13,7 +13,8 @@ use App\Http\Controllers\SellerReviewController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CartItemController;
 use App\Http\Controllers\WishlistController;
-use App\Http\Controllers\OrderController;
+// ❌ REMOVED OLD: use App\Http\Controllers\OrderController;
+use App\Http\Controllers\Api\OrderController; // ✅ KEEP ONLY THIS ONE
 use App\Http\Controllers\OrderItemController;
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\PaymentController;
@@ -82,6 +83,15 @@ Route::prefix('v1')->group(function () {
     Route::get('/sellers/{id}', [SellerProfileController::class, 'show']);
     Route::get('/sellers/{id}/products', [SellerProfileController::class, 'getProducts']);
     Route::get('/sellers/{id}/reviews', [SellerReviewController::class, 'getBySeller']);
+    
+    // ============================================================================
+    // ORDER ROUTES - PUBLIC (Guest checkout allowed)
+    // ============================================================================
+    // Create order (no auth required for guest checkout)
+    Route::post('/orders/create', [OrderController::class, 'store']);
+    
+    // Get order by order number (public for tracking)
+    Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
 });
 
 // Protected routes (require authentication)
@@ -99,9 +109,15 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Admin/Super Admin privilege revocation
     Route::post('/auth/revoke-privileges', [AuthController::class, 'revokePrivileges']);
     
-    // Payment Recording (requires authentication and payment recorder permission)
-    Route::post('/payments/record', [PaymentController::class, 'recordPayment']);
-
+    // 🆕 PAYMENT RECORDER ROUTES - Must come BEFORE general order routes
+    Route::get('/orders/pending-payments', [OrderController::class, 'getPendingPayments']);
+    Route::get('/orders/search/{orderNumber}', [OrderController::class, 'searchByOrderNumber']);
+    Route::post('/orders/{orderNumber}/record-payment', [OrderController::class, 'recordPayment']);
+    
+    // Orders (Protected - User's own orders)
+    Route::get('/orders', [OrderController::class, 'index']);
+    Route::post('/orders/{orderNumber}/cancel', [OrderController::class, 'cancel']);
+    
     // Auth user
     Route::get('/user', function (Request $request) {
         return $request->user();
@@ -112,12 +128,6 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         Route::post('/move-to-cart/{itemId}', [WishlistController::class, 'moveToCart']);
         Route::post('/move-all-to-cart', [WishlistController::class, 'moveAllToCart']);
     });
-    
-    // Orders
-    Route::get('/orders', [OrderController::class, 'index']);
-    Route::get('/orders/{id}', [OrderController::class, 'show']);
-    Route::post('/orders', [OrderController::class, 'store']);
-    Route::put('/orders/{id}/cancel', [OrderController::class, 'cancel']);
     
     // Addresses
     Route::get('/addresses', [AddressController::class, 'index']);
@@ -200,10 +210,10 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // PAYOUT MANAGEMENT (Super Admin Only)
     // ============================================================================
     Route::prefix('payouts')->middleware('role:super_admin')->group(function () {
-        Route::get('/pending', [\App\Http\Controllers\Dashboard\PayoutController::class, 'pending']);
-        Route::get('/seller/{seller_id}/pending-payments', [\App\Http\Controllers\Dashboard\PayoutController::class, 'sellerPendingPayments']);
-        Route::post('/process', [\App\Http\Controllers\Dashboard\PayoutController::class, 'process']);
-        Route::get('/history', [\App\Http\Controllers\Dashboard\PayoutController::class, 'history']);
+        Route::get('/pending', [PayoutController::class, 'pending']);
+        Route::get('/seller/{seller_id}/pending-payments', [PayoutController::class, 'sellerPendingPayments']);
+        Route::post('/process', [PayoutController::class, 'process']);
+        Route::get('/history', [PayoutController::class, 'history']);
     });
 
     // ============================================================================

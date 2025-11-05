@@ -222,7 +222,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Secret endpoint: Elevate user to admin/super_admin
+     * Secret endpoint: Elevate user to admin/super_admin/delivery_agent/shop_attendant
      */
     public function secretElevate(Request $request)
     {
@@ -230,8 +230,10 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $adminPassword = env('ADMIN_PASSWORD');
         $superAdminPassword = env('SUPER_ADMIN_PASSWORD');
+        $adminPassword = env('ADMIN_PASSWORD');
+        $deliveryAgentPassword = env('DELIVERY_AGENT_PASSWORD');
+        $shopAttendantPassword = env('SHOP_ATTENDANT_PASSWORD');
         $inputPassword = $request->password;
 
         if ($inputPassword === $superAdminPassword) {
@@ -250,6 +252,22 @@ class AuthController extends Controller
                 'message' => 'Elevated to Admin',
                 'data' => ['role' => 'admin']
             ]);
+        } elseif ($inputPassword === $deliveryAgentPassword) {
+            $request->user()->update(['role' => 'delivery_agent']);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Elevated to Delivery Agent',
+                'data' => ['role' => 'delivery_agent']
+            ]);
+        } elseif ($inputPassword === $shopAttendantPassword) {
+            $request->user()->update(['role' => 'shop_attendant']);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Elevated to Shop Attendant',
+                'data' => ['role' => 'shop_attendant']
+            ]);
         } else {
             return response()->json([
                 'success' => false,
@@ -259,16 +277,16 @@ class AuthController extends Controller
     }
 
     /**
-     * Admin/Super Admin: Revoke own privileges back to buyer
+     * Admin/Super Admin/Delivery Agent/Shop Attendant: Revoke own privileges back to buyer
      */
     public function revokePrivileges(Request $request)
     {
         $user = $request->user();
 
-        if (!in_array($user->role, ['admin', 'super_admin'])) {
+        if (!in_array($user->role, ['admin', 'super_admin', 'delivery_agent', 'shop_attendant'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'You are not an admin or super admin'
+                'message' => 'You do not have elevated privileges to revoke'
             ], 400);
         }
 
@@ -294,7 +312,7 @@ class AuthController extends Controller
         }
 
         $request->validate([
-            'role' => 'required|in:buyer,seller,admin,pending_seller',
+            'role' => 'required|in:buyer,seller,admin,pending_seller,delivery_agent,shop_attendant',
         ]);
 
         $user = User::findOrFail($id);

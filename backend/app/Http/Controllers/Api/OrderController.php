@@ -90,6 +90,12 @@ class OrderController extends Controller
                     throw new \Exception("Product not found: {$item['id']}");
                 }
 
+                // Check stock availability (handle both stock_quantity and quantity fields)
+                $availableStock = $product->stock_quantity ?? $product->quantity ?? 0;
+                if ($availableStock < $item['quantity']) {
+                    throw new \Exception("Insufficient stock for product: {$product->name}. Available: {$availableStock}, Requested: {$item['quantity']}");
+                }
+
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $product->id,
@@ -101,9 +107,11 @@ class OrderController extends Controller
                     'total' => $item['price'] * $item['quantity'],
                 ]);
 
-                // Reduce product stock
+                // Reduce product stock (handle both stock_quantity and quantity columns)
                 if ($product->stock_quantity !== null) {
                     $product->decrement('stock_quantity', $item['quantity']);
+                } elseif ($product->quantity !== null) {
+                    $product->decrement('quantity', $item['quantity']);
                 }
             }
 
@@ -184,8 +192,7 @@ class OrderController extends Controller
      */
     private function createOrGetAddress(Request $request, $user = null)
     {
-        // Extract first name and last name from customer_name
-        $nameParts = explode(' ', $request->customer_name, 2);
+        // Extract full name from customer_name
         $fullName = $request->customer_name;
 
         $addressData = [
@@ -217,97 +224,99 @@ class OrderController extends Controller
     }
 
     /**
-     * Get all pending COD payments
+     * Get pending payment orders (for payment recorders)
+     * GET /api/v1/orders/pending-payments
      */
-    public function getPendingPayments()
+    public function pendingPayments(Request $request)
     {
-        \Log::info('🔍 getPendingPayments method called');
-        
-        $orders = Order::where('payment_method', 'cod')
-            ->where('payment_status', 'pending')
-            ->with(['user', 'orderItems.product'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        try {
+            $user = $request->user();
+            
+            // Check permission
+            if (!$user->canRecordPayments()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
 
-        \Log::info('📦 Found orders: ' . $orders->count());
+            // Get orders with pending payment status and COD payment method
+            $orders = Order::where('payment_status', 'pending')
+                ->where('payment_method', 'cod')
+                ->where('status', '!=', 'cancelled')
+                ->with(['orderItems.product', 'address'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(20);
 
-        return response()->json([
-            'success' => true,
-            'data' => $orders
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $orders
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch pending orders',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
-     * Search order by order number
+     * Search order by order number (for payment recorders)
+     * GET /api/v1/orders/search?order_number=OS12345678
      */
-    public function searchByOrderNumber($orderNumber)
+    public function searchByOrderNumber(Request $request)
     {
-        $order = Order::where('order_number', $orderNumber)
-            ->with(['user', 'orderItems.product', 'address'])
-            ->first();
+        try {
+            $user = $request->user();
+            
+            // Check permission
+            if (!$user->canRecordPayments()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
 
-        if (!$order) {
+            $validator = Validator::make($request->all(), [
+                'order_number' => 'required|string|min:10|max:15'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid order number format',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $order = Order::where('order_number', $request->order_number)
+                ->with(['orderItems.product.images', 'address'])
+                ->first();
+
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'order' => $order,
+                    'items' => $order->orderItems,
+                    'can_record_payment' => $order->payment_status === 'pending'
+                ]
+            ]);
+
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Order not found'
-            ], 404);
+                'message' => 'Search failed',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'data' => $order
-        ]);
-    }
-
-    /**
-     * Record payment for COD order
-     */
-    public function recordPayment(Request $request, $orderNumber)
-    {
-        $validator = Validator::make($request->all(), [
-            'amount_received' => 'required|numeric|min:0',
-            'payment_method' => 'required|in:cash,mpesa,card',
-            'notes' => 'nullable|string|max:500',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $order = Order::where('order_number', $orderNumber)->first();
-
-        if (!$order) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Order not found'
-            ], 404);
-        }
-
-        if ($order->payment_status !== 'pending') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Payment already recorded for this order'
-            ], 400);
-        }
-
-        // Update order
-        $order->update([
-            'payment_status' => 'paid',
-            'payment_method' => $request->payment_method,
-            'amount_received' => $request->amount_received,
-            'payment_notes' => $request->notes,
-            'paid_at' => now(),
-            'recorded_by' => $request->user()->id,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Payment recorded successfully',
-            'data' => $order
-        ]);
     }
 }

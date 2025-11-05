@@ -242,62 +242,118 @@ const countyInfo = {
     }
   };
   
-  const handlePaymentSubmit = async (e) => {
-    e.preventDefault();
-    if (!validatePayment()) return;
-    
-    setLoading(true);
-    
-    // Simulate API call - replace with actual API integration
-    try {
-      await new Promise(resolve => setTimeout(resolve, 3000));
+    // Replace the handlePaymentSubmit function in CheckoutPage.jsx
+    const handlePaymentSubmit = async (e) => {
+      e.preventDefault();
+      if (!validatePayment()) return;
       
-      // Prepare order data to pass to success page
-      const orderData = {
-        orderNumber: `OS${Date.now().toString().slice(-8)}`,
-        orderDate: new Date().toISOString(),
-        status: 'confirmed',
-        customer: {
-          name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
-          email: shippingInfo.email,
-          phone: shippingInfo.phone
-        },
-        shipping: {
-          address: shippingInfo.address,
-          county: shippingInfo.city, // Now contains the county
+      setLoading(true);
+      
+      try {
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+        
+        // Prepare order data
+        const orderData = {
+          customer_name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+          customer_email: shippingInfo.email,
+          customer_phone: shippingInfo.phone,
+          delivery_address: shippingInfo.address,
+          county: shippingInfo.city,
           zone: shippingInfo.zone,
-          postalCode: shippingInfo.postalCode
-        },
-        payment: {
-          method: paymentMethod === 'mpesa' ? 'M-Pesa' : 
-                  paymentMethod === 'cod' ? 'Cash on Delivery' : 
-                  'Credit/Debit Card',
-          transactionId: paymentMethod === 'cod' ? 'COD-PENDING' : `TXN${Date.now().toString().slice(-10)}`,
-          amount: total,
-          status: paymentMethod === 'cod' ? 'pending' : 'completed',
-          shippingCost: shippingCost // Pass the actual shipping cost
-        },
-        deliveryInstructions: shippingInfo.deliveryInstructions || '' // Add this line
-      };
-      
-      // Navigate to success page with order data
-      navigate('/order-success', {
-        state: {
-          orderData: orderData,
-          items: cartItems,
-          discount: 0 // Add discount if you have it
+          postal_code: shippingInfo.postalCode || null,
+          delivery_instructions: shippingInfo.deliveryInstructions || null,
+          payment_method: paymentMethod,
+          items: cartItems.map(item => ({
+            id: item.id,
+            quantity: item.quantity,
+            price: Number(item.price),
+            variant_name: item.variant?.name || null
+          })),
+          subtotal: subtotal,
+          shipping_cost: shippingCost,
+          tax: tax,
+          discount: 0,
+          total: total
+        };
+
+        // Get auth token if user is logged in
+        const token = localStorage.getItem('auth_token');
+        const headers = {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        };
+
+        // Create order
+        const response = await fetch(`${apiUrl}/orders/create`, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(orderData)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || 'Failed to create order');
         }
-      });
-      
-      // Clear the cart after successful order
-      // clearCart(); // Uncomment this when you want to clear cart after order
-      
-    } catch (error) {
-      setErrors({ submit: 'Payment failed. Please try again.' });
-    } finally {
-      setLoading(false);
-    }
-  };
+
+        // Order created successfully
+        const createdOrder = result.data.order;
+        const createdItems = result.data.items;
+
+        // Prepare data for success page
+        const successOrderData = {
+          orderNumber: createdOrder.order_number,
+          orderDate: createdOrder.created_at,
+          status: createdOrder.status,
+          estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB'),
+          customer: {
+            name: createdOrder.customer_name,
+            email: createdOrder.customer_email,
+            phone: createdOrder.customer_phone
+          },
+          shipping: {
+            address: orderData.delivery_address,
+            county: orderData.county,
+            zone: orderData.zone,
+            postalCode: orderData.postal_code
+          },
+          payment: {
+            method: paymentMethod === 'mpesa' ? 'M-Pesa' : 
+                    paymentMethod === 'cod' ? 'Cash on Delivery' : 
+                    'Credit/Debit Card',
+            transactionId: createdOrder.transaction_reference,
+            amount: createdOrder.total,
+            status: createdOrder.payment_status,
+            shippingCost: createdOrder.shipping_fee
+          },
+          deliveryInstructions: createdOrder.delivery_instructions || ''
+        };
+        
+        // Navigate to success page with order data
+        navigate('/order-success', {
+          state: {
+            orderData: successOrderData,
+            items: createdItems.map(item => ({
+              ...item.product,
+              quantity: item.quantity,
+              price: item.price
+            })),
+            discount: createdOrder.discount
+          }
+        });
+        
+        // Clear the cart after successful order
+        clearCart();
+        
+      } catch (error) {
+        console.error('Order creation error:', error);
+        setErrors({ 
+          submit: error.message || 'Failed to create order. Please try again.' 
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
   // Auto-fill shopping form when user data becomes available
   useEffect(() => {

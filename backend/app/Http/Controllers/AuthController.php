@@ -546,7 +546,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        if (!in_array($user->role, ['admin', 'super_admin'])) {
+        if (!in_array($user->role, ['admin', 'super_admin', 'delivery_agent', 'shop_attendant'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not an admin or super admin'
@@ -575,7 +575,7 @@ class AuthController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'role' => 'required|in:buyer,seller,admin,pending_seller',
+            'role' => 'required|in:buyer,seller,admin,pending_seller,delivery_agent,shop_attendant',
         ]);
 
         if ($validator->fails()) {

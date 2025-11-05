@@ -9,7 +9,13 @@ class Order extends Model
     protected $fillable = [
         'order_number',
         'user_id',
+        'customer_name',
+        'customer_email',
+        'customer_phone',
         'address_id',
+        'delivery_zone',
+        'postal_code',
+        'delivery_instructions',
         'subtotal',
         'shipping_fee',
         'tax',
@@ -17,6 +23,8 @@ class Order extends Model
         'total',
         'status',
         'payment_status',
+        'payment_method',
+        'transaction_reference',
         'notes',
         'paid_at',
         'shipped_at',
@@ -84,5 +92,37 @@ class Order extends Model
     public function isPaid()
     {
         return $this->payment_status === 'paid';
+    }
+
+    public function isCOD()
+    {
+        return $this->payment_method === 'cod';
+    }
+
+    /**
+     * Get customer name with fallback to user
+     * (Use getDisplayName() method instead of attribute accessor)
+     */
+    public function getDisplayName()
+    {
+        return $this->customer_name ?? $this->user?->name ?? 'Guest';
+    }
+
+    /**
+     * Get customer email with fallback to user
+     * (Use getDisplayEmail() method instead of attribute accessor)
+     */
+    public function getDisplayEmail()
+    {
+        return $this->customer_email ?? $this->user?->email ?? null;
+    }
+
+    /**
+     * Get customer phone with fallback to user
+     * (Use getDisplayPhone() method instead of attribute accessor)
+     */
+    public function getDisplayPhone()
+    {
+        return $this->customer_phone ?? $this->user?->phone ?? null;
     }
 }

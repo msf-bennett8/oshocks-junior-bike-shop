@@ -219,7 +219,6 @@ const handleElevation = async () => {
       }
     ];
 
-    // ADD SELLER SECTION HERE (BEFORE SUPER ADMIN)
     // Add Seller section if user is seller (but not admin or super_admin)
     if (user?.role === 'seller') {
       categories.push({
@@ -234,6 +233,24 @@ const handleElevation = async () => {
         ]
       });
     }
+    
+  //PAYMENT RECORDER
+  if (user && (
+    user.role === 'delivery_agent' || 
+    user.role === 'shop_attendant' || 
+    user.role === 'seller' || 
+    user.role === 'admin' || 
+    user.role === 'super_admin'
+  )) {
+    categories.push({
+      title: '💳 Payment Recorder',
+      items: [
+        { name: 'Recorder Dashboard', link: '/recorder', icon: DollarSign },
+        { name: 'Pending Payments', link: '/recorder', icon: Package },
+        { name: 'Search Orders', link: '/recorder', icon: Search },
+      ]
+    });
+  }
 
     // Add Super Admin section if user is super admin
     if (user?.role === 'super_admin') {
@@ -862,6 +879,23 @@ const handleElevation = async () => {
                 <Heart size={20} className="text-gray-600" />
                 <span className="text-gray-900">Wishlist</span>
               </Link>
+              {/* 🆕 Payment Recorder Link - For authorized roles */}
+              {isAuthenticated && user && (
+                user.role === 'delivery_agent' || 
+                user.role === 'shop_attendant' || 
+                user.role === 'seller' || 
+                user.role === 'admin' || 
+                user.role === 'super_admin'
+              ) && (
+                <Link
+                  to="/recorder"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-t border-gray-100 mt-2 pt-4"
+                >
+                  <DollarSign size={20} className="text-green-600" />
+                  <span className="text-gray-900 font-medium">💳 Payment Recorder</span>
+                </Link>
+              )}
               {/* Admin Dashboard Link - Only visible to admins */}
                 {isAuthenticated && user?.role === 'admin' && (
                   <Link
