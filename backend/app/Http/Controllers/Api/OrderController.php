@@ -227,96 +227,124 @@ class OrderController extends Controller
      * Get pending payment orders (for payment recorders)
      * GET /api/v1/orders/pending-payments
      */
-    public function pendingPayments(Request $request)
+    public function getPendingPayments()
     {
+        \Log::info('🔍 getPendingPayments method called');
+        \Log::info('🔍 Auth user ID: ' . (auth()->id() ?? 'guest'));
+        
         try {
-            $user = $request->user();
-            
-            // Check permission
-            if (!$user->canRecordPayments()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized'
-                ], 403);
-            }
-
-            // Get orders with pending payment status and COD payment method
-            $orders = Order::where('payment_status', 'pending')
-                ->where('payment_method', 'cod')
-                ->where('status', '!=', 'cancelled')
-                ->with(['orderItems.product', 'address'])
+            $orders = Order::where('payment_method', 'cod')
+                ->where('payment_status', 'pending')
+                ->with(['user', 'orderItems.product'])
                 ->orderBy('created_at', 'desc')
                 ->paginate(20);
+
+            \Log::info('📦 Found ' . $orders->total() . ' pending orders');
 
             return response()->json([
                 'success' => true,
                 'data' => $orders
             ]);
-
         } catch (\Exception $e) {
+            \Log::error('❌ Error in getPendingPayments: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to fetch pending orders',
-                'error' => $e->getMessage()
+                'message' => 'Error fetching orders: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Search order by order number (for payment recorders)
-     * GET /api/v1/orders/search?order_number=OS12345678
+     * Search order by order number
      */
     public function searchByOrderNumber(Request $request)
-    {
-        try {
-            $user = $request->user();
+        {
+            \Log::info('🔍 searchByOrderNumber called');
+            \Log::info('🔍 Query params:', $request->all());
             
-            // Check permission
-            if (!$user->canRecordPayments()) {
+            $orderNumber = $request->query('order_number');
+            
+            if (!$orderNumber) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized'
-                ], 403);
+                    'message' => 'Order number is required'
+                ], 400);
             }
 
-            $validator = Validator::make($request->all(), [
-                'order_number' => 'required|string|min:10|max:15'
-            ]);
+            \Log::info('🔍 Searching for order:', ['order_number' => $orderNumber]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid order number format',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $order = Order::where('order_number', $request->order_number)
-                ->with(['orderItems.product.images', 'address'])
+            $order = Order::where('order_number', $orderNumber)
+                ->with(['user', 'orderItems.product', 'address'])
                 ->first();
 
             if (!$order) {
+                \Log::info('❌ Order not found:', ['order_number' => $orderNumber]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Order not found'
                 ], 404);
             }
 
+            \Log::info('✅ Order found:', ['order_number' => $orderNumber]);
+
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'order' => $order,
-                    'items' => $order->orderItems,
-                    'can_record_payment' => $order->payment_status === 'pending'
-                ]
+                'data' => $order
             ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Search failed',
-                'error' => $e->getMessage()
-            ], 500);
         }
+    
+
+    /**
+     * Record payment for COD order
+     */
+    public function recordPayment(Request $request, $orderNumber)
+{
+    $validator = Validator::make($request->all(), [
+        'amount_received' => 'required|numeric|min:0',
+        'payment_method' => 'required|in:cash,mpesa_manual,bank_transfer',
+        'notes' => 'nullable|string|max:500',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors' => $validator->errors()
+        ], 422);
     }
+
+    $order = Order::where('order_number', $orderNumber)->first();
+
+    if (!$order) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Order not found'
+        ], 404);
+    }
+
+    if ($order->payment_status !== 'pending') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Payment already recorded for this order'
+        ], 400);
+    }
+
+    // Update order - DON'T change payment_method (keep 'cod')
+    $order->update([
+        'payment_status' => 'paid',
+        // 'payment_method' stays as 'cod' - don't change it!
+        'amount_received' => $request->amount_received,
+        'payment_notes' => $request->notes,
+        'paid_at' => now(),
+        'recorded_by' => $request->user()->id,
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Payment recorded successfully',
+        'data' => $order
+    ]);
+}
 }
