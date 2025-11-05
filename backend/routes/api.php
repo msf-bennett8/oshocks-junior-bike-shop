@@ -13,8 +13,7 @@ use App\Http\Controllers\SellerReviewController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CartItemController;
 use App\Http\Controllers\WishlistController;
-// ❌ REMOVED OLD: use App\Http\Controllers\OrderController;
-use App\Http\Controllers\Api\OrderController; // ✅ KEEP ONLY THIS ONE
+use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\OrderItemController;
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\PaymentController;
@@ -90,8 +89,8 @@ Route::prefix('v1')->group(function () {
     // Create order (no auth required for guest checkout)
     Route::post('/orders/create', [OrderController::class, 'store']);
     
-    // Get order by order number (public for tracking)
-    Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
+    // ⚠️ NOTE: Dynamic route /orders/{orderNumber} moved to END of file
+    // to prevent it from catching specific routes like /orders/pending-payments
 });
 
 // Protected routes (require authentication)
@@ -109,9 +108,11 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Admin/Super Admin privilege revocation
     Route::post('/auth/revoke-privileges', [AuthController::class, 'revokePrivileges']);
     
-    // 🆕 PAYMENT RECORDER ROUTES - Must come BEFORE general order routes
+    // ============================================================================
+    // 🆕 PAYMENT RECORDER ROUTES - MUST COME BEFORE GENERAL ORDER ROUTES
+    // ============================================================================
     Route::get('/orders/pending-payments', [OrderController::class, 'getPendingPayments']);
-    Route::get('/orders/search/{orderNumber}', [OrderController::class, 'searchByOrderNumber']);
+    Route::get('/orders/search', [OrderController::class, 'searchByOrderNumber']);
     Route::post('/orders/{orderNumber}/record-payment', [OrderController::class, 'recordPayment']);
     
     // Orders (Protected - User's own orders)
@@ -290,6 +291,17 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         // User role management
         Route::put('/users/{id}/role', [AuthController::class, 'changeUserRole']);
     });
+});
+
+// ============================================================================
+// DYNAMIC PUBLIC ROUTES - MUST COME LAST
+// ============================================================================
+// These routes use dynamic parameters and MUST be defined after all specific routes
+// to prevent them from catching specific route patterns
+Route::prefix('v1')->group(function () {
+    // Get order by order number (public for tracking)
+    // This MUST come after /orders/pending-payments and other specific routes
+    Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
 });
 
 // M-Pesa callback (public - called by Safaricom)

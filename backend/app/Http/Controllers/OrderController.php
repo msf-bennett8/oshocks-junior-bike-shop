@@ -222,19 +222,30 @@ class OrderController extends Controller
     public function getPendingPayments()
     {
         \Log::info('🔍 getPendingPayments method called');
+        \Log::info('🔍 Auth user ID: ' . (auth()->id() ?? 'guest'));
         
-        $orders = Order::where('payment_method', 'cod')
-            ->where('payment_status', 'pending')
-            ->with(['user', 'orderItems.product'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        try {
+            $orders = Order::where('payment_method', 'cod')
+                ->where('payment_status', 'pending')
+                ->with(['user', 'orderItems.product'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(20);
 
-        \Log::info('📦 Found orders: ' . $orders->count());
+            \Log::info('📦 Found ' . $orders->total() . ' pending orders');
 
-        return response()->json([
-            'success' => true,
-            'data' => $orders
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $orders
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('❌ Error in getPendingPayments: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching orders: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
