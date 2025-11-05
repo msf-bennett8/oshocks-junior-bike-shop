@@ -11,6 +11,10 @@ import { Helmet } from 'react-helmet-async';
 import { useSelector, useDispatch } from 'react-redux';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
+// Recorder Portal
+import RecorderDashboard from './pages/recorder/RecorderDashboard';
+import OrderDetailsPage from './pages/recorder/OrderDetailsPage';
+import RecordPaymentPage from './pages/recorder/RecordPaymentPage';
 
 // ============================================================================
 // CONTEXT IMPORTS
@@ -63,7 +67,7 @@ const StravaCallback = lazy(() => import('./pages/auth/StravaCallback'));
 const DashboardPage = lazy(() => import('./pages/user/UserDashboardPage'));
 const ProfilePage = lazy(() => import('./pages/user/UserProfilePage'));
 const OrdersPage = lazy(() => import('./pages/user/OrdersPage'));
-const OrderDetailsPage = lazy(() => import('./pages/user/OrderDetailsPage'));
+//const OrderDetailsPage = lazy(() => import('./pages/user/OrderDetailsPage'));
 const Wishlist = lazy(() => import('./pages/user/Wishlist'));
 const AddressesPage = lazy(() => import('./pages/user/AddressesPage'));
 const ReviewsPage = lazy(() => import('./pages/user/ReviewsPage'));
@@ -868,6 +872,34 @@ function App() {
                 <Route path="/become-a-seller" element={<BecomeASeller />} />
                 <Route path="/partner-with-us" element={<PatnerWithUsPage />} />
 
+
+                  {/* ============================================
+                      RECORDER PORTAL ROUTES
+                      ============================================ */}
+                    <Route
+                      path="/recorder"
+                      element={
+                        <ProtectedRoute>
+                          <RecorderDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/recorder/order/:orderNumber"
+                      element={
+                        <ProtectedRoute>
+                          <OrderDetailsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/recorder/record-payment/:orderNumber"
+                      element={
+                        <ProtectedRoute>
+                          <RecordPaymentPage />
+                        </ProtectedRoute>
+                      }
+                    />
                 {/* ============================================
                     ADDITIONAL LEGAL PAGES
                     ============================================ */}
