@@ -10,6 +10,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use App\Services\AuditService;
 
 class OrderController extends Controller
 {
@@ -82,7 +83,8 @@ class OrderController extends Controller
                 'transaction_reference' => $this->generateTransactionReference($request->payment_method, $orderNumber),
             ]);
 
-            // Create order items
+            // Create order items and track for audit log
+            $itemsData = [];
             foreach ($request->items as $item) {
                 $product = Product::find($item['id']);
                 
@@ -107,6 +109,14 @@ class OrderController extends Controller
                     'total' => $item['price'] * $item['quantity'],
                 ]);
 
+                // Track items for audit log
+                $itemsData[] = [
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'quantity' => $item['quantity'],
+                    'price' => $item['price'],
+                ];
+
                 // Reduce product stock (handle both stock_quantity and quantity columns)
                 if ($product->stock_quantity !== null) {
                     $product->decrement('stock_quantity', $item['quantity']);
@@ -114,6 +124,30 @@ class OrderController extends Controller
                     $product->decrement('quantity', $item['quantity']);
                 }
             }
+
+            // Log order creation
+            AuditService::log([
+                'event_type' => 'order_created',
+                'event_category' => 'order',
+                'action' => 'created',
+                'model_type' => 'Order',
+                'model_id' => $order->id,
+                'description' => "Order created: {$order->order_number} - KES {$order->total} by {$request->customer_name}",
+                'new_values' => [
+                    'order_number' => $order->order_number,
+                    'total' => $order->total,
+                    'payment_method' => $order->payment_method,
+                    'customer_name' => $order->customer_name,
+                    'customer_phone' => $order->customer_phone,
+                ],
+                'metadata' => [
+                    'items_count' => count($itemsData),
+                    'items' => $itemsData,
+                    'county' => $request->county,
+                    'zone' => $request->zone,
+                ],
+                'severity' => 'low',
+            ]);
 
             DB::commit();
 
@@ -368,29 +402,295 @@ class OrderController extends Controller
             $paymentNotesData['notes'] = $request->notes;
         }
 
-        // Update order with all payment details
-        $order->update([
-            'payment_status' => 'paid',
-            'amount_received' => $request->amount_received,
-            'payment_notes' => json_encode($paymentNotesData, JSON_PRETTY_PRINT),
-            'customer_phone' => $request->customer_phone ?? $order->customer_phone,
-            'external_reference' => $request->external_reference,
-            'external_transaction_id' => $request->external_transaction_id,
-            'paid_at' => now(),
-            'recorded_by' => $request->user()->id,
+        try {
+            DB::beginTransaction();
+
+            // 1. GET RECORDER DETAILS
+            $recorder = \App\Models\PaymentRecorder::where('user_id', $request->user()->id)->first();
+            $recorderCode = $recorder ? $recorder->recorder_code : 'UNKNOWN';
+            $recorderType = $recorder ? $recorder->recorder_type : 'system';
+            $recorderLocation = $recorder ? $recorder->location : 'UNKNOWN';
+
+            // 2. CAPTURE IP & DEVICE INFO
+            $ipAddress = $request->ip();
+            $deviceInfo = $request->userAgent();
+
+            // 3. GET ORDER ITEMS & CALCULATE PER SELLER
+            $order->load('orderItems');
+            
+            foreach ($order->orderItems as $orderItem) {
+                // 4. GET SELLER & COMMISSION RATE
+                $seller = \App\Models\SellerProfile::find($orderItem->seller_id);
+                $commissionRate = $seller ? ($seller->commission_rate ?? 15.00) : 15.00;
+                
+                // 5. CALCULATE COMMISSION
+                $itemTotal = $orderItem->total;
+                $commissionAmount = round($itemTotal * ($commissionRate / 100), 2);
+                $sellerPayoutAmount = round($itemTotal - $commissionAmount, 2);
+                
+                // 6. GENERATE TRANSACTION REFERENCE
+                $method = strtoupper(explode('_', $request->payment_method)[0]);
+                $dateStr = now()->format('Ymd');
+                $timeStr = now()->format('His');
+                $sequence = str_pad(\App\Models\Payment::whereDate('created_at', now())->count() + 1, 3, '0', STR_PAD_LEFT);
+                $transactionReference = "{$method}-{$recorderCode}-{$recorderLocation}-{$dateStr}-{$timeStr}-{$sequence}";
+                
+                // 7. CREATE PAYMENT RECORD
+                \App\Models\Payment::create([
+                    'order_id' => $order->id,
+                    'seller_id' => $orderItem->seller_id,
+                    'sale_channel' => $this->determineSaleChannel($recorderType),
+                    'payment_method' => $request->payment_method,
+                    'transaction_reference' => $transactionReference,
+                    'transaction_id' => $transactionReference, // Use same as reference for now
+                    'external_reference' => $request->external_reference,
+                    'external_transaction_id' => $request->external_transaction_id,
+                    'amount' => $itemTotal,
+                    'currency' => 'KES',
+                    'platform_commission_rate' => $commissionRate,
+                    'platform_commission_amount' => $commissionAmount,
+                    'seller_payout_amount' => $sellerPayoutAmount,
+                    'status' => 'completed',
+                    'payout_status' => 'pending',
+                    'recorded_by_user_id' => $request->user()->id,
+                    'recorder_type' => $recorderType,
+                    'recorder_location' => $recorderLocation,
+                    'phone_number' => $request->customer_phone,
+                    'payment_collected_at' => now(),
+                    'recorded_from_ip' => $ipAddress,
+                    'recorded_device_info' => $deviceInfo,
+                    'notes' => $request->notes,
+                    'metadata' => json_encode([
+                        'county' => $request->county,
+                        'zone' => $request->zone,
+                        'order_item_id' => $orderItem->id,
+                    ]),
+                ]);
+                
+                // 8. UPDATE SELLER TOTALS
+                if ($seller) {
+                    $seller->increment('total_sales', $itemTotal);
+                    $seller->increment('total_commission_paid', $commissionAmount);
+                    $seller->increment('total_earnings', $sellerPayoutAmount);
+                }
+            }
+
+            // 9. UPDATE ORDER
+            $order->update([
+                'payment_status' => 'paid',
+                'amount_received' => $request->amount_received,
+                'payment_notes' => json_encode($paymentNotesData, JSON_PRETTY_PRINT),
+                'customer_phone' => $request->customer_phone ?? $order->customer_phone,
+                'external_reference' => $request->external_reference,
+                'external_transaction_id' => $request->external_transaction_id,
+                'paid_at' => now(),
+                'recorded_by' => $request->user()->id,
+            ]);
+
+            DB::commit();
+
+            // Reload to get fresh data
+            $order->refresh();
+
+            // Log payment recording in audit trail
+            try {
+                \App\Services\AuditService::log([
+                    'event_type' => 'payment_recorded',
+                    'event_category' => 'payment',
+                    'action' => 'created',
+                    'model_type' => 'Order',
+                    'model_id' => $order->id,
+                    'description' => "Payment recorded for order {$order->order_number} - KES {$request->amount_received} via {$request->payment_method}",
+                    'new_values' => [
+                        'order_number' => $order->order_number,
+                        'amount_received' => $request->amount_received,
+                        'payment_method' => $request->payment_method,
+                        'county' => $request->county,
+                        'zone' => $request->zone,
+                    ],
+                    'metadata' => $paymentNotesData,
+                    'severity' => 'medium',
+                ]);
+                \Log::info('✅ Audit log created successfully');
+            } catch (\Exception $e) {
+                \Log::error('❌ Failed to create audit log: ' . $e->getMessage());
+            }
+
+            \Log::info('✅ Payment recorded successfully', [
+                'order_number' => $orderNumber,
+                'amount' => $request->amount_received
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment recorded successfully',
+                'data' => $order
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            \Log::error('❌ Payment recording failed: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to record payment',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Determine sale channel from recorder type
+     */
+    private function determineSaleChannel($recorderType)
+    {
+        return match($recorderType) {
+            'delivery_agent' => 'online_delivery',
+            'shop_attendant' => 'physical_shop',
+            'seller' => 'direct_seller',
+            default => 'online_delivery',
+        };
+    }
+
+    /**
+     * Update order status
+     * PUT /api/v1/orders/{orderNumber}/status
+     */
+    public function updateStatus(Request $request, $orderNumber)
+    {
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:pending,processing,confirmed,shipped,delivered,cancelled',
+            'notes' => 'nullable|string|max:500',
         ]);
 
-        // Reload to get fresh data
-        $order->refresh();
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
-        \Log::info('✅ Payment recorded successfully', [
-            'order_number' => $orderNumber,
-            'amount' => $request->amount_received
+        $order = Order::where('order_number', $orderNumber)->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        // Capture old status
+        $oldStatus = $order->status;
+
+        // Update status
+        $order->status = $request->status;
+        
+        // Set timestamps for specific statuses
+        if ($request->status === 'shipped' && !$order->shipped_at) {
+            $order->shipped_at = now();
+        }
+        if ($request->status === 'delivered' && !$order->delivered_at) {
+            $order->delivered_at = now();
+        }
+        
+        $order->save();
+
+        // Log status change
+        AuditService::log([
+            'event_type' => 'order_status_changed',
+            'event_category' => 'order',
+            'action' => 'updated',
+            'model_type' => 'Order',
+            'model_id' => $order->id,
+            'description' => "Order {$order->order_number} status changed from {$oldStatus} to {$request->status} by " . auth()->user()->name,
+            'old_values' => ['status' => $oldStatus],
+            'new_values' => ['status' => $request->status],
+            'metadata' => [
+                'order_number' => $order->order_number,
+                'customer_phone' => $order->customer_phone,
+                'total' => $order->total,
+                'notes' => $request->notes,
+            ],
+            'severity' => 'medium',
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Payment recorded successfully',
+            'message' => 'Order status updated successfully',
+            'data' => $order
+        ]);
+    }
+
+    /**
+     * Cancel order
+     * POST /api/v1/orders/{orderNumber}/cancel
+     */
+    public function cancelOrder(Request $request, $orderNumber)
+    {
+        $validator = Validator::make($request->all(), [
+            'reason' => 'required|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $order = Order::where('order_number', $orderNumber)->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        if (in_array($order->status, ['shipped', 'delivered', 'cancelled'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order cannot be cancelled in current status'
+            ], 400);
+        }
+
+        $oldStatus = $order->status;
+        $oldPaymentStatus = $order->payment_status;
+
+        $order->status = 'cancelled';
+        $order->save();
+
+        // Log cancellation
+        AuditService::log([
+            'event_type' => 'order_cancelled',
+            'event_category' => 'order',
+            'action' => 'updated',
+            'model_type' => 'Order',
+            'model_id' => $order->id,
+            'description' => "Order {$order->order_number} cancelled by " . auth()->user()->name . " - Reason: {$request->reason}",
+            'old_values' => [
+                'status' => $oldStatus,
+                'payment_status' => $oldPaymentStatus,
+            ],
+            'new_values' => [
+                'status' => 'cancelled',
+                'cancellation_reason' => $request->reason,
+            ],
+            'metadata' => [
+                'order_number' => $order->order_number,
+                'total' => $order->total,
+                'reason' => $request->reason,
+            ],
+            'severity' => 'high',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order cancelled successfully',
             'data' => $order
         ]);
     }

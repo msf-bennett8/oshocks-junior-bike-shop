@@ -182,4 +182,17 @@ return [
 
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Audit Log Retention Settings
+    |--------------------------------------------------------------------------
+    */
+    'audit' => [
+        'retention_days' => env('AUDIT_RETENTION_DAYS', 365),
+        'high_severity_retention_days' => env('AUDIT_HIGH_SEVERITY_RETENTION_DAYS', 730),
+        'suspicious_retention_days' => env('AUDIT_SUSPICIOUS_RETENTION_DAYS', 730),
+        'cleanup_enabled' => env('AUDIT_CLEANUP_ENABLED', true),
+        'archive_before_delete' => env('AUDIT_ARCHIVE_BEFORE_DELETE', true),
+    ],
+
 ];

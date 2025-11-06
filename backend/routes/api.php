@@ -83,6 +83,10 @@ Route::prefix('v1')->group(function () {
     Route::get('/sellers/{id}/products', [SellerProfileController::class, 'getProducts']);
     Route::get('/sellers/{id}/reviews', [SellerReviewController::class, 'getBySeller']);
     
+    // Payment Recorders (public view)
+    Route::get('/payment-recorders', [\App\Http\Controllers\PaymentRecorderController::class, 'index']);
+    Route::get('/payment-recorders/{id}', [\App\Http\Controllers\PaymentRecorderController::class, 'show']);
+    
     // ============================================================================
     // ORDER ROUTES - PUBLIC (Guest checkout allowed)
     // ============================================================================
@@ -109,15 +113,34 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::post('/auth/revoke-privileges', [AuthController::class, 'revokePrivileges']);
     
     // ============================================================================
-    // 🆕 PAYMENT RECORDER ROUTES - MUST COME BEFORE GENERAL ORDER ROUTES
+    // AUDIT LOG ROUTES (Admin/Super Admin only) - SPECIFIC ROUTES FIRST
     // ============================================================================
+    Route::get('/audit-logs/stats', [\App\Http\Controllers\Api\AuditLogController::class, 'stats']);
+    Route::get('/audit-logs/suspicious', [\App\Http\Controllers\Api\AuditLogController::class, 'suspicious']);
+    Route::get('/audit-logs/export', [\App\Http\Controllers\Api\AuditLogController::class, 'export']);
+    Route::get('/audit-logs/category/{category}', [\App\Http\Controllers\Api\AuditLogController::class, 'byCategory']);
+    Route::get('/audit-logs/user/{userId}', [\App\Http\Controllers\Api\AuditLogController::class, 'userLogs']);
+    Route::get('/audit-logs/retention/stats', [App\Http\Controllers\Api\AuditLogController::class, 'retentionStats']);
+    Route::post('/audit-logs/retention/cleanup', [App\Http\Controllers\Api\AuditLogController::class, 'runCleanup']);
+    Route::get('/audit-logs/archives', [App\Http\Controllers\Api\AuditLogController::class, 'archives']);
+    Route::get('/audit-logs/archives/{id}', [App\Http\Controllers\Api\AuditLogController::class, 'showArchive']);
+    Route::get('/audit-logs', [\App\Http\Controllers\Api\AuditLogController::class, 'index']);
+    Route::get('/audit-logs/{id}', [\App\Http\Controllers\Api\AuditLogController::class, 'show']);
+    
+    // ============================================================================
+    // ORDER MANAGEMENT ROUTES
+    // ============================================================================
+    // Order status management
+    Route::put('/orders/{orderNumber}/status', [App\Http\Controllers\Api\OrderController::class, 'updateStatus']);
+    Route::post('/orders/{orderNumber}/cancel', [App\Http\Controllers\Api\OrderController::class, 'cancelOrder']);
+    
+    // Payment Recorder Routes - MUST COME BEFORE GENERAL ORDER ROUTES
     Route::get('/orders/pending-payments', [OrderController::class, 'getPendingPayments']);
     Route::get('/orders/search', [OrderController::class, 'searchByOrderNumber']);
     Route::post('/orders/{orderNumber}/record-payment', [OrderController::class, 'recordPayment']);
     
     // Orders (Protected - User's own orders)
     Route::get('/orders', [OrderController::class, 'index']);
-    Route::post('/orders/{orderNumber}/cancel', [OrderController::class, 'cancel']);
     
     // Auth user
     Route::get('/user', function (Request $request) {

@@ -7,80 +7,142 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use App\Services\AuditService;
 
 class AuthController extends Controller
 {
     // Register
-        public function register(Request $request)
-        {
-            $request->validate([
-                'name' => 'required|string|max:255',
-                'username' => 'nullable|string|max:50|unique:users|regex:/^[a-zA-Z0-9_]+$/',
-                'email' => 'nullable|string|email|max:255|unique:users',
-                'password' => 'required|string|min:8|confirmed',
-                'phone' => 'nullable|string|max:20|unique:users',
-                'address' => 'nullable|string',
-            ]);
+    public function register(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'username' => 'nullable|string|max:50|unique:users|regex:/^[a-zA-Z0-9_]+$/',
+            'email' => 'nullable|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'phone' => 'nullable|string|max:20|unique:users',
+            'address' => 'nullable|string',
+        ]);
 
-            // Ensure at least one of email, phone, or username is provided
-            if (!$request->email && !$request->phone && !$request->username) {
-                return response()->json([
-                    'message' => 'At least one of email, phone, or username is required'
-                ], 422);
-            }
-
-            $user = User::create([
-                'name' => $request->name,
-                'username' => $request->username,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-                'phone' => $request->phone,
-                'address' => $request->address,
-                'role' => 'buyer',
-            ]);
-
-            $token = $user->createToken('auth-token')->plainTextToken;
-
+        // Ensure at least one of email, phone, or username is provided
+        if (!$request->email && !$request->phone && !$request->username) {
             return response()->json([
-                'user' => $user,
-                'token' => $token,
-                'message' => 'Registration successful'
-            ], 201);
+                'message' => 'At least one of email, phone, or username is required'
+            ], 422);
         }
+
+        $user = User::create([
+            'name' => $request->name,
+            'username' => $request->username,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'phone' => $request->phone,
+            'address' => $request->address,
+            'role' => 'buyer',
+        ]);
+
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        // Log user registration
+        AuditService::log([
+            'event_type' => 'user_registered',
+            'event_category' => 'security',
+            'action' => 'created',
+            'user_id' => $user->id,
+            'user_role' => $user->role,
+            'model_type' => 'User',
+            'model_id' => $user->id,
+            'description' => "New user registered: {$user->email}",
+            'new_values' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'role' => $user->role,
+            ],
+            'severity' => 'low',
+        ]);
+
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+            'message' => 'Registration successful'
+        ], 201);
+    }
 
     // Login
-        public function login(Request $request)
-        {
-            $request->validate([
-                'login' => 'required|string',
-                'password' => 'required',
+    public function login(Request $request)
+    {
+        $request->validate([
+            'login' => 'required|string',
+            'password' => 'required',
+        ]);
+
+        // Determine if login is email, phone, or username
+        $loginField = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 
+                    (preg_match('/^[+]?[0-9]{10,15}$/', $request->login) ? 'phone' : 'username');
+
+        $user = User::where($loginField, $request->login)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            // Log failed login attempt
+            AuditService::log([
+                'event_type' => 'login_failed',
+                'event_category' => 'security',
+                'action' => 'failed',
+                'user_id' => null,
+                'user_role' => null,
+                'description' => "Failed login attempt for: {$request->login}",
+                'metadata' => [
+                    'login_field' => $loginField,
+                    'login_value' => $request->login,
+                ],
+                'severity' => 'medium',
+                'is_suspicious' => true,
             ]);
 
-            // Determine if login is email, phone, or username
-            $loginField = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 
-                        (preg_match('/^[+]?[0-9]{10,15}$/', $request->login) ? 'phone' : 'username');
-
-            $user = User::where($loginField, $request->login)->first();
-
-            if (!$user || !Hash::check($request->password, $user->password)) {
-                throw ValidationException::withMessages([
-                    'login' => ['The provided credentials are incorrect.'],
-                ]);
-            }
-
-            $token = $user->createToken('auth-token')->plainTextToken;
-
-            return response()->json([
-                'user' => $user,
-                'token' => $token,
-                'message' => 'Login successful'
+            throw ValidationException::withMessages([
+                'login' => ['The provided credentials are incorrect.'],
             ]);
         }
+
+        $token = $user->createToken('auth-token')->plainTextToken;
+
+        // Log successful login
+        AuditService::log([
+            'event_type' => 'login_success',
+            'event_category' => 'security',
+            'action' => 'accessed',
+            'user_id' => $user->id,
+            'user_role' => $user->role,
+            'description' => "User logged in successfully: {$user->email}",
+            'metadata' => [
+                'login_method' => $loginField,
+            ],
+            'severity' => 'low',
+        ]);
+
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+            'message' => 'Login successful'
+        ]);
+    }
 
     // Logout
     public function logout(Request $request)
     {
+        $user = $request->user();
         $request->user()->currentAccessToken()->delete();
+
+        // Log logout
+        AuditService::log([
+            'event_type' => 'logout',
+            'event_category' => 'security',
+            'action' => 'accessed',
+            'user_id' => $user->id,
+            'user_role' => $user->role,
+            'description' => "User logged out: {$user->email}",
+            'severity' => 'low',
+        ]);
 
         return response()->json([
             'message' => 'Logged out successfully'
@@ -99,6 +161,7 @@ class AuthController extends Controller
     public function updateProfile(Request $request)
     {
         $user = $request->user();
+        $oldValues = $user->only(['name', 'phone', 'address']);
 
         $request->validate([
             'name' => 'sometimes|string|max:255',
@@ -107,6 +170,20 @@ class AuthController extends Controller
         ]);
 
         $user->update($request->only(['name', 'phone', 'address']));
+        $newValues = $user->only(['name', 'phone', 'address']);
+
+        // Log profile update
+        AuditService::log([
+            'event_type' => 'profile_updated',
+            'event_category' => 'user',
+            'action' => 'updated',
+            'model_type' => 'User',
+            'model_id' => $user->id,
+            'description' => "User profile updated: {$user->email}",
+            'old_values' => $oldValues,
+            'new_values' => $newValues,
+            'severity' => 'low',
+        ]);
 
         return response()->json([
             'user' => $user,
@@ -125,6 +202,16 @@ class AuthController extends Controller
         $user = $request->user();
 
         if (!Hash::check($request->current_password, $user->password)) {
+            // Log failed password change
+            AuditService::log([
+                'event_type' => 'password_change_failed',
+                'event_category' => 'security',
+                'action' => 'failed',
+                'description' => "Failed password change attempt: {$user->email}",
+                'severity' => 'medium',
+                'is_suspicious' => true,
+            ]);
+
             throw ValidationException::withMessages([
                 'current_password' => ['Current password is incorrect.'],
             ]);
@@ -132,6 +219,17 @@ class AuthController extends Controller
 
         $user->update([
             'password' => Hash::make($request->new_password)
+        ]);
+
+        // Log successful password change
+        AuditService::log([
+            'event_type' => 'password_changed',
+            'event_category' => 'security',
+            'action' => 'updated',
+            'model_type' => 'User',
+            'model_id' => $user->id,
+            'description' => "Password changed successfully: {$user->email}",
+            'severity' => 'medium',
         ]);
 
         return response()->json([
@@ -162,6 +260,19 @@ class AuthController extends Controller
 
         $user->update(['role' => 'seller']);
 
+        // Log seller approval
+        AuditService::log([
+            'event_type' => 'seller_approved',
+            'event_category' => 'user',
+            'action' => 'updated',
+            'model_type' => 'User',
+            'model_id' => $user->id,
+            'description' => "Seller approved by {$request->user()->email}: {$user->email}",
+            'old_values' => ['role' => 'pending_seller'],
+            'new_values' => ['role' => 'seller'],
+            'severity' => 'medium',
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Seller approved successfully',
@@ -191,6 +302,19 @@ class AuthController extends Controller
         }
 
         $user->update(['role' => 'buyer']);
+
+        // Log seller rejection
+        AuditService::log([
+            'event_type' => 'seller_rejected',
+            'event_category' => 'user',
+            'action' => 'updated',
+            'model_type' => 'User',
+            'model_id' => $user->id,
+            'description' => "Seller rejected by {$request->user()->email}: {$user->email}",
+            'old_values' => ['role' => 'pending_seller'],
+            'new_values' => ['role' => 'buyer'],
+            'severity' => 'medium',
+        ]);
 
         return response()->json([
             'success' => true,
@@ -236,8 +360,26 @@ class AuthController extends Controller
         $shopAttendantPassword = env('SHOP_ATTENDANT_PASSWORD');
         $inputPassword = $request->password;
 
+        $user = $request->user();
+        $oldRole = $user->role;
+        $newRole = null;
+
         if ($inputPassword === $superAdminPassword) {
-            $request->user()->update(['role' => 'super_admin']);
+            $user->update(['role' => 'super_admin']);
+            $newRole = 'super_admin';
+            
+            // Log privilege elevation
+            AuditService::log([
+                'event_type' => 'privilege_elevated',
+                'event_category' => 'security',
+                'action' => 'updated',
+                'model_type' => 'User',
+                'model_id' => $user->id,
+                'description' => "User elevated to Super Admin: {$user->email}",
+                'old_values' => ['role' => $oldRole],
+                'new_values' => ['role' => $newRole],
+                'severity' => 'high',
+            ]);
             
             return response()->json([
                 'success' => true,
@@ -245,7 +387,20 @@ class AuthController extends Controller
                 'data' => ['role' => 'super_admin']
             ]);
         } elseif ($inputPassword === $adminPassword) {
-            $request->user()->update(['role' => 'admin']);
+            $user->update(['role' => 'admin']);
+            $newRole = 'admin';
+            
+            AuditService::log([
+                'event_type' => 'privilege_elevated',
+                'event_category' => 'security',
+                'action' => 'updated',
+                'model_type' => 'User',
+                'model_id' => $user->id,
+                'description' => "User elevated to Admin: {$user->email}",
+                'old_values' => ['role' => $oldRole],
+                'new_values' => ['role' => $newRole],
+                'severity' => 'high',
+            ]);
             
             return response()->json([
                 'success' => true,
@@ -253,7 +408,20 @@ class AuthController extends Controller
                 'data' => ['role' => 'admin']
             ]);
         } elseif ($inputPassword === $deliveryAgentPassword) {
-            $request->user()->update(['role' => 'delivery_agent']);
+            $user->update(['role' => 'delivery_agent']);
+            $newRole = 'delivery_agent';
+            
+            AuditService::log([
+                'event_type' => 'privilege_elevated',
+                'event_category' => 'security',
+                'action' => 'updated',
+                'model_type' => 'User',
+                'model_id' => $user->id,
+                'description' => "User elevated to Delivery Agent: {$user->email}",
+                'old_values' => ['role' => $oldRole],
+                'new_values' => ['role' => $newRole],
+                'severity' => 'medium',
+            ]);
             
             return response()->json([
                 'success' => true,
@@ -261,7 +429,20 @@ class AuthController extends Controller
                 'data' => ['role' => 'delivery_agent']
             ]);
         } elseif ($inputPassword === $shopAttendantPassword) {
-            $request->user()->update(['role' => 'shop_attendant']);
+            $user->update(['role' => 'shop_attendant']);
+            $newRole = 'shop_attendant';
+            
+            AuditService::log([
+                'event_type' => 'privilege_elevated',
+                'event_category' => 'security',
+                'action' => 'updated',
+                'model_type' => 'User',
+                'model_id' => $user->id,
+                'description' => "User elevated to Shop Attendant: {$user->email}",
+                'old_values' => ['role' => $oldRole],
+                'new_values' => ['role' => $newRole],
+                'severity' => 'medium',
+            ]);
             
             return response()->json([
                 'success' => true,
@@ -269,6 +450,16 @@ class AuthController extends Controller
                 'data' => ['role' => 'shop_attendant']
             ]);
         } else {
+            // Log failed elevation attempt
+            AuditService::log([
+                'event_type' => 'privilege_elevation_failed',
+                'event_category' => 'security',
+                'action' => 'failed',
+                'description' => "Failed privilege elevation attempt: {$user->email}",
+                'severity' => 'high',
+                'is_suspicious' => true,
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid password'
@@ -290,7 +481,21 @@ class AuthController extends Controller
             ], 400);
         }
 
+        $oldRole = $user->role;
         $user->update(['role' => 'buyer']);
+
+        // Log privilege revocation
+        AuditService::log([
+            'event_type' => 'privilege_revoked',
+            'event_category' => 'security',
+            'action' => 'updated',
+            'model_type' => 'User',
+            'model_id' => $user->id,
+            'description' => "User revoked own privileges: {$user->email}",
+            'old_values' => ['role' => $oldRole],
+            'new_values' => ['role' => 'buyer'],
+            'severity' => 'medium',
+        ]);
 
         return response()->json([
             'success' => true,
@@ -325,7 +530,21 @@ class AuthController extends Controller
             ], 400);
         }
 
+        $oldRole = $user->role;
         $user->update(['role' => $request->role]);
+
+        // Log role change
+        AuditService::log([
+            'event_type' => 'user_role_changed',
+            'event_category' => 'user',
+            'action' => 'updated',
+            'model_type' => 'User',
+            'model_id' => $user->id,
+            'description' => "User role changed by {$request->user()->email}: {$user->email}",
+            'old_values' => ['role' => $oldRole],
+            'new_values' => ['role' => $request->role],
+            'severity' => 'high',
+        ]);
 
         return response()->json([
             'success' => true,
@@ -358,7 +577,21 @@ class AuthController extends Controller
         ]);
 
         $user = User::findOrFail($id);
+        $oldStatus = $user->is_active;
         $user->update(['is_active' => $request->is_active]);
+
+        // Log status change
+        AuditService::log([
+            'event_type' => 'user_status_changed',
+            'event_category' => 'user',
+            'action' => 'updated',
+            'model_type' => 'User',
+            'model_id' => $user->id,
+            'description' => "User status changed by {$request->user()->email}: {$user->email}",
+            'old_values' => ['is_active' => $oldStatus],
+            'new_values' => ['is_active' => $request->is_active],
+            'severity' => 'medium',
+        ]);
 
         return response()->json([
             'success' => true,
@@ -381,6 +614,22 @@ class AuthController extends Controller
             ], 403);
         }
 
+        // Log user deletion
+        AuditService::log([
+            'event_type' => 'user_deleted',
+            'event_category' => 'user',
+            'action' => 'deleted',
+            'model_type' => 'User',
+            'model_id' => $user->id,
+            'description' => "User deleted: {$user->email}",
+            'old_values' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+            ],
+            'severity' => 'high',
+        ]);
+
         $user->delete();
 
         return response()->json([
@@ -388,5 +637,4 @@ class AuthController extends Controller
             'message' => 'User deleted successfully'
         ]);
     }
-
 }
