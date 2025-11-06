@@ -247,6 +247,14 @@ const countyInfo = {
       e.preventDefault();
       if (!validatePayment()) return;
       
+      // DEBUG: Log cart items to see what IDs we're sending
+      console.log('🛒 Cart Items:', cartItems);
+      console.log('📦 Items being sent:', cartItems.map(item => ({
+        id: item.id,
+        productId: item.product_id,
+        allKeys: Object.keys(item)
+      })));
+      
       setLoading(true);
       
       try {
@@ -264,7 +272,7 @@ const countyInfo = {
           delivery_instructions: shippingInfo.deliveryInstructions || null,
           payment_method: paymentMethod,
           items: cartItems.map(item => ({
-            id: item.id,
+            id: item.product_id, 
             quantity: item.quantity,
             price: Number(item.price),
             variant_name: item.variant?.name || null

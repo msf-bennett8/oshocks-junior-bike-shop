@@ -76,7 +76,7 @@ const loadOrderDetails = async () => {
       setSubmitting(true);
 
       const paymentData = {
-        order_id: order.id,
+        //order_id: order.id,// -recorderService will add it
         payment_method: formData.payment_method,
         amount_received: parseFloat(order.total),
         county: order.address?.county || 'Unknown',
@@ -160,6 +160,11 @@ const loadOrderDetails = async () => {
             <span className="text-gray-600">Order Number</span>
             <span className="font-semibold text-gray-900">{order.order_number}</span>
           </div>
+
+          <div className="flex justify-between items-center pb-3 border-b">
+          <span className="text-gray-600">Transaction ID</span>
+          <span className="font-mono text-sm text-gray-900">{order.transaction_reference}</span>
+        </div>
           
           <div className="flex justify-between items-center pb-3 border-b">
             <span className="text-gray-600">Customer</span>
@@ -204,18 +209,19 @@ const loadOrderDetails = async () => {
           <button
             onClick={() => {
               const summaryText = `
-          PAYMENT RECEIPT
-          =====================================
+                PAYMENT RECEIPT
+                =====================================
 
-          Order Number: ${order.order_number}
-          Customer: ${order.customer_name}
-          Amount Collected: KES ${parseFloat(order.total).toLocaleString('en-KE', { minimumFractionDigits: 2 })}
-          Payment Method: ${formData.payment_method === 'mpesa_manual' ? 'M-Pesa' : formData.payment_method === 'bank_transfer' ? 'Bank Transfer' : 'Cash'}
-          ${formData.external_transaction_id ? `Transaction ID: ${formData.external_transaction_id}` : ''}
-          Recorded At: ${new Date().toLocaleString('en-KE', { dateStyle: 'medium', timeStyle: 'short' })}
+                Order Number: ${order.order_number}
+                Transaction ID: ${order.transaction_reference || 'N/A'}
+                Customer: ${order.customer_name}
+                Amount Collected: KES ${parseFloat(order.total).toLocaleString('en-KE', { minimumFractionDigits: 2 })}
+                Payment Method: ${formData.payment_method === 'mpesa_manual' ? 'M-Pesa' : formData.payment_method === 'bank_transfer' ? 'Bank Transfer' : 'Cash'}
+                ${formData.external_transaction_id ? `External Ref: ${formData.external_transaction_id}` : ''}
+                Recorded At: ${new Date().toLocaleString('en-KE', { dateStyle: 'medium', timeStyle: 'short' })}
 
-          =====================================
-              `.trim();
+                =====================================
+                `.trim();
               
               navigator.clipboard.writeText(summaryText);
               alert('Payment details copied to clipboard!');

@@ -24,7 +24,17 @@ const SuperAdminAdminUsersPage = () => {
     try {
       setLoading(true);
       const response = await userService.getAllUsers();
-      setUsers(response.data.data || []);
+      const usersData = response.data.data || [];
+      
+      // Add all_roles property to each user for multi-role support
+      const usersWithRoles = usersData.map(user => ({
+        ...user,
+        all_roles: user.additional_roles 
+          ? [user.role, ...user.additional_roles] 
+          : [user.role]
+      }));
+      
+      setUsers(usersWithRoles);
     } catch (error) {
       console.error('Failed to fetch users:', error);
       alert('Failed to load users. Please try again.');
@@ -51,6 +61,8 @@ const SuperAdminAdminUsersPage = () => {
       case 'admin': return 'bg-purple-100 text-purple-800';
       case 'seller': return 'bg-blue-100 text-blue-800';
       case 'pending_seller': return 'bg-yellow-100 text-yellow-800';
+      case 'delivery_agent': return 'bg-green-100 text-green-800';
+      case 'shop_attendant': return 'bg-cyan-100 text-cyan-800';
       case 'buyer': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -60,6 +72,8 @@ const SuperAdminAdminUsersPage = () => {
     switch (role) {
       case 'super_admin': return 'Super Admin';
       case 'pending_seller': return 'Pending Seller';
+      case 'delivery_agent': return 'Delivery Agent';
+      case 'shop_attendant': return 'Shop Attendant';
       default: return role.charAt(0).toUpperCase() + role.slice(1);
     }
   };
@@ -98,85 +112,87 @@ const SuperAdminAdminUsersPage = () => {
     setActionMenuOpen(null);
   };
 
-  const handleRoleChange = async (userId, currentRole, action) => {
-    let newRole;
-    let confirmMessage;
-
-    switch (action) {
-      case 'upgrade_to_seller':
-        newRole = 'pending_seller';
-        confirmMessage = 'Upgrade this user to pending seller status?';
-        break;
-      case 'remove_seller':
-        newRole = 'buyer';
-        confirmMessage = 'Remove seller privileges from this user?';
-        break;
-      case 'make_admin':
-        if (currentUser.role !== 'super_admin') {
-          alert('Only super admins can promote users to admin');
-          return;
-        }
-        newRole = 'admin';
-        confirmMessage = 'Promote this user to admin?';
-        break;
-      case 'remove_admin':
-        if (currentUser.role !== 'super_admin') {
-          alert('Only super admins can demote admins');
-          return;
-        }
-        newRole = 'buyer';
-        confirmMessage = 'Demote this admin to regular buyer?';
-        break;
-      case 'approve_seller':
-        if (currentUser.role !== 'super_admin') {
-          alert('Only super admins can approve sellers');
-          return;
-        }
-        try {
-          await userService.approveSeller(userId);
-          setUsers(users.map(user => 
-            user.id === userId ? { ...user, role: 'seller' } : user
-          ));
-          alert('Seller approved successfully!');
-          setActionMenuOpen(null);
-          return;
-        } catch (error) {
-          alert(error.response?.data?.message || 'Failed to approve seller');
-          return;
-        }
-      case 'reject_seller':
-        if (currentUser.role !== 'super_admin') {
-          alert('Only super admins can reject sellers');
-          return;
-        }
-        try {
-          await userService.rejectSeller(userId);
-          setUsers(users.map(user => 
-            user.id === userId ? { ...user, role: 'buyer' } : user
-          ));
-          alert('Seller rejected successfully!');
-          setActionMenuOpen(null);
-          return;
-        } catch (error) {
-          alert(error.response?.data?.message || 'Failed to reject seller');
-          return;
-        }
-      default:
-        return;
+const handleRoleElevation = async (userId, rolesToAdd) => {
+    try {
+      const response = await userService.elevateUser(userId, rolesToAdd);
+      // Refresh user list to show updated roles
+      await fetchUsers();
+      alert(response.message || 'User roles updated successfully!');
+    } catch (error) {
+      alert(error.response?.data?.message || 'Failed to elevate user');
     }
+    setActionMenuOpen(null);
+  };
 
-    if (window.confirm(confirmMessage)) {
+  const handleRoleRemoval = async (userId, roleToRemove) => {
+    if (window.confirm(`Remove ${roleToRemove} role from this user?`)) {
       try {
-        await userService.changeUserRole(userId, newRole);
-        setUsers(users.map(user => 
-          user.id === userId ? { ...user, role: newRole } : user
-        ));
-        alert('Role updated successfully!');
+        const response = await userService.removeRole(userId, roleToRemove);
+        await fetchUsers();
+        alert(response.message || 'Role removed successfully!');
       } catch (error) {
-        alert(error.response?.data?.message || 'Failed to update role');
+        alert(error.response?.data?.message || 'Failed to remove role');
       }
     }
     setActionMenuOpen(null);
+  };
+
+  const handleRoleChange = async (userId, currentRole, action) => {
+    // Handle special cases that use old endpoints
+    if (action === 'approve_seller') {
+      if (currentUser.role !== 'super_admin') {
+        alert('Only super admins can approve sellers');
+        return;
+      }
+      try {
+        await userService.approveSeller(userId);
+        await fetchUsers();
+        alert('Seller approved successfully!');
+      } catch (error) {
+        alert(error.response?.data?.message || 'Failed to approve seller');
+      }
+      setActionMenuOpen(null);
+      return;
+    }
+
+    if (action === 'reject_seller') {
+      if (currentUser.role !== 'super_admin') {
+        alert('Only super admins can reject sellers');
+        return;
+      }
+      try {
+        await userService.rejectSeller(userId);
+        await fetchUsers();
+        alert('Seller rejected successfully!');
+      } catch (error) {
+        alert(error.response?.data?.message || 'Failed to reject seller');
+      }
+      setActionMenuOpen(null);
+      return;
+    }
+
+    // Handle new multi-role elevation system
+    const roleMapping = {
+      'make_seller': { roles: ['seller'], confirm: 'Add seller role to this user?' },
+      'make_delivery_agent': { roles: ['delivery_agent'], confirm: 'Add delivery agent role to this user?' },
+      'make_shop_attendant': { roles: ['shop_attendant'], confirm: 'Add shop attendant role to this user?' },
+      'make_admin': { roles: ['admin'], confirm: 'Promote this user to admin?' },
+      'remove_seller': { role: 'seller', isRemoval: true },
+      'remove_delivery_agent': { role: 'delivery_agent', isRemoval: true },
+      'remove_shop_attendant': { role: 'shop_attendant', isRemoval: true },
+      'remove_admin': { role: 'admin', isRemoval: true },
+    };
+
+    const mapping = roleMapping[action];
+    if (!mapping) return;
+
+    if (mapping.isRemoval) {
+      await handleRoleRemoval(userId, mapping.role);
+    } else {
+      if (window.confirm(mapping.confirm)) {
+        await handleRoleElevation(userId, mapping.roles);
+      }
+    }
   };
 
   const filteredUsers = users.filter(user => {
@@ -308,9 +324,24 @@ const SuperAdminAdminUsersPage = () => {
                       <div className="text-sm text-gray-500">{user.phone || 'N/A'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getRoleBadgeColor(user.role)}`}>
-                        {getRoleDisplay(user.role)}
-                      </span>
+                      <div className="flex flex-wrap gap-1 justify-center">
+                        {/* Primary Role - Larger badge */}
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getRoleBadgeColor(user.role)} border-2 border-gray-300`}>
+                          {getRoleDisplay(user.role)} ⭐
+                        </span>
+                        
+                        {/* Additional Roles - Smaller badges */}
+                        {user.additional_roles && user.additional_roles.length > 0 && 
+                          user.additional_roles.map((role, index) => (
+                            <span 
+                              key={index} 
+                              className={`px-2 py-1 rounded-full text-xs font-semibold ${getRoleBadgeColor(role)}`}
+                            >
+                              {getRoleDisplay(role)}
+                            </span>
+                          ))
+                        }
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(user.is_active)}`}>
@@ -331,7 +362,7 @@ const SuperAdminAdminUsersPage = () => {
 
                         {/* Dropdown Menu */}
                         {actionMenuOpen === user.id && (
-                          <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
+                          <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
                             <button
                               onClick={() => handleViewUser(user)}
                               className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition text-left"
@@ -342,19 +373,101 @@ const SuperAdminAdminUsersPage = () => {
 
                             <hr className="my-2" />
 
-                            {/* Role Actions */}
-                            {user.role === 'buyer' && (
+                            {/* Add Roles Section */}
+                            <div className="px-4 py-1 text-xs font-semibold text-gray-500 uppercase">Add Roles</div>
+                            
+                            {!user.all_roles?.includes('seller') && (
                               <button
-                                onClick={() => handleRoleChange(user.id, user.role, 'upgrade_to_seller')}
+                                onClick={() => handleRoleChange(user.id, user.role, 'make_seller')}
                                 className="w-full flex items-center gap-3 px-4 py-2 hover:bg-blue-50 transition text-left"
                               >
-                                <UserPlus size={16} className="text-blue-600" />
-                                <span className="text-blue-600">Upgrade to Seller</span>
+                                <Store size={16} className="text-blue-600" />
+                                <span className="text-blue-600">Add Seller Role</span>
                               </button>
                             )}
 
+                            {!user.all_roles?.includes('delivery_agent') && (
+                              <button
+                                onClick={() => handleRoleChange(user.id, user.role, 'make_delivery_agent')}
+                                className="w-full flex items-center gap-3 px-4 py-2 hover:bg-green-50 transition text-left"
+                              >
+                                <ShoppingBag size={16} className="text-green-600" />
+                                <span className="text-green-600">Add Delivery Agent Role</span>
+                              </button>
+                            )}
+
+                            {!user.all_roles?.includes('shop_attendant') && (
+                              <button
+                                onClick={() => handleRoleChange(user.id, user.role, 'make_shop_attendant')}
+                                className="w-full flex items-center gap-3 px-4 py-2 hover:bg-cyan-50 transition text-left"
+                              >
+                                <User size={16} className="text-cyan-600" />
+                                <span className="text-cyan-600">Add Shop Attendant Role</span>
+                              </button>
+                            )}
+
+                            {!user.all_roles?.includes('admin') && currentUser.role === 'super_admin' && (
+                              <button
+                                onClick={() => handleRoleChange(user.id, user.role, 'make_admin')}
+                                className="w-full flex items-center gap-3 px-4 py-2 hover:bg-purple-50 transition text-left"
+                              >
+                                <Shield size={16} className="text-purple-600" />
+                                <span className="text-purple-600">Add Admin Role</span>
+                              </button>
+                            )}
+
+                            {/* Remove Roles Section */}
+                            {user.all_roles && user.all_roles.length > 1 && (
+                              <>
+                                <hr className="my-2" />
+                                <div className="px-4 py-1 text-xs font-semibold text-gray-500 uppercase">Remove Roles</div>
+                                
+                                {user.all_roles.includes('seller') && user.role !== 'seller' && (
+                                  <button
+                                    onClick={() => handleRoleChange(user.id, user.role, 'remove_seller')}
+                                    className="w-full flex items-center gap-3 px-4 py-2 hover:bg-orange-50 transition text-left"
+                                  >
+                                    <X size={16} className="text-orange-600" />
+                                    <span className="text-orange-600">Remove Seller Role</span>
+                                  </button>
+                                )}
+
+                                {user.all_roles.includes('delivery_agent') && user.role !== 'delivery_agent' && (
+                                  <button
+                                    onClick={() => handleRoleChange(user.id, user.role, 'remove_delivery_agent')}
+                                    className="w-full flex items-center gap-3 px-4 py-2 hover:bg-orange-50 transition text-left"
+                                  >
+                                    <X size={16} className="text-orange-600" />
+                                    <span className="text-orange-600">Remove Delivery Agent</span>
+                                  </button>
+                                )}
+
+                                {user.all_roles.includes('shop_attendant') && user.role !== 'shop_attendant' && (
+                                  <button
+                                    onClick={() => handleRoleChange(user.id, user.role, 'remove_shop_attendant')}
+                                    className="w-full flex items-center gap-3 px-4 py-2 hover:bg-orange-50 transition text-left"
+                                  >
+                                    <X size={16} className="text-orange-600" />
+                                    <span className="text-orange-600">Remove Shop Attendant</span>
+                                  </button>
+                                )}
+
+                                {user.all_roles.includes('admin') && user.role !== 'admin' && currentUser.role === 'super_admin' && (
+                                  <button
+                                    onClick={() => handleRoleChange(user.id, user.role, 'remove_admin')}
+                                    className="w-full flex items-center gap-3 px-4 py-2 hover:bg-red-50 transition text-left"
+                                  >
+                                    <X size={16} className="text-red-600" />
+                                    <span className="text-red-600">Remove Admin Role</span>
+                                  </button>
+                                )}
+                              </>
+                            )}
+
+                            {/* Legacy Seller Approval (for pending_seller) */}
                             {user.role === 'pending_seller' && currentUser.role === 'super_admin' && (
                               <>
+                                <hr className="my-2" />
                                 <button
                                   onClick={() => handleRoleChange(user.id, user.role, 'approve_seller')}
                                   className="w-full flex items-center gap-3 px-4 py-2 hover:bg-green-50 transition text-left"
@@ -370,36 +483,6 @@ const SuperAdminAdminUsersPage = () => {
                                   <span className="text-red-600">Reject Seller</span>
                                 </button>
                               </>
-                            )}
-
-                            {user.role === 'seller' && (
-                              <button
-                                onClick={() => handleRoleChange(user.id, user.role, 'remove_seller')}
-                                className="w-full flex items-center gap-3 px-4 py-2 hover:bg-orange-50 transition text-left"
-                              >
-                                <X size={16} className="text-orange-600" />
-                                <span className="text-orange-600">Remove Seller</span>
-                              </button>
-                            )}
-
-                            {(user.role === 'buyer' || user.role === 'seller') && currentUser.role === 'super_admin' && (
-                              <button
-                                onClick={() => handleRoleChange(user.id, user.role, 'make_admin')}
-                                className="w-full flex items-center gap-3 px-4 py-2 hover:bg-purple-50 transition text-left"
-                              >
-                                <Shield size={16} className="text-purple-600" />
-                                <span className="text-purple-600">Make Admin</span>
-                              </button>
-                            )}
-
-                            {user.role === 'admin' && currentUser.role === 'super_admin' && (
-                              <button
-                                onClick={() => handleRoleChange(user.id, user.role, 'remove_admin')}
-                                className="w-full flex items-center gap-3 px-4 py-2 hover:bg-red-50 transition text-left"
-                              >
-                                <X size={16} className="text-red-600" />
-                                <span className="text-red-600">Remove Admin</span>
-                              </button>
                             )}
 
                             <hr className="my-2" />

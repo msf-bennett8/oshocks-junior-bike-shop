@@ -42,6 +42,13 @@ class OrderController extends Controller
         ]);
 
         if ($validator->fails()) {
+            \Log::error('❌ Order validation failed', [
+            'errors' => $validator->errors()->toArray(),
+            'input' => $request->except(['payment_proof']),
+            'items_received' => $request->items,
+            'first_item_id' => $request->items[0]['id'] ?? 'none'
+        ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
@@ -353,12 +360,26 @@ class OrderController extends Controller
 
     /**
      * Generate unique order number
+     * Format: OS-YYYYMMDD-SEQ
+     * Example: OS-20231104-001
      */
     private function generateOrderNumber()
     {
-        do {
-            $orderNumber = 'OS' . str_pad(mt_rand(1, 99999999), 8, '0', STR_PAD_LEFT);
-        } while (Order::where('order_number', $orderNumber)->exists());
+        $date = now()->format('Ymd');
+        
+        // Get today's order count to generate sequence
+        $todayOrderCount = Order::whereDate('created_at', now()->toDateString())->count();
+        $sequence = str_pad($todayOrderCount + 1, 3, '0', STR_PAD_LEFT);
+        
+        $orderNumber = "OS-{$date}-{$sequence}";
+        
+        // Ensure uniqueness (in case of race conditions)
+        $counter = 1;
+        while (Order::where('order_number', $orderNumber)->exists()) {
+            $sequence = str_pad($todayOrderCount + $counter + 1, 3, '0', STR_PAD_LEFT);
+            $orderNumber = "OS-{$date}-{$sequence}";
+            $counter++;
+        }
 
         return $orderNumber;
     }
@@ -390,13 +411,25 @@ class OrderController extends Controller
 
     /**
      * Generate transaction reference
+     * Format: {METHOD}-{RECORDER_CODE}-{LOCATION}-{YYYYMMDD}-{HHMMSS}-{SEQ}
+     * Example: MPESA-ONLINE-20231104-143052-001
+     * Note: For online orders, recorder_code is "ONLINE" and location is "WEB"
      */
     private function generateTransactionReference($paymentMethod, $orderNumber)
     {
-        $method = strtoupper($paymentMethod);
-        $timestamp = now()->format('YmdHis');
+        $method = strtoupper(explode('_', $paymentMethod)[0]); // MPESA, CARD, COD
+        $recorderCode = 'ONLINE';
+        $location = 'WEB';
+        $date = now()->format('Ymd');
+        $time = now()->format('His');
         
-        return "{$method}-{$orderNumber}-{$timestamp}";
+        // Get daily sequence for this payment method
+        $todayCount = Order::whereDate('created_at', now()->toDateString())
+            ->where('payment_method', $paymentMethod)
+            ->count();
+        $sequence = str_pad($todayCount + 1, 3, '0', STR_PAD_LEFT);
+        
+        return "{$method}-{$recorderCode}-{$location}-{$date}-{$time}-{$sequence}";
     }
 
     /**
