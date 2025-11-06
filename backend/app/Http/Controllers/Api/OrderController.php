@@ -270,13 +270,13 @@ class OrderController extends Controller
             ->count();
         $sequence = str_pad($todayOrderCount + 1, 3, '0', STR_PAD_LEFT);
         
-        $orderNumber = "OS-{$countyClean}-{$zoneClean}-{$userId}-{$date}-{$time}-{$sequence}";
+        $orderNumber = "OS-{$countyClean}-{$zoneClean}-UID{$userId}-{$date}-{$time}-{$sequence}";
         
         // Ensure uniqueness (in case of race conditions)
         $counter = 1;
         while (Order::where('order_number', $orderNumber)->exists()) {
             $sequence = str_pad($todayOrderCount + $counter + 1, 3, '0', STR_PAD_LEFT);
-            $orderNumber = "OS-{$countyClean}-{$zoneClean}-{$userId}-{$date}-{$time}-{$sequence}";
+            $orderNumber = "OS-{$countyClean}-{$zoneClean}-UID{$userId}-{$date}-{$time}-{$sequence}";
             $counter++;
         }
 
@@ -347,7 +347,7 @@ class OrderController extends Controller
             ->count();
         $sequence = str_pad($todayCount + 1, 3, '0', STR_PAD_LEFT);
         
-        return "{$method}-{$recorderCode}-{$countyClean}-{$zoneClean}-{$userId}-{$orderSeq}-{$date}-{$time}-{$sequence}";
+        return "{$method}-{$recorderCode}-{$countyClean}-{$zoneClean}-UID{$userId}-{$orderSeq}-{$date}-{$time}-{$sequence}";
     }
 
     /**
@@ -570,7 +570,7 @@ class OrderController extends Controller
                 $timeStr = now()->format('His');
                 $sequence = str_pad(\App\Models\Payment::whereDate('created_at', now())->count() + 1, 3, '0', STR_PAD_LEFT);
 
-                $transactionReference = "{$method}-{$recorderCode}-{$countyClean}-{$zoneClean}-{$userId}-{$orderSeq}-{$dateStr}-{$timeStr}-{$sequence}";
+                $transactionReference = "{$method}-{$recorderCode}-{$countyClean}-{$zoneClean}-UID{$userId}-{$orderSeq}-{$dateStr}-{$timeStr}-{$sequence}";
 
                 // 7. CREATE PAYMENT RECORD
                 \App\Models\Payment::create([
