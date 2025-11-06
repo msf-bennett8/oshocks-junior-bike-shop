@@ -59,23 +59,44 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
 
-            // Get authenticated user (if logged in)
+            // Get authenticated user (required for checkout)
             $user = auth('sanctum')->user();
 
-            // Generate unique order number
-            $orderNumber = $this->generateOrderNumber();
+            // Ensure user is authenticated
+            if (!$user) {
+                return response()->json([
+                            'success' => false,
+                            'message' => 'Authentication required to place order'
+                        ], 401);
+                    }
+
+            // Get county and zone from request
+            $county = $request->county;
+            $zone = $request->zone;
+
+            // Get user ID
+            $userId = $user->id;
+
+            // Generate order number with full format
+            $orderNumber = $this->generateOrderNumber($county, $zone, $userId);
 
             // Create or get address
             $address = $this->createOrGetAddress($request, $user);
 
+            // Get primary seller_id from first item (for order-level tracking)
+            $firstProduct = Product::find($request->items[0]['id']);
+            $primarySellerId = $firstProduct?->seller_id;
+
             // Create order
             $order = Order::create([
                 'order_number' => $orderNumber,
-                'user_id' => $user?->id,
+                'user_id' => $user->id,
+                'seller_id' => $primarySellerId,
                 'customer_name' => $request->customer_name,
                 'customer_email' => $request->customer_email,
                 'customer_phone' => $request->customer_phone,
                 'address_id' => $address->id,
+                'county' => $county,
                 'delivery_zone' => $request->zone,
                 'postal_code' => $request->postal_code,
                 'delivery_instructions' => $request->delivery_instructions,
@@ -87,7 +108,7 @@ class OrderController extends Controller
                 'status' => 'pending',
                 'payment_status' => $request->payment_method === 'cod' ? 'pending' : 'pending',
                 'payment_method' => $request->payment_method,
-                'transaction_reference' => $this->generateTransactionReference($request->payment_method, $orderNumber),
+                'transaction_reference' => $this->generateTransactionReference($request->payment_method, $orderNumber, $county, $zone, $userId),
             ]);
 
             // Create order items and track for audit log
@@ -218,24 +239,37 @@ class OrderController extends Controller
 
     /**
      * Generate unique order number
-     * Format: OS-YYYYMMDD-SEQ
-     * Example: OS-20231104-001
+     * Format: OS-COUNTY-ZONE-USERID-YYYYMMDD-HHMMSS-SEQ
+     * Example: OS-NAIROBI-WESTLANDS-89-20231104-143052-001
      */
-    private function generateOrderNumber()
+    private function generateOrderNumber($county, $zone, $userId)
     {
         $date = now()->format('Ymd');
+        $time = now()->format('His');
         
-        // Get today's order count to generate sequence
-        $todayOrderCount = Order::whereDate('created_at', now()->toDateString())->count();
+        // Clean county and zone names (remove "County" suffix first, then spaces)
+        $countyClean = strtoupper(str_replace(' County', '', $county));
+        $countyClean = str_replace(' ', '', $countyClean);
+        // Remove numbers and special characters, keep only letters and limit length
+        $zoneClean = preg_replace('/[^A-Za-z]/', '', $zone);
+        $zoneClean = strtoupper($zoneClean);
+        
+        // Limit zone to 15 chars for readability
+        $zoneClean = substr($zoneClean, 0, 15);
+        
+        // Get today's order count for this user
+        $todayOrderCount = Order::whereDate('created_at', now()->toDateString())
+            ->where('user_id', $userId)
+            ->count();
         $sequence = str_pad($todayOrderCount + 1, 3, '0', STR_PAD_LEFT);
         
-        $orderNumber = "OS-{$date}-{$sequence}";
+        $orderNumber = "OS-{$countyClean}-{$zoneClean}-{$userId}-{$date}-{$time}-{$sequence}";
         
         // Ensure uniqueness (in case of race conditions)
         $counter = 1;
         while (Order::where('order_number', $orderNumber)->exists()) {
             $sequence = str_pad($todayOrderCount + $counter + 1, 3, '0', STR_PAD_LEFT);
-            $orderNumber = "OS-{$date}-{$sequence}";
+            $orderNumber = "OS-{$countyClean}-{$zoneClean}-{$userId}-{$date}-{$time}-{$sequence}";
             $counter++;
         }
 
@@ -251,7 +285,7 @@ class OrderController extends Controller
         $fullName = $request->customer_name;
 
         $addressData = [
-            'user_id' => $user?->id,
+            'user_id' => $user->id,
             'full_name' => $fullName,
             'phone' => $request->customer_phone,
             'address_line1' => $request->delivery_address,
@@ -269,25 +303,37 @@ class OrderController extends Controller
 
     /**
      * Generate transaction reference
-     * Format: {METHOD}-{RECORDER_CODE}-{LOCATION}-{YYYYMMDD}-{HHMMSS}-{SEQ}
-     * Example: MPESA-ONLINE-20231104-143052-001
-     * Note: For online orders, recorder_code is "ONLINE" and location is "WEB"
+     * Format: {METHOD}-{RECORDER_CODE}-{COUNTY}-{ZONE}-{USERID}-{ORDERSEQ}-{YYYYMMDD}-{HHMMSS}-{SEQ}
+     * Example: CASH-DA001-NAIROBI-WESTLANDS-89-001-20231104-143052-001
+     * Note: For online orders, recorder_code is "ONLINE"
      */
-    private function generateTransactionReference($paymentMethod, $orderNumber)
+    private function generateTransactionReference($paymentMethod, $orderNumber, $county, $zone, $userId)
     {
         $method = strtoupper(explode('_', $paymentMethod)[0]); // MPESA, CARD, COD
         $recorderCode = 'ONLINE';
-        $location = 'WEB';
+        
+        // Clean county and zone (remove "County" suffix first, then spaces)
+        $countyClean = strtoupper(str_replace(' County', '', $county));
+        $countyClean = str_replace(' ', '', $countyClean);
+        // Remove numbers and special characters, keep only letters and limit length
+        $zoneClean = preg_replace('/[^A-Za-z]/', '', $zone);
+        $zoneClean = strtoupper($zoneClean);
+        $zoneClean = substr($zoneClean, 0, 15);
+        
         $date = now()->format('Ymd');
         $time = now()->format('His');
         
-        // Get daily sequence for this payment method
+        // Extract order sequence from order number (last 3 digits)
+        preg_match('/-(\d{3})$/', $orderNumber, $matches);
+        $orderSeq = $matches[1] ?? '001';
+        
+        // Get daily payment sequence
         $todayCount = Order::whereDate('created_at', now()->toDateString())
             ->where('payment_method', $paymentMethod)
             ->count();
         $sequence = str_pad($todayCount + 1, 3, '0', STR_PAD_LEFT);
         
-        return "{$method}-{$recorderCode}-{$location}-{$date}-{$time}-{$sequence}";
+        return "{$method}-{$recorderCode}-{$countyClean}-{$zoneClean}-{$userId}-{$orderSeq}-{$date}-{$time}-{$sequence}";
     }
 
     /**
@@ -462,12 +508,34 @@ class OrderController extends Controller
                 $sellerPayoutAmount = round($itemTotal - $commissionAmount, 2);
                 
                 // 6. GENERATE TRANSACTION REFERENCE
+                // Format: {METHOD}-{RECORDER_CODE}-{COUNTY}-{ZONE}-{USERID}-{ORDERSEQ}-{YYYYMMDD}-{HHMMSS}-{SEQ}
                 $method = strtoupper(explode('_', $request->payment_method)[0]);
+
+                // Get county and zone from order or request
+                $county = $request->county ?? $order->county ?? 'UNKNOWN';
+                $zone = $request->zone ?? $order->delivery_zone ?? 'UNKNOWN';
+
+                // Clean county and zone (remove "County" suffix first, then spaces)
+                $countyClean = strtoupper(str_replace(' County', '', $county));
+                $countyClean = str_replace(' ', '', $countyClean);
+                // Remove numbers and special characters, keep only letters and limit length
+                $zoneClean = preg_replace('/[^A-Za-z]/', '', $zone);
+                $zoneClean = strtoupper($zoneClean);
+                $zoneClean = substr($zoneClean, 0, 15);
+
+                // Get user ID from order
+                $userId = $order->user_id ?? 0;
+
+                // Extract order sequence from order number (last 3 digits)
+                preg_match('/-(\d{3})$/', $order->order_number, $matches);
+                $orderSeq = $matches[1] ?? '001';
+
                 $dateStr = now()->format('Ymd');
                 $timeStr = now()->format('His');
                 $sequence = str_pad(\App\Models\Payment::whereDate('created_at', now())->count() + 1, 3, '0', STR_PAD_LEFT);
-                $transactionReference = "{$method}-{$recorderCode}-{$recorderLocation}-{$dateStr}-{$timeStr}-{$sequence}";
-                
+
+                $transactionReference = "{$method}-{$recorderCode}-{$countyClean}-{$zoneClean}-{$userId}-{$orderSeq}-{$dateStr}-{$timeStr}-{$sequence}";
+
                 // 7. CREATE PAYMENT RECORD
                 \App\Models\Payment::create([
                     'order_id' => $order->id,
