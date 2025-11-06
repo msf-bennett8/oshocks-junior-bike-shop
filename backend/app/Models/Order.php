@@ -6,13 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
-    protected $fillable = [
+        protected $fillable = [
         'order_number',
         'user_id',
+        'seller_id',
         'customer_name',
         'customer_email',
         'customer_phone',
         'address_id',
+        'county',
         'delivery_zone',
         'postal_code',
         'delivery_instructions',

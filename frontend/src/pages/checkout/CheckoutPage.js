@@ -3,6 +3,7 @@ import { CreditCard, Truck, MapPin, Phone, Mail, User, ShoppingBag, AlertCircle,
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import authService from '../../services/authService';
 
 const CheckoutPage = () => {
   const { cartItems, clearCart } = useCart();
@@ -284,8 +285,8 @@ const countyInfo = {
           total: total
         };
 
-        // Get auth token if user is logged in
-        const token = localStorage.getItem('auth_token');
+        // Get auth token using authService (best practice)
+        const token = authService.getToken();
         const headers = {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` })
