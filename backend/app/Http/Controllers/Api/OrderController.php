@@ -250,8 +250,15 @@ class OrderController extends Controller
         // Clean county and zone names (remove "County" suffix first, then spaces)
         $countyClean = strtoupper(str_replace(' County', '', $county));
         $countyClean = str_replace(' ', '', $countyClean);
-        // Remove numbers and special characters, keep only letters and limit length
-        $zoneClean = preg_replace('/[^A-Za-z]/', '', $zone);
+        // Extract specific location if format is "Zone Name - Location"
+        if (strpos($zone, ' - ') !== false) {
+            $zoneParts = explode(' - ', $zone);
+            $zone = end($zoneParts); // Get the last part (specific location)
+        }
+
+        // Remove special chars but keep spaces, then remove spaces
+        $zoneClean = preg_replace('/[^A-Za-z\s]/', '', $zone);
+        $zoneClean = str_replace(' ', '', $zoneClean);
         $zoneClean = strtoupper($zoneClean);
         
         // Limit zone to 15 chars for readability
@@ -310,13 +317,20 @@ class OrderController extends Controller
     private function generateTransactionReference($paymentMethod, $orderNumber, $county, $zone, $userId)
     {
         $method = strtoupper(explode('_', $paymentMethod)[0]); // MPESA, CARD, COD
-        $recorderCode = 'ONLINE';
+        $recorderCode = 'UID' . $userId; // UID30, UID89, etc. (for online orders)
         
         // Clean county and zone (remove "County" suffix first, then spaces)
         $countyClean = strtoupper(str_replace(' County', '', $county));
         $countyClean = str_replace(' ', '', $countyClean);
-        // Remove numbers and special characters, keep only letters and limit length
-        $zoneClean = preg_replace('/[^A-Za-z]/', '', $zone);
+        // Extract specific location if format is "Zone Name - Location"
+        if (strpos($zone, ' - ') !== false) {
+            $zoneParts = explode(' - ', $zone);
+            $zone = end($zoneParts); // Get the last part (specific location)
+        }
+
+        // Remove special chars but keep spaces, then remove spaces
+        $zoneClean = preg_replace('/[^A-Za-z\s]/', '', $zone);
+        $zoneClean = str_replace(' ', '', $zoneClean);
         $zoneClean = strtoupper($zoneClean);
         $zoneClean = substr($zoneClean, 0, 15);
         
@@ -486,10 +500,25 @@ class OrderController extends Controller
 
             // 1. GET RECORDER DETAILS
             $recorder = \App\Models\PaymentRecorder::where('user_id', $request->user()->id)->first();
-            $recorderCode = $recorder ? $recorder->recorder_code : 'UNKNOWN';
-            $recorderType = $recorder ? $recorder->recorder_type : 'system';
-            $recorderLocation = $recorder ? $recorder->location : 'UNKNOWN';
 
+            if ($recorder) {
+                // Use proper recorder code based on type
+                $recorderPrefix = match($recorder->recorder_type) {
+                    'delivery_agent' => 'DA',
+                    'shop_attendant' => 'SA',
+                    'seller' => 'SL',
+                    default => 'REC'
+                };
+                $recorderCode = $recorderPrefix . str_pad($recorder->id, 3, '0', STR_PAD_LEFT); // DA030, SA025, SL010
+                $recorderType = $recorder->recorder_type;
+                $recorderLocation = $recorder->location;
+            } else {
+                // Fallback for users without recorder profile (shouldn't happen for payment recording)
+                $recorderCode = 'UID' . $request->user()->id;
+                $recorderType = 'system';
+                $recorderLocation = 'ONLINE';
+            }
+                        
             // 2. CAPTURE IP & DEVICE INFO
             $ipAddress = $request->ip();
             $deviceInfo = $request->userAgent();
@@ -518,8 +547,15 @@ class OrderController extends Controller
                 // Clean county and zone (remove "County" suffix first, then spaces)
                 $countyClean = strtoupper(str_replace(' County', '', $county));
                 $countyClean = str_replace(' ', '', $countyClean);
-                // Remove numbers and special characters, keep only letters and limit length
-                $zoneClean = preg_replace('/[^A-Za-z]/', '', $zone);
+                // Extract specific location if format is "Zone Name - Location"
+                if (strpos($zone, ' - ') !== false) {
+                    $zoneParts = explode(' - ', $zone);
+                    $zone = end($zoneParts); // Get the last part (specific location)
+                }
+
+                // Remove special chars but keep spaces, then remove spaces
+                $zoneClean = preg_replace('/[^A-Za-z\s]/', '', $zone);
+                $zoneClean = str_replace(' ', '', $zoneClean);
                 $zoneClean = strtoupper($zoneClean);
                 $zoneClean = substr($zoneClean, 0, 15);
 

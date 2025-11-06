@@ -262,13 +262,19 @@ const countyInfo = {
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
         
         // Prepare order data
+        // Extract specific location from zone selection
+        // Format: "CBD & Westlands (15-25km) - Loresho"
+        const extractedZone = shippingInfo.zone.includes(' - ')
+          ? shippingInfo.zone.split(' - ')[1].trim()  // Get "Loresho"
+          : shippingInfo.zone.split(' (')[0].trim();   // Fallback
+
         const orderData = {
           customer_name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
           customer_email: shippingInfo.email,
           customer_phone: shippingInfo.phone,
           delivery_address: shippingInfo.address,
           county: shippingInfo.city,
-          zone: shippingInfo.zone,
+          zone: extractedZone,  // Send clean zone name
           postal_code: shippingInfo.postalCode || null,
           delivery_instructions: shippingInfo.deliveryInstructions || null,
           payment_method: paymentMethod,
