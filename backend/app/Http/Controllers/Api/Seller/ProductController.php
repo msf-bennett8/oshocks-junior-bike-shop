@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\ProductVariant;
 use App\Services\CloudinaryService;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -194,12 +195,12 @@ class ProductController extends Controller
                 // Create product variant for this color
                 $variant = ProductVariant::create([
                     'product_id' => $product->id,
-                    'name' => $colorData['name'],  // ✅ CORRECT: Use 'name' not 'color'
+                    'name' => $colorData['name'],
                     'sku' => $product->slug . '-' . Str::slug($colorData['name']),
                     'price' => $request->price,
                     'quantity' => $request->quantity,
                     'attributes' => [
-                        'color' => $colorData['name'],  // Store color in attributes JSON
+                        'color' => $colorData['name'],
                     ],
                 ]);
 
@@ -232,7 +233,7 @@ class ProductController extends Controller
                                 'image_url' => $uploadResult['url'],
                                 'thumbnail_url' => $uploadResult['thumbnail_url'],
                                 'public_id' => $uploadResult['public_id'],
-                                'is_primary' => $imageIndex === 0, // First image is primary
+                                'is_primary' => $imageIndex === 0,
                                 'display_order' => $imageIndex,
                             ]);
 
@@ -241,6 +242,26 @@ class ProductController extends Controller
                     }
                 }
             }
+
+            // Log product creation
+            AuditService::log([
+                'event_type' => 'product_created',
+                'event_category' => 'product',
+                'action' => 'created',
+                'model_type' => 'Product',
+                'model_id' => $product->id,
+                'description' => "Product created: {$product->name} by {$user->name}",
+                'new_values' => [
+                    'name' => $product->name,
+                    'price' => $product->price,
+                    'quantity' => $product->quantity,
+                    'type' => $product->type,
+                    'category_id' => $product->category_id,
+                    'variants_count' => count($colors),
+                    'images_count' => count($allUploadedImages),
+                ],
+                'severity' => 'low',
+            ]);
 
             DB::commit();
 
@@ -317,6 +338,9 @@ class ProductController extends Controller
                 ], 403);
             }
 
+            // Capture old values before update
+            $oldValues = $product->only(['name', 'price', 'quantity', 'is_active', 'type', 'category_id']);
+
             // Validation
             $validator = Validator::make($request->all(), [
                 'name' => 'sometimes|required|string|max:255',
@@ -346,6 +370,7 @@ class ProductController extends Controller
             }
 
             // Handle new images if uploaded
+            $newImagesCount = 0;
             if ($request->has('colors')) {
                 $colors = $request->input('colors', []);
                 
@@ -385,11 +410,28 @@ class ProductController extends Controller
                                     'public_id' => $uploadResult['public_id'],
                                     'display_order' => $imageIndex,
                                 ]);
+                                $newImagesCount++;
                             }
                         }
                     }
                 }
             }
+
+            // Log product update
+            AuditService::log([
+                'event_type' => 'product_updated',
+                'event_category' => 'product',
+                'action' => 'updated',
+                'model_type' => 'Product',
+                'model_id' => $product->id,
+                'description' => "Product updated: {$product->name} by {$user->name}",
+                'old_values' => $oldValues,
+                'new_values' => $product->only(['name', 'price', 'quantity', 'is_active', 'type', 'category_id']),
+                'metadata' => [
+                    'new_images_added' => $newImagesCount,
+                ],
+                'severity' => 'low',
+            ]);
 
             DB::commit();
 
@@ -429,6 +471,24 @@ class ProductController extends Controller
                     'message' => 'Unauthorized access'
                 ], 403);
             }
+
+            // Log product deletion BEFORE deleting
+            AuditService::log([
+                'event_type' => 'product_deleted',
+                'event_category' => 'product',
+                'action' => 'deleted',
+                'model_type' => 'Product',
+                'model_id' => $product->id,
+                'description' => "Product deleted: {$product->name} by {$user->name}",
+                'old_values' => [
+                    'name' => $product->name,
+                    'price' => $product->price,
+                    'quantity' => $product->quantity,
+                    'type' => $product->type,
+                    'images_count' => $product->images->count(),
+                ],
+                'severity' => 'medium',
+            ]);
 
             DB::beginTransaction();
 

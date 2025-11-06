@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use App\Services\AuditService;
 
 class ProductController extends Controller
 {
@@ -187,6 +188,24 @@ class ProductController extends Controller
 
         $product = Product::create($validated);
 
+        // Log product creation
+        AuditService::log([
+            'event_type' => 'product_created',
+            'event_category' => 'product',
+            'action' => 'created',
+            'model_type' => 'Product',
+            'model_id' => $product->id,
+            'description' => "Product created: {$product->name} by " . auth()->user()->name,
+            'new_values' => [
+                'name' => $product->name,
+                'price' => $product->price,
+                'quantity' => $product->quantity,
+                'type' => $product->type,
+                'category_id' => $product->category_id,
+            ],
+            'severity' => 'low',
+        ]);
+
         return response()->json($product, 201);
     }
 
@@ -198,6 +217,9 @@ class ProductController extends Controller
         $product = Product::where('id', $id)
             ->where('seller_id', auth()->id())
             ->firstOrFail();
+
+        // Capture old values before update
+        $oldValues = $product->only(['name', 'price', 'quantity', 'is_active', 'type', 'category_id']);
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
@@ -219,6 +241,19 @@ class ProductController extends Controller
 
         $product->update($validated);
 
+        // Log product update
+        AuditService::log([
+            'event_type' => 'product_updated',
+            'event_category' => 'product',
+            'action' => 'updated',
+            'model_type' => 'Product',
+            'model_id' => $product->id,
+            'description' => "Product updated: {$product->name} by " . auth()->user()->name,
+            'old_values' => $oldValues,
+            'new_values' => $product->only(['name', 'price', 'quantity', 'is_active', 'type', 'category_id']),
+            'severity' => 'low',
+        ]);
+
         return response()->json($product);
     }
 
@@ -231,6 +266,23 @@ class ProductController extends Controller
             ->where('seller_id', auth()->id())
             ->firstOrFail();
 
+        // Log product deletion BEFORE deleting
+        AuditService::log([
+            'event_type' => 'product_deleted',
+            'event_category' => 'product',
+            'action' => 'deleted',
+            'model_type' => 'Product',
+            'model_id' => $product->id,
+            'description' => "Product deleted: {$product->name} by " . auth()->user()->name,
+            'old_values' => [
+                'name' => $product->name,
+                'price' => $product->price,
+                'quantity' => $product->quantity,
+                'type' => $product->type,
+            ],
+            'severity' => 'medium',
+        ]);
+
         $product->delete();
 
         return response()->json(['message' => 'Product deleted successfully']);
@@ -242,8 +294,22 @@ class ProductController extends Controller
     public function toggleFeature($id)
     {
         $product = Product::findOrFail($id);
+        $oldFeaturedStatus = $product->is_featured;
         $product->is_featured = !$product->is_featured;
         $product->save();
+
+        // Log feature toggle
+        AuditService::log([
+            'event_type' => 'product_featured_toggled',
+            'event_category' => 'product',
+            'action' => 'updated',
+            'model_type' => 'Product',
+            'model_id' => $product->id,
+            'description' => "Product featured status changed: {$product->name} - " . ($product->is_featured ? 'Featured' : 'Unfeatured'),
+            'old_values' => ['is_featured' => $oldFeaturedStatus],
+            'new_values' => ['is_featured' => $product->is_featured],
+            'severity' => 'low',
+        ]);
 
         return response()->json([
             'message' => 'Product featured status updated',
@@ -257,6 +323,23 @@ class ProductController extends Controller
     public function forceDestroy($id)
     {
         $product = Product::withTrashed()->findOrFail($id);
+        
+        // Log permanent deletion BEFORE deleting
+        AuditService::log([
+            'event_type' => 'product_force_deleted',
+            'event_category' => 'product',
+            'action' => 'deleted',
+            'model_type' => 'Product',
+            'model_id' => $product->id,
+            'description' => "Product permanently deleted: {$product->name}",
+            'old_values' => [
+                'name' => $product->name,
+                'price' => $product->price,
+                'quantity' => $product->quantity,
+            ],
+            'severity' => 'high',
+        ]);
+
         $product->forceDelete();
 
         return response()->json(['message' => 'Product permanently deleted']);
