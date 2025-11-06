@@ -40,9 +40,7 @@ const OrderSuccessPage = () => {
       },
       payment: {
         method: location.state?.orderData?.payment?.method || 'M-Pesa',
-        transactionId: location.state?.orderData?.payment?.method === 'Cash on Delivery' 
-          ? `COD-${Date.now().toString().slice(-8)}-${new Date().toISOString().replace(/[-:]/g, '').slice(0, 14)}`
-          : location.state?.orderData?.payment?.transactionId || 'QGH7X9K2M1',
+        transactionId: location.state?.orderData?.payment?.transactionId || 'N/A',
         amount: 52140,
         status: location.state?.orderData?.payment?.method === 'Cash on Delivery' ? 'pending' : 'completed'
       },
@@ -77,10 +75,8 @@ const OrderSuccessPage = () => {
           ...location.state.orderData,
           payment: {
             ...location.state.orderData.payment,
-            // Generate proper transaction ID for COD orders
-            transactionId: location.state.orderData.payment?.method === 'Cash on Delivery'
-              ? `COD-${mockOrder.orderNumber}-${new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14)}`
-              : location.state.orderData.payment?.transactionId || mockOrder.payment.transactionId
+            // Use transaction ID from backend
+            transactionId: location.state.orderData.payment?.transactionId || mockOrder.payment.transactionId
           },
           items: (location.state.items || cartItems || []).map(item => ({
             id: item.id,

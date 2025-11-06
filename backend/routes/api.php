@@ -164,7 +164,8 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::post('/payments/mpesa/initiate', [PaymentController::class, 'initiateMpesa']);
     Route::post('/payments/card/initiate', [PaymentController::class, 'initiateCard']);
     Route::get('/payments/{id}', [PaymentController::class, 'show']);
-    
+    Route::post('/payments/record', [PaymentController::class, 'recordPayment']);
+
     // Reviews
     Route::post('/reviews', [ReviewController::class, 'store']);
     Route::put('/reviews/{id}', [ReviewController::class, 'update']);
@@ -266,6 +267,16 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         Route::put('/users/{id}/status', [AuthController::class, 'updateUserStatus']);
         Route::delete('/users/{id}', [AuthController::class, 'deleteUser']);
         
+        // ⭐ NEW: Advanced User Management
+        Route::prefix('users')->group(function () {
+            Route::get('/{id}', [\App\Http\Controllers\Admin\UserManagementController::class, 'show']);
+            Route::post('/{id}/elevate', [\App\Http\Controllers\Admin\UserManagementController::class, 'elevateUser']);
+            Route::post('/{id}/remove-role', [\App\Http\Controllers\Admin\UserManagementController::class, 'removeRole']);
+            Route::post('/{id}/toggle-status', [\App\Http\Controllers\Admin\UserManagementController::class, 'toggleStatus']);
+            Route::post('/{id}/payment-recorder', [\App\Http\Controllers\Admin\UserManagementController::class, 'managePaymentRecorder']);
+            Route::post('/{id}/seller-profile', [\App\Http\Controllers\Admin\UserManagementController::class, 'manageSellerProfile']);
+        });
+
         // Seller management
         Route::get('/sellers/pending', [SellerProfileController::class, 'pendingSellers']);
         Route::put('/sellers/{id}/approve', [SellerProfileController::class, 'approve']);

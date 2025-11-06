@@ -157,4 +157,54 @@ class User extends Authenticatable
         return in_array($this->role, ['delivery_agent', 'shop_attendant', 'seller', 'admin', 'super_admin']);
     }
     
+    // Multi-role support methods
+    public function getAdditionalRolesAttribute($value)
+    {
+        return $value ? json_decode($value, true) : [];
+    }
+
+    public function setAdditionalRolesAttribute($value)
+    {
+        $this->attributes['additional_roles'] = json_encode($value);
+    }
+
+    public function getAllRoles()
+    {
+        $roles = [$this->role];
+        if ($this->additional_roles) {
+            $roles = array_merge($roles, $this->additional_roles);
+        }
+        return array_unique($roles);
+    }
+
+    public function hasRole($role)
+    {
+        return in_array($role, $this->getAllRoles());
+    }
+
+    public function hasAnyRole($roles)
+    {
+        return !empty(array_intersect($roles, $this->getAllRoles()));
+    }
+
+    public function addRole($role)
+    {
+        $additionalRoles = $this->additional_roles;
+        if (!in_array($role, $additionalRoles) && $role !== $this->role) {
+            $additionalRoles[] = $role;
+            $this->additional_roles = $additionalRoles;
+            $this->save();
+        }
+    }
+
+    public function removeRole($role)
+    {
+        $additionalRoles = $this->additional_roles;
+        $key = array_search($role, $additionalRoles);
+        if ($key !== false) {
+            unset($additionalRoles[$key]);
+            $this->additional_roles = array_values($additionalRoles);
+            $this->save();
+        }
+    }
 }
