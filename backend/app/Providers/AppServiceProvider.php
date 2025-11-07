@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Laravel\Socialite\Contracts\Factory as SocialiteFactory;
+use App\Models\User;  
+use App\Observers\UserObserver;  
+use App\Services\CloudinaryService;  
 
 class AppServiceProvider extends ServiceProvider
 {
