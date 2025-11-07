@@ -18,8 +18,8 @@ class SellerDashboardController extends Controller
     {
         $user = $request->user();
         
-        // Get seller profile
-        $seller = SellerProfile::where('user_id', $user->id)->firstOrFail();
+        // Get or create seller profile
+        $seller = $this->getOrCreateSellerProfile($user);
         
         $period = $request->query('period', 'month');
         $dateRange = $this->getDateRange($period);
@@ -75,7 +75,8 @@ class SellerDashboardController extends Controller
                 'seller' => [
                     'id' => $seller->id,
                     'business_name' => $seller->business_name,
-                    'commission_rate' => $avgCommissionRate
+                    'commission_rate' => $avgCommissionRate,
+                    'status' => $seller->status
                 ],
                 'total_sales' => [
                     'amount' => $totalSales,
@@ -111,7 +112,7 @@ class SellerDashboardController extends Controller
     public function transactions(Request $request)
     {
         $user = $request->user();
-        $seller = SellerProfile::where('user_id', $user->id)->firstOrFail();
+        $seller = $this->getOrCreateSellerProfile($user);
         
         $query = Payment::where('seller_id', $seller->id)
             ->with(['order:id,order_number', 'recordedBy:id,name']);
@@ -169,7 +170,7 @@ class SellerDashboardController extends Controller
     public function commissionBreakdown(Request $request)
     {
         $user = $request->user();
-        $seller = SellerProfile::where('user_id', $user->id)->firstOrFail();
+        $seller = $this->getOrCreateSellerProfile($user);
         
         $period = $request->query('period', 'month');
         $dateRange = $this->getDateRange($period);
@@ -209,7 +210,7 @@ class SellerDashboardController extends Controller
     public function payouts(Request $request)
     {
         $user = $request->user();
-        $seller = SellerProfile::where('user_id', $user->id)->firstOrFail();
+        $seller = $this->getOrCreateSellerProfile($user);
         
         // Get completed payouts (payments that have been paid out)
         $completedPayouts = Payment::where('seller_id', $seller->id)
@@ -243,6 +244,35 @@ class SellerDashboardController extends Controller
             'success' => true,
             'data' => $completedPayouts
         ]);
+    }
+    
+    /**
+     * Helper: Get or create seller profile for the user
+     * This prevents the "No query results" error
+     */
+    private function getOrCreateSellerProfile($user)
+    {
+        $seller = SellerProfile::where('user_id', $user->id)->first();
+        
+        if (!$seller) {
+            // Auto-create seller profile if it doesn't exist
+            $seller = SellerProfile::create([
+                'user_id' => $user->id,
+                'business_name' => $user->name . "'s Shop",
+                'business_description' => 'New seller account - please update your business details',
+                'phone' => $user->phone ?? '',
+                'county' => '',
+                'sub_county' => '',
+                'ward' => '',
+                'street_address' => '',
+                'commission_rate' => 10.00,
+                'status' => 'pending', // Requires admin approval
+            ]);
+            
+            \Log::info("✅ Auto-created SellerProfile in controller for user: {$user->id}");
+        }
+        
+        return $seller;
     }
     
     /**
