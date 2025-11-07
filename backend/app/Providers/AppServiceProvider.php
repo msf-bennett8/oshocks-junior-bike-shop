@@ -18,11 +18,14 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-    /**
+   /**
      * Bootstrap any application services.
      */
     public function boot(): void
     {
+        // Register User Observer
+        User::observe(UserObserver::class);
+        
         // Register Strava Socialite Provider
         $this->app->make(SocialiteFactory::class)->extend('strava', function ($app) {
             $config = $app['config']['services.strava'];
