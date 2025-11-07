@@ -616,6 +616,7 @@ class OrderController extends Controller
             $order->update([
                 'payment_status' => 'paid',
                 'amount_received' => $request->amount_received,
+                'transaction_reference' => $transactionReference, 
                 'payment_notes' => json_encode($paymentNotesData, JSON_PRETTY_PRINT),
                 'customer_phone' => $request->customer_phone ?? $order->customer_phone,
                 'external_reference' => $request->external_reference,
