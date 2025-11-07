@@ -523,55 +523,55 @@ class OrderController extends Controller
             $ipAddress = $request->ip();
             $deviceInfo = $request->userAgent();
 
-            // 3. GET ORDER ITEMS & CALCULATE PER SELLER
+            // 3. GENERATE TRANSACTION REFERENCE (ONCE, BEFORE LOOP)
+            // Format: {METHOD}-{RECORDER_CODE}-{COUNTY}-{ZONE}-{USERID}-{ORDERSEQ}-{YYYYMMDD}-{HHMMSS}-{SEQ}
+            $method = strtoupper(explode('_', $request->payment_method)[0]);
+
+            // Get county and zone from order or request
+            $county = $request->county ?? $order->county ?? 'UNKNOWN';
+            $zone = $request->zone ?? $order->delivery_zone ?? 'UNKNOWN';
+
+            // Clean county and zone (remove "County" suffix first, then spaces)
+            $countyClean = strtoupper(str_replace(' County', '', $county));
+            $countyClean = str_replace(' ', '', $countyClean);
+            // Extract specific location if format is "Zone Name - Location"
+            if (strpos($zone, ' - ') !== false) {
+                $zoneParts = explode(' - ', $zone);
+                $zone = end($zoneParts); // Get the last part (specific location)
+            }
+
+            // Remove special chars but keep spaces, then remove spaces
+            $zoneClean = preg_replace('/[^A-Za-z\s]/', '', $zone);
+            $zoneClean = str_replace(' ', '', $zoneClean);
+            $zoneClean = strtoupper($zoneClean);
+            $zoneClean = substr($zoneClean, 0, 15);
+
+            // Get user ID from order
+            $userId = $order->user_id ?? 0;
+
+            // Extract order sequence from order number (last 3 digits)
+            preg_match('/-(\d{3})$/', $order->order_number, $matches);
+            $orderSeq = $matches[1] ?? '001';
+
+            $dateStr = now()->format('Ymd');
+            $timeStr = now()->format('His');
+            $sequence = str_pad(\App\Models\Payment::whereDate('created_at', now())->count() + 1, 3, '0', STR_PAD_LEFT);
+
+            $transactionReference = "{$method}-{$recorderCode}-{$countyClean}-{$zoneClean}-UID{$userId}-{$orderSeq}-{$dateStr}-{$timeStr}-{$sequence}";
+
+            // 4. GET ORDER ITEMS & CALCULATE PER SELLER
             $order->load('orderItems');
-            
+
             foreach ($order->orderItems as $orderItem) {
-                // 4. GET SELLER & COMMISSION RATE
+                // 5. GET SELLER & COMMISSION RATE
                 $seller = \App\Models\SellerProfile::find($orderItem->seller_id);
                 $commissionRate = $seller ? ($seller->commission_rate ?? 15.00) : 15.00;
                 
-                // 5. CALCULATE COMMISSION
+                // 6. CALCULATE COMMISSION
                 $itemTotal = $orderItem->total;
                 $commissionAmount = round($itemTotal * ($commissionRate / 100), 2);
                 $sellerPayoutAmount = round($itemTotal - $commissionAmount, 2);
                 
-                // 6. GENERATE TRANSACTION REFERENCE
-                // Format: {METHOD}-{RECORDER_CODE}-{COUNTY}-{ZONE}-{USERID}-{ORDERSEQ}-{YYYYMMDD}-{HHMMSS}-{SEQ}
-                $method = strtoupper(explode('_', $request->payment_method)[0]);
-
-                // Get county and zone from order or request
-                $county = $request->county ?? $order->county ?? 'UNKNOWN';
-                $zone = $request->zone ?? $order->delivery_zone ?? 'UNKNOWN';
-
-                // Clean county and zone (remove "County" suffix first, then spaces)
-                $countyClean = strtoupper(str_replace(' County', '', $county));
-                $countyClean = str_replace(' ', '', $countyClean);
-                // Extract specific location if format is "Zone Name - Location"
-                if (strpos($zone, ' - ') !== false) {
-                    $zoneParts = explode(' - ', $zone);
-                    $zone = end($zoneParts); // Get the last part (specific location)
-                }
-
-                // Remove special chars but keep spaces, then remove spaces
-                $zoneClean = preg_replace('/[^A-Za-z\s]/', '', $zone);
-                $zoneClean = str_replace(' ', '', $zoneClean);
-                $zoneClean = strtoupper($zoneClean);
-                $zoneClean = substr($zoneClean, 0, 15);
-
-                // Get user ID from order
-                $userId = $order->user_id ?? 0;
-
-                // Extract order sequence from order number (last 3 digits)
-                preg_match('/-(\d{3})$/', $order->order_number, $matches);
-                $orderSeq = $matches[1] ?? '001';
-
-                $dateStr = now()->format('Ymd');
-                $timeStr = now()->format('His');
-                $sequence = str_pad(\App\Models\Payment::whereDate('created_at', now())->count() + 1, 3, '0', STR_PAD_LEFT);
-
-                $transactionReference = "{$method}-{$recorderCode}-{$countyClean}-{$zoneClean}-UID{$userId}-{$orderSeq}-{$dateStr}-{$timeStr}-{$sequence}";
-
                 // 7. CREATE PAYMENT RECORD
                 \App\Models\Payment::create([
                     'order_id' => $order->id,
