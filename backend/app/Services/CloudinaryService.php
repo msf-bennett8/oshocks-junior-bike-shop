@@ -15,18 +15,21 @@ class CloudinaryService
 
     public function __construct()
     {
-        $this->cloudinary = new Cloudinary([
+        $config = [
             'cloud' => [
                 'cloud_name' => config('cloudinary.cloud_name'),
                 'api_key' => config('cloudinary.api_key'),
                 'api_secret' => config('cloudinary.api_secret'),
             ],
             'url' => [
-                'secure' => config('cloudinary.secure')
+                'secure' => config('cloudinary.secure', true)
             ]
-        ]);
+        ];
 
-        $this->uploadApi = new UploadApi();
+        $this->cloudinary = new Cloudinary($config);
+        
+        // CRITICAL FIX: Pass config to UploadApi
+        $this->uploadApi = new UploadApi($config);
     }
 
     /**
@@ -143,55 +146,55 @@ class CloudinaryService
     }
 
     /**
- * Get transformed image URL
- * 
- * @param string $publicId
- * @param string $transformation - 'thumbnail', 'medium', 'large'
- * @return string
- */
-public function getTransformedUrl($publicId, $transformation = 'medium')
-{
-    $transformations = config('cloudinary.transformations');
-    
-    if (!isset($transformations[$transformation])) {
-        $transformation = 'medium';
-    }
-
-    $transform = $transformations[$transformation];
-    
-    // Get the image
-    $image = $this->cloudinary->image($publicId);
-    
-    // Apply resize transformation based on crop type
-    $width = $transform['width'] ?? null;
-    $height = $transform['height'] ?? null;
-    $crop = $transform['crop'] ?? 'fill';
-    
-    if ($width && $height) {
-        switch ($crop) {
-            case 'fill':
-                $image->resize(Resize::fill()->width($width)->height($height));
-                break;
-            case 'limit':
-                $image->resize(Resize::limit()->width($width)->height($height));
-                break;
-            case 'fit':
-                $image->resize(Resize::fit()->width($width)->height($height));
-                break;
-            case 'scale':
-                $image->resize(Resize::scale()->width($width)->height($height));
-                break;
-            default:
-                $image->resize(Resize::fill()->width($width)->height($height));
+     * Get transformed image URL
+     * 
+     * @param string $publicId
+     * @param string $transformation - 'thumbnail', 'medium', 'large'
+     * @return string
+     */
+    public function getTransformedUrl($publicId, $transformation = 'medium')
+    {
+        $transformations = config('cloudinary.transformations');
+        
+        if (!isset($transformations[$transformation])) {
+            $transformation = 'medium';
         }
-    } elseif ($width) {
-        $image->resize(Resize::scale()->width($width));
-    } elseif ($height) {
-        $image->resize(Resize::scale()->height($height));
+
+        $transform = $transformations[$transformation];
+        
+        // Get the image
+        $image = $this->cloudinary->image($publicId);
+        
+        // Apply resize transformation based on crop type
+        $width = $transform['width'] ?? null;
+        $height = $transform['height'] ?? null;
+        $crop = $transform['crop'] ?? 'fill';
+        
+        if ($width && $height) {
+            switch ($crop) {
+                case 'fill':
+                    $image->resize(Resize::fill()->width($width)->height($height));
+                    break;
+                case 'limit':
+                    $image->resize(Resize::limit()->width($width)->height($height));
+                    break;
+                case 'fit':
+                    $image->resize(Resize::fit()->width($width)->height($height));
+                    break;
+                case 'scale':
+                    $image->resize(Resize::scale()->width($width)->height($height));
+                    break;
+                default:
+                    $image->resize(Resize::fill()->width($width)->height($height));
+            }
+        } elseif ($width) {
+            $image->resize(Resize::scale()->width($width));
+        } elseif ($height) {
+            $image->resize(Resize::scale()->height($height));
+        }
+        
+        return $image->toUrl();
     }
-    
-    return $image->toUrl();
-}
 
     /**
      * Extract public_id from Cloudinary URL
