@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import sellerDashboardService from '../../services/sellerDashboardService';
 import {
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, Package, Users,
   Eye, Star, AlertCircle, Clock, CheckCircle, XCircle, Truck, Heart,
@@ -22,6 +23,13 @@ const SellerDashboardPage = () => {
   const [selectedMetric, setSelectedMetric] = useState('revenue');
   const [showNotifications, setShowNotifications] = useState(false);
   const { user } = useAuth();
+
+  // Real data from API
+  const [dashboardData, setDashboardData] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [commissionBreakdown, setCommissionBreakdown] = useState(null);
+  const [payouts, setPayouts] = useState([]);
+  const [error, setError] = useState(null);
 
   // Mock data - Replace with API calls
   const [stats, setStats] = useState({
@@ -278,12 +286,67 @@ const SellerDashboardPage = () => {
   ];
 
   useEffect(() => {
-    setTimeout(() => setLoading(false), 1000);
-  }, []);
+    loadDashboardData();
+  }, [timeRange]);
 
-  const handleRefresh = () => {
+  const loadDashboardData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Fetch all dashboard data in parallel
+      const [overviewData, transactionsData, commissionsData, payoutsData] = await Promise.all([
+        sellerDashboardService.getOverview(timeRange === '24hours' ? 'today' : timeRange === '7days' ? 'week' : 'month'),
+        sellerDashboardService.getTransactions({ 
+          page: 1, 
+          per_page: 10 
+        }),
+        sellerDashboardService.getCommissionBreakdown(timeRange === '24hours' ? 'today' : timeRange === '7days' ? 'week' : 'month'),
+        sellerDashboardService.getPayouts()
+      ]);
+
+      console.log('✅ Dashboard data loaded:', { overviewData, transactionsData, commissionsData, payoutsData });
+      
+      // Update state with real data
+      setDashboardData(overviewData.data);
+      setTransactions(transactionsData.data.data || []);
+      setCommissionBreakdown(commissionsData.data);
+      setPayouts(payoutsData.data || []);
+
+      // Map API data to stats structure
+      if (overviewData.data) {
+        setStats(prev => ({
+          ...prev,
+          revenue: {
+            total: overviewData.data.total_sales || 0,
+            change: overviewData.data.sales_change || 0,
+            trend: overviewData.data.sales_change > 0 ? 'up' : overviewData.data.sales_change < 0 ? 'down' : 'flat',
+            target: 3000000, // Keep target as is
+            targetProgress: ((overviewData.data.total_sales || 0) / 3000000) * 100
+          },
+          orders: {
+            ...prev.orders,
+            total: overviewData.data.total_transactions || 0,
+            avgOrderValue: overviewData.data.average_order_value || 0
+          },
+          customers: {
+            ...prev.customers,
+            total: overviewData.data.unique_customers || 0
+          }
+        }));
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error('❌ Error loading dashboard data:', error);
+      setError(error.message || 'Failed to load dashboard data');
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1500);
+    await loadDashboardData();
+    setRefreshing(false);
   };
 
   const getStatusBadge = (status) => {
@@ -346,6 +409,26 @@ const SellerDashboardPage = () => {
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p className="mt-4 text-gray-600 font-medium">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <XCircle className="w-8 h-8 text-red-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Failed to Load Dashboard</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={loadDashboardData}
+            className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );

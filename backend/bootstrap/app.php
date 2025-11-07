@@ -21,6 +21,15 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/*',
         ]);
         
+        // Configure Sanctum for API authentication
+        $middleware->statefulApi();
+        
+        // Make auth middleware redirect to JSON for API routes
+        $middleware->redirectGuestsTo(fn () => response()->json([
+            'message' => 'Unauthenticated.',
+            'status' => 'error'
+        ], 401));
+        
         // Register middleware aliases (Laravel 11 style)
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,

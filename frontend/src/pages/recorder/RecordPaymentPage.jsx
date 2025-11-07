@@ -91,7 +91,12 @@ const loadOrderDetails = async () => {
 
       const response = await recorderService.recordPayment(orderNumber, paymentData);
 
-        if (response.success) {
+      if (response.success) {
+        // Store the payment transaction reference from response
+        setOrder(prev => ({
+          ...prev,
+          transaction_reference: response.data.transaction_reference
+        }));
         setSuccess(true);
         // Don't auto-redirect - let user review summary
       }

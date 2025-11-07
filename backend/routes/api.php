@@ -229,6 +229,8 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         Route::get('/payment-methods-breakdown', [OwnerDashboardController::class, 'paymentMethodsBreakdown']);
         Route::get('/sale-channels-breakdown', [OwnerDashboardController::class, 'saleChannelsBreakdown']);
         Route::get('/top-sellers', [OwnerDashboardController::class, 'topSellers']);
+        Route::get('/recent-orders', [OwnerDashboardController::class, 'recentOrders']);
+        Route::get('/order-status-distribution', [OwnerDashboardController::class, 'orderStatusDistribution']);
     });
 
     // ============================================================================

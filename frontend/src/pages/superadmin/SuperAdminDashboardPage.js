@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import dashboardService from '../../services/dashboardService';
 import { 
   TrendingUp, TrendingDown, ShoppingCart, Package, Users, DollarSign, 
   Eye, AlertCircle, CheckCircle, Clock, XCircle, Star, MapPin, 
@@ -10,19 +11,38 @@ import {
 import { BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const SuperAdminDashboardPage = () => {
-  const [timeRange, setTimeRange] = useState('7days');
-  const [isLoading, setIsLoading] = useState(false);
+  const [timeRange, setTimeRange] = useState('month');
+  const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const { user } = useAuth();
 
-  // Mock data for dashboard
-  const [dashboardData ] = useState({
+  // Real data states
+  const [dashboardData, setDashboardData] = useState({
     revenue: {
-      total: 2847650,
-      change: 12.5,
+      total: 0,
+      change: 0,
       trend: 'up',
       comparison: 'vs last period'
     },
+    platformCommission: {
+      total: 0,
+      averageRate: 0
+    },
+    pendingPayouts: {
+      total: 0,
+      sellerCount: 0
+    }
+  });
+
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [saleChannels, setSaleChannels] = useState([]);
+  const [topSellers, setTopSellers] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [orderStatusData, setOrderStatusData] = useState([]);
+
+  // Mock data that doesn't come from backend yet
+  const [dashboardMetrics] = useState({
     orders: {
       total: 342,
       change: -3.2,
@@ -123,54 +143,7 @@ const SuperAdminDashboardPage = () => {
     }
   ];
 
-  // Recent orders
-  const recentOrders = [
-    {
-      id: 'ORD-10234',
-      customer: 'John Kamau',
-      items: 3,
-      total: 45000,
-      status: 'completed',
-      paymentMethod: 'M-Pesa',
-      date: '2025-10-10 14:30'
-    },
-    {
-      id: 'ORD-10235',
-      customer: 'Sarah Wanjiku',
-      items: 1,
-      total: 125000,
-      status: 'processing',
-      paymentMethod: 'Card',
-      date: '2025-10-10 13:15'
-    },
-    {
-      id: 'ORD-10236',
-      customer: 'David Ochieng',
-      items: 5,
-      total: 28500,
-      status: 'shipped',
-      paymentMethod: 'M-Pesa',
-      date: '2025-10-10 11:45'
-    },
-    {
-      id: 'ORD-10237',
-      customer: 'Mary Akinyi',
-      items: 2,
-      total: 67000,
-      status: 'pending',
-      paymentMethod: 'M-Pesa',
-      date: '2025-10-10 10:20'
-    },
-    {
-      id: 'ORD-10238',
-      customer: 'Peter Mwangi',
-      items: 1,
-      total: 15000,
-      status: 'cancelled',
-      paymentMethod: 'Card',
-      date: '2025-10-10 09:05'
-    }
-  ];
+  // Mock data removed - now using real API data
 
   // Traffic sources
   const trafficData = [
@@ -233,22 +206,105 @@ const SuperAdminDashboardPage = () => {
     }
   ];
 
-  // Order status distribution
-  const orderStatusData = [
-    { status: 'Completed', count: 245, color: '#10B981' },
-    { status: 'Processing', count: 67, color: '#3B82F6' },
-    { status: 'Shipped', count: 89, color: '#8B5CF6' },
-    { status: 'Pending', count: 34, color: '#F59E0B' },
-    { status: 'Cancelled', count: 23, color: '#EF4444' }
-  ];
+  // Mock data removed - now using real API data
+
+  // Fetch dashboard data
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      console.log('🔄 Fetching dashboard data for period:', timeRange);
+
+      // Fetch all data in parallel
+      const [overviewRes, paymentMethodsRes, channelsRes, sellersRes, transactionsRes, ordersRes, statusRes] = await Promise.all([
+        dashboardService.getOwnerOverview(timeRange),
+        dashboardService.getPaymentMethodsBreakdown(timeRange),
+        dashboardService.getSaleChannelsBreakdown(timeRange),
+        dashboardService.getTopSellers(5, timeRange),
+        dashboardService.getTransactions({ per_page: 5 }),
+        dashboardService.getRecentOrders(5),
+        dashboardService.getOrderStatusDistribution(timeRange)
+      ]);
+
+      console.log('✅ Dashboard data fetched successfully');
+
+      // Update overview data
+      if (overviewRes.success) {
+        setDashboardData({
+          revenue: {
+            total: overviewRes.data.total_revenue.amount || 0,
+            change: overviewRes.data.total_revenue.change_percentage || 0,
+            trend: overviewRes.data.total_revenue.change_percentage >= 0 ? 'up' : 'down',
+            comparison: 'vs last period'
+          },
+          platformCommission: {
+            total: overviewRes.data.platform_commission.amount || 0,
+            averageRate: overviewRes.data.platform_commission.average_rate || 0
+          },
+          pendingPayouts: {
+            total: overviewRes.data.pending_payouts.amount || 0,
+            sellerCount: overviewRes.data.pending_payouts.seller_count || 0
+          }
+        });
+      }
+
+      // Update payment methods
+      if (paymentMethodsRes.success) {
+        const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+        setPaymentMethods(paymentMethodsRes.data.map((item, index) => ({
+          method: item.method,
+          value: item.total_amount,
+          count: item.transaction_count,
+          color: colors[index % colors.length]
+        })));
+      }
+
+      // Update sale channels
+      if (channelsRes.success) {
+        const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+        setSaleChannels(channelsRes.data.map((item, index) => ({
+          name: item.channel,
+          value: item.total_amount,
+          percentage: item.percentage,
+          color: colors[index % colors.length]
+        })));
+      }
+
+      // Update top sellers
+      if (sellersRes.success) {
+        setTopSellers(sellersRes.data);
+      }
+
+      // Update recent transactions
+      if (transactionsRes.success) {
+        setRecentTransactions(transactionsRes.data || []);
+      }
+
+      // Update recent orders
+      if (ordersRes.success) {
+        setRecentOrders(ordersRes.data || []);
+      }
+
+      // Update order status distribution
+      if (statusRes.success) {
+        setOrderStatusData(statusRes.data || []);
+      }
+
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('❌ Error fetching dashboard data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Load data on mount and when timeRange changes
+  useEffect(() => {
+    fetchDashboardData();
+  }, [timeRange]);
 
   // Refresh data
   const handleRefresh = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setLastUpdated(new Date());
-      setIsLoading(false);
-    }, 1000);
+    fetchDashboardData();
   };
 
   // Format currency
@@ -307,12 +363,11 @@ const SuperAdminDashboardPage = () => {
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={isLoading}
           >
             <option value="today">Today</option>
-            <option value="7days">Last 7 Days</option>
-            <option value="30days">Last 30 Days</option>
-            <option value="90days">Last 90 Days</option>
-            <option value="year">This Year</option>
+            <option value="week">Last 7 Days</option>
+            <option value="month">Last 30 Days</option>
           </select>
           
           <button
@@ -332,6 +387,16 @@ const SuperAdminDashboardPage = () => {
           </button>
         </div>
       </div>
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center gap-3">
+            <RefreshCw size={20} className="text-blue-600 animate-spin" />
+            <p className="text-blue-800">Loading dashboard data...</p>
+          </div>
+        </div>
+      )}
 
       {/* Key Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -353,59 +418,54 @@ const SuperAdminDashboardPage = () => {
           <p className="text-xs opacity-75">{dashboardData.revenue.comparison}</p>
         </div>
 
-        {/* Orders Card */}
+        {/* Platform Commission Card */}
         <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-white bg-opacity-20 rounded-lg">
+              <Percent size={24} />
+            </div>
+            <span className="text-sm text-green-200">
+              {dashboardData.platformCommission.averageRate.toFixed(1)}%
+            </span>
+          </div>
+          <h3 className="text-sm font-medium opacity-90 mb-1">Platform Commission</h3>
+          <p className="text-3xl font-bold mb-1">{formatCurrency(dashboardData.platformCommission.total)}</p>
+          <p className="text-xs opacity-75">Average commission rate</p>
+        </div>
+
+        {/* Pending Payouts Card */}
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white">
+          <div className="flex justify-between items-start mb-4">
+            <div className="p-3 bg-white bg-opacity-20 rounded-lg">
+              <Users size={24} />
+            </div>
+            <span className="text-sm text-orange-200">
+              {dashboardData.pendingPayouts.sellerCount} sellers
+            </span>
+          </div>
+          <h3 className="text-sm font-medium opacity-90 mb-1">Pending Payouts</h3>
+          <p className="text-3xl font-bold mb-1">{formatCurrency(dashboardData.pendingPayouts.total)}</p>
+          <p className="text-xs opacity-75">Awaiting transfer</p>
+        </div>
+
+        {/* Orders Card (Mock) */}
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-white bg-opacity-20 rounded-lg">
               <ShoppingCart size={24} />
             </div>
             <span className={`flex items-center gap-1 text-sm ${
-              dashboardData.orders.trend === 'up' ? 'text-green-200' : 'text-red-200'
+              dashboardMetrics.orders.trend === 'up' ? 'text-green-200' : 'text-red-200'
             }`}>
-              {dashboardData.orders.trend === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-              {Math.abs(dashboardData.orders.change)}%
+              {dashboardMetrics.orders.trend === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+              {Math.abs(dashboardMetrics.orders.change)}%
             </span>
           </div>
           <h3 className="text-sm font-medium opacity-90 mb-1">Total Orders</h3>
-          <p className="text-3xl font-bold mb-1">{formatNumber(dashboardData.orders.total)}</p>
-          <p className="text-xs opacity-75">{dashboardData.orders.comparison}</p>
+          <p className="text-3xl font-bold mb-1">{formatNumber(dashboardMetrics.orders.total)}</p>
+          <p className="text-xs opacity-75">{dashboardMetrics.orders.comparison}</p>
         </div>
 
-        {/* Customers Card */}
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-white bg-opacity-20 rounded-lg">
-              <Users size={24} />
-            </div>
-            <span className={`flex items-center gap-1 text-sm ${
-              dashboardData.customers.trend === 'up' ? 'text-green-200' : 'text-red-200'
-            }`}>
-              {dashboardData.customers.trend === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-              {Math.abs(dashboardData.customers.change)}%
-            </span>
-          </div>
-          <h3 className="text-sm font-medium opacity-90 mb-1">Total Customers</h3>
-          <p className="text-3xl font-bold mb-1">{formatNumber(dashboardData.customers.total)}</p>
-          <p className="text-xs opacity-75">{dashboardData.customers.comparison}</p>
-        </div>
-
-        {/* Avg Order Value Card */}
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-white bg-opacity-20 rounded-lg">
-              <TrendingUp size={24} />
-            </div>
-            <span className={`flex items-center gap-1 text-sm ${
-              dashboardData.avgOrderValue.trend === 'up' ? 'text-green-200' : 'text-red-200'
-            }`}>
-              {dashboardData.avgOrderValue.trend === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-              {Math.abs(dashboardData.avgOrderValue.change)}%
-            </span>
-          </div>
-          <h3 className="text-sm font-medium opacity-90 mb-1">Avg Order Value</h3>
-          <p className="text-3xl font-bold mb-1">{formatCurrency(dashboardData.avgOrderValue.total)}</p>
-          <p className="text-xs opacity-75">{dashboardData.avgOrderValue.comparison}</p>
-        </div>
       </div>
 
       {/* Secondary Metrics */}
@@ -417,15 +477,15 @@ const SuperAdminDashboardPage = () => {
             </div>
             <div>
               <p className="text-sm text-gray-600">Conversion Rate</p>
-              <p className="text-2xl font-bold">{dashboardData.conversionRate.total}%</p>
+              <p className="text-2xl font-bold">{dashboardMetrics.conversionRate.total}%</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <span className={`flex items-center gap-1 ${
-              dashboardData.conversionRate.trend === 'up' ? 'text-green-600' : 'text-red-600'
+              dashboardMetrics.conversionRate.trend === 'up' ? 'text-green-600' : 'text-red-600'
             }`}>
-              {dashboardData.conversionRate.trend === 'up' ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-              {Math.abs(dashboardData.conversionRate.change)}%
+              {dashboardMetrics.conversionRate.trend === 'up' ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+              {Math.abs(dashboardMetrics.conversionRate.change)}%
             </span>
             <span className="text-gray-500">vs last period</span>
           </div>
@@ -438,11 +498,11 @@ const SuperAdminDashboardPage = () => {
             </div>
             <div>
               <p className="text-sm text-gray-600">Active Products</p>
-              <p className="text-2xl font-bold">{formatNumber(dashboardData.totalProducts.active)}</p>
+              <p className="text-2xl font-bold">{formatNumber(dashboardMetrics.totalProducts.active)}</p>
             </div>
           </div>
           <div className="text-sm text-gray-600">
-            {dashboardData.totalProducts.outOfStock} out of stock
+            {dashboardMetrics.totalProducts.outOfStock} out of stock
           </div>
         </div>
 
@@ -464,6 +524,197 @@ const SuperAdminDashboardPage = () => {
             <span className="text-gray-500">vs last period</span>
           </div>
         </div>
+      </div>
+
+      {/* Payment Methods & Sale Channels */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Payment Methods Breakdown */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Payment Methods</h2>
+              <p className="text-sm text-gray-600">Transaction breakdown</p>
+            </div>
+          </div>
+
+          {paymentMethods.length > 0 ? (
+            <div className="space-y-4">
+              {paymentMethods.map((method, index) => (
+                <div key={index}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: method.color }}
+                      />
+                      <span className="text-sm font-medium text-gray-900">{method.method}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-semibold text-gray-900">
+                        {formatCurrency(method.value)}
+                      </span>
+                      <span className="text-xs text-gray-500 ml-2">({method.count} txns)</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 text-center py-8">No payment data available</p>
+          )}
+        </div>
+
+        {/* Sale Channels Breakdown */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Sale Channels</h2>
+              <p className="text-sm text-gray-600">Revenue distribution</p>
+            </div>
+          </div>
+
+          {saleChannels.length > 0 ? (
+            <div className="space-y-4">
+              {saleChannels.map((channel, index) => (
+                <div key={index}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-3 h-3 rounded-full" 
+                        style={{ backgroundColor: channel.color }}
+                      />
+                      <span className="text-sm font-medium text-gray-900">{channel.name}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-sm font-semibold text-gray-900">
+                        {formatCurrency(channel.value)}
+                      </span>
+                      <span className="text-xs text-gray-500 ml-2">({channel.percentage}%)</span>
+                    </div>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="h-2 rounded-full transition-all duration-500" 
+                      style={{ 
+                        width: `${channel.percentage}%`,
+                        backgroundColor: channel.color 
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 text-center py-8">No channel data available</p>
+          )}
+        </div>
+      </div>
+
+      {/* Top Sellers */}
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Top Performing Sellers</h2>
+            <p className="text-sm text-gray-600">Highest revenue generators</p>
+          </div>
+        </div>
+
+        {topSellers.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">#</th>
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Seller</th>
+                  <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Total Sales</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {topSellers.map((seller, index) => (
+                  <tr key={seller.seller_id} className="hover:bg-gray-50">
+                    <td className="py-4">
+                      <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full text-sm font-semibold text-blue-600">
+                        {index + 1}
+                      </div>
+                    </td>
+                    <td className="py-4">
+                      <p className="text-sm font-medium text-gray-900">{seller.seller_name}</p>
+                    </td>
+                    <td className="py-4 text-right">
+                      <p className="text-sm font-semibold text-gray-900">{formatCurrency(seller.total_sales)}</p>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 text-center py-8">No seller data available</p>
+        )}
+      </div>
+
+      {/* Recent Transactions */}
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Recent Transactions</h2>
+            <p className="text-sm text-gray-600">Latest payment records</p>
+          </div>
+          <button className="text-blue-600 text-sm font-medium hover:underline flex items-center gap-1">
+            View All <ChevronRight size={16} />
+          </button>
+        </div>
+
+        {recentTransactions.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Transaction ID</th>
+                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Seller</th>
+                  <th className="text-center text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Method</th>
+                  <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Amount</th>
+                  <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Commission</th>
+                  <th className="text-center text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {recentTransactions.map((transaction) => (
+                  <tr key={transaction.id} className="hover:bg-gray-50">
+                    <td className="py-4">
+                      <p className="text-sm font-medium text-gray-900">{transaction.transaction_reference}</p>
+                      <p className="text-xs text-gray-500">{new Date(transaction.payment_collected_at).toLocaleString()}</p>
+                    </td>
+                    <td className="py-4">
+                      <p className="text-sm text-gray-900">{transaction.seller?.shop_name || 'N/A'}</p>
+                    </td>
+                    <td className="py-4 text-center">
+                      <span className="text-xs px-2 py-1 bg-gray-100 rounded-full">
+                        {transaction.payment_method}
+                      </span>
+                    </td>
+                    <td className="py-4 text-right">
+                      <p className="text-sm font-semibold text-gray-900">{formatCurrency(transaction.amount)}</p>
+                    </td>
+                    <td className="py-4 text-right">
+                      <p className="text-sm text-gray-600">{formatCurrency(transaction.platform_commission_amount)}</p>
+                    </td>
+                    <td className="py-4">
+                      <div className="flex justify-center">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}>
+                          {getStatusIcon(transaction.status)}
+                          {transaction.status}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 text-center py-8">No recent transactions</p>
+        )}
       </div>
 
       {/* Charts Row */}
@@ -679,12 +930,12 @@ const SuperAdminDashboardPage = () => {
                     </td>
                     <td className="py-4 text-center">
                       <span className="inline-flex items-center gap-1 text-xs text-gray-600">
-                        {order.paymentMethod === 'M-Pesa' ? (
+                        {order.payment_method === 'mpesa' || order.payment_method === 'mpesa_manual' ? (
                           <CreditCard size={14} className="text-green-600" />
                         ) : (
                           <CreditCard size={14} className="text-blue-600" />
                         )}
-                        {order.paymentMethod}
+                        {order.payment_method}
                       </span>
                     </td>
                   </tr>

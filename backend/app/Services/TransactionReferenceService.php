@@ -146,8 +146,8 @@ class TransactionReferenceService
         // Remove special characters, keep only alphanumeric and spaces
         $zone = preg_replace('/[^a-zA-Z0-9\s]/', '', $zone);
         
-        // Remove spaces and convert to PascalCase for readability
-        $zone = str_replace(' ', '', ucwords(strtolower($zone)));
+        // Remove spaces and convert to UPPERCASE for consistency with county
+        $zone = strtoupper(str_replace(' ', '', $zone));
         
         // Limit to 15 characters to keep reference manageable
         return substr($zone, 0, 15);
