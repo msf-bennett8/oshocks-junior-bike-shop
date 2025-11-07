@@ -308,29 +308,30 @@ const SellerDashboardPage = () => {
       
       // Update state with real data
       setDashboardData(overviewData.data);
-      setTransactions(transactionsData.data.data || []);
+      setTransactions(transactionsData.data || []);
       setCommissionBreakdown(commissionsData.data);
       setPayouts(payoutsData.data || []);
 
       // Map API data to stats structure
       if (overviewData.data) {
+        const apiData = overviewData.data;
         setStats(prev => ({
           ...prev,
           revenue: {
-            total: overviewData.data.total_sales || 0,
-            change: overviewData.data.sales_change || 0,
-            trend: overviewData.data.sales_change > 0 ? 'up' : overviewData.data.sales_change < 0 ? 'down' : 'flat',
-            target: 3000000, // Keep target as is
-            targetProgress: ((overviewData.data.total_sales || 0) / 3000000) * 100
+            total: parseFloat(apiData.total_sales?.amount || 0),
+            change: apiData.total_sales?.change_percentage || 0,
+            trend: (apiData.total_sales?.change_percentage || 0) > 0 ? 'up' : (apiData.total_sales?.change_percentage || 0) < 0 ? 'down' : 'flat',
+            target: 3000000,
+            targetProgress: ((parseFloat(apiData.total_sales?.amount || 0)) / 3000000) * 100
           },
           orders: {
             ...prev.orders,
-            total: overviewData.data.total_transactions || 0,
-            avgOrderValue: overviewData.data.average_order_value || 0
+            total: apiData.total_transactions || 0,
+            avgOrderValue: parseFloat(apiData.average_order_value || 0)
           },
           customers: {
             ...prev.customers,
-            total: overviewData.data.unique_customers || 0
+            total: apiData.unique_customers || 0
           }
         }));
       }
@@ -375,6 +376,25 @@ const SellerDashboardPage = () => {
       success: { icon: CheckCircle, color: 'text-green-600' }
     };
     return icons[type];
+  };
+
+  const formatTimeAgo = (date) => {
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  
+  return date.toLocaleDateString('en-GB', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric' 
+    });
   };
 
   const StatCard = ({ icon: Icon, label, value, change, trend, color, suffix = '', subtitle = '' }) => (
@@ -1094,37 +1114,57 @@ const SellerDashboardPage = () => {
               </button>
             </div>
             <div className="space-y-3">
-              {recentOrders.map(order => (
-                <div key={order.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <p className="font-medium text-gray-900">{order.id}</p>
-                      {getStatusBadge(order.status)}
+              {transactions.length > 0 ? (
+                transactions.slice(0, 5).map(transaction => {
+                  const orderNumber = transaction.order?.order_number || 'N/A';
+                  const customerName = transaction.display?.customer_name || 'Guest';
+                  const firstProduct = transaction.display?.first_product || 'N/A';
+                  const county = transaction.display?.county || 'N/A';
+                  const paymentMethod = transaction.payment_method 
+                    ? transaction.payment_method.charAt(0).toUpperCase() + transaction.payment_method.slice(1)
+                    : 'N/A';
+                  const amount = parseFloat(transaction.amount || 0);
+                  const createdAt = new Date(transaction.created_at);
+                  const timeAgo = formatTimeAgo(createdAt);
+                  
+                  return (
+                    <div key={transaction.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <p className="font-medium text-gray-900 text-sm">{orderNumber}</p>
+                          {getStatusBadge(transaction.status)}
+                        </div>
+                        <p className="text-sm text-gray-900 font-medium">{customerName}</p>
+                        <p className="text-xs text-gray-600 truncate">{firstProduct}</p>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <CreditCard className="w-3 h-3" />
+                            {paymentMethod}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {county}
+                          </span>
+                          <span>{timeAgo}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-gray-900">
+                          KSh {amount.toLocaleString()}
+                        </p>
+                        <button className="text-xs text-orange-600 hover:text-orange-700 font-medium mt-1 flex items-center gap-1">
+                          View <ExternalLink className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-900 font-medium">{order.customer}</p>
-                    <p className="text-xs text-gray-600 truncate">{order.product}</p>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <CreditCard className="w-3 h-3" />
-                        {order.payment}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {order.location}
-                      </span>
-                      <span>{order.time}</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gray-900">
-                      KSh {order.amount.toLocaleString()}
-                    </p>
-                    <button className="text-xs text-orange-600 hover:text-orange-700 font-medium mt-1 flex items-center gap-1">
-                      View <ExternalLink className="w-3 h-3" />
-                    </button>
-                  </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>No recent orders yet</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

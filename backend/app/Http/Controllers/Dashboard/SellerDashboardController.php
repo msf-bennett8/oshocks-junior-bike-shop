@@ -115,7 +115,13 @@ class SellerDashboardController extends Controller
         $seller = $this->getOrCreateSellerProfile($user);
         
         $query = Payment::where('seller_id', $seller->id)
-            ->with(['order:id,order_number', 'recordedBy:id,name']);
+            ->with([
+                'order:id,order_number,user_id,county',
+                'order.user:id,name',
+                'order.orderItems:id,order_id,product_id,quantity',
+                'order.orderItems.product:id,name',
+                'recordedBy:id,name'
+            ]);
         
         // Apply filters (optional)
         if ($request->has('payment_method')) {
@@ -144,11 +150,28 @@ class SellerDashboardController extends Controller
         // Transform data to show seller's perspective
         $data = $transactions->items();
         foreach ($data as $transaction) {
+            // Extract customer name
+            $customerName = $transaction->order?->user?->name ?? 'Guest Customer';
+            
+            // Extract first product name
+            $firstProduct = $transaction->order?->orderItems?->first()?->product?->name ?? 'N/A';
+            
+            // Format county (remove "County" suffix if present)
+            $county = $transaction->order?->county ?? $transaction->recorder_location ?? 'N/A';
+            $county = str_replace(' County', '', $county);
+            
             $transaction->breakdown = [
                 'sale_amount' => $transaction->amount,
                 'commission' => $transaction->platform_commission_amount,
                 'commission_rate' => $transaction->platform_commission_rate . '%',
                 'i_receive' => $transaction->seller_payout_amount
+            ];
+            
+            // Add display data for frontend
+            $transaction->display = [
+                'customer_name' => $customerName,
+                'first_product' => $firstProduct,
+                'county' => $county
             ];
         }
         
