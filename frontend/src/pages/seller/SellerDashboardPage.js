@@ -325,9 +325,15 @@ const SellerDashboardPage = () => {
             targetProgress: ((parseFloat(apiData.total_sales?.amount || 0)) / 3000000) * 100
           },
           orders: {
-            ...prev.orders,
-            total: apiData.total_transactions || 0,
-            avgOrderValue: parseFloat(apiData.average_order_value || 0)
+            total: apiData.order_statistics?.total_orders || 0,
+            change: apiData.order_statistics?.change_percentage || 0,
+            trend: (apiData.order_statistics?.change_percentage || 0) > 0 ? 'up' : (apiData.order_statistics?.change_percentage || 0) < 0 ? 'down' : 'flat',
+            pending: apiData.order_statistics?.pending_orders || 0,
+            processing: apiData.order_statistics?.processing_orders || 0,
+            shipped: 0,
+            completed: apiData.order_statistics?.completed_orders || 0,
+            cancelled: apiData.order_statistics?.cancelled_orders || 0,
+            avgOrderValue: apiData.order_statistics?.average_order_value || 0
           },
           customers: {
             ...prev.customers,
@@ -582,11 +588,13 @@ const SellerDashboardPage = () => {
           <StatCard
             icon={DollarSign}
             label="Total Revenue"
-            value={`KSh ${(stats.revenue.total / 1000).toFixed(0)}K`}
+            value={`KSh ${stats.revenue.total.toLocaleString()}`}
             change={stats.revenue.change}
             trend={stats.revenue.trend}
             color="bg-green-600"
-            subtitle={`Avg Order: KSh ${stats.orders.avgOrderValue.toLocaleString()}`}
+            subtitle={dashboardData?.platform_commission ? `Commission: KSh ${parseFloat(dashboardData.platform_commission.amount).toLocaleString()}` : 'Loading...'}
+            //If i will like to use non decimal commision uncomment below
+            //subtitle={dashboardData?.platform_commission ? `Commission: KSh ${Math.round(parseFloat(dashboardData.platform_commission.amount)).toLocaleString()}` : 'Loading...'}
           />
           <StatCard
             icon={ShoppingCart}
@@ -595,7 +603,7 @@ const SellerDashboardPage = () => {
             change={stats.orders.change}
             trend={stats.orders.trend}
             color="bg-blue-600"
-            subtitle={`${stats.orders.pending} pending orders`}
+            subtitle={`${stats.orders.completed} completed orders`}
           />
           <StatCard
             icon={Users}

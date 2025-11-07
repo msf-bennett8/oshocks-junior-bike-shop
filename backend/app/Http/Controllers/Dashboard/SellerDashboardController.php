@@ -67,7 +67,34 @@ class SellerDashboardController extends Controller
         
         // Average commission rate for this seller
         $avgCommissionRate = $seller->commission_rate ?? 15.00;
-        
+
+        // Get order statistics
+        $orderStats = Payment::where('seller_id', $seller->id)
+            ->whereBetween('payment_collected_at', $dateRange)
+            ->selectRaw('
+                COUNT(DISTINCT order_id) as total_orders,
+                SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending_orders,
+                SUM(CASE WHEN status = "processing" THEN 1 ELSE 0 END) as processing_orders,
+                SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed_orders,
+                SUM(CASE WHEN status = "cancelled" THEN 1 ELSE 0 END) as cancelled_orders
+            ')
+            ->first();
+
+        // Previous period order count for comparison
+        $previousOrderCount = Payment::where('seller_id', $seller->id)
+            ->whereBetween('payment_collected_at', $previousDateRange)
+            ->distinct('order_id')
+            ->count('order_id');
+
+        $orderChange = $previousOrderCount > 0 
+            ? ((($orderStats->total_orders ?? 0) - $previousOrderCount) / $previousOrderCount) * 100 
+            : 0;
+
+        // Average order value
+        $avgOrderValue = ($orderStats->total_orders ?? 0) > 0 
+            ? $totalSales / ($orderStats->total_orders ?? 1)
+            : 0;
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -101,6 +128,15 @@ class SellerDashboardController extends Controller
                     'amount' => $completedPayouts,
                     'currency' => 'KES',
                     'status' => 'already_received'
+                ],
+                'order_statistics' => [
+                    'total_orders' => $orderStats->total_orders ?? 0,
+                    'pending_orders' => $orderStats->pending_orders ?? 0,
+                    'processing_orders' => $orderStats->processing_orders ?? 0,
+                    'completed_orders' => $orderStats->completed_orders ?? 0,
+                    'cancelled_orders' => $orderStats->cancelled_orders ?? 0,
+                    'change_percentage' => round($orderChange, 2),
+                    'average_order_value' => round($avgOrderValue, 2)
                 ]
             ]
         ]);

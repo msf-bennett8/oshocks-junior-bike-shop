@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import dashboardService from '../../services/dashboardService';
 import { 
   TrendingUp, TrendingDown, ShoppingCart, Package, Users, DollarSign, 
@@ -15,6 +16,7 @@ const SuperAdminDashboardPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Real data states
   const [dashboardData, setDashboardData] = useState({
@@ -433,8 +435,11 @@ const SuperAdminDashboardPage = () => {
           <p className="text-xs opacity-75">Average commission rate</p>
         </div>
 
-        {/* Pending Payouts Card */}
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white">
+        {/* Pending Payouts Card - Clickable */}
+        <div 
+          onClick={() => navigate('/super-admin/payouts')}
+          className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white cursor-pointer hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105"
+        >
           <div className="flex justify-between items-start mb-4">
             <div className="p-3 bg-white bg-opacity-20 rounded-lg">
               <Users size={24} />
@@ -445,7 +450,10 @@ const SuperAdminDashboardPage = () => {
           </div>
           <h3 className="text-sm font-medium opacity-90 mb-1">Pending Payouts</h3>
           <p className="text-3xl font-bold mb-1">{formatCurrency(dashboardData.pendingPayouts.total)}</p>
-          <p className="text-xs opacity-75">Awaiting transfer</p>
+          <p className="text-xs opacity-75 flex items-center gap-1">
+            Awaiting transfer
+            <ChevronRight size={14} className="opacity-75" />
+          </p>
         </div>
 
         {/* Orders Card (Mock) */}
@@ -1130,6 +1138,16 @@ const SuperAdminDashboardPage = () => {
               <Download size={24} className="text-indigo-600" />
             </div>
             <span className="text-sm font-medium text-gray-700">Export Report</span>
+          </button>
+
+          <button 
+            onClick={() => navigate('/super-admin/payouts')}
+            className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group"
+          >
+            <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
+              <DollarSign size={24} className="text-yellow-600" />
+            </div>
+            <span className="text-sm font-medium text-gray-700">Manage Payouts</span>
           </button>
         </div>
       </div>
