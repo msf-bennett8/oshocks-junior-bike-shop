@@ -509,7 +509,7 @@ class OrderController extends Controller
                     'seller' => 'SL',
                     default => 'REC'
                 };
-                $recorderCode = $recorderPrefix . str_pad($recorder->id, 3, '0', STR_PAD_LEFT); // DA030, SA025, SL010
+                $recorderCode = $recorderPrefix . str_pad($recorder->user_id, 3, '0', STR_PAD_LEFT); // DA030, SA025, SL010
                 $recorderType = $recorder->recorder_type;
                 $recorderLocation = $recorder->location;
             } else {
