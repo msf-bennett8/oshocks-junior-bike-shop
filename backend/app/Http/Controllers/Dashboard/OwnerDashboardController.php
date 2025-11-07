@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
+use App\Models\Order;
 use App\Models\SellerProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -167,6 +168,70 @@ class OwnerDashboardController extends Controller
         return response()->json([
             'success' => true,
             'data' => $topSellers
+        ]);
+    }
+
+    /**
+     * GET /api/v1/dashboard/owner/recent-orders?limit=10
+     */
+    public function recentOrders(Request $request)
+    {
+        $limit = $request->query('limit', 10);
+
+        $orders = Order::with(['user:id,name', 'orderItems'])
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'id' => $order->order_number,
+                    'customer' => $order->customer_name,
+                    'items' => $order->orderItems->count(),
+                    'total' => $order->total,
+                    'status' => $order->status,
+                    'payment_method' => $order->payment_method,
+                    'payment_status' => $order->payment_status,
+                    'date' => $order->created_at->format('Y-m-d H:i')
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $orders
+        ]);
+    }
+
+    /**
+     * GET /api/v1/dashboard/owner/order-status-distribution?period=today|week|month
+     */
+    public function orderStatusDistribution(Request $request)
+    {
+        $period = $request->query('period', 'month');
+        $dateRange = $this->getDateRange($period);
+
+        $distribution = Order::whereBetween('created_at', $dateRange)
+            ->select('status', DB::raw('COUNT(*) as count'))
+            ->groupBy('status')
+            ->get()
+            ->map(function ($item) {
+                $colors = [
+                    'delivered' => '#10B981',
+                    'processing' => '#3B82F6',
+                    'shipped' => '#8B5CF6',
+                    'pending' => '#F59E0B',
+                    'cancelled' => '#EF4444'
+                ];
+
+                return [
+                    'status' => ucfirst($item->status),
+                    'count' => $item->count,
+                    'color' => $colors[$item->status] ?? '#6B7280'
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $distribution
         ]);
     }
     

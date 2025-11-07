@@ -65,6 +65,15 @@ class PaymentController extends Controller
             // 6. Calculate commission
             $commission = CommissionService::calculate($request->amount, $sellerId);
             
+            // 6.5. Log the data being used for transaction reference
+            Log::info('🔍 Generating transaction reference', [
+                'payment_method' => $request->payment_method,
+                'recorder_code' => $recorder->recorder_code,
+                'county' => $request->county,
+                'zone' => $request->zone,
+                'order_number' => $order->order_number,
+            ]);
+
             // 7. Generate transaction reference
             $transactionReference = TransactionReferenceService::generate(
                 $request->payment_method,

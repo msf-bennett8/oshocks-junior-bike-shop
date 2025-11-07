@@ -347,7 +347,7 @@ class OrderController extends Controller
             ->count();
         $sequence = str_pad($todayCount + 1, 3, '0', STR_PAD_LEFT);
         
-        return "{$method}-{$recorderCode}-{$countyClean}-{$zoneClean}-UID{$userId}-{$orderSeq}-{$date}-{$time}-{$sequence}";
+        return "{$method}-{$recorderCode}-{$countyClean}-{$zoneClean}-{$orderSeq}-{$date}-{$time}-{$sequence}";
     }
 
     /**

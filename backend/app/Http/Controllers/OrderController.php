@@ -87,7 +87,7 @@ class OrderController extends Controller
                 'status' => 'pending',
                 'payment_status' => $request->payment_method === 'cod' ? 'pending' : 'pending',
                 'payment_method' => $request->payment_method,
-                'transaction_reference' => $this->generateTransactionReference($request->payment_method, $orderNumber),
+                'transaction_reference' => $this->generateTransactionReference($request->payment_method, $orderNumber, $request->county, $request->zone),
             ]);
 
             // Create order items
@@ -168,6 +168,14 @@ class OrderController extends Controller
                 'data' => [
                     'order' => $order,
                     'items' => $order->orderItems,
+                ],
+                'debug' => [
+                    'transaction_reference' => $order->transaction_reference,
+                    'payment_method' => $request->payment_method,
+                    'order_number' => $orderNumber,
+                    'county' => $request->county,
+                    'zone' => $request->zone,
+                    'user_id' => auth('sanctum')->user()?->id ?? 'guest',
                 ]
             ], 201);
 
@@ -410,26 +418,65 @@ class OrderController extends Controller
     }
 
     /**
-     * Generate transaction reference
-     * Format: {METHOD}-{RECORDER_CODE}-{LOCATION}-{YYYYMMDD}-{HHMMSS}-{SEQ}
-     * Example: MPESA-ONLINE-20231104-143052-001
-     * Note: For online orders, recorder_code is "ONLINE" and location is "WEB"
+     * Generate transaction reference for online orders
+     * Format: {METHOD}-UID{USER_ID}-{COUNTY}-{ZONE}-{ORDER_SEQ}-{YYYYMMDD}-{HHMMSS}-{PAYMENT_SEQ}
+     * Example: COD-UID28-NAIROBI-LORESHO-002-20251107-084348-012
      */
-    private function generateTransactionReference($paymentMethod, $orderNumber)
+    private function generateTransactionReference($paymentMethod, $orderNumber, $county = null, $zone = null)
     {
-        $method = strtoupper(explode('_', $paymentMethod)[0]); // MPESA, CARD, COD
-        $recorderCode = 'ONLINE';
-        $location = 'WEB';
+        \Log::info('========== TRANSACTION REFERENCE GENERATION START ==========');
+        \Log::info('INPUT - paymentMethod: ' . $paymentMethod);
+        \Log::info('INPUT - orderNumber: ' . $orderNumber);
+        \Log::info('INPUT - county: ' . ($county ?? 'NULL'));
+        \Log::info('INPUT - zone: ' . ($zone ?? 'NULL'));
+        
+        $method = strtoupper(explode('_', $paymentMethod)[0]);
+        \Log::info('STEP 1 - Method extracted: ' . $method);
+        
+        $user = auth('sanctum')->user();
+        $userCode = $user ? "UID{$user->id}" : 'GUEST';
+        \Log::info('STEP 2 - User code: ' . $userCode);
+        
+        $countyCode = $county ? strtoupper(str_replace(' County', '', $county)) : 'UNKNOWN';
+        $zoneCode = $zone ? strtoupper($zone) : 'UNKNOWN';
+        \Log::info('STEP 3 - County code: ' . $countyCode);
+        \Log::info('STEP 3 - Zone code: ' . $zoneCode);
+        
+        $orderParts = explode('-', $orderNumber);
+        $orderSeq = end($orderParts);
+        \Log::info('STEP 4 - Order parts: ' . json_encode($orderParts));
+        \Log::info('STEP 4 - Order sequence: ' . $orderSeq);
+        
         $date = now()->format('Ymd');
         $time = now()->format('His');
+        \Log::info('STEP 5 - Date: ' . $date);
+        \Log::info('STEP 5 - Time: ' . $time);
         
-        // Get daily sequence for this payment method
         $todayCount = Order::whereDate('created_at', now()->toDateString())
             ->where('payment_method', $paymentMethod)
             ->count();
         $sequence = str_pad($todayCount + 1, 3, '0', STR_PAD_LEFT);
+        \Log::info('STEP 6 - Today count: ' . $todayCount);
+        \Log::info('STEP 6 - Payment sequence: ' . $sequence);
         
-        return "{$method}-{$recorderCode}-{$location}-{$date}-{$time}-{$sequence}";
+        // Build transaction reference step by step
+        $parts = [
+            'method' => $method,
+            'userCode' => $userCode,
+            'countyCode' => $countyCode,
+            'zoneCode' => $zoneCode,
+            'orderSeq' => $orderSeq,
+            'date' => $date,
+            'time' => $time,
+            'sequence' => $sequence,
+        ];
+        
+        $transactionRef = "{$method}-{$userCode}-{$countyCode}-{$zoneCode}-{$orderSeq}-{$date}-{$time}-{$sequence}";
+        
+        // Store debug info in session for inspection
+        session(['last_transaction_debug' => $parts]);
+        
+        return $transactionRef;
     }
 
     /**
