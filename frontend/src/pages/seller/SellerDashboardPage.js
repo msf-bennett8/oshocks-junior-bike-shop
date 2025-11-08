@@ -1050,11 +1050,9 @@ const [lowStockProducts, setLowStockProducts] = useState([
                 <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
                 <YAxis stroke="#9CA3AF" fontSize={12} />
                 <Tooltip 
-  contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-  formatter={(value) => `KES ${value.toLocaleString()}`}
-  isAnimationActive={false}
-  wrapperStyle={{ zIndex: 1000 }}
-/>
+                  contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                  formatter={(value) => `KES ${value.toLocaleString()}`}
+                />
                 <Area 
                   type="monotone" 
                   dataKey="revenue" 
@@ -1132,11 +1130,9 @@ const [lowStockProducts, setLowStockProducts] = useState([
                 <XAxis dataKey="name" stroke="#9CA3AF" fontSize={12} angle={-45} textAnchor="end" height={80} />
                 <YAxis stroke="#9CA3AF" fontSize={12} />
                 <Tooltip 
-  contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-  formatter={(value) => `KES ${value.toLocaleString()}`}
-  isAnimationActive={false}
-  wrapperStyle={{ zIndex: 1000 }}
-/>
+                  contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                  formatter={(value) => `KES ${value.toLocaleString()}`}
+                />
                 <Bar dataKey="sales" radius={[8, 8, 0, 0]}>
                   {categoryPerformance.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
