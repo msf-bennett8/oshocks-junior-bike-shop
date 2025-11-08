@@ -28,10 +28,10 @@ const SellerDashboardPage = () => {
   const { user } = useAuth();
 
   // State variables for API data sections (checked in JSX)
-  const [paymentMethods] = useState([]);
-  const [saleChannels] = useState([]);
-  const [topSellers] = useState([]);
-  const [recentTransactions] = useState([]);
+  //const [paymentMethods] = useState([]);
+  //const [saleChannels] = useState([]);
+  //const [topSellers] = useState([]);
+  //const [recentTransactions] = useState([]);
 
   // Real data from API
   const [dashboardData, setDashboardData] = useState(null);
