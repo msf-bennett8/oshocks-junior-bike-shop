@@ -27,11 +27,11 @@ const SellerDashboardPage = () => {
   const [lastUpdated] = useState(new Date());
   const { user } = useAuth();
 
-  // State variables for API data sections (checked in JSX)
-const [paymentMethods] = useState([]);
-const [saleChannels] = useState([]);
-const [topSellers] = useState([]);
-const [recentTransactions] = useState([]);
+// State variables for API data sections (checked in JSX)
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [saleChannels, setSaleChannels] = useState([]);
+  const [topSellers, setTopSellers] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
 
   // Real data from API
   const [dashboardData, setDashboardData] = useState(null);
@@ -321,6 +321,35 @@ const [recentTransactions] = useState([]);
       setDashboardData(overviewData.data);
       setTransactions(transactionsData.data || []);
       setPayouts(payoutsData.data || []);
+
+      // Populate payment methods, channels, sellers, transactions if available
+      if (commissionsData?.data?.payment_methods) {
+        const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+        setPaymentMethods(commissionsData.data.payment_methods.map((item, index) => ({
+          method: item.method,
+          value: item.total_amount,
+          count: item.transaction_count,
+          color: colors[index % colors.length]
+        })));
+      }
+
+      if (commissionsData?.data?.sale_channels) {
+        const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+        setSaleChannels(commissionsData.data.sale_channels.map((item, index) => ({
+          name: item.channel,
+          value: item.total_amount,
+          percentage: item.percentage,
+          color: colors[index % colors.length]
+        })));
+      }
+
+      if (commissionsData?.data?.top_sellers) {
+        setTopSellers(commissionsData.data.top_sellers);
+      }
+
+      if (transactionsData?.data) {
+        setRecentTransactions(transactionsData.data.slice(0, 5) || []);
+      }
 
       if (overviewData.data) {
         const apiData = overviewData.data;
