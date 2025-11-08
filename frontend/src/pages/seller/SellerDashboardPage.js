@@ -830,6 +830,107 @@ const [lowStockProducts, setLowStockProducts] = useState([
           </div>
         </div>
 
+        {/* Secondary Metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Clock className="w-4 h-4 text-yellow-600" />
+              <span className="text-sm text-gray-600">Pending</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.orders.pending}</p>
+            <p className="text-xs text-gray-500 mt-1">Need action</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Package className="w-4 h-4 text-blue-600" />
+              <span className="text-sm text-gray-600">Processing</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.orders.processing}</p>
+            <p className="text-xs text-gray-500 mt-1">Being prepared</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Truck className="w-4 h-4 text-purple-600" />
+              <span className="text-sm text-gray-600">Shipped</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.orders.shipped}</p>
+            <p className="text-xs text-gray-500 mt-1">In transit</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="w-4 h-4 text-red-600" />
+              <span className="text-sm text-gray-600">Low Stock</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.products.lowStock}</p>
+            <p className="text-xs text-gray-500 mt-1">Items need restock</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Star className="w-4 h-4 text-yellow-600" />
+              <span className="text-sm text-gray-600">Avg Rating</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.rating.average}</p>
+            <p className="text-xs text-gray-500 mt-1">{stats.rating.total} reviews</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Percent className="w-4 h-4 text-green-600" />
+              <span className="text-sm text-gray-600">Conversion</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.conversion.rate}%</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {stats.conversion.change > 0 ? '+' : ''}{stats.conversion.change}% change
+            </p>
+          </div>
+        </div>
+
+        {/* Alerts Banner */}
+        {alerts.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border-l-4 border-orange-600">
+            <div className="flex items-start gap-3">
+              <Bell className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  Action Required 
+                  <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full font-medium">
+                    {alerts.filter(a => a.type === 'error' || a.type === 'warning').length} urgent
+                  </span>
+                </h3>
+                <div className="grid md:grid-cols-2 gap-3">
+                  {alerts.slice(0, 4).map(alert => {
+                    const alertIcon = getAlertIcon(alert.type);
+                    const AlertIcon = alertIcon.icon;
+                    return (
+                      <div key={alert.id} className="flex items-start gap-2 text-sm p-2 bg-gray-50 rounded-lg">
+                        <AlertIcon className={`w-4 h-4 ${alertIcon.color} flex-shrink-0 mt-0.5`} />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-gray-700">{alert.message}</span>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-xs text-gray-500">{alert.time}</span>
+                            <button className="text-xs text-orange-600 hover:text-orange-700 font-medium">
+                              {alert.action}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {alerts.length > 4 && (
+                  <button className="text-orange-600 hover:text-orange-700 text-sm font-medium mt-3 flex items-center gap-1">
+                    View all {alerts.length} alerts <ChevronRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Payment Methods & Sale Channels */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Payment Methods Breakdown */}
@@ -1282,107 +1383,6 @@ const [lowStockProducts, setLowStockProducts] = useState([
             )}
           </div>
         </div>
-
-        {/* Secondary Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="w-4 h-4 text-yellow-600" />
-              <span className="text-sm text-gray-600">Pending</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{stats.orders.pending}</p>
-            <p className="text-xs text-gray-500 mt-1">Need action</p>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <Package className="w-4 h-4 text-blue-600" />
-              <span className="text-sm text-gray-600">Processing</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{stats.orders.processing}</p>
-            <p className="text-xs text-gray-500 mt-1">Being prepared</p>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <Truck className="w-4 h-4 text-purple-600" />
-              <span className="text-sm text-gray-600">Shipped</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{stats.orders.shipped}</p>
-            <p className="text-xs text-gray-500 mt-1">In transit</p>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle className="w-4 h-4 text-red-600" />
-              <span className="text-sm text-gray-600">Low Stock</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{stats.products.lowStock}</p>
-            <p className="text-xs text-gray-500 mt-1">Items need restock</p>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <Star className="w-4 h-4 text-yellow-600" />
-              <span className="text-sm text-gray-600">Avg Rating</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{stats.rating.average}</p>
-            <p className="text-xs text-gray-500 mt-1">{stats.rating.total} reviews</p>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <Percent className="w-4 h-4 text-green-600" />
-              <span className="text-sm text-gray-600">Conversion</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{stats.conversion.rate}%</p>
-            <p className="text-xs text-gray-500 mt-1">
-              {stats.conversion.change > 0 ? '+' : ''}{stats.conversion.change}% change
-            </p>
-          </div>
-        </div>
-
-        {/* Alerts Banner */}
-        {alerts.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border-l-4 border-orange-600">
-            <div className="flex items-start gap-3">
-              <Bell className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                  Action Required 
-                  <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full font-medium">
-                    {alerts.filter(a => a.type === 'error' || a.type === 'warning').length} urgent
-                  </span>
-                </h3>
-                <div className="grid md:grid-cols-2 gap-3">
-                  {alerts.slice(0, 4).map(alert => {
-                    const alertIcon = getAlertIcon(alert.type);
-                    const AlertIcon = alertIcon.icon;
-                    return (
-                      <div key={alert.id} className="flex items-start gap-2 text-sm p-2 bg-gray-50 rounded-lg">
-                        <AlertIcon className={`w-4 h-4 ${alertIcon.color} flex-shrink-0 mt-0.5`} />
-                        <div className="flex-1 min-w-0">
-                          <span className="text-gray-700">{alert.message}</span>
-                          <div className="flex items-center justify-between mt-1">
-                            <span className="text-xs text-gray-500">{alert.time}</span>
-                            <button className="text-xs text-orange-600 hover:text-orange-700 font-medium">
-                              {alert.action}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                {alerts.length > 4 && (
-                  <button className="text-orange-600 hover:text-orange-700 text-sm font-medium mt-3 flex items-center gap-1">
-                    View all {alerts.length} alerts <ChevronRight className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Main Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
