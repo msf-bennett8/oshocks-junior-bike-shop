@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import sellerDashboardService from '../../services/sellerDashboardService';
 import {
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, Package, Users,
   Eye, Star, AlertCircle, Clock, CheckCircle, XCircle, Truck, Heart,
   MessageSquare, ArrowUp, ArrowDown, Calendar, Download, RefreshCw,
-  BarChart3, PieChart, Activity, Zap, Target, Award, ShoppingBag,
-  CreditCard, Percent, Bell, Settings, Plus, ChevronRight, Filter,
-  MapPin, Phone, Mail, ExternalLink, Search, ChevronDown, Minus,
-  Wallet, Gift, UserPlus, ShieldCheck, AlertTriangle, Info, Tag,
+  PieChart, Activity, ShoppingBag,
+  CreditCard, Percent, Bell, Settings, Plus, ChevronRight, 
+  MapPin, ExternalLink, ChevronDown, Minus,
+  Wallet, AlertTriangle, Info, Tag,
   MoreVertical, UserCheck
 } from 'lucide-react';
 
 import { 
-  LineChart, Line, BarChart, Bar, PieChart as RechartsPie, Pie, Cell, 
+  BarChart, Bar, PieChart as RechartsPie, Pie, Cell, 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from 'recharts';
@@ -24,42 +24,43 @@ const SellerDashboardPage = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState('revenue');
   const [showNotifications, setShowNotifications] = useState(false);
-  const [lastUpdated] = useState(new Date()); 
+  const [lastUpdated] = useState(new Date());
   const { user } = useAuth();
-  const [paymentMethods, setPaymentMethods] = useState([]);
-  const [saleChannels, setSaleChannels] = useState([]);
-  const [topSellers, setTopSellers] = useState([]);
-  const [recentTransactions, setRecentTransactions] = useState([]);
+
+  // State variables for API data sections (checked in JSX)
+  const [paymentMethods] = useState([]);
+  const [saleChannels] = useState([]);
+  const [topSellers] = useState([]);
+  const [recentTransactions] = useState([]);
 
   // Real data from API
   const [dashboardData, setDashboardData] = useState(null);
   const [transactions, setTransactions] = useState([]);
-  const [commissionBreakdown, setCommissionBreakdown] = useState(null);
   const [payouts, setPayouts] = useState([]);
   const [error, setError] = useState(null);
-  const [orderStatusData, setOrderStatusData] = useState([
+  const [orderStatusData] = useState([
     { status: 'Pending', count: 23, color: '#f59e0b' },
     { status: 'Processing', count: 45, color: '#3b82f6' },
     { status: 'Completed', count: 398, color: '#22c55e' },
     { status: 'Cancelled', count: 21, color: '#ef4444' }
   ]);
 
-  const [trafficData, setTrafficData] = useState([
-  { source: 'Direct', visitors: 4532, percentage: 35, color: '#3B82F6' },
-  { source: 'Google Search', visitors: 3894, percentage: 30, color: '#10B981' },
-  { source: 'Social Media', visitors: 2596, percentage: 20, color: '#F59E0B' },
-  { source: 'Referral', visitors: 1298, percentage: 10, color: '#EF4444' },
-  { source: 'Email', visitors: 649, percentage: 5, color: '#8B5CF6' }
-]);
+  const [trafficData] = useState([
+    { source: 'Direct', visitors: 4532, percentage: 35, color: '#3B82F6' },
+    { source: 'Google Search', visitors: 3894, percentage: 30, color: '#10B981' },
+    { source: 'Social Media', visitors: 2596, percentage: 20, color: '#F59E0B' },
+    { source: 'Referral', visitors: 1298, percentage: 10, color: '#EF4444' },
+    { source: 'Email', visitors: 649, percentage: 5, color: '#8B5CF6' }
+  ]);
 
-const [lowStockProducts, setLowStockProducts] = useState([
-  { id: 1, name: 'Road Racer Elite', stock: 8, threshold: 10, category: 'Bicycles' },
-  { id: 2, name: 'Mountain Bike Tires', stock: 5, threshold: 15, category: 'Spare Parts' },
-  { id: 3, name: 'Bike Lock Pro', stock: 3, threshold: 20, category: 'Accessories' },
-  { id: 4, name: 'Cycling Gloves M', stock: 6, threshold: 12, category: 'Accessories' }
-]);
+  const [lowStockProducts] = useState([
+    { id: 1, name: 'Road Racer Elite', stock: 8, threshold: 10, category: 'Bicycles' },
+    { id: 2, name: 'Mountain Bike Tires', stock: 5, threshold: 15, category: 'Spare Parts' },
+    { id: 3, name: 'Bike Lock Pro', stock: 3, threshold: 20, category: 'Accessories' },
+    { id: 4, name: 'Cycling Gloves M', stock: 6, threshold: 12, category: 'Accessories' }
+  ]);
 
-  const [recentActivities, setRecentActivities] = useState([
+  const [recentActivities] = useState([
     {
       id: 1,
       type: 'order',
@@ -102,7 +103,7 @@ const [lowStockProducts, setLowStockProducts] = useState([
     }
   ]);
 
-  // Mock data - Replace with API calls
+  // Mock data
   const [stats, setStats] = useState({
     revenue: {
       total: 2450000,
@@ -356,34 +357,29 @@ const [lowStockProducts, setLowStockProducts] = useState([
     { id: 5, task: 'Update pricing for 15 products', priority: 'low', deadline: 'This Week' }
   ];
 
-  useEffect(() => {
-    loadDashboardData();
-  }, [timeRange]);
+  
 
-  const loadDashboardData = async () => {
+    useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  const loadDashboardData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // Fetch all dashboard data in parallel
       const [overviewData, transactionsData, commissionsData, payoutsData] = await Promise.all([
         sellerDashboardService.getOverview(timeRange === '24hours' ? 'today' : timeRange === '7days' ? 'week' : 'month'),
-        sellerDashboardService.getTransactions({ 
-          page: 1, 
-          per_page: 10 
-        }),
+        sellerDashboardService.getTransactions({ page: 1, per_page: 10 }),
         sellerDashboardService.getCommissionBreakdown(timeRange === '24hours' ? 'today' : timeRange === '7days' ? 'week' : 'month'),
         sellerDashboardService.getPayouts()
       ]);
 
       console.log('✅ Dashboard data loaded:', { overviewData, transactionsData, commissionsData, payoutsData });
       
-      // Update state with real data
       setDashboardData(overviewData.data);
       setTransactions(transactionsData.data || []);
-      setCommissionBreakdown(commissionsData.data);
       setPayouts(payoutsData.data || []);
 
-      // Map API data to stats structure
       if (overviewData.data) {
         const apiData = overviewData.data;
         setStats(prev => ({
@@ -419,7 +415,12 @@ const [lowStockProducts, setLowStockProducts] = useState([
       setError(error.message || 'Failed to load dashboard data');
       setLoading(false);
     }
-  };
+  }, [timeRange]);
+
+  // ✅ NOW useEffect comes AFTER loadDashboardData
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -770,6 +771,65 @@ const [lowStockProducts, setLowStockProducts] = useState([
         </div>
 
         {/* Secondary Metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Clock className="w-4 h-4 text-yellow-600" />
+              <span className="text-sm text-gray-600">Pending</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.orders.pending}</p>
+            <p className="text-xs text-gray-500 mt-1">Need action</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Package className="w-4 h-4 text-blue-600" />
+              <span className="text-sm text-gray-600">Processing</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.orders.processing}</p>
+            <p className="text-xs text-gray-500 mt-1">Being prepared</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Truck className="w-4 h-4 text-purple-600" />
+              <span className="text-sm text-gray-600">Shipped</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.orders.shipped}</p>
+            <p className="text-xs text-gray-500 mt-1">In transit</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="w-4 h-4 text-red-600" />
+              <span className="text-sm text-gray-600">Low Stock</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.products.lowStock}</p>
+            <p className="text-xs text-gray-500 mt-1">Items need restock</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Star className="w-4 h-4 text-yellow-600" />
+              <span className="text-sm text-gray-600">Avg Rating</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.rating.average}</p>
+            <p className="text-xs text-gray-500 mt-1">{stats.rating.total} reviews</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Percent className="w-4 h-4 text-green-600" />
+              <span className="text-sm text-gray-600">Conversion</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.conversion.rate}%</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {stats.conversion.change > 0 ? '+' : ''}{stats.conversion.change}% change
+            </p>
+          </div>
+        </div>
+
+        {/* Secondary Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {/* Conversion Rate */}
           <div className="bg-white rounded-lg shadow p-6">
@@ -827,65 +887,6 @@ const [lowStockProducts, setLowStockProducts] = useState([
               </span>
               <span className="text-gray-500">vs last period</span>
             </div>
-          </div>
-        </div>
-
-        {/* Secondary Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="w-4 h-4 text-yellow-600" />
-              <span className="text-sm text-gray-600">Pending</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{stats.orders.pending}</p>
-            <p className="text-xs text-gray-500 mt-1">Need action</p>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <Package className="w-4 h-4 text-blue-600" />
-              <span className="text-sm text-gray-600">Processing</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{stats.orders.processing}</p>
-            <p className="text-xs text-gray-500 mt-1">Being prepared</p>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <Truck className="w-4 h-4 text-purple-600" />
-              <span className="text-sm text-gray-600">Shipped</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{stats.orders.shipped}</p>
-            <p className="text-xs text-gray-500 mt-1">In transit</p>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle className="w-4 h-4 text-red-600" />
-              <span className="text-sm text-gray-600">Low Stock</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{stats.products.lowStock}</p>
-            <p className="text-xs text-gray-500 mt-1">Items need restock</p>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <Star className="w-4 h-4 text-yellow-600" />
-              <span className="text-sm text-gray-600">Avg Rating</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{stats.rating.average}</p>
-            <p className="text-xs text-gray-500 mt-1">{stats.rating.total} reviews</p>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <Percent className="w-4 h-4 text-green-600" />
-              <span className="text-sm text-gray-600">Conversion</span>
-            </div>
-            <p className="text-2xl font-bold text-gray-900">{stats.conversion.rate}%</p>
-            <p className="text-xs text-gray-500 mt-1">
-              {stats.conversion.change > 0 ? '+' : ''}{stats.conversion.change}% change
-            </p>
           </div>
         </div>
 
