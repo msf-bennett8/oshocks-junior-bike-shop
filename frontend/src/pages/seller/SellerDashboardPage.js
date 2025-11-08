@@ -885,7 +885,7 @@ const SellerDashboardPage = () => {
               </div>
             </div>
 
-            {paymentMethods.length > 0 ? (
+            {false ? (
               <div className="space-y-4">
                 {paymentMethods.map((method, index) => (
                   <div key={index}>
@@ -921,7 +921,7 @@ const SellerDashboardPage = () => {
               </div>
             </div>
 
-            {saleChannels.length > 0 ? (
+            {false ? (
               <div className="space-y-4">
                 {saleChannels.map((channel, index) => (
                   <div key={index}>
@@ -967,7 +967,7 @@ const SellerDashboardPage = () => {
             </div>
           </div>
 
-          {topSellers.length > 0 ? (
+          {false ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -1013,7 +1013,7 @@ const SellerDashboardPage = () => {
             </button>
           </div>
 
-          {recentTransactions.length > 0 ? (
+          {false ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
