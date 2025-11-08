@@ -10,7 +10,6 @@ import {
   CreditCard, Truck, ShoppingBag, UserCheck, Percent, Tag, Plus 
 } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
 const SuperAdminDashboardPage = () => {
   const [timeRange, setTimeRange] = useState('month');
   const [isLoading, setIsLoading] = useState(true);
