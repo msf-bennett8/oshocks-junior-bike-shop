@@ -259,59 +259,6 @@ const SellerDashboardPage = () => {
     }
   ];
 
-  const recentOrders = [
-    { 
-      id: 'ORD-2024-1234', 
-      customer: 'John Kamau', 
-      product: 'Mountain Bike Pro X500', 
-      amount: 45000, 
-      status: 'pending', 
-      time: '5 mins ago',
-      payment: 'M-Pesa',
-      location: 'Nairobi'
-    },
-    { 
-      id: 'ORD-2024-1235', 
-      customer: 'Jane Wanjiku', 
-      product: 'Road Racing Bike Elite', 
-      amount: 65000, 
-      status: 'processing', 
-      time: '12 mins ago',
-      payment: 'Card',
-      location: 'Mombasa'
-    },
-    { 
-      id: 'ORD-2024-1236', 
-      customer: 'Peter Ochieng', 
-      product: 'Kids Bicycle 16"', 
-      amount: 12500, 
-      status: 'shipped', 
-      time: '1 hour ago',
-      payment: 'M-Pesa',
-      location: 'Kisumu'
-    },
-    { 
-      id: 'ORD-2024-1237', 
-      customer: 'Mary Njeri', 
-      product: 'Professional Bike Helmet', 
-      amount: 3500, 
-      status: 'completed', 
-      time: '2 hours ago',
-      payment: 'COD',
-      location: 'Nakuru'
-    },
-    { 
-      id: 'ORD-2024-1238', 
-      customer: 'David Mwangi', 
-      product: 'Hydraulic Disc Brakes', 
-      amount: 8500, 
-      status: 'cancelled', 
-      time: '3 hours ago',
-      payment: 'M-Pesa',
-      location: 'Nairobi'
-    }
-  ];
-
   const alerts = [
     { id: 1, type: 'warning', message: 'LED Bike Light Set is running low on stock (3 units left)', time: '10 mins ago', action: 'Restock' },
     { id: 2, type: 'error', message: 'Hydraulic Disc Brakes Set is out of stock', time: '1 hour ago', action: 'Restock Now' },
