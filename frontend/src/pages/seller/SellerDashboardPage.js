@@ -357,12 +357,7 @@ const SellerDashboardPage = () => {
     { id: 5, task: 'Update pricing for 15 products', priority: 'low', deadline: 'This Week' }
   ];
 
-  
-
-    useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
-
+  // ✅ Define loadDashboardData FIRST with useCallback
   const loadDashboardData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -417,7 +412,7 @@ const SellerDashboardPage = () => {
     }
   }, [timeRange]);
 
-  // ✅ NOW useEffect comes AFTER loadDashboardData
+  // ✅ THEN useEffect comes AFTER
   useEffect(() => {
     loadDashboardData();
   }, [loadDashboardData]);
