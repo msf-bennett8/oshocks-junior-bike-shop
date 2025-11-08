@@ -24,7 +24,7 @@ const SellerDashboardPage = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState('revenue');
   const [showNotifications, setShowNotifications] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(new Date()); 
+  const [lastUpdated] = useState(new Date()); 
   const { user } = useAuth();
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [saleChannels, setSaleChannels] = useState([]);
