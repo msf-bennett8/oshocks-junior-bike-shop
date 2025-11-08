@@ -1283,104 +1283,6 @@ const [lowStockProducts, setLowStockProducts] = useState([
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-            <button className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                <Plus size={24} className="text-blue-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-700">Add Product</span>
-            </button>
-
-            <button className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                <ShoppingBag size={24} className="text-green-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-700">New Order</span>
-            </button>
-
-            <button className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                <Users size={24} className="text-purple-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-700">Add Customer</span>
-            </button>
-
-            <button className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group">
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
-                <Tag size={24} className="text-orange-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-700">Add Category</span>
-            </button>
-
-            <button className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group">
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition-colors">
-                <Percent size={24} className="text-red-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-700">Add Discount</span>
-            </button>
-
-            <button className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
-                <Download size={24} className="text-indigo-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-700">Export Report</span>
-            </button>
-
-            <button className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group">
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
-                <DollarSign size={24} className="text-yellow-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-700">Manage Payouts</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Bottom Stats Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center gap-3">
-              <Eye size={20} className="text-gray-600" />
-              <div>
-                <p className="text-xs text-gray-600">Page Views</p>
-                <p className="text-lg font-bold text-gray-900">45,234</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center gap-3">
-              <ShoppingCart size={20} className="text-gray-600" />
-              <div>
-                <p className="text-xs text-gray-600">Cart Abandonment</p>
-                <p className="text-lg font-bold text-gray-900">18.5%</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center gap-3">
-              <Clock size={20} className="text-gray-600" />
-              <div>
-                <p className="text-xs text-gray-600">Avg. Session</p>
-                <p className="text-lg font-bold text-gray-900">4m 32s</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center gap-3">
-              <MapPin size={20} className="text-gray-600" />
-              <div>
-                <p className="text-xs text-gray-600">Top Location</p>
-                <p className="text-lg font-bold text-gray-900">Nairobi</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Secondary Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
@@ -1976,6 +1878,104 @@ const [lowStockProducts, setLowStockProducts] = useState([
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            <button className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                <Plus size={24} className="text-blue-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700">Add Product</span>
+            </button>
+
+            <button className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
+                <ShoppingBag size={24} className="text-green-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700">New Order</span>
+            </button>
+
+            <button className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                <Users size={24} className="text-purple-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700">Add Customer</span>
+            </button>
+
+            <button className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group">
+              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                <Tag size={24} className="text-orange-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700">Add Category</span>
+            </button>
+
+            <button className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group">
+              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition-colors">
+                <Percent size={24} className="text-red-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700">Add Discount</span>
+            </button>
+
+            <button className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group">
+              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+                <Download size={24} className="text-indigo-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700">Export Report</span>
+            </button>
+
+            <button className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group">
+              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
+                <DollarSign size={24} className="text-yellow-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700">Manage Payouts</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Bottom Stats Bar */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+            <div className="flex items-center gap-3">
+              <Eye size={20} className="text-gray-600" />
+              <div>
+                <p className="text-xs text-gray-600">Page Views</p>
+                <p className="text-lg font-bold text-gray-900">45,234</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+            <div className="flex items-center gap-3">
+              <ShoppingCart size={20} className="text-gray-600" />
+              <div>
+                <p className="text-xs text-gray-600">Cart Abandonment</p>
+                <p className="text-lg font-bold text-gray-900">18.5%</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+            <div className="flex items-center gap-3">
+              <Clock size={20} className="text-gray-600" />
+              <div>
+                <p className="text-xs text-gray-600">Avg. Session</p>
+                <p className="text-lg font-bold text-gray-900">4m 32s</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+            <div className="flex items-center gap-3">
+              <MapPin size={20} className="text-gray-600" />
+              <div>
+                <p className="text-xs text-gray-600">Top Location</p>
+                <p className="text-lg font-bold text-gray-900">Nairobi</p>
+              </div>
+            </div>
           </div>
         </div>
 

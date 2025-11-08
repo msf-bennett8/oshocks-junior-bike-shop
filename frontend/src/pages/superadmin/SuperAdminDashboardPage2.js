@@ -187,6 +187,59 @@ const SellerDashboardPage = () => {
     }
   ];
 
+  const recentOrders = [
+    { 
+      id: 'ORD-2024-1234', 
+      customer: 'John Kamau', 
+      product: 'Mountain Bike Pro X500', 
+      amount: 45000, 
+      status: 'pending', 
+      time: '5 mins ago',
+      payment: 'M-Pesa',
+      location: 'Nairobi'
+    },
+    { 
+      id: 'ORD-2024-1235', 
+      customer: 'Jane Wanjiku', 
+      product: 'Road Racing Bike Elite', 
+      amount: 65000, 
+      status: 'processing', 
+      time: '12 mins ago',
+      payment: 'Card',
+      location: 'Mombasa'
+    },
+    { 
+      id: 'ORD-2024-1236', 
+      customer: 'Peter Ochieng', 
+      product: 'Kids Bicycle 16"', 
+      amount: 12500, 
+      status: 'shipped', 
+      time: '1 hour ago',
+      payment: 'M-Pesa',
+      location: 'Kisumu'
+    },
+    { 
+      id: 'ORD-2024-1237', 
+      customer: 'Mary Njeri', 
+      product: 'Professional Bike Helmet', 
+      amount: 3500, 
+      status: 'completed', 
+      time: '2 hours ago',
+      payment: 'COD',
+      location: 'Nakuru'
+    },
+    { 
+      id: 'ORD-2024-1238', 
+      customer: 'David Mwangi', 
+      product: 'Hydraulic Disc Brakes', 
+      amount: 8500, 
+      status: 'cancelled', 
+      time: '3 hours ago',
+      payment: 'M-Pesa',
+      location: 'Nairobi'
+    }
+  ];
+
   const alerts = [
     { id: 1, type: 'warning', message: 'LED Bike Light Set is running low on stock (3 units left)', time: '10 mins ago', action: 'Restock' },
     { id: 2, type: 'error', message: 'Hydraulic Disc Brakes Set is out of stock', time: '1 hour ago', action: 'Restock Now' },
@@ -230,104 +283,6 @@ const SellerDashboardPage = () => {
     { id: 3, task: 'Respond to 12 customer messages', priority: 'medium', deadline: 'Tomorrow' },
     { id: 4, task: 'Review and approve 5 product returns', priority: 'medium', deadline: 'Tomorrow' },
     { id: 5, task: 'Update pricing for 15 products', priority: 'low', deadline: 'This Week' }
-  ];
-
-  const recentOrdersTable = [
-    { 
-      id: 'ORD-2024-1234', 
-      customer: 'John Kamau', 
-      items: 2,
-      total: 45000, 
-      status: 'pending', 
-      date: '2 mins ago',
-      payment_method: 'mpesa'
-    },
-    { 
-      id: 'ORD-2024-1235', 
-      customer: 'Jane Wanjiku', 
-      items: 3,
-      total: 65000, 
-      status: 'processing', 
-      date: '12 mins ago',
-      payment_method: 'card'
-    },
-    { 
-      id: 'ORD-2024-1236', 
-      customer: 'Peter Ochieng', 
-      items: 1,
-      total: 12500, 
-      status: 'shipped', 
-      date: '1 hour ago',
-      payment_method: 'mpesa'
-    },
-    { 
-      id: 'ORD-2024-1237', 
-      customer: 'Mary Njeri', 
-      items: 1,
-      total: 3500, 
-      status: 'completed', 
-      date: '2 hours ago',
-      payment_method: 'cod'
-    },
-    { 
-      id: 'ORD-2024-1238', 
-      customer: 'David Mwangi', 
-      items: 2,
-      total: 8500, 
-      status: 'cancelled', 
-      date: '3 hours ago',
-      payment_method: 'mpesa'
-    }
-  ];
-
-  const recentActivities = [
-    {
-      id: 1,
-      type: 'order',
-      message: 'New order #ORD-10234 placed',
-      time: '2 minutes ago',
-      icon: ShoppingCart,
-      color: 'blue'
-    },
-    {
-      id: 2,
-      type: 'customer',
-      message: 'New customer registration: Sarah Wanjiku',
-      time: '15 minutes ago',
-      icon: UserPlus,
-      color: 'green'
-    },
-    {
-      id: 3,
-      type: 'stock',
-      message: 'Low stock alert: Mountain Bike Tires',
-      time: '1 hour ago',
-      icon: AlertCircle,
-      color: 'orange'
-    },
-    {
-      id: 4,
-      type: 'review',
-      message: 'New 5-star review on Road Racer Elite',
-      time: '2 hours ago',
-      icon: Star,
-      color: 'yellow'
-    },
-    {
-      id: 5,
-      type: 'payment',
-      message: 'Payment received: KES 125,000',
-      time: '3 hours ago',
-      icon: DollarSign,
-      color: 'green'
-    }
-  ];
-
-  const lowStockProducts = [
-    { id: 1, name: 'Road Racer Elite', stock: 8, threshold: 10, category: 'Bicycles' },
-    { id: 2, name: 'Mountain Bike Tires', stock: 5, threshold: 15, category: 'Spare Parts' },
-    { id: 3, name: 'Bike Lock Pro', stock: 3, threshold: 20, category: 'Accessories' },
-    { id: 4, name: 'Cycling Gloves M', stock: 6, threshold: 12, category: 'Accessories' }
   ];
 
   useEffect(() => {
@@ -430,18 +385,18 @@ const SellerDashboardPage = () => {
   };
 
   const formatTimeAgo = (date) => {
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    
-    return date.toLocaleDateString('en-GB', { 
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  
+  return date.toLocaleDateString('en-GB', { 
       day: 'numeric', 
       month: 'short', 
       year: 'numeric' 
@@ -619,4 +574,684 @@ const SellerDashboardPage = () => {
           <div className="w-full bg-orange-400 rounded-full h-3 mb-2">
             <div
               className="bg-white h-3 rounded-full transition-all duration-500"
-              style={{ width: `${stats.revenue.targetProgress}%`
+              style={{ width: `${stats.revenue.targetProgress}%` }}
+            ></div>
+          </div>
+          <div className="flex justify-between text-sm text-orange-100">
+            <span>{stats.revenue.targetProgress.toFixed(1)}% completed</span>
+            <span>KSh {((stats.revenue.target - stats.revenue.total) / 1000).toFixed(0)}K remaining</span>
+          </div>
+        </div>
+
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <StatCard
+            icon={DollarSign}
+            label="Total Revenue"
+            value={`KSh ${stats.revenue.total.toLocaleString()}`}
+            change={stats.revenue.change}
+            trend={stats.revenue.trend}
+            color="bg-green-600"
+            subtitle={dashboardData?.platform_commission ? `Commission: KSh ${parseFloat(dashboardData.platform_commission.amount).toLocaleString()}` : 'Loading...'}
+            //If i will like to use non decimal commision uncomment below
+            //subtitle={dashboardData?.platform_commission ? `Commission: KSh ${Math.round(parseFloat(dashboardData.platform_commission.amount)).toLocaleString()}` : 'Loading...'}
+          />
+          <StatCard
+            icon={ShoppingCart}
+            label="Total Orders"
+            value={stats.orders.total}
+            change={stats.orders.change}
+            trend={stats.orders.trend}
+            color="bg-blue-600"
+            subtitle={`${stats.orders.completed} completed orders`}
+          />
+          <StatCard
+            icon={Users}
+            label="Total Customers"
+            value={stats.customers.total}
+            change={stats.customers.change}
+            trend="up"
+            color="bg-purple-600"
+            subtitle={`${stats.customers.repeatRate}% repeat rate`}
+          />
+          <StatCard
+            icon={Eye}
+            label="Product Views"
+            value={`${(stats.views.total / 1000).toFixed(1)}K`}
+            change={stats.views.change}
+            trend="up"
+            color="bg-orange-600"
+            subtitle={`${stats.views.avgDuration} avg duration`}
+          />
+        </div>
+
+        {/* Secondary Metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Clock className="w-4 h-4 text-yellow-600" />
+              <span className="text-sm text-gray-600">Pending</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.orders.pending}</p>
+            <p className="text-xs text-gray-500 mt-1">Need action</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Package className="w-4 h-4 text-blue-600" />
+              <span className="text-sm text-gray-600">Processing</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.orders.processing}</p>
+            <p className="text-xs text-gray-500 mt-1">Being prepared</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Truck className="w-4 h-4 text-purple-600" />
+              <span className="text-sm text-gray-600">Shipped</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.orders.shipped}</p>
+            <p className="text-xs text-gray-500 mt-1">In transit</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="w-4 h-4 text-red-600" />
+              <span className="text-sm text-gray-600">Low Stock</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.products.lowStock}</p>
+            <p className="text-xs text-gray-500 mt-1">Items need restock</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Star className="w-4 h-4 text-yellow-600" />
+              <span className="text-sm text-gray-600">Avg Rating</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.rating.average}</p>
+            <p className="text-xs text-gray-500 mt-1">{stats.rating.total} reviews</p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Percent className="w-4 h-4 text-green-600" />
+              <span className="text-sm text-gray-600">Conversion</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{stats.conversion.rate}%</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {stats.conversion.change > 0 ? '+' : ''}{stats.conversion.change}% change
+            </p>
+          </div>
+        </div>
+
+        {/* Alerts Banner */}
+        {alerts.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border-l-4 border-orange-600">
+            <div className="flex items-start gap-3">
+              <Bell className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  Action Required 
+                  <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full font-medium">
+                    {alerts.filter(a => a.type === 'error' || a.type === 'warning').length} urgent
+                  </span>
+                </h3>
+                <div className="grid md:grid-cols-2 gap-3">
+                  {alerts.slice(0, 4).map(alert => {
+                    const alertIcon = getAlertIcon(alert.type);
+                    const AlertIcon = alertIcon.icon;
+                    return (
+                      <div key={alert.id} className="flex items-start gap-2 text-sm p-2 bg-gray-50 rounded-lg">
+                        <AlertIcon className={`w-4 h-4 ${alertIcon.color} flex-shrink-0 mt-0.5`} />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-gray-700">{alert.message}</span>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-xs text-gray-500">{alert.time}</span>
+                            <button className="text-xs text-orange-600 hover:text-orange-700 font-medium">
+                              {alert.action}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {alerts.length > 4 && (
+                  <button className="text-orange-600 hover:text-orange-700 text-sm font-medium mt-3 flex items-center gap-1">
+                    View all {alerts.length} alerts <ChevronRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Main Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* Revenue & Orders Chart */}
+          <div className="lg:col-span-2 bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Performance Overview</h3>
+                <p className="text-sm text-gray-600">Daily revenue, orders, and profit trends</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSelectedMetric('revenue')}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    selectedMetric === 'revenue'
+                      ? 'bg-orange-100 text-orange-700'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  Revenue
+                </button>
+                <button
+                  onClick={() => setSelectedMetric('orders')}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    selectedMetric === 'orders'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  Orders
+                </button>
+                <button
+                  onClick={() => setSelectedMetric('profit')}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    selectedMetric === 'profit'
+                      ? 'bg-green-100 text-green-700'
+                      : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  Profit
+                </button>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={320}>
+              <AreaChart data={salesData}>
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ea580c" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#ea580c" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="date" stroke="#999" fontSize={12} />
+                <YAxis stroke="#999" fontSize={12} />
+                <Tooltip
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: '1px solid #e5e7eb', 
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                  formatter={(value, name) => {
+                    if (name === 'orders' || name === 'customers') return [value, name];
+                    return [`KSh ${value.toLocaleString()}`, name];
+                  }}
+                />
+                <Legend />
+                {selectedMetric === 'revenue' && (
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#ea580c"
+                    strokeWidth={2}
+                    fill="url(#colorRevenue)"
+                  />
+                )}
+                {selectedMetric === 'orders' && (
+                  <Area
+                    type="monotone"
+                    dataKey="orders"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    fill="url(#colorOrders)"
+                  />
+                )}
+                {selectedMetric === 'profit' && (
+                  <Area
+                    type="monotone"
+                    dataKey="profit"
+                    stroke="#22c55e"
+                    strokeWidth={2}
+                    fill="url(#colorProfit)"
+                  />
+                )}
+              </AreaChart>
+            </ResponsiveContainer>
+            
+            {/* Summary Stats */}
+            <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-200">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Total Revenue</p>
+                <p className="text-xl font-bold text-gray-900">
+                  KSh {salesData.reduce((sum, d) => sum + d.revenue, 0).toLocaleString()}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Total Orders</p>
+                <p className="text-xl font-bold text-gray-900">
+                  {salesData.reduce((sum, d) => sum + d.orders, 0)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Total Profit</p>
+                <p className="text-xl font-bold text-gray-900">
+                  KSh {salesData.reduce((sum, d) => sum + d.profit, 0).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Category Performance */}
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Category Performance</h3>
+            <ResponsiveContainer width="100%" height={220}>
+              <RechartsPie>
+                <Pie
+                  data={categoryPerformance}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={90}
+                  paddingAngle={5}
+                  dataKey="percentage"
+                >
+                  {categoryPerformance.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value) => `${value}%`}
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: '1px solid #e5e7eb', 
+                    borderRadius: '8px' 
+                  }}
+                />
+              </RechartsPie>
+            </ResponsiveContainer>
+            <div className="space-y-3 mt-4">
+              {categoryPerformance.map((cat, idx) => (
+                <div key={idx} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2 flex-1">
+                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: cat.color }}></div>
+                    <span className="text-gray-700 font-medium">{cat.name}</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-gray-900">KSh {(cat.sales / 1000).toFixed(0)}K</p>
+                    <p className="text-xs text-gray-500">{cat.orders} orders • {cat.roi}% ROI</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Hourly Performance & Performance Radar */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Hourly Performance */}
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Hourly Performance</h3>
+            <p className="text-sm text-gray-600 mb-6">Peak sales times today</p>
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={hourlyData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="hour" stroke="#999" fontSize={12} />
+                <YAxis stroke="#999" fontSize={12} />
+                <Tooltip
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: '1px solid #e5e7eb', 
+                    borderRadius: '8px' 
+                  }}
+                  formatter={(value, name) => {
+                    if (name === 'orders') return [value, 'Orders'];
+                    return [`KSh ${value.toLocaleString()}`, 'Revenue'];
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="orders" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="revenue" fill="#ea580c" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Performance Radar */}
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Store Performance Metrics</h3>
+            <p className="text-sm text-gray-600 mb-6">Overall rating across key areas</p>
+            <ResponsiveContainer width="100%" height={240}>
+              <RadarChart data={performanceMetrics}>
+                <PolarGrid stroke="#e5e7eb" />
+                <PolarAngleAxis dataKey="metric" stroke="#999" fontSize={11} />
+                <PolarRadiusAxis angle={90} domain={[0, 100]} stroke="#999" fontSize={11} />
+                <Radar
+                  name="Score"
+                  dataKey="score"
+                  stroke="#ea580c"
+                  fill="#ea580c"
+                  fillOpacity={0.3}
+                  strokeWidth={2}
+                />
+                <Tooltip
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    border: '1px solid #e5e7eb', 
+                    borderRadius: '8px' 
+                  }}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Payment Methods & Customer Segments */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Payment Methods */}
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Revenue by Payment Method</h3>
+            <div className="space-y-4">
+              {revenueByPayment.map((method, idx) => (
+                <div key={idx}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-gray-600" />
+                      <span className="text-sm font-medium text-gray-900">{method.name}</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-gray-900">KSh {(method.value / 1000).toFixed(0)}K</p>
+                      <p className="text-xs text-gray-500">{method.transactions} transactions • {method.percentage}%</p>
+                    </div>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div
+                      className="h-2.5 rounded-full transition-all duration-500"
+                      style={{ width: `${method.percentage}%`, backgroundColor: method.color }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Average Transaction</span>
+                <span className="font-bold text-gray-900">KSh 5,031</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Customer Segments */}
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Customer Segments</h3>
+            <div className="space-y-4">
+              {customerSegments.map((segment, idx) => (
+                <div key={idx} className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
+                        style={{ backgroundColor: segment.color }}
+                      >
+                        {segment.count}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{segment.segment}</p>
+                        <p className="text-xs text-gray-500">Avg: KSh {segment.avgOrder.toLocaleString()}</p>
+                      </div>
+                    </div>
+                    <p className="text-lg font-bold text-gray-900">
+                      KSh {(segment.revenue / 1000).toFixed(0)}K
+                    </p>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-1.5">
+                    <div
+                      className="h-1.5 rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${(segment.revenue / customerSegments.reduce((sum, s) => sum + s.revenue, 0)) * 100}%`,
+                        backgroundColor: segment.color 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Traffic Sources */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Traffic Sources</h3>
+              <p className="text-sm text-gray-600">Where your customers are coming from</p>
+            </div>
+            <button className="text-orange-600 hover:text-orange-700 text-sm font-medium flex items-center gap-1">
+              View Details <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="grid md:grid-cols-4 gap-4">
+            {trafficSources.map((source, idx) => (
+              <div key={idx} className="p-4 border border-gray-200 rounded-lg hover:border-orange-300 transition-colors">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-gray-900">{source.source}</h4>
+                  <span className="text-xs font-medium text-gray-600">{source.percentage}%</span>
+                </div>
+                <p className="text-2xl font-bold text-gray-900 mb-2">{source.visitors.toLocaleString()}</p>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">{source.orders} orders</span>
+                  <span className="text-green-600 font-medium">{source.conversion}% conv.</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-3">
+                  <div
+                    className="h-1.5 rounded-full bg-orange-600 transition-all duration-500"
+                    style={{ width: `${source.conversion * 20}%` }}
+                  ></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top Products & Recent Orders */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Top Products */}
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Top Performing Products</h3>
+              <button className="text-orange-600 hover:text-orange-700 text-sm font-medium flex items-center gap-1">
+                View All <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              {topProducts.map((product, idx) => (
+                <div key={product.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100">
+                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-orange-600 to-orange-500 text-white rounded-lg font-bold text-sm shadow-sm">
+                    #{idx + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">{product.name}</p>
+                    <div className="flex items-center gap-3 mt-1 flex-wrap">
+                      <span className="text-xs text-gray-600">{product.sales} sales</span>
+                      <span className="text-xs text-gray-600">{product.views} views</span>
+                      <span className="text-xs text-gray-600">Stock: {product.stock}</span>
+                      <div className="flex items-center gap-1">
+                        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                        <span className="text-xs text-gray-900 font-medium">{product.rating}</span>
+                        <span className="text-xs text-gray-500">({product.reviews})</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-gray-900">
+                      {(product.revenue / 1000).toFixed(0)}K
+                    </p>
+                    <div className={`flex items-center gap-1 text-xs ${
+                      product.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {product.trend === 'up' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                      {product.trend === 'up' ? '+' : '-'}{product.trendValue}%
+                    </div>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Heart className="w-3 h-3 text-red-500" />
+                      <span className="text-xs text-gray-600">{product.wishlist}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent Orders */}
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Recent Orders</h3>
+              <button className="text-orange-600 hover:text-orange-700 text-sm font-medium flex items-center gap-1">
+                View All <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              {transactions.length > 0 ? (
+                transactions.slice(0, 5).map(transaction => {
+                  const orderNumber = transaction.order?.order_number || 'N/A';
+                  const customerName = transaction.display?.customer_name || 'Guest';
+                  const firstProduct = transaction.display?.first_product || 'N/A';
+                  const county = transaction.display?.county || 'N/A';
+                  const paymentMethod = transaction.payment_method 
+                    ? transaction.payment_method.charAt(0).toUpperCase() + transaction.payment_method.slice(1)
+                    : 'N/A';
+                  const amount = parseFloat(transaction.amount || 0);
+                  const createdAt = new Date(transaction.created_at);
+                  const timeAgo = formatTimeAgo(createdAt);
+                  
+                  return (
+                    <div key={transaction.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <p className="font-medium text-gray-900 text-sm">{orderNumber}</p>
+                          {getStatusBadge(transaction.status)}
+                        </div>
+                        <p className="text-sm text-gray-900 font-medium">{customerName}</p>
+                        <p className="text-xs text-gray-600 truncate">{firstProduct}</p>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <CreditCard className="w-3 h-3" />
+                            {paymentMethod}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {county}
+                          </span>
+                          <span>{timeAgo}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-gray-900">
+                          KSh {amount.toLocaleString()}
+                        </p>
+                        <button className="text-xs text-orange-600 hover:text-orange-700 font-medium mt-1 flex items-center gap-1">
+                          View <ExternalLink className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>No recent orders yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Upcoming Tasks */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Upcoming Tasks</h3>
+              <p className="text-sm text-gray-600">Action items requiring your attention</p>
+            </div>
+            <button className="text-orange-600 hover:text-orange-700 text-sm font-medium">
+              Mark All Complete
+            </button>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {upcomingTasks.map(task => {
+              const priorityColors = {
+                high: 'border-red-300 bg-red-50',
+                medium: 'border-yellow-300 bg-yellow-50',
+                low: 'border-blue-300 bg-blue-50'
+              };
+              const priorityBadge = {
+                high: 'bg-red-100 text-red-700',
+                medium: 'bg-yellow-100 text-yellow-700',
+                low: 'bg-blue-100 text-blue-700'
+              };
+              return (
+                <div key={task.id} className={`p-4 border-l-4 rounded-lg ${priorityColors[task.priority]}`}>
+                  <div className="flex items-start justify-between mb-2">
+                    <p className="font-medium text-gray-900 text-sm">{task.task}</p>
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${priorityBadge[task.priority]}`}>
+                      {task.priority}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-600 flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {task.deadline}
+                    </span>
+                    <button className="text-xs text-orange-600 hover:text-orange-700 font-medium">
+                      Complete
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <button className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-all text-left border border-gray-100 hover:border-orange-300 group">
+            <Plus className="w-8 h-8 text-orange-600 mb-3 group-hover:scale-110 transition-transform" />
+            <h4 className="font-semibold text-gray-900 mb-1">Add Product</h4>
+            <p className="text-sm text-gray-600">List new item for sale</p>
+          </button>
+          
+          <button className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-all text-left border border-gray-100 hover:border-blue-300 group">
+            <ShoppingCart className="w-8 h-8 text-blue-600 mb-3 group-hover:scale-110 transition-transform" />
+            <h4 className="font-semibold text-gray-900 mb-1">Manage Orders</h4>
+            <p className="text-sm text-gray-600">{stats.orders.pending} pending orders</p>
+          </button>
+          
+          <button className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-all text-left border border-gray-100 hover:border-purple-300 group">
+            <MessageSquare className="w-8 h-8 text-purple-600 mb-3 group-hover:scale-110 transition-transform" />
+            <h4 className="font-semibold text-gray-900 mb-1">Messages</h4>
+            <p className="text-sm text-gray-600">5 unread messages</p>
+          </button>
+          
+          <button className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-all text-left border border-gray-100 hover:border-gray-300 group">
+            <Settings className="w-8 h-8 text-gray-600 mb-3 group-hover:scale-110 transition-transform" />
+            <h4 className="font-semibold text-gray-900 mb-1">Store Settings</h4>
+            <p className="text-sm text-gray-600">Manage your store</p>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SellerDashboardPage;
