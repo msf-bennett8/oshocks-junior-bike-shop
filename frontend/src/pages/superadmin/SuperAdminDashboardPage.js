@@ -1952,6 +1952,34 @@ const [lowStockProducts, setLowStockProducts] = useState([
           </div>
         </div>
 
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <button className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-all text-left border border-gray-100 hover:border-orange-300 group">
+            <Plus className="w-8 h-8 text-orange-600 mb-3 group-hover:scale-110 transition-transform" />
+            <h4 className="font-semibold text-gray-900 mb-1">Add Product</h4>
+            <p className="text-sm text-gray-600">List new item for sale</p>
+          </button>
+          
+          <button className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-all text-left border border-gray-100 hover:border-blue-300 group">
+            <ShoppingCart className="w-8 h-8 text-blue-600 mb-3 group-hover:scale-110 transition-transform" />
+            <h4 className="font-semibold text-gray-900 mb-1">Manage Orders</h4>
+            <p className="text-sm text-gray-600">{stats.orders.pending} pending orders</p>
+          </button>
+          
+          <button className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-all text-left border border-gray-100 hover:border-purple-300 group">
+            <MessageSquare className="w-8 h-8 text-purple-600 mb-3 group-hover:scale-110 transition-transform" />
+            <h4 className="font-semibold text-gray-900 mb-1">Messages</h4>
+            <p className="text-sm text-gray-600">5 unread messages</p>
+          </button>
+          
+          <button className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-all text-left border border-gray-100 hover:border-gray-300 group">
+            <Settings className="w-8 h-8 text-gray-600 mb-3 group-hover:scale-110 transition-transform" />
+            <h4 className="font-semibold text-gray-900 mb-1">Store Settings</h4>
+            <p className="text-sm text-gray-600">Manage your store</p>
+          </button>
+        </div>
+      </div>
+
         {/* Bottom Stats Bar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
@@ -1994,34 +2022,7 @@ const [lowStockProducts, setLowStockProducts] = useState([
             </div>
           </div>
         </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-all text-left border border-gray-100 hover:border-orange-300 group">
-            <Plus className="w-8 h-8 text-orange-600 mb-3 group-hover:scale-110 transition-transform" />
-            <h4 className="font-semibold text-gray-900 mb-1">Add Product</h4>
-            <p className="text-sm text-gray-600">List new item for sale</p>
-          </button>
-          
-          <button className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-all text-left border border-gray-100 hover:border-blue-300 group">
-            <ShoppingCart className="w-8 h-8 text-blue-600 mb-3 group-hover:scale-110 transition-transform" />
-            <h4 className="font-semibold text-gray-900 mb-1">Manage Orders</h4>
-            <p className="text-sm text-gray-600">{stats.orders.pending} pending orders</p>
-          </button>
-          
-          <button className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-all text-left border border-gray-100 hover:border-purple-300 group">
-            <MessageSquare className="w-8 h-8 text-purple-600 mb-3 group-hover:scale-110 transition-transform" />
-            <h4 className="font-semibold text-gray-900 mb-1">Messages</h4>
-            <p className="text-sm text-gray-600">5 unread messages</p>
-          </button>
-          
-          <button className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-all text-left border border-gray-100 hover:border-gray-300 group">
-            <Settings className="w-8 h-8 text-gray-600 mb-3 group-hover:scale-110 transition-transform" />
-            <h4 className="font-semibold text-gray-900 mb-1">Store Settings</h4>
-            <p className="text-sm text-gray-600">Manage your store</p>
-          </button>
-        </div>
-      </div>
+        
     </div>
   );
 };
