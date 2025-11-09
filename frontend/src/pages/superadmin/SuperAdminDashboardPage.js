@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import dashboardService from '../../services/dashboardService';
 import {
@@ -26,6 +27,7 @@ const SuperAdminDashboardPage = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date()); 
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [saleChannels, setSaleChannels] = useState([]);
   const [topSellers, setTopSellers] = useState([]);
@@ -439,14 +441,22 @@ const [lowStockProducts, setLowStockProducts] = useState([
       processing: { bg: 'bg-blue-100', text: 'text-blue-800', icon: RefreshCw },
       shipped: { bg: 'bg-purple-100', text: 'text-purple-800', icon: Truck },
       completed: { bg: 'bg-green-100', text: 'text-green-800', icon: CheckCircle },
-      cancelled: { bg: 'bg-red-100', text: 'text-red-800', icon: XCircle }
+      cancelled: { bg: 'bg-red-100', text: 'text-red-800', icon: XCircle },
+      failed: { bg: 'bg-red-100', text: 'text-red-800', icon: XCircle },
+      delivered: { bg: 'bg-green-100', text: 'text-green-800', icon: CheckCircle }
     };
-    const style = styles[status];
+    
+    const style = styles[status?.toLowerCase()] || { 
+      bg: 'bg-gray-100', 
+      text: 'text-gray-800', 
+      icon: AlertCircle 
+    };
+    
     const Icon = style.icon;
     return (
       <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${style.bg} ${style.text}`}>
         <Icon className="w-3 h-3" />
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown'}
       </span>
     );
   };
@@ -695,7 +705,10 @@ const [lowStockProducts, setLowStockProducts] = useState([
           </div>
 
           {/* Pending Payouts Card - Orange */}
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white cursor-pointer hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105">
+          <div 
+              onClick={() => navigate('/super-admin/payouts')}
+              className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white cursor-pointer hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105"
+            >
             <div className="flex justify-between items-start mb-4">
               <div className="p-3 bg-white bg-opacity-20 rounded-lg">
                 <Wallet size={24} />
@@ -1814,7 +1827,12 @@ const [lowStockProducts, setLowStockProducts] = useState([
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <p className="font-medium text-gray-900 text-sm">{orderNumber}</p>
-                          {getStatusBadge(transaction.status)}
+                          {transaction.order?.status ? getStatusBadge(transaction.order.status) : 
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                            <AlertCircle className="w-3 h-3" />
+                            Unknown
+                          </span>
+                        }
                         </div>
                         <p className="text-sm text-gray-900 font-medium">{customerName}</p>
                         <p className="text-xs text-gray-600 truncate">{firstProduct}</p>
@@ -1943,12 +1961,15 @@ const [lowStockProducts, setLowStockProducts] = useState([
               <span className="text-sm font-medium text-gray-700">Export Report</span>
             </button>
 
-            <button className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group">
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
-                <DollarSign size={24} className="text-yellow-600" />
-              </div>
-              <span className="text-sm font-medium text-gray-700">Manage Payouts</span>
-            </button>
+            <button 
+            onClick={() => navigate('/super-admin/payouts')}
+            className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group"
+          >
+            <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
+              <DollarSign size={24} className="text-yellow-600" />
+            </div>
+            <span className="text-sm font-medium text-gray-700">Manage Payouts</span>
+          </button>
           </div>
         </div>
 
