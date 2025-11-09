@@ -1852,7 +1852,7 @@ const [lowStockProducts, setLowStockProducts] = useState([
         </div>
 
         {/* Upcoming Tasks */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-100">
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-8 border border-gray-100">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-bold text-gray-900">Upcoming Tasks</h3>
@@ -1898,7 +1898,7 @@ const [lowStockProducts, setLowStockProducts] = useState([
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <div className="bg-white rounded-lg shadow p-6 mb-10">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             <button className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-gray-50 transition-colors group">
@@ -1952,8 +1952,8 @@ const [lowStockProducts, setLowStockProducts] = useState([
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Additional Quick Actions Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           <button className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-all text-left border border-gray-100 hover:border-orange-300 group">
             <Plus className="w-8 h-8 text-orange-600 mb-3 group-hover:scale-110 transition-transform" />
             <h4 className="font-semibold text-gray-900 mb-1">Add Product</h4>
@@ -1981,7 +1981,7 @@ const [lowStockProducts, setLowStockProducts] = useState([
       </div>
 
         {/* Bottom Stats Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
             <div className="flex items-center gap-3">
               <Eye size={20} className="text-gray-600" />
@@ -2022,7 +2022,7 @@ const [lowStockProducts, setLowStockProducts] = useState([
             </div>
           </div>
         </div>
-        
+
     </div>
   );
 };
