@@ -293,6 +293,7 @@ const OrderHistory = () => {
   };
 
   const handleReorder = async (order) => {
+    // eslint-disable-next-line no-restricted-globals
     if (confirm('Add all items from this order to your cart?')) {
       try {
         const response = await fetch('/api/cart/reorder', {
