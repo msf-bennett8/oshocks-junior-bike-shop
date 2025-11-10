@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import dashboardService from '../../services/dashboardService';
+//import '../../SuperAdminDashboard.css';
 import {
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, Package, Users,
   Eye, Star, AlertCircle, Clock, CheckCircle, XCircle, Truck, Heart,
@@ -18,6 +19,18 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
   ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from 'recharts';
+
+// Define status colors
+const STATUS_COLORS = {
+  'Pending': '#F59E0B',
+  'Processing': '#3B82F6', 
+  'Cancelled': '#EF4444',
+  'Delivered': '#10B981',
+  'pending': '#F59E0B',
+  'processing': '#3B82F6',
+  'cancelled': '#EF4444',
+  'delivered': '#10B981'
+};
 
 const SuperAdminDashboardPage = () => {
   const [timeRange, setTimeRange] = useState('7days');
@@ -39,12 +52,7 @@ const SuperAdminDashboardPage = () => {
   const [commissionBreakdown, setCommissionBreakdown] = useState(null);
   const [payouts, setPayouts] = useState([]);
   const [error, setError] = useState(null);
-  const [orderStatusData, setOrderStatusData] = useState([
-    { status: 'Pending', count: 23, color: '#f59e0b' },
-    { status: 'Processing', count: 45, color: '#3b82f6' },
-    { status: 'Completed', count: 398, color: '#22c55e' },
-    { status: 'Cancelled', count: 21, color: '#ef4444' }
-  ]);
+  const [orderStatusData, setOrderStatusData] = useState([]);
 
   const [trafficData, setTrafficData] = useState([
   { source: 'Direct', visitors: 4532, percentage: 35, color: '#3B82F6' },
@@ -375,14 +383,16 @@ const [lowStockProducts, setLowStockProducts] = useState([
       paymentMethodsData,
       saleChannelsData,
       topSellersData,
-      recentOrdersData
+      recentOrdersData,
+      orderStatusData
     ] = await Promise.all([
       dashboardService.getOwnerOverview(period),
       dashboardService.getTransactions({ page: 1, per_page: 10 }),
       dashboardService.getPaymentMethodsBreakdown(period),
       dashboardService.getSaleChannelsBreakdown(period),
       dashboardService.getTopSellers(5, period),
-      dashboardService.getRecentOrders(10)
+      dashboardService.getRecentOrders(10),
+      dashboardService.getOrderStatusDistribution(period)
     ]);
 
     console.log('✅ Dashboard data loaded:', { 
@@ -391,7 +401,8 @@ const [lowStockProducts, setLowStockProducts] = useState([
       paymentMethodsData,
       saleChannelsData,
       topSellersData,
-      recentOrdersData
+      recentOrdersData,
+      orderStatusData
     });
     
     // Update state with real data
@@ -401,6 +412,14 @@ const [lowStockProducts, setLowStockProducts] = useState([
     setSaleChannels(saleChannelsData.data || []);
     setTopSellers(topSellersData.data || []);
     setRecentTransactions(transactionsData.data?.slice(0, 5) || []);
+
+    // Update order status distribution from API
+    if (orderStatusData.data) {
+      console.log('📊 Order Status Data from API:', orderStatusData.data);
+      console.log('📊 First item color:', orderStatusData.data[0]?.color);
+      console.log('📊 Full first item:', JSON.stringify(orderStatusData.data[0], null, 2));
+      setOrderStatusData(orderStatusData.data);
+    }
 
     // Map API data to stats structure for the owner/super admin
     if (overviewData.data) {
@@ -1204,39 +1223,75 @@ const [lowStockProducts, setLowStockProducts] = useState([
               </div>
             </div>
             
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={orderStatusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={90}
-                  paddingAngle={2}
-                  dataKey="count"
-                >
-                  {orderStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-
-            <div className="space-y-2 mt-4">
-              {orderStatusData.map((item, index) => (
-                <div key={index} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: item.color }}
+            {(() => {
+              console.log('🎨 Rendering Order Status Chart');
+              console.log('🎨 orderStatusData:', orderStatusData);
+              console.log('🎨 orderStatusData length:', orderStatusData?.length);
+              console.log('🎨 orderStatusData items:', JSON.stringify(orderStatusData, null, 2));
+              return null;
+            })()}
+            
+            {orderStatusData && orderStatusData.length > 0 ? (
+              <>
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={orderStatusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      dataKey="count"
+                      nameKey="status"
+                    >
+                      {orderStatusData.map((entry, index) => {
+                        const color = entry.color || STATUS_COLORS[entry.status] || STATUS_COLORS[entry.status.toLowerCase()] || '#6B7280';
+                        console.log(`🎨 Rendering Cell ${index}:`, entry.status, 'Using Color:', color);
+                        return (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={color}
+                            stroke={color}
+                            style={{ fill: color, stroke: color }}
+                          />
+                        );
+                      })}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value, name, props) => {
+                        console.log('🎨 Tooltip props:', props);
+                        return [value, props.payload.status];
+                      }}
+                      contentStyle={{ 
+                        backgroundColor: '#fff', 
+                        border: '1px solid #e5e7eb', 
+                        borderRadius: '8px' 
+                      }}
                     />
-                    <span className="text-gray-700">{item.status}</span>
-                  </div>
-                  <span className="font-semibold text-gray-900">{item.count}</span>
+                  </PieChart>
+                </ResponsiveContainer>
+
+                <div className="space-y-2 mt-4">
+                  {orderStatusData.map((item, index) => (
+                    <div key={index} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: item.color || '#6B7280' }}
+                        />
+                        <span className="text-gray-700">{item.status}</span>
+                      </div>
+                      <span className="font-semibold text-gray-900">{item.count}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <p className="text-sm">No order data available</p>
+              </div>
+            )}
           </div>
         </div>
 

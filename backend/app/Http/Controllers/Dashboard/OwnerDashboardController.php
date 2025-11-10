@@ -242,13 +242,13 @@ class OwnerDashboardController extends Controller
     {
         switch ($period) {
             case 'today':
-                return [Carbon::today(), Carbon::now()];
+                return [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()];
             case 'week':
-                return [Carbon::now()->startOfWeek(), Carbon::now()];
+                return [Carbon::now()->subDays(7)->startOfDay(), Carbon::now()->endOfDay()];
             case 'month':
-                return [Carbon::now()->startOfMonth(), Carbon::now()];
+                return [Carbon::now()->subDays(30)->startOfDay(), Carbon::now()->endOfDay()];
             default:
-                return [Carbon::today(), Carbon::now()];
+                return [Carbon::now()->startOfDay(), Carbon::now()->endOfDay()];
         }
     }
     
