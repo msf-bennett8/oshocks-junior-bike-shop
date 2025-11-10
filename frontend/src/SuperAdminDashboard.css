@@ -1,0 +1,13 @@
+/* Force Recharts pie chart colors - CRITICAL FIX */
+.recharts-pie-sector {
+  fill: inherit !important;
+}
+
+.recharts-pie {
+  outline: none;
+}
+
+/* Ensure SVG paths use the correct fill color */
+.recharts-surface path[name] {
+  fill: inherit !important;
+}
