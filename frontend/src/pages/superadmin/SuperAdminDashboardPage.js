@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import dashboardService from '../../services/dashboardService';
+import auditService from '../../services/auditService';
 //import '../../SuperAdminDashboard.css';
 import {
-  TrendingUp, TrendingDown, DollarSign, ShoppingCart, Package, Users,
+  TrendingUp, Shield, TrendingDown, DollarSign, ShoppingCart, Package, Users,
   Eye, Star, AlertCircle, Clock, CheckCircle, XCircle, Truck, Heart,
   MessageSquare, ArrowUp, ArrowDown, Calendar, Download, RefreshCw,
   BarChart3, PieChart, Activity, Zap, Target, Award, ShoppingBag,
@@ -69,48 +70,7 @@ const [lowStockProducts, setLowStockProducts] = useState([
   { id: 4, name: 'Cycling Gloves M', stock: 6, threshold: 12, category: 'Accessories' }
 ]);
 
-  const [recentActivities, setRecentActivities] = useState([
-    {
-      id: 1,
-      type: 'order',
-      message: 'New order #ORD-10234 placed',
-      time: '2 minutes ago',
-      icon: ShoppingCart,
-      color: 'blue'
-    },
-    {
-      id: 2,
-      type: 'customer',
-      message: 'New customer registration: Sarah Wanjiku',
-      time: '15 minutes ago',
-      icon: UserCheck,
-      color: 'green'
-    },
-    {
-      id: 3,
-      type: 'stock',
-      message: 'Low stock alert: Mountain Bike Tires',
-      time: '1 hour ago',
-      icon: AlertCircle,
-      color: 'orange'
-    },
-    {
-      id: 4,
-      type: 'review',
-      message: 'New 5-star review on Road Racer Elite',
-      time: '2 hours ago',
-      icon: Star,
-      color: 'yellow'
-    },
-    {
-      id: 5,
-      type: 'payment',
-      message: 'Payment received: KES 125,000',
-      time: '3 hours ago',
-      icon: DollarSign,
-      color: 'green'
-    }
-  ]);
+  const [recentActivities, setRecentActivities] = useState([]);
 
   // Mock data - Replace with API calls
   const [stats, setStats] = useState({
@@ -384,7 +344,8 @@ const [lowStockProducts, setLowStockProducts] = useState([
       saleChannelsData,
       topSellersData,
       recentOrdersData,
-      orderStatusData
+      orderStatusData,
+      auditLogsData
     ] = await Promise.all([
       dashboardService.getOwnerOverview(period),
       dashboardService.getTransactions({ page: 1, per_page: 10 }),
@@ -392,7 +353,8 @@ const [lowStockProducts, setLowStockProducts] = useState([
       dashboardService.getSaleChannelsBreakdown(period),
       dashboardService.getTopSellers(5, period),
       dashboardService.getRecentOrders(10),
-      dashboardService.getOrderStatusDistribution(period)
+      dashboardService.getOrderStatusDistribution(period),
+      auditService.getAuditLogs({ per_page: 13, sort_by: 'occurred_at', sort_order: 'desc' })
     ]);
 
     console.log('✅ Dashboard data loaded:', { 
@@ -402,7 +364,8 @@ const [lowStockProducts, setLowStockProducts] = useState([
       saleChannelsData,
       topSellersData,
       recentOrdersData,
-      orderStatusData
+      orderStatusData,
+      auditLogsData
     });
     
     // Update state with real data
@@ -419,6 +382,56 @@ const [lowStockProducts, setLowStockProducts] = useState([
       console.log('📊 First item color:', orderStatusData.data[0]?.color);
       console.log('📊 Full first item:', JSON.stringify(orderStatusData.data[0], null, 2));
       setOrderStatusData(orderStatusData.data);
+    }
+
+    // Map audit logs to recent activities with severity badges
+    if (auditLogsData.data?.data) {
+      const activities = auditLogsData.data.data.map(log => {
+        // Determine icon based on event category
+        let icon, color;
+        switch (log.event_category?.toLowerCase()) {
+          case 'security':
+            icon = Shield;
+            color = log.severity === 'high' ? 'red' : log.severity === 'medium' ? 'orange' : 'purple';
+            break;
+          case 'order':
+            icon = ShoppingCart;
+            color = 'blue';
+            break;
+          case 'payment':
+            icon = DollarSign;
+            color = 'green';
+            break;
+          case 'product':
+            icon = Package;
+            color = 'orange';
+            break;
+          case 'user':
+            icon = UserCheck;
+            color = 'indigo';
+            break;
+          default:
+            icon = Activity;
+            color = 'gray';
+        }
+
+        // Format time ago
+        const timeAgo = formatTimeAgo(new Date(log.occurred_at));
+
+        return {
+          id: log.id,
+          type: log.event_category,
+          message: log.description,
+          time: timeAgo,
+          icon: icon,
+          color: color,
+          severity: log.severity,
+          is_suspicious: log.is_suspicious
+        };
+      });
+
+      setRecentActivities(activities);
+      console.log('✅ Mapped audit logs to activities:', activities);
     }
 
     // Map API data to stats structure for the owner/super admin
@@ -1332,38 +1345,77 @@ const [lowStockProducts, setLowStockProducts] = useState([
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-                <p className="text-sm text-gray-600">Latest updates</p>
+                <p className="text-sm text-gray-600">Latest security & system events</p>
               </div>
             </div>
 
-            <div className="space-y-4">
-              {recentActivities.map((activity) => {
-                const Icon = activity.icon;
-                const colorClasses = {
-                  blue: 'bg-blue-100 text-blue-600',
-                  green: 'bg-green-100 text-green-600',
-                  orange: 'bg-orange-100 text-orange-600',
-                  yellow: 'bg-yellow-100 text-yellow-600',
-                  red: 'bg-red-100 text-red-600'
-                };
-                
-                return (
-                  <div key={activity.id} className="flex gap-3">
-                    <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${colorClasses[activity.color]}`}>
-                      <Icon size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900">{activity.message}</p>
-                      <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            {recentActivities.length > 0 ? (
+              <>
+                <div className="space-y-4">
+                  {recentActivities.map((activity) => {
+                    const Icon = activity.icon;
+                    const colorClasses = {
+                      blue: 'bg-blue-100 text-blue-600',
+                      green: 'bg-green-100 text-green-600',
+                      orange: 'bg-orange-100 text-orange-600',
+                      yellow: 'bg-yellow-100 text-yellow-600',
+                      red: 'bg-red-100 text-red-600',
+                      purple: 'bg-purple-100 text-purple-600',
+                      indigo: 'bg-indigo-100 text-indigo-600',
+                      gray: 'bg-gray-100 text-gray-600'
+                    };
 
-            <button className="w-full mt-4 py-2 text-sm text-orange-600 font-medium hover:bg-orange-50 rounded-lg transition-colors">
-              View All Activity
-            </button>
+                    const severityBadges = {
+                      low: { bg: 'bg-blue-100', text: 'text-blue-800', icon: Info },
+                      medium: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: AlertTriangle },
+                      high: { bg: 'bg-red-100', text: 'text-red-800', icon: AlertCircle }
+                    };
+
+                    const severityStyle = severityBadges[activity.severity?.toLowerCase()] || severityBadges.low;
+                    const SeverityIcon = severityStyle.icon;
+                    
+                    return (
+                      <div key={activity.id} className="flex gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                        <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${colorClasses[activity.color]}`}>
+                          <Icon size={18} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-sm text-gray-900 flex-1">{activity.message}</p>
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${severityStyle.bg} ${severityStyle.text} flex-shrink-0`}>
+                              <SeverityIcon className="w-3 h-3" />
+                              {activity.severity}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <p className="text-xs text-gray-500">{activity.time}</p>
+                            {activity.is_suspicious && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <Shield className="w-3 h-3" />
+                                Suspicious
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <button 
+                  onClick={() => navigate('/audit-logs')}
+                  className="w-full mt-4 py-2 text-sm text-orange-600 font-medium hover:bg-orange-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  View All Audit Logs
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <Activity className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p className="text-sm">No recent activity</p>
+              </div>
+            )}
           </div>
         </div>
 

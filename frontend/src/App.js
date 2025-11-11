@@ -145,6 +145,8 @@ const BikeMaintainance = lazy(() => import('./pages/education/BikeMaintainance')
 const CookiePolicy = lazy(() => import('./pages/legal/CookiePolicy'));
 const PaymentTerms = lazy(() => import('./pages/legal/PaymentTerms'));
 const ReturnPolicy = lazy(() => import('./pages/legal/ReturnPolicy'));
+// Audit Pages
+const AuditLogsPage = lazy(() => import('./pages/audit/AuditLogsPage'));
 
 // ============================================================================
 // ROUTE PROTECTION COMPONENTS
@@ -839,6 +841,18 @@ function App() {
                   element={
                     <SuperAdminRoute>
                       <PayoutManagementPage />
+                    </SuperAdminRoute>
+                  }
+                />
+
+                {/* ============================================
+                    AUDIT LOGS (Super Admin Only)
+                    ============================================ */}
+                <Route
+                  path="/audit-logs"
+                  element={
+                    <SuperAdminRoute>
+                      <AuditLogsPage />
                     </SuperAdminRoute>
                   }
                 />
