@@ -122,8 +122,22 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('/audit-logs/user/{userId}', [\App\Http\Controllers\Api\AuditLogController::class, 'userLogs']);
     Route::get('/audit-logs/retention/stats', [App\Http\Controllers\Api\AuditLogController::class, 'retentionStats']);
     Route::post('/audit-logs/retention/cleanup', [App\Http\Controllers\Api\AuditLogController::class, 'runCleanup']);
-    Route::get('/audit-logs/archives', [App\Http\Controllers\Api\AuditLogController::class, 'archives']);
+    
+    // Archive routes - SPECIFIC ROUTES MUST COME FIRST!
+    Route::get('/audit-logs/archives/stats', [App\Http\Controllers\Api\AuditLogController::class, 'archiveStats']);
+    Route::get('/audit-logs/archives/export', [App\Http\Controllers\Api\AuditLogController::class, 'exportArchives']);
+    Route::post('/audit-logs/archives/bulk-restore', [App\Http\Controllers\Api\AuditLogController::class, 'bulkRestoreArchives']);
+    Route::post('/audit-logs/archives/bulk-delete', [App\Http\Controllers\Api\AuditLogController::class, 'bulkDeleteArchives']);
+
+    // Dynamic ID routes MUST come after all specific routes
     Route::get('/audit-logs/archives/{id}', [App\Http\Controllers\Api\AuditLogController::class, 'showArchive']);
+    Route::post('/audit-logs/archives/{id}/restore', [App\Http\Controllers\Api\AuditLogController::class, 'restoreArchive']);
+    Route::delete('/audit-logs/archives/{id}', [App\Http\Controllers\Api\AuditLogController::class, 'permanentlyDeleteArchive']);
+
+    // General list route comes last
+    Route::get('/audit-logs/archives', [App\Http\Controllers\Api\AuditLogController::class, 'archives']);
+
+        // General audit logs routes
     Route::get('/audit-logs', [\App\Http\Controllers\Api\AuditLogController::class, 'index']);
     Route::get('/audit-logs/{id}', [\App\Http\Controllers\Api\AuditLogController::class, 'show']);
     

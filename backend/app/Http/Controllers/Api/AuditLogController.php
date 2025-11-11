@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class AuditLogController extends Controller
 {
@@ -326,6 +327,12 @@ class AuditLogController extends Controller
 
         $validator = Validator::make($request->all(), [
             'dry_run' => 'nullable|boolean',
+            'is_suspicious' => 'nullable|string',
+            'severity' => 'nullable|in:low,medium,high',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date',
+            'event_category' => 'nullable|string',
+            'delete_all' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -336,23 +343,70 @@ class AuditLogController extends Controller
             ], 422);
         }
 
+        // Build conditions from request
+        $conditions = [];
+        if ($request->has('is_suspicious')) {
+            $conditions['is_suspicious'] = $request->is_suspicious;
+        }
+        if ($request->has('severity')) {
+            $conditions['severity'] = $request->severity;
+        }
+        if ($request->has('date_from') && $request->has('date_to')) {
+            $conditions['date_from'] = $request->date_from;
+            $conditions['date_to'] = $request->date_to;
+        }
+        if ($request->has('event_category')) {
+            $conditions['event_category'] = $request->event_category;
+        }
+
+        // Preview mode (dry run)
         if ($request->dry_run) {
-            $stats = \App\Services\AuditRetentionService::getStats();
-            $totalEligible = $stats['logs_eligible_for_cleanup']['standard'] +
-                           $stats['logs_eligible_for_cleanup']['high_severity'] +
-                           $stats['logs_eligible_for_cleanup']['suspicious'];
+            $query = AuditLog::query();
+
+            // Apply same filters
+            if (isset($conditions['is_suspicious'])) {
+                $query->where('is_suspicious', $conditions['is_suspicious'] == '1');
+            }
+            if (isset($conditions['severity'])) {
+                $query->where('severity', $conditions['severity']);
+            }
+            if (isset($conditions['date_from']) && isset($conditions['date_to'])) {
+                $query->whereBetween('occurred_at', [
+                    $conditions['date_from'],
+                    $conditions['date_to']
+                ]);
+            }
+            if (isset($conditions['event_category'])) {
+                $query->where('event_category', $conditions['event_category']);
+            }
+            if ($request->delete_all) {
+                // No additional filters, count all
+            }
+
+            $count = $query->count();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Dry run completed',
                 'data' => [
-                    'would_archive' => $totalEligible,
-                    'breakdown' => $stats['logs_eligible_for_cleanup']
+                    'would_archive' => $count,
+                    'breakdown' => [
+                        'standard' => $count,
+                        'high_severity' => 0,
+                        'suspicious' => 0,
+                    ]
                 ]
             ]);
         }
 
-        $result = \App\Services\AuditRetentionService::cleanup();
+        // Actual deletion
+        if ($request->delete_all) {
+            // Delete all logs (dangerous!)
+            $result = \App\Services\AuditRetentionService::cleanup();
+        } else {
+            // Delete with conditions
+            $result = \App\Services\AuditRetentionService::deleteByConditions($conditions);
+        }
 
         return response()->json($result);
     }
@@ -422,6 +476,358 @@ class AuditLogController extends Controller
         return response()->json([
             'success' => true,
             'data' => $archive
+        ]);
+    }
+
+    /**
+     * Get archive statistics
+     * GET /api/v1/audit-logs/archives/stats
+     */
+    public function archiveStats(Request $request)
+    {
+        if (!$request->user()->hasAdminAccess()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Admin access required.'
+            ], 403);
+        }
+
+        $totalArchived = \App\Models\AuditArchive::count();
+        
+        // Archives older than 90 days (eligible for permanent deletion)
+        $eligibleForDeletion = \App\Models\AuditArchive::where(
+            'archived_at', 
+            '<', 
+            now()->subDays(90)
+        )->count();
+
+        // Calculate approximate storage size (rough estimate)
+        $avgRowSize = 2; // KB per row (estimate)
+        $storageSizeMB = round(($totalArchived * $avgRowSize) / 1024, 2);
+
+        $stats = [
+            'total_archived' => $totalArchived,
+            'eligible_for_deletion' => $eligibleForDeletion,
+            'storage_size' => $storageSizeMB . ' MB',
+            'retention_days' => 90,
+            'by_reason' => \App\Models\AuditArchive::selectRaw('archive_reason, COUNT(*) as count')
+                ->groupBy('archive_reason')
+                ->get(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $stats
+        ]);
+    }
+
+    /**
+     * Restore archived log to active logs
+     * POST /api/v1/audit-logs/archives/{id}/restore
+     */
+    public function restoreArchive(Request $request, $id)
+    {
+        if (auth()->user()->role !== 'super_admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Only super admins can restore archives.'
+            ], 403);
+        }
+
+        $archive = \App\Models\AuditArchive::find($id);
+
+        if (!$archive) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Archive not found'
+            ], 404);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Restore to audit_logs table
+            AuditLog::create([
+                'event_type' => $archive->event_type,
+                'event_category' => $archive->event_category,
+                'user_id' => $archive->user_id,
+                'user_role' => $archive->user_role,
+                'action' => $archive->action,
+                'model_type' => $archive->model_type,
+                'model_id' => $archive->model_id,
+                'description' => $archive->description,
+                'old_values' => $archive->old_values,
+                'new_values' => $archive->new_values,
+                'metadata' => $archive->metadata,
+                'ip_address' => $archive->ip_address,
+                'user_agent' => $archive->user_agent,
+                'request_method' => $archive->request_method,
+                'request_url' => $archive->request_url,
+                'severity' => $archive->severity,
+                'is_suspicious' => $archive->is_suspicious,
+                'occurred_at' => $archive->occurred_at,
+            ]);
+
+            // Delete from archives
+            $archive->delete();
+
+            DB::commit();
+
+            Log::info('✅ Archive restored', [
+                'archive_id' => $id,
+                'restored_by' => auth()->id()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Archive restored successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('❌ Archive restoration failed', [
+                'archive_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Restoration failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Bulk restore archived logs
+     * POST /api/v1/audit-logs/archives/bulk-restore
+     */
+    public function bulkRestoreArchives(Request $request)
+    {
+        if (auth()->user()->role !== 'super_admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Only super admins can restore archives.'
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'archive_ids' => 'required|array',
+            'archive_ids.*' => 'required|integer|exists:audit_archives,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $restoredCount = 0;
+            $failedCount = 0;
+
+            foreach ($request->archive_ids as $archiveId) {
+                $archive = \App\Models\AuditArchive::find($archiveId);
+                
+                if ($archive) {
+                    try {
+                        AuditLog::create([
+                            'event_type' => $archive->event_type,
+                            'event_category' => $archive->event_category,
+                            'user_id' => $archive->user_id,
+                            'user_role' => $archive->user_role,
+                            'action' => $archive->action,
+                            'model_type' => $archive->model_type,
+                            'model_id' => $archive->model_id,
+                            'description' => $archive->description,
+                            'old_values' => $archive->old_values,
+                            'new_values' => $archive->new_values,
+                            'metadata' => $archive->metadata,
+                            'ip_address' => $archive->ip_address,
+                            'user_agent' => $archive->user_agent,
+                            'request_method' => $archive->request_method,
+                            'request_url' => $archive->request_url,
+                            'severity' => $archive->severity,
+                            'is_suspicious' => $archive->is_suspicious,
+                            'occurred_at' => $archive->occurred_at,
+                        ]);
+
+                        $archive->delete();
+                        $restoredCount++;
+                    } catch (\Exception $e) {
+                        $failedCount++;
+                        Log::error('Failed to restore archive', [
+                            'archive_id' => $archiveId,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+
+            Log::info('✅ Bulk restore completed', [
+                'restored' => $restoredCount,
+                'failed' => $failedCount,
+                'restored_by' => auth()->id()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Restored $restoredCount archives successfully",
+                'restored_count' => $restoredCount,
+                'failed_count' => $failedCount
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Bulk restoration failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Permanently delete single archived log
+     * DELETE /api/v1/audit-logs/archives/{id}
+     */
+    public function permanentlyDeleteArchive(Request $request, $id)
+    {
+        if (auth()->user()->role !== 'super_admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Only super admins can permanently delete archives.'
+            ], 403);
+        }
+
+        $archive = \App\Models\AuditArchive::find($id);
+
+        if (!$archive) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Archive not found'
+            ], 404);
+        }
+
+        try {
+            $archive->delete();
+
+            Log::warning('⚠️ Archive permanently deleted', [
+                'archive_id' => $id,
+                'event_type' => $archive->event_type,
+                'deleted_by' => auth()->id()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Archive permanently deleted'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('❌ Failed to delete archive', [
+                'archive_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Deletion failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Bulk permanently delete archived logs
+     * POST /api/v1/audit-logs/archives/bulk-delete
+     */
+    public function bulkDeleteArchives(Request $request)
+    {
+        if (auth()->user()->role !== 'super_admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Only super admins can permanently delete archives.'
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'archive_ids' => 'required|array',
+            'archive_ids.*' => 'required|integer|exists:audit_archives,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $deletedCount = \App\Models\AuditArchive::whereIn('id', $request->archive_ids)->delete();
+
+            Log::warning('⚠️ Bulk archives permanently deleted', [
+                'count' => $deletedCount,
+                'deleted_by' => auth()->id()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Permanently deleted $deletedCount archives",
+                'deleted_count' => $deletedCount
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('❌ Bulk deletion failed', [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Bulk deletion failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Export archived logs
+     * GET /api/v1/audit-logs/archives/export
+     */
+    public function exportArchives(Request $request)
+    {
+        if (!$request->user()->hasSuperAdminAccess()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Super admin access required.'
+            ], 403);
+        }
+
+        $query = \App\Models\AuditArchive::query();
+
+        // Apply filters
+        if ($request->has('start_date')) {
+            $query->whereDate('archived_at', '>=', $request->start_date);
+        }
+
+        if ($request->has('end_date')) {
+            $query->whereDate('archived_at', '<=', $request->end_date);
+        }
+
+        if ($request->has('archive_reason')) {
+            $query->where('archive_reason', $request->archive_reason);
+        }
+
+        $archives = $query->orderBy('archived_at', 'desc')->get();
+
+        return response()->json([
+            'success' => true,
+            'count' => $archives->count(),
+            'data' => $archives
         ]);
     }
 }
