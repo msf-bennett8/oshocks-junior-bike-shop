@@ -7,7 +7,7 @@ import {
   User, Activity, ShoppingCart, Package, DollarSign, Eye, Clock,
   TrendingUp, BarChart3, FileText, AlertCircle, Lock, Unlock,
   UserCheck, UserX, Settings, LogIn, LogOut, CreditCard, Truck,
-  Star, MessageSquare, Tag, Percent, ArrowUp, ArrowDown, Zap
+  Star, MessageSquare, Tag, Percent, ArrowUp, ArrowDown, Zap, Archive 
 } from 'lucide-react';
 
 const AuditLogsPage = () => {
@@ -41,6 +41,18 @@ const AuditLogsPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedLog, setSelectedLog] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteDropdown, setShowDeleteDropdown] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteParams, setDeleteParams] = useState(null);
+  const [deletePreview, setDeletePreview] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [showDateRangeModal, setShowDateRangeModal] = useState(false);
+  const [dateRangeSelection, setDateRangeSelection] = useState({
+    mode: '', // 'quick' or 'custom'
+    quickOption: '', // '30days', '3months', '6months', '1year'
+    customStart: '',
+    customEnd: ''
+  });
 
   useEffect(() => {
     loadAuditLogs();
@@ -156,6 +168,159 @@ const AuditLogsPage = () => {
       console.error('Failed to export logs:', error);
     }
   };
+
+  const handleDeleteRequest = async (type) => {
+    let params = {};
+    
+    switch(type) {
+      case 'all':
+        params = { delete_all: true };
+        break;
+      case 'suspicious':
+        params = { is_suspicious: '1' };
+        break;
+      case 'low_severity':
+        params = { severity: 'low' };
+        break;
+      case 'medium_severity':
+        params = { severity: 'medium' };
+        break;
+      case 'high_severity':
+        params = { severity: 'high' };
+        break;
+      case 'date_range':
+        if (!filters.date_from || !filters.date_to) {
+          alert('Please select a date range in the filters first');
+          return;
+        }
+        params = { 
+          date_from: filters.date_from,
+          date_to: filters.date_to 
+        };
+        break;
+    }
+
+    try {
+      // Preview deletion first
+      const preview = await auditService.previewDeletion(params);
+      if (preview.success) {
+        setDeleteParams(params);
+        setDeletePreview(preview.data);
+        setShowDeleteModal(true);
+        setShowDeleteDropdown(false);
+      }
+    } catch (error) {
+      console.error('Failed to preview deletion:', error);
+      alert('Failed to preview deletion. Please try again.');
+    }
+  };
+
+  const confirmDelete = async () => {
+    try {
+      setDeleting(true);
+      const response = await auditService.deleteAuditLogs(deleteParams);
+      
+      if (response.success) {
+        alert(`✅ Successfully deleted ${response.results?.archived || 0} audit logs`);
+        setShowDeleteModal(false);
+        setDeleteParams(null);
+        setDeletePreview(null);
+        // Refresh the page data
+        await handleRefresh();
+      } else {
+        alert('❌ Deletion failed: ' + response.message);
+      }
+    } catch (error) {
+      console.error('Failed to delete logs:', error);
+      alert('❌ Failed to delete logs. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const calculateDateRange = (option) => {
+  const today = new Date();
+  let startDate;
+  
+  switch(option) {
+    case '30days':
+      startDate = new Date(today.setDate(today.getDate() - 30));
+      break;
+    case '3months':
+      startDate = new Date(today.setMonth(today.getMonth() - 3));
+      break;
+    case '6months':
+      startDate = new Date(today.setMonth(today.getMonth() - 6));
+      break;
+    case '1year':
+      startDate = new Date(today.setFullYear(today.getFullYear() - 1));
+      break;
+    default:
+      startDate = new Date();
+  }
+  
+  return {
+    start: startDate.toISOString().split('T')[0],
+    end: new Date().toISOString().split('T')[0]
+  };
+};
+
+const handleQuickDateRangeSelect = (option) => {
+  setDateRangeSelection({
+    mode: 'quick',
+    quickOption: option,
+    customStart: '',
+    customEnd: ''
+  });
+};
+
+const handleCustomDateRangeSelect = () => {
+  setDateRangeSelection(prev => ({
+    ...prev,
+    mode: 'custom'
+  }));
+};
+
+const previewDateRangeDeletion = async () => {
+  let dateRange;
+  
+  if (dateRangeSelection.mode === 'quick') {
+    dateRange = calculateDateRange(dateRangeSelection.quickOption);
+  } else if (dateRangeSelection.mode === 'custom') {
+    if (!dateRangeSelection.customStart || !dateRangeSelection.customEnd) {
+      alert('Please select both start and end dates');
+      return;
+    }
+    dateRange = {
+      start: dateRangeSelection.customStart,
+      end: dateRangeSelection.customEnd
+    };
+  } else {
+    alert('Please select a time range option');
+    return;
+  }
+
+  try {
+    // Preview deletion first
+    const preview = await auditService.previewDeletion({
+      date_from: dateRange.start,
+      date_to: dateRange.end
+    });
+    
+    if (preview.success) {
+      setDeleteParams({
+        date_from: dateRange.start,
+        date_to: dateRange.end
+      });
+      setDeletePreview(preview.data);
+      setShowDateRangeModal(false);
+      setShowDeleteModal(true);
+    }
+  } catch (error) {
+    console.error('Failed to preview deletion:', error);
+    alert('Failed to preview deletion. Please try again.');
+  }
+};
 
   const getSeverityBadge = (severity) => {
     const styles = {
@@ -290,6 +455,82 @@ const AuditLogsPage = () => {
                 <Download className="w-4 h-4" />
                 Export
               </button>
+
+              <button
+                onClick={() => navigate('/archives/archives')}
+                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                <Archive className="w-4 h-4" />
+                View Archives
+              </button>
+              
+              {/* Cleanup Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowDeleteDropdown(!showDeleteDropdown)}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  <XCircle className="w-4 h-4" />
+                  Cleanup
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+
+                {showDeleteDropdown && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                    <div className="p-2">
+                      <button
+                        onClick={() => handleDeleteRequest('suspicious')}
+                        className="w-full text-left px-4 py-2 hover:bg-red-50 rounded-lg text-sm font-medium text-gray-700 flex items-center gap-2"
+                      >
+                        <AlertTriangle className="w-4 h-4 text-red-600" />
+                        Delete Suspicious Logs
+                      </button>
+                      
+                      <button
+                        onClick={() => handleDeleteRequest('low_severity')}
+                        className="w-full text-left px-4 py-2 hover:bg-blue-50 rounded-lg text-sm font-medium text-gray-700 flex items-center gap-2"
+                      >
+                        <Info className="w-4 h-4 text-blue-600" />
+                        Delete Low Severity
+                      </button>
+                      
+                      <button
+                        onClick={() => handleDeleteRequest('medium_severity')}
+                        className="w-full text-left px-4 py-2 hover:bg-yellow-50 rounded-lg text-sm font-medium text-gray-700 flex items-center gap-2"
+                      >
+                        <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                        Delete Medium Severity
+                      </button>
+                      
+                      <button
+                        onClick={() => handleDeleteRequest('high_severity')}
+                        className="w-full text-left px-4 py-2 hover:bg-orange-50 rounded-lg text-sm font-medium text-gray-700 flex items-center gap-2"
+                      >
+                        <AlertCircle className="w-4 h-4 text-orange-600" />
+                        Delete High Severity
+                      </button>
+                      
+                      <button
+                        onClick={() => setShowDateRangeModal(true)}
+                        className="w-full text-left px-4 py-2 hover:bg-purple-50 rounded-lg text-sm font-medium text-gray-700 flex items-center gap-2"
+                      >
+                        <Calendar className="w-4 h-4 text-purple-600" />
+                        Delete by Date Range
+                      </button>
+                      
+                      <div className="border-t border-gray-200 my-2"></div>
+                      
+                      <button
+                        onClick={() => handleDeleteRequest('all')}
+                        className="w-full text-left px-4 py-2 hover:bg-red-100 rounded-lg text-sm font-bold text-red-600 flex items-center gap-2"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        ⚠️ Delete ALL Logs
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -736,6 +977,297 @@ const AuditLogsPage = () => {
                   className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                 >
                   Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && deletePreview && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 bg-red-100 rounded-full">
+                    <AlertCircle className="w-6 h-6 text-red-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Confirm Deletion</h2>
+                    <p className="text-sm text-gray-600">This action cannot be undone</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-sm font-medium text-red-800 mb-2">
+                    ⚠️ You are about to delete:
+                  </p>
+                  <p className="text-2xl font-bold text-red-900">
+                    {deletePreview.would_archive?.toLocaleString() || '0'} audit logs
+                  </p>
+                </div>
+
+                {deletePreview.breakdown && (
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                    <p className="text-xs font-medium text-gray-600 mb-2">Breakdown:</p>
+                    {deletePreview.breakdown.standard > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-700">Standard logs:</span>
+                        <span className="font-medium text-gray-900">{deletePreview.breakdown.standard}</span>
+                      </div>
+                    )}
+                    {deletePreview.breakdown.high_severity > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-700">High severity:</span>
+                        <span className="font-medium text-gray-900">{deletePreview.breakdown.high_severity}</span>
+                      </div>
+                    )}
+                    {deletePreview.breakdown.suspicious > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-700">Suspicious:</span>
+                        <span className="font-medium text-gray-900">{deletePreview.breakdown.suspicious}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-xs text-blue-800">
+                    ℹ️ Logs will be archived before deletion. You can restore them from archives if needed.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-gray-200 flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteParams(null);
+                    setDeletePreview(null);
+                  }}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {deleting ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="w-4 h-4" />
+                      Yes, Delete
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Date Range Selection Modal */}
+        {showDateRangeModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-purple-100 rounded-full">
+                      <Calendar className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900">Select Time Range for Deletion</h2>
+                      <p className="text-sm text-gray-600">Choose a quick option or set custom dates</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowDateRangeModal(false);
+                      setDateRangeSelection({ mode: '', quickOption: '', customStart: '', customEnd: '' });
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-lg"
+                  >
+                    <XCircle className="w-6 h-6 text-gray-500" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Quick Select Options */}
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Quick Select:</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <button
+                      onClick={() => handleQuickDateRangeSelect('30days')}
+                      className={`p-4 border-2 rounded-lg text-center transition-all ${
+                        dateRangeSelection.quickOption === '30days'
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                    >
+                      <Calendar className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+                      <p className="text-sm font-semibold text-gray-900">Last 30 Days</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {(() => {
+                          const range = calculateDateRange('30days');
+                          return `${range.start} to ${range.end}`;
+                        })()}
+                      </p>
+                    </button>
+
+                    <button
+                      onClick={() => handleQuickDateRangeSelect('3months')}
+                      className={`p-4 border-2 rounded-lg text-center transition-all ${
+                        dateRangeSelection.quickOption === '3months'
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                    >
+                      <Calendar className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+                      <p className="text-sm font-semibold text-gray-900">Last 3 Months</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {(() => {
+                          const range = calculateDateRange('3months');
+                          return `${range.start} to ${range.end}`;
+                        })()}
+                      </p>
+                    </button>
+
+                    <button
+                      onClick={() => handleQuickDateRangeSelect('6months')}
+                      className={`p-4 border-2 rounded-lg text-center transition-all ${
+                        dateRangeSelection.quickOption === '6months'
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                    >
+                      <Calendar className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+                      <p className="text-sm font-semibold text-gray-900">Last 6 Months</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {(() => {
+                          const range = calculateDateRange('6months');
+                          return `${range.start} to ${range.end}`;
+                        })()}
+                      </p>
+                    </button>
+
+                    <button
+                      onClick={() => handleQuickDateRangeSelect('1year')}
+                      className={`p-4 border-2 rounded-lg text-center transition-all ${
+                        dateRangeSelection.quickOption === '1year'
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-200 hover:border-purple-300'
+                      }`}
+                    >
+                      <Calendar className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+                      <p className="text-sm font-semibold text-gray-900">Last 1 Year</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {(() => {
+                          const range = calculateDateRange('1year');
+                          return `${range.start} to ${range.end}`;
+                        })()}
+                      </p>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-500">OR</span>
+                  </div>
+                </div>
+
+                {/* Custom Date Range */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-gray-700">Custom Date Range:</h3>
+                    <button
+                      onClick={handleCustomDateRangeSelect}
+                      className={`text-sm font-medium ${
+                        dateRangeSelection.mode === 'custom'
+                          ? 'text-purple-600'
+                          : 'text-gray-500 hover:text-purple-600'
+                      }`}
+                    >
+                      {dateRangeSelection.mode === 'custom' ? '✓ Custom Mode Active' : 'Select Custom'}
+                    </button>
+                  </div>
+
+                  <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border-2 transition-all ${
+                    dateRangeSelection.mode === 'custom'
+                      ? 'border-purple-300 bg-purple-50'
+                      : 'border-gray-200 bg-gray-50 opacity-50'
+                  }`}>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        disabled={dateRangeSelection.mode !== 'custom'}
+                        value={dateRangeSelection.customStart}
+                        onChange={(e) => setDateRangeSelection(prev => ({ ...prev, customStart: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        disabled={dateRangeSelection.mode !== 'custom'}
+                        value={dateRangeSelection.customEnd}
+                        onChange={(e) => setDateRangeSelection(prev => ({ ...prev, customEnd: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Warning */}
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-red-800">
+                      <p className="font-medium">⚠️ Warning:</p>
+                      <p>All logs within the selected date range will be archived and deleted. You'll see a preview before final deletion.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-gray-200 flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDateRangeModal(false);
+                    setDateRangeSelection({ mode: '', quickOption: '', customStart: '', customEnd: '' });
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={previewDateRangeDeletion}
+                  disabled={!dateRangeSelection.mode}
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <Eye className="w-4 h-4" />
+                  Preview Deletion
                 </button>
               </div>
             </div>

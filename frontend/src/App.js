@@ -147,6 +147,7 @@ const PaymentTerms = lazy(() => import('./pages/legal/PaymentTerms'));
 const ReturnPolicy = lazy(() => import('./pages/legal/ReturnPolicy'));
 // Audit Pages
 const AuditLogsPage = lazy(() => import('./pages/audit/AuditLogsPage'));
+const ArchivesPage = lazy(() => import('./pages/archives/ArchivesPage')); 
 
 // ============================================================================
 // ROUTE PROTECTION COMPONENTS
@@ -853,6 +854,18 @@ function App() {
                   element={
                     <SuperAdminRoute>
                       <AuditLogsPage />
+                    </SuperAdminRoute>
+                  }
+                />
+
+                {/* ============================================
+                    ARCHIVES (Super Admin Only)
+                    ============================================ */}
+                <Route
+                  path="/archives/archives"
+                  element={
+                    <SuperAdminRoute>
+                      <ArchivesPage />
                     </SuperAdminRoute>
                   }
                 />

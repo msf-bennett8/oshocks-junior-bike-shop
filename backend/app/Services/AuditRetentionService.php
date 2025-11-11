@@ -216,4 +216,81 @@ class AuditRetentionService
 
         return $results;
     }
+
+    /**
+     * Delete logs based on custom conditions (for manual cleanup)
+     */
+    public static function deleteByConditions(array $conditions): array
+    {
+        try {
+            DB::beginTransaction();
+
+            $query = AuditLog::query();
+
+            // Apply filters
+            if (isset($conditions['is_suspicious'])) {
+                $query->where('is_suspicious', $conditions['is_suspicious'] == '1');
+            }
+
+            if (isset($conditions['severity'])) {
+                $query->where('severity', $conditions['severity']);
+            }
+
+            if (isset($conditions['date_from']) && isset($conditions['date_to'])) {
+                $query->whereBetween('occurred_at', [
+                    $conditions['date_from'],
+                    $conditions['date_to']
+                ]);
+            }
+
+            if (isset($conditions['event_category'])) {
+                $query->where('event_category', $conditions['event_category']);
+            }
+
+            // Get logs to delete
+            $logs = $query->get();
+            $count = $logs->count();
+
+            // Archive and delete each log
+            $results = [
+                'archived' => 0,
+                'deleted' => 0,
+                'failed' => 0,
+            ];
+
+            foreach ($logs as $log) {
+                if (self::archiveAndDelete($log, 'manual_deletion')) {
+                    $results['archived']++;
+                } else {
+                    $results['failed']++;
+                }
+            }
+
+            DB::commit();
+
+            Log::info('✅ Manual audit log deletion completed', [
+                'conditions' => $conditions,
+                'results' => $results,
+            ]);
+
+            return [
+                'success' => true,
+                'message' => "Deleted {$results['archived']} logs successfully",
+                'results' => $results,
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('❌ Manual audit log deletion failed', [
+                'conditions' => $conditions,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Deletion failed: ' . $e->getMessage(),
+            ];
+        }
+    }
 }
