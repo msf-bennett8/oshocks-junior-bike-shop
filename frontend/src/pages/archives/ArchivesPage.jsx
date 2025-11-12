@@ -446,7 +446,7 @@ const ArchivesPage = () => {
   };
 
   const StatCard = ({ icon: Icon, label, value, color }) => (
-    <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+  <div className="bg-white rounded-lg shadow-sm p-4 md:p-6 border border-gray-100">
       <div className="flex items-start justify-between mb-4">
         <div className={`p-3 rounded-lg ${color}`}>
           <Icon className="w-6 h-6 text-white" />
@@ -469,7 +469,7 @@ const ArchivesPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -481,7 +481,7 @@ const ArchivesPage = () => {
             Back to Active Logs
           </button>
 
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
                 <Archive className="w-8 h-8 text-orange-600" />
@@ -491,7 +491,7 @@ const ArchivesPage = () => {
                 View and manage deleted audit logs • Restore or permanently delete
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 md:gap-3">
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
@@ -513,7 +513,7 @@ const ArchivesPage = () => {
 
         {/* Statistics Cards */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
             <StatCard
               icon={Archive}
               label="Total Archived"
@@ -543,15 +543,15 @@ const ArchivesPage = () => {
 
         {/* Bulk Actions */}
         {selectedArchives.length > 0 && (
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6 flex items-center justify-between">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <p className="text-sm font-medium text-orange-800">
               {selectedArchives.length} log(s) selected
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 md:gap-3">
               <button
                 onClick={handleBulkRestore}
                 disabled={processing}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-3 md:px-4 py-2 text-sm md:text-base bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
               >
                 <RotateCcw className="w-4 h-4" />
                 Restore Selected
@@ -570,7 +570,7 @@ const ArchivesPage = () => {
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <Filter className="w-5 h-5" />
               Filters
@@ -584,7 +584,7 @@ const ArchivesPage = () => {
           </div>
 
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Category
@@ -651,9 +651,9 @@ const ArchivesPage = () => {
         </div>
 
         {/* Date Range Deletion Tool - Click to Open Modal */}
-        <div className="bg-red-50 border-2 border-red-200 rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
+        <div className="bg-red-50 border-2 border-red-200 rounded-lg shadow-sm p-4 md:p-6 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <div className="flex flex-wrap items-center gap-2 md:gap-3">
               <div className="p-3 bg-red-600 rounded-lg">
                 <Calendar className="w-6 h-6 text-white" />
               </div>
@@ -682,7 +682,7 @@ const ArchivesPage = () => {
 
         {/* Archives Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -718,7 +718,7 @@ const ArchivesPage = () => {
 
                   return (
                     <tr key={archive.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
+                      <td className="px-3 md:px-6 py-3 md:py-4">
                         <input
                           type="checkbox"
                           checked={selectedArchives.includes(archive.id)}
@@ -726,8 +726,8 @@ const ArchivesPage = () => {
                           className="rounded border-gray-300"
                         />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
+                      <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                        <div className="flex flex-wrap items-center gap-2 md:gap-3">
                           <div className={`p-2 rounded-lg ${categoryInfo.bg}`}>
                             <CategoryIcon className={`w-5 h-5 ${categoryInfo.color}`} />
                           </div>
@@ -739,21 +739,21 @@ const ArchivesPage = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 md:px-6 py-3 md:py-4">
                         <p className="text-sm text-gray-900 max-w-md truncate">
                           {archive.description}
                         </p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{formatDate(archive.archived_at)}</div>
                         <div className="text-xs text-gray-500">
                           Original: {formatDate(archive.occurred_at)}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getArchiveReasonBadge(archive.archive_reason)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                      {getArchiveReasonBadge(archive.archive_reason)}
+                    </td>
+                      <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleRestore(archive.id)}
@@ -786,9 +786,9 @@ const ArchivesPage = () => {
           </div>
 
           {/* Pagination */}
-          <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600">
+          <div className="bg-gray-50 px-4 md:px-6 py-4 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-xs md:text-sm text-gray-600 text-center sm:text-left">
                 Showing {((pagination.current_page - 1) * pagination.per_page) + 1} to{' '}
                 {Math.min(pagination.current_page * pagination.per_page, pagination.total)} of{' '}
                 {pagination.total} results
@@ -818,23 +818,23 @@ const ArchivesPage = () => {
 
         {/* Detail Modal */}
         {showModal && selectedArchive && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-gray-900">Archived Log Details</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 my-8 max-h-[calc(100vh-4rem)] flex flex-col">
+              <div className="p-4 md:p-6 border-b border-gray-200 flex-shrink-0">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <h2 className="text-xl md:text-2xl font-bold text-gray-900">Archived Log Details</h2>
                   <button
                     onClick={() => setShowModal(false)}
-                    className="p-2 hover:bg-gray-100 rounded-lg"
+                    className="p-2 hover:bg-gray-100 rounded-lg self-end md:self-auto"
                   >
                     <XCircle className="w-6 h-6 text-gray-500" />
                   </button>
                 </div>
               </div>
 
-              <div className="p-6 space-y-6">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 md:p-6 space-y-4 md:space-y-6 overflow-y-auto flex-1">
+                <div className="bg-gray-50 rounded-lg p-3 md:p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-600">Archived Date:</p>
                       <p className="text-sm font-medium text-gray-900">{formatDate(selectedArchive.archived_at)}</p>
@@ -848,16 +848,16 @@ const ArchivesPage = () => {
 
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Event Information</h3>
-                  <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                    <div className="flex justify-between">
+                  <div className="bg-gray-50 rounded-lg p-3 md:p-4 space-y-3">
+                    <div className="flex justify-between flex-wrap gap-2">
                       <span className="text-sm text-gray-600">Event Type:</span>
-                      <span className="text-sm font-medium">{selectedArchive.event_type}</span>
+                      <span className="text-sm font-medium break-all">{selectedArchive.event_type}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between flex-wrap gap-2">
                       <span className="text-sm text-gray-600">Category:</span>
                       <span className="text-sm font-medium">{selectedArchive.event_category}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between flex-wrap gap-2">
                       <span className="text-sm text-gray-600">Severity:</span>
                       {getSeverityBadge(selectedArchive.severity)}
                     </div>
@@ -866,20 +866,20 @@ const ArchivesPage = () => {
 
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Description</h3>
-                  <p className="text-sm text-gray-900 bg-gray-50 rounded-lg p-4">{selectedArchive.description}</p>
+                  <p className="text-sm text-gray-900 bg-gray-50 rounded-lg p-3 md:p-4 break-words">{selectedArchive.description}</p>
                 </div>
               </div>
 
-              <div className="p-6 border-t border-gray-200 flex justify-between">
+              <div className="p-4 md:p-6 border-t border-gray-200 flex flex-col sm:flex-row justify-between gap-3 flex-shrink-0">
                 <button
                   onClick={() => handleRestore(selectedArchive.id)}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  className="px-6 py-2.5 md:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm md:text-base"
                 >
                   Restore This Log
                 </button>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+                  className="px-6 py-2.5 md:py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm md:text-base"
                 >
                   Close
                 </button>
@@ -890,17 +890,17 @@ const ArchivesPage = () => {
 
         {/* Time Range Selection Modal */}
         {showDateRangeModal && !dateRangePreview && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 my-8 max-h-[calc(100vh-4rem)] flex flex-col">
+              <div className="p-4 md:p-6 border-b border-gray-200 flex-shrink-0">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                  <div className="flex flex-wrap items-center gap-2 md:gap-3">
                     <div className="p-3 bg-purple-100 rounded-full">
                       <Calendar className="w-6 h-6 text-purple-600" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-gray-900">Select Time Range for Deletion</h2>
-                      <p className="text-sm text-gray-600">Choose quick option or set custom dates</p>
+                      <h2 className="text-lg md:text-xl font-bold text-gray-900">Select Time Range for Deletion</h2>
+                      <p className="text-xs md:text-sm text-gray-600">Choose quick option or set custom dates</p>
                     </div>
                   </div>
                   <button
@@ -908,18 +908,18 @@ const ArchivesPage = () => {
                       setShowDateRangeModal(false);
                       setDateRangeSelection({ mode: '', quickOption: '', customStart: '', customEnd: '' });
                     }}
-                    className="p-2 hover:bg-gray-100 rounded-lg"
+                    className="p-2 hover:bg-gray-100 rounded-lg self-end md:self-auto"
                   >
                     <XCircle className="w-6 h-6 text-gray-500" />
                   </button>
                 </div>
               </div>
 
-              <div className="p-6 space-y-6">
+              <div className="p-4 md:p-6 space-y-4 md:space-y-6 overflow-y-auto flex-1">
                 {/* Quick Select Options */}
                 <div>
                   <h3 className="text-sm font-medium text-gray-700 mb-3">Quick Select:</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     {['30days', '3months', '6months', '1year'].map((option) => {
                       const range = calculateDateRange(option);
                       const labels = {
@@ -933,15 +933,15 @@ const ArchivesPage = () => {
                         <button
                           key={option}
                           onClick={() => handleQuickDateRangeSelect(option)}
-                          className={`p-4 border-2 rounded-lg text-center transition-all ${
+                          className={`p-3 md:p-4 border-2 rounded-lg text-center transition-all ${
                             dateRangeSelection.quickOption === option
                               ? 'border-purple-500 bg-purple-50'
                               : 'border-gray-200 hover:border-purple-300'
                           }`}
                         >
-                          <Calendar className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                          <p className="text-sm font-semibold text-gray-900">{labels[option]}</p>
-                          <p className="text-xs text-gray-500 mt-1">{range.start}</p>
+                          <Calendar className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-purple-600" />
+                          <p className="text-xs md:text-sm font-semibold text-gray-900">{labels[option]}</p>
+                          <p className="text-xs text-gray-500 mt-0.5 md:mt-1">{range.start}</p>
                         </button>
                       );
                     })}
@@ -964,7 +964,7 @@ const ArchivesPage = () => {
                     <h3 className="text-sm font-medium text-gray-700">Custom Date Range:</h3>
                     <button
                       onClick={handleCustomDateRangeSelect}
-                      className={`text-sm font-medium ${
+                      className={`text-xs md:text-sm font-medium ${
                         dateRangeSelection.mode === 'custom'
                           ? 'text-purple-600'
                           : 'text-gray-500 hover:text-purple-600'
@@ -974,13 +974,13 @@ const ArchivesPage = () => {
                     </button>
                   </div>
 
-                  <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border-2 transition-all ${
+                  <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-3 md:p-4 rounded-lg border-2 transition-all ${
                     dateRangeSelection.mode === 'custom'
                       ? 'border-purple-300 bg-purple-50'
                       : 'border-gray-200 bg-gray-50 opacity-50'
                   }`}>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
                         Start Date (Archived After)
                       </label>
                       <input
@@ -988,12 +988,12 @@ const ArchivesPage = () => {
                         disabled={dateRangeSelection.mode !== 'custom'}
                         value={dateRangeSelection.customStart}
                         onChange={(e) => setDateRangeSelection(prev => ({ ...prev, customStart: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
                         End Date (Archived Before)
                       </label>
                       <input
@@ -1001,17 +1001,17 @@ const ArchivesPage = () => {
                         disabled={dateRangeSelection.mode !== 'custom'}
                         value={dateRangeSelection.customEnd}
                         onChange={(e) => setDateRangeSelection(prev => ({ ...prev, customEnd: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Warning */}
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 md:p-4">
                   <div className="flex items-start gap-2">
                     <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-red-800">
+                    <div className="text-xs md:text-sm text-red-800">
                       <p className="font-medium">⚠️ Warning:</p>
                       <p>All archived logs within the selected range will be permanently deleted. You'll see a preview before final deletion.</p>
                     </div>
@@ -1019,20 +1019,20 @@ const ArchivesPage = () => {
                 </div>
               </div>
 
-              <div className="p-6 border-t border-gray-200 flex gap-3">
+              <div className="p-4 md:p-6 border-t border-gray-200 flex flex-col sm:flex-row gap-3 flex-shrink-0">
                 <button
                   onClick={() => {
                     setShowDateRangeModal(false);
                     setDateRangeSelection({ mode: '', quickOption: '', customStart: '', customEnd: '' });
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2.5 md:py-2 text-sm md:text-base border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={previewTimeRangeDeletion}
                   disabled={!dateRangeSelection.mode || processing}
-                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 md:py-2 text-sm md:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {processing ? (
                     <>
@@ -1053,50 +1053,50 @@ const ArchivesPage = () => {
 
         {/* Date Range Deletion Preview Modal */}
         {dateRangePreview && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
-              <div className="p-6 border-b border-gray-200">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 my-8 max-h-[calc(100vh-4rem)] flex flex-col">
+              <div className="p-4 md:p-6 border-b border-gray-200 flex-shrink-0">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-3 bg-red-100 rounded-full">
                     <Calendar className="w-6 h-6 text-red-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">Date Range Deletion Preview</h2>
-                    <p className="text-sm text-gray-600">Review logs before permanent deletion</p>
+                    <h2 className="text-lg md:text-xl font-bold text-gray-900">Date Range Deletion Preview</h2>
+                    <p className="text-xs md:text-sm text-gray-600">Review logs before permanent deletion</p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-6 space-y-4">
+              <div className="p-4 md:p-6 space-y-3 md:space-y-4 overflow-y-auto flex-1">
                 {/* Summary */}
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 md:p-4">
                   <div className="flex items-center gap-3 mb-3">
-                    <AlertCircle className="w-6 h-6 text-red-600" />
-                    <p className="text-lg font-semibold text-red-900">
+                    <AlertCircle className="w-5 h-5 md:w-6 md:h-6 text-red-600 flex-shrink-0" />
+                    <p className="text-base md:text-lg font-semibold text-red-900">
                       {dateRangePreview.count} logs will be permanently deleted
                     </p>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-gray-600">Start Date:</p>
-                      <p className="font-medium text-gray-900">{dateRangePreview.start_date}</p>
+                      <p className="font-medium text-gray-900 break-words">{dateRangePreview.start_date}</p>
                     </div>
                     <div>
                       <p className="text-gray-600">End Date:</p>
-                      <p className="font-medium text-gray-900">{dateRangePreview.end_date}</p>
+                      <p className="font-medium text-gray-900 break-words">{dateRangePreview.end_date}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Breakdown by Category */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Breakdown by Category:</h3>
+                <div className="bg-gray-50 rounded-lg p-3 md:p-4">
+                  <h3 className="text-xs md:text-sm font-medium text-gray-700 mb-3">Breakdown by Category:</h3>
                   <div className="space-y-2">
                     {['security', 'order', 'payment', 'product', 'user'].map(category => {
                       const count = dateRangePreview.logs.filter(log => log.event_category === category).length;
                       if (count === 0) return null;
                       return (
-                        <div key={category} className="flex justify-between text-sm">
+                        <div key={category} className="flex justify-between text-xs md:text-sm">
                           <span className="text-gray-700 capitalize">{category}:</span>
                           <span className="font-medium text-gray-900">{count} logs</span>
                         </div>
@@ -1106,12 +1106,12 @@ const ArchivesPage = () => {
                 </div>
 
                 {/* Preview of logs (first 5) */}
-                <div className="bg-gray-50 rounded-lg p-4 max-h-64 overflow-y-auto">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Sample Logs (first 5):</h3>
+                <div className="bg-gray-50 rounded-lg p-3 md:p-4 max-h-64 overflow-y-auto">
+                  <h3 className="text-xs md:text-sm font-medium text-gray-700 mb-3">Sample Logs (first 5):</h3>
                   <div className="space-y-2">
                     {dateRangePreview.logs.slice(0, 5).map((log, index) => (
                       <div key={index} className="text-xs p-2 bg-white rounded border border-gray-200">
-                        <p className="font-medium text-gray-900">{log.event_type}</p>
+                        <p className="font-medium text-gray-900 break-words">{log.event_type}</p>
                         <p className="text-gray-600 truncate">{log.description}</p>
                         <p className="text-gray-500 mt-1">{formatDate(log.archived_at)}</p>
                       </div>
@@ -1125,10 +1125,10 @@ const ArchivesPage = () => {
                 </div>
 
                 {/* Warning */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 md:p-4">
                   <div className="flex items-start gap-2">
                     <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-yellow-800">
+                    <div className="text-xs md:text-sm text-yellow-800">
                       <p className="font-medium">⚠️ This action cannot be undone!</p>
                       <p>These {dateRangePreview.count} logs will be permanently removed from the database.</p>
                     </div>
@@ -1136,21 +1136,21 @@ const ArchivesPage = () => {
                 </div>
               </div>
 
-              <div className="p-6 border-t border-gray-200 flex gap-3">
+              <div className="p-4 md:p-6 border-t border-gray-200 flex flex-col sm:flex-row gap-3 flex-shrink-0">
                 <button
                   onClick={() => {
                     setShowDateRangeModal(false);
                     setDateRangePreview(null);
                   }}
                   disabled={processing}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-2.5 md:py-2 text-sm md:text-base border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmDateRangeDeletion}
                   disabled={processing}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 md:py-2 text-sm md:text-base bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {processing ? (
                     <>
