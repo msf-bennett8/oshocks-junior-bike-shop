@@ -7,7 +7,7 @@ import {
   User, Activity, ShoppingCart, Package, DollarSign, Eye, Clock,
   TrendingUp, BarChart3, FileText, AlertCircle, Lock, Unlock,
   UserCheck, UserX, Settings, LogIn, LogOut, CreditCard, Truck,
-  Star, MessageSquare, Tag, Percent, ArrowUp, ArrowDown, Zap, Archive 
+  Star, MessageSquare, Tag, Percent, ArrowUp, ArrowDown, Zap, Archive, Plus 
 } from 'lucide-react';
 
 const AuditLogsPage = () => {
@@ -384,30 +384,30 @@ const previewDateRangeDeletion = async () => {
   const StatCard = ({ icon: Icon, label, value, color, trend, filterKey, filterValue, isActive, onClick }) => (
     <div 
       onClick={onClick}
-      className={`bg-white rounded-lg shadow-sm p-6 border-2 cursor-pointer transition-all transform hover:scale-105 hover:shadow-md ${
+      className={`bg-white rounded-lg shadow-sm p-3 md:p-4 border-2 cursor-pointer transition-all hover:shadow-md ${
         isActive ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-100'
       }`}
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className={`p-3 rounded-lg ${color} ${isActive ? 'ring-2 ring-white' : ''}`}>
-          <Icon className="w-6 h-6 text-white" />
+      <div className="flex items-center justify-between mb-2">
+        <div className={`p-2 rounded-lg ${color} ${isActive ? 'ring-2 ring-white' : ''}`}>
+          <Icon className="w-4 h-4 md:w-5 md:h-5 text-white" />
         </div>
         {trend && (
-          <div className={`flex items-center gap-1 text-sm font-semibold ${
+          <div className={`flex items-center gap-1 text-xs font-semibold ${
             trend > 0 ? 'text-green-600' : 'text-red-600'
           }`}>
-            {trend > 0 ? <TrendingUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+            {trend > 0 ? <TrendingUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
             {Math.abs(trend)}%
           </div>
         )}
       </div>
-      <p className={`text-sm mb-1 ${isActive ? 'text-orange-600 font-semibold' : 'text-gray-600'}`}>
+      <p className={`text-xs md:text-sm mb-1 ${isActive ? 'text-orange-600 font-semibold' : 'text-gray-600'} truncate`}>
         {label}
       </p>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <p className="text-lg md:text-xl font-bold text-gray-900">{value}</p>
       {isActive && (
-        <p className="text-xs text-orange-600 mt-2 font-medium">
-          ✓ Filter Active
+        <p className="text-xs text-orange-600 mt-1 font-medium">
+          ✓ Active
         </p>
       )}
     </div>
@@ -425,11 +425,11 @@ const previewDateRangeDeletion = async () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-3 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
                 <Shield className="w-8 h-8 text-orange-600" />
@@ -439,7 +439,7 @@ const previewDateRangeDeletion = async () => {
                 Complete system activity and security audit trail
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 md:gap-3">
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
@@ -450,7 +450,7 @@ const previewDateRangeDeletion = async () => {
               </button>
               <button
                 onClick={handleExport}
-                className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                className="flex items-center gap-2 px-3 md:px-4 py-2 text-sm md:text-base bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
               >
                 <Download className="w-4 h-4" />
                 Export
@@ -537,7 +537,7 @@ const previewDateRangeDeletion = async () => {
 
         {/* Statistics Cards */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
+  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-6">
             <StatCard
               icon={Activity}
               label="Total Events"
@@ -588,12 +588,33 @@ const previewDateRangeDeletion = async () => {
               isActive={activeFilter === 'event_category' && filters.event_category === 'payment'}
               onClick={() => handleStatCardClick('event_category', 'payment')}
             />
+            
+            {/* Add Task Card */}
+            <div 
+              onClick={() => {
+                // TODO: Add your task assignment logic here
+                alert('Add task functionality - Coming soon!');
+              }}
+              className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg shadow-sm p-3 md:p-4 border-2 border-dashed border-gray-300 cursor-pointer transition-all hover:shadow-md hover:border-orange-400 hover:from-orange-50 hover:to-orange-100 group"
+            >
+              <div className="flex items-center justify-center mb-2">
+                <div className="p-2 rounded-lg bg-gray-400 group-hover:bg-orange-500 transition-colors">
+                  <Plus className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                </div>
+              </div>
+              <p className="text-xs md:text-sm mb-1 text-gray-600 group-hover:text-orange-600 text-center font-medium truncate">
+                Add Task
+              </p>
+              <p className="text-lg md:text-xl font-bold text-gray-400 group-hover:text-orange-500 text-center transition-colors">
+                + New
+              </p>
+            </div>
           </div>
         )}
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <Filter className="w-5 h-5" />
               Filters & Search
@@ -622,7 +643,7 @@ const previewDateRangeDeletion = async () => {
           </div>
 
           {/* Search Bar */}
-          <div className="flex gap-3 mb-4">
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
@@ -636,7 +657,7 @@ const previewDateRangeDeletion = async () => {
             </div>
             <button
               onClick={handleSearch}
-              className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              className="w-full sm:w-auto px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
             >
               Search
             </button>
@@ -644,7 +665,7 @@ const previewDateRangeDeletion = async () => {
 
           {/* Advanced Filters */}
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 pt-4 border-t border-gray-200">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Category
@@ -711,7 +732,7 @@ const previewDateRangeDeletion = async () => {
 
         {/* Audit Logs Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -724,7 +745,7 @@ const previewDateRangeDeletion = async () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     User
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="hidden lg:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     IP Address
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -746,8 +767,8 @@ const previewDateRangeDeletion = async () => {
 
                   return (
                     <tr key={log.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-3">
+                      <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                        <div className="flex flex-wrap items-center gap-2 md:gap-3">
                           <div className={`p-2 rounded-lg ${categoryInfo.bg}`}>
                             <CategoryIcon className={`w-5 h-5 ${categoryInfo.color}`} />
                           </div>
@@ -780,7 +801,7 @@ const previewDateRangeDeletion = async () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
                         <p className="text-sm text-gray-900 font-mono">{log.ip_address}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -811,9 +832,9 @@ const previewDateRangeDeletion = async () => {
           </div>
 
           {/* Pagination */}
-          <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600">
+          <div className="bg-gray-50 px-4 md:px-6 py-4 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-xs md:text-sm text-gray-600 text-center sm:text-left">
                 Showing {((pagination.current_page - 1) * pagination.per_page) + 1} to{' '}
                 {Math.min(pagination.current_page * pagination.per_page, pagination.total)} of{' '}
                 {pagination.total} results
@@ -844,9 +865,9 @@ const previewDateRangeDeletion = async () => {
         {/* Detail Modal */}
         {showModal && selectedLog && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto mx-4">
               <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                   <h2 className="text-2xl font-bold text-gray-900">Audit Log Details</h2>
                   <button
                     onClick={() => setShowModal(false)}
@@ -974,7 +995,7 @@ const previewDateRangeDeletion = async () => {
               <div className="p-6 border-t border-gray-200 flex justify-end">
                 <button
                   onClick={() => setShowModal(false)}
-                  className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                  className="w-full sm:w-auto px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                 >
                   Close
                 </button>
@@ -986,7 +1007,7 @@ const previewDateRangeDeletion = async () => {
         {/* Delete Confirmation Modal */}
         {showDeleteModal && deletePreview && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-3 bg-red-100 rounded-full">
@@ -1000,7 +1021,7 @@ const previewDateRangeDeletion = async () => {
               </div>
 
               <div className="p-6 space-y-4">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 md:p-4">
                   <p className="text-sm font-medium text-red-800 mb-2">
                     ⚠️ You are about to delete:
                   </p>
@@ -1040,7 +1061,7 @@ const previewDateRangeDeletion = async () => {
                 </div>
               </div>
 
-              <div className="p-6 border-t border-gray-200 flex gap-3">
+              <div className="p-4 md:p-6 border-t border-gray-200 flex flex-col sm:flex-row gap-2 md:gap-3 flex-shrink-0">
                 <button
                   onClick={() => {
                     setShowDeleteModal(false);
@@ -1077,16 +1098,16 @@ const previewDateRangeDeletion = async () => {
         {/* Date Range Selection Modal */}
         {showDateRangeModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 bg-purple-100 rounded-full">
-                      <Calendar className="w-6 h-6 text-purple-600" />
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col">
+              <div className="p-4 md:p-6 border-b border-gray-200 flex-shrink-0">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="p-2 md:p-3 bg-purple-100 rounded-full flex-shrink-0">
+                      <Calendar className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-gray-900">Select Time Range for Deletion</h2>
-                      <p className="text-sm text-gray-600">Choose a quick option or set custom dates</p>
+                      <h2 className="text-lg md:text-xl font-bold text-gray-900">Select Time Range for Deletion</h2>
+                      <p className="text-xs md:text-sm text-gray-600">Choose a quick option or set custom dates</p>
                     </div>
                   </div>
                   <button
@@ -1094,29 +1115,29 @@ const previewDateRangeDeletion = async () => {
                       setShowDateRangeModal(false);
                       setDateRangeSelection({ mode: '', quickOption: '', customStart: '', customEnd: '' });
                     }}
-                    className="p-2 hover:bg-gray-100 rounded-lg"
+                    className="p-2 hover:bg-gray-100 rounded-lg absolute top-4 right-4 md:relative md:top-0 md:right-0"
                   >
-                    <XCircle className="w-6 h-6 text-gray-500" />
+                    <XCircle className="w-5 h-5 md:w-6 md:h-6 text-gray-500" />
                   </button>
                 </div>
               </div>
 
-              <div className="p-6 space-y-6">
+              <div className="p-4 md:p-6 space-y-4 md:space-y-6 overflow-y-auto flex-1">
                 {/* Quick Select Options */}
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Quick Select:</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2 md:mb-3">Quick Select:</h3>
+                  <div className="grid grid-cols-2 gap-2 md:gap-3">
                     <button
                       onClick={() => handleQuickDateRangeSelect('30days')}
-                      className={`p-4 border-2 rounded-lg text-center transition-all ${
+                      className={`p-3 md:p-4 border-2 rounded-lg text-center transition-all ${
                         dateRangeSelection.quickOption === '30days'
                           ? 'border-purple-500 bg-purple-50'
                           : 'border-gray-200 hover:border-purple-300'
                       }`}
                     >
-                      <Calendar className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                      <p className="text-sm font-semibold text-gray-900">Last 30 Days</p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <Calendar className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-purple-600" />
+                      <p className="text-xs md:text-sm font-semibold text-gray-900">Last 30 Days</p>
+                      <p className="text-xs text-gray-500 mt-0.5 md:mt-1 leading-tight">
                         {(() => {
                           const range = calculateDateRange('30days');
                           return `${range.start} to ${range.end}`;
@@ -1126,15 +1147,15 @@ const previewDateRangeDeletion = async () => {
 
                     <button
                       onClick={() => handleQuickDateRangeSelect('3months')}
-                      className={`p-4 border-2 rounded-lg text-center transition-all ${
+                      className={`p-3 md:p-4 border-2 rounded-lg text-center transition-all ${
                         dateRangeSelection.quickOption === '3months'
                           ? 'border-purple-500 bg-purple-50'
                           : 'border-gray-200 hover:border-purple-300'
                       }`}
                     >
-                      <Calendar className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                      <p className="text-sm font-semibold text-gray-900">Last 3 Months</p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <Calendar className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-purple-600" />
+                      <p className="text-xs md:text-sm font-semibold text-gray-900">Last 3 Months</p>
+                      <p className="text-xs text-gray-500 mt-0.5 md:mt-1 leading-tight">
                         {(() => {
                           const range = calculateDateRange('3months');
                           return `${range.start} to ${range.end}`;
@@ -1144,15 +1165,15 @@ const previewDateRangeDeletion = async () => {
 
                     <button
                       onClick={() => handleQuickDateRangeSelect('6months')}
-                      className={`p-4 border-2 rounded-lg text-center transition-all ${
+                      className={`p-3 md:p-4 border-2 rounded-lg text-center transition-all ${
                         dateRangeSelection.quickOption === '6months'
                           ? 'border-purple-500 bg-purple-50'
                           : 'border-gray-200 hover:border-purple-300'
                       }`}
                     >
-                      <Calendar className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                      <p className="text-sm font-semibold text-gray-900">Last 6 Months</p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <Calendar className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-purple-600" />
+                      <p className="text-xs md:text-sm font-semibold text-gray-900">Last 6 Months</p>
+                      <p className="text-xs text-gray-500 mt-0.5 md:mt-1 leading-tight">
                         {(() => {
                           const range = calculateDateRange('6months');
                           return `${range.start} to ${range.end}`;
@@ -1162,15 +1183,15 @@ const previewDateRangeDeletion = async () => {
 
                     <button
                       onClick={() => handleQuickDateRangeSelect('1year')}
-                      className={`p-4 border-2 rounded-lg text-center transition-all ${
+                      className={`p-3 md:p-4 border-2 rounded-lg text-center transition-all ${
                         dateRangeSelection.quickOption === '1year'
                           ? 'border-purple-500 bg-purple-50'
                           : 'border-gray-200 hover:border-purple-300'
                       }`}
                     >
-                      <Calendar className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-                      <p className="text-sm font-semibold text-gray-900">Last 1 Year</p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <Calendar className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-purple-600" />
+                      <p className="text-xs md:text-sm font-semibold text-gray-900">Last 1 Year</p>
+                      <p className="text-xs text-gray-500 mt-0.5 md:mt-1 leading-tight">
                         {(() => {
                           const range = calculateDateRange('1year');
                           return `${range.start} to ${range.end}`;
@@ -1192,11 +1213,11 @@ const previewDateRangeDeletion = async () => {
 
                 {/* Custom Date Range */}
                 <div>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-2 md:mb-3">
                     <h3 className="text-sm font-medium text-gray-700">Custom Date Range:</h3>
                     <button
                       onClick={handleCustomDateRangeSelect}
-                      className={`text-sm font-medium ${
+                      className={`text-xs md:text-sm font-medium ${
                         dateRangeSelection.mode === 'custom'
                           ? 'text-purple-600'
                           : 'text-gray-500 hover:text-purple-600'
@@ -1206,13 +1227,13 @@ const previewDateRangeDeletion = async () => {
                     </button>
                   </div>
 
-                  <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg border-2 transition-all ${
+                  <div className={`grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 p-3 md:p-4 rounded-lg border-2 transition-all ${
                     dateRangeSelection.mode === 'custom'
                       ? 'border-purple-300 bg-purple-50'
                       : 'border-gray-200 bg-gray-50 opacity-50'
                   }`}>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
                         Start Date
                       </label>
                       <input
@@ -1220,12 +1241,12 @@ const previewDateRangeDeletion = async () => {
                         disabled={dateRangeSelection.mode !== 'custom'}
                         value={dateRangeSelection.customStart}
                         onChange={(e) => setDateRangeSelection(prev => ({ ...prev, customStart: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
                         End Date
                       </label>
                       <input
@@ -1233,41 +1254,41 @@ const previewDateRangeDeletion = async () => {
                         disabled={dateRangeSelection.mode !== 'custom'}
                         value={dateRangeSelection.customEnd}
                         onChange={(e) => setDateRangeSelection(prev => ({ ...prev, customEnd: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Warning */}
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 md:p-4">
                   <div className="flex items-start gap-2">
-                    <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm text-red-800">
+                    <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-xs md:text-sm text-red-800">
                       <p className="font-medium">⚠️ Warning:</p>
-                      <p>All logs within the selected date range will be archived and deleted. You'll see a preview before final deletion.</p>
+                      <p className="mt-1">All logs within the selected date range will be archived and deleted. You'll see a preview before final deletion.</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="p-6 border-t border-gray-200 flex gap-3">
+              <div className="p-4 md:p-6 border-t border-gray-200 flex flex-col sm:flex-row gap-2 md:gap-3 flex-shrink-0">
                 <button
                   onClick={() => {
                     setShowDateRangeModal(false);
                     setDateRangeSelection({ mode: '', quickOption: '', customStart: '', customEnd: '' });
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={previewDateRangeDeletion}
                   disabled={!dateRangeSelection.mode}
-                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 text-sm md:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   <Eye className="w-4 h-4" />
-                  Preview Deletion
+                  <span>Preview Deletion</span>
                 </button>
               </div>
             </div>
