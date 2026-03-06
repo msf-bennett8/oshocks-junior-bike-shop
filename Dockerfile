@@ -1,6 +1,7 @@
+# Use the backend's own Dockerfile
 FROM php:8.2-fpm-alpine
 
-# Install dependencies
+# Install system dependencies
 RUN apk add --no-cache \
     postgresql-dev \
     mysql-client \
@@ -10,8 +11,6 @@ RUN apk add --no-cache \
     unzip \
     git \
     curl \
-    nginx \
-    supervisor \
     oniguruma-dev \
     libxml2-dev \
     freetype-dev \
@@ -24,26 +23,17 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set working directory
 WORKDIR /var/www
 
-# Copy composer files first (for better caching)
-COPY backend/composer.json backend/composer.lock* ./
-
-# Install dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
-
-# Copy rest of the application
+# Copy everything from backend
 COPY backend/ .
 
-# Generate autoload again with scripts
-RUN composer dump-autoload --optimize
+# Install dependencies (ignore scripts for now)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Expose port
 EXPOSE 8080
 
-# Start command
-CMD php artisan serve --host=0.0.0.0 --port=8080
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
