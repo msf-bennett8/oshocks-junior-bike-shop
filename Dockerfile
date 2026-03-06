@@ -27,11 +27,17 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www
 
-# Copy backend files
-COPY backend/ .
+# Copy composer files first (for better caching)
+COPY backend/composer.json backend/composer.lock* ./
 
 # Install dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+# Copy rest of the application
+COPY backend/ .
+
+# Generate autoload again with scripts
+RUN composer dump-autoload --optimize
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
