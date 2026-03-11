@@ -1,2 +1,7 @@
 [build]
-dockerfile = "backend/Dockerfile"
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+numReplicas = 1
+restartPolicyType = "always"
