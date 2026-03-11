@@ -35,8 +35,10 @@ require_once __DIR__."/public/index.php"; \
 
 ENV PORT=8080
 
-# Start script with migrations
-CMD echo "=== Running Migrations ===" && \
+# Start script with cache clear and migrations
+CMD echo "=== Clearing Cached Config ===" && \
+    rm -f bootstrap/cache/*.php && \
+    echo "=== Running Migrations ===" && \
     php artisan migrate --force && \
     echo "=== Running Seeders ===" && \
     php artisan db:seed --force && \
