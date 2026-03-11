@@ -88,3 +88,4 @@ composer.lock
 # Uploads (if storing locally during development)
 backend/storage/app/public/uploads/
 uploads/
+firebase-admin-key.json
