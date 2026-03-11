@@ -74,4 +74,4 @@ echo -e "${YELLOW}Press Ctrl+C to stop the server${NC}"
 echo ""
 
 # Start the server
-php artisan serve
+php artisan serve --host=0.0.0.0 --port=8000

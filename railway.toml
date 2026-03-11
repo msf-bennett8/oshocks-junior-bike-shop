@@ -1,7 +1,8 @@
 [build]
 builder = "dockerfile"
-dockerfilePath = "backend/Dockerfile"
 
 [deploy]
-numReplicas = 1
-restartPolicyType = "always"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
