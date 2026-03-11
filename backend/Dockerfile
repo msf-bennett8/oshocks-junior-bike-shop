@@ -1,5 +1,4 @@
-# Use PHP 8.2 with Apache
-FROM php:8.2-apache
+FROM php:8.2-cli
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -11,90 +10,54 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     libzip-dev \
-    nano \
-    vim
+    libpq-dev \
+    default-mysql-client \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+# Install PHP extensions (separate commands to avoid build conflicts)
+RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd
+RUN docker-php-ext-install zip
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
-
-# Get latest Composer
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy composer files first
-COPY composer.json composer.lock /var/www/html/
+# Copy composer files first for better caching
+COPY composer.json composer.lock ./
 
-# Install application dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+# Install PHP dependencies
+RUN composer install --optimize-autoloader --no-interaction --no-scripts
 
 # Copy the rest of the application
-COPY . /var/www/html
+COPY . .
 
-# Create .env from example if it doesn't exist (environment variables will override)
-RUN cp .env.example .env 2>/dev/null || true
+# Create storage directories and set permissions
+RUN mkdir -p storage/framework/{sessions,views,cache}/data \
+    bootstrap/cache \
+    storage/logs \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
-# Create all necessary directories
-RUN mkdir -p /var/www/html/storage/framework/{sessions,views,cache} \
-    /var/www/html/bootstrap/cache \
-    /var/www/html/storage/logs \
-    /var/www/html/resources/views
+# Create server.php for PHP built-in server
+RUN printf '<?php\n\
+$uri = urldecode(parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH) ?? "");\n\
+if ($uri !== "/" && file_exists(__DIR__."/public".$uri)) return false;\n\
+require_once __DIR__."/public/index.php";\n\
+' > server.php
 
-# Set proper permissions
-RUN chown -R www-data:www-data \
-    /var/www/html/storage \
-    /var/www/html/bootstrap/cache \
-    /var/www/html/resources \
-    && chmod -R 775 \
-    /var/www/html/storage \
-    /var/www/html/bootstrap/cache
+# Expose port
+ENV PORT=8080
+EXPOSE 8080
 
-# Enable Apache modules
-RUN a2enmod rewrite headers
-
-# Configure Apache DocumentRoot to Laravel's public directory
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-
-# Update Apache configuration
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-
-# Configure Laravel directory in Apache
-RUN echo '<Directory /var/www/html/public>\n\
-    Options Indexes FollowSymLinks\n\
-    AllowOverride All\n\
-    Require all granted\n\
-</Directory>' > /etc/apache2/conf-available/laravel.conf && \
-    a2enconf laravel
-
-# Set ServerName to suppress Apache warning
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
-
-# Expose port 80
-EXPOSE 80
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost/ || exit 1
-
-# Startup script with error handling
-CMD set -e && \
-    echo "=== Starting Laravel Application ===" && \
-    echo "Checking environment..." && \
-    php -v && \
-    echo "Testing database connection..." && \
-    php artisan migrate:status || echo "Warning: Could not connect to database" && \
-    echo "Caching configuration..." && \
-    php artisan config:cache && \
-    echo "Caching routes..." && \
-    php artisan route:cache && \
-    echo "Caching views (if possible)..." && \
-    (php artisan view:cache || echo "View cache skipped - no views found") && \
-    echo "Running migrations..." && \
-    (php artisan migrate --force || echo "Warning: Migrations failed") && \
-    echo "=== Starting Apache ===" && \
-    apache2-foreground
+# Start command with migrations and seeders
+CMD echo "=== Clearing Cached Config ===" && \
+    rm -f bootstrap/cache/*.php && \
+    echo "=== Running Migrations ===" && \
+    php artisan migrate --force && \
+    echo "=== Running Seeders ===" && \
+    php artisan db:seed --force && \
+    echo "=== Starting Server ===" && \
+    php -S 0.0.0.0:${PORT} server.php
