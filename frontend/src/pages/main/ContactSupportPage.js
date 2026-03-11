@@ -668,12 +668,12 @@ const ContactSupportPage = () => {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900 text-sm">Call Us Now</p>
-                      <p className="text-xs text-gray-600">+254 712 345 678</p>
+                      <p className="text-xs text-gray-600">+254 798 558  285</p>
                     </div>
                   </a>
 
                   <a
-                    href="https://wa.me/254712345678"
+                    href="https://wa.me/254798558285"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center space-x-3 p-4 bg-gradient-to-r from-green-50 to-emerald-100 border border-green-200 rounded-lg hover:shadow-md transition-all"
