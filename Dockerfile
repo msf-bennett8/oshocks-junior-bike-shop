@@ -13,9 +13,9 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# Copy and install dependencies
+# Copy and install dependencies (including dev for faker)
 COPY backend/composer.json backend/composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+RUN composer install --optimize-autoloader --no-interaction --no-scripts
 
 # Copy application
 COPY backend/ .
@@ -35,7 +35,7 @@ require_once __DIR__."/public/index.php"; \
 
 ENV PORT=8080
 
-# Start script with cache clear and migrations
+# Start script with migrations and seeding
 CMD echo "=== Clearing Cached Config ===" && \
     rm -f bootstrap/cache/*.php && \
     echo "=== Running Migrations ===" && \
