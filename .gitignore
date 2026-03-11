@@ -62,3 +62,6 @@ yarn-error.log*
 *.pem
 .cache
 .parcel-cache
+firebase-admin-key.json
+railway-env.txt
+railway-env-variables.txt
