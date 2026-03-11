@@ -1,10 +1,10 @@
-FROM php:8.2-apache
+FROM php:8.2-cli
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-    git curl libpng-dev libonig-dev libxml2-dev zip unzip libzip-dev libpq-dev
-
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+    git curl libpng-dev libonig-dev libxml2-dev zip unzip libzip-dev libpq-dev \
+    default-mysql-client \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip
@@ -17,36 +17,29 @@ WORKDIR /var/www/html
 COPY backend/composer.json backend/composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-# Copy app
+# Copy application
 COPY backend/ .
 
-# Create .env
-RUN echo "APP_KEY=base64:8x5Y+zZtY0RPXcaWykebUxtRIuEjolXlr/BOCMtJjyc=" > .env
-
-# Permissions
-RUN mkdir -p storage/framework/{sessions,views,cache} bootstrap/cache storage/logs \
+# Create storage directories
+RUN mkdir -p storage/framework/{sessions,views,cache}/data \
+    bootstrap/cache storage/logs \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Apache config
-RUN a2enmod rewrite headers
+# Create server.php for built-in server
+RUN echo '<?php \
+$uri = urldecode(parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH) ?? ""); \
+if ($uri !== "/" && file_exists(__DIR__."/public".$uri)) return false; \
+require_once __DIR__."/public/index.php"; \
+' > server.php
 
-# Use Railway's PORT env var (default 8080)
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 ENV PORT=8080
 
-# Configure Apache to listen on $PORT
-RUN sed -i "s/Listen 80/Listen \${PORT}/g" /etc/apache2/ports.conf \
-    && sed -i "s/:80>/:\${PORT}>/g" /etc/apache2/sites-available/*.conf \
-    && sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
-    && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
-
-# Laravel directory permissions
-RUN echo "<Directory /var/www/html/public>\nOptions Indexes FollowSymLinks\nAllowOverride All\nRequire all granted\n</Directory>" > /etc/apache2/conf-available/laravel.conf \
-    && a2enconf laravel
-
-RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
-
-EXPOSE 8080
-
-CMD ["apache2-foreground"]
+# Start script with migrations
+CMD echo "=== Running Migrations ===" && \
+    php artisan migrate --force && \
+    echo "=== Running Seeders ===" && \
+    php artisan db:seed --force && \
+    echo "=== Starting Server ===" && \
+    cd /var/www/html/public && \
+    php -S 0.0.0.0:${PORT} ../server.php
