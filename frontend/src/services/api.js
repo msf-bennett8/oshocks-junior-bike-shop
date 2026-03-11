@@ -1,11 +1,11 @@
 // ============================================================================
-// API SERVICE - Centralized API calls with detailed logging
+// API SERVICE - Centralized API calls with Railway backend
 // ============================================================================
 
 import axios from 'axios';
 
-// Base API URL
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://oshocks-junior-bike-shop-backend.onrender.com/api/v1';
+// Base API URL - Railway backend
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://your-railway-app.up.railway.app/api/v1';
 
 console.log('🌐 API Service Initialized');
 console.log('📍 Base URL:', API_BASE_URL);
@@ -14,7 +14,7 @@ console.log('🔧 Environment:', process.env.NODE_ENV);
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 120000, // ✅ Increased to 120 seconds (2 minutes) for Render cold starts
+  timeout: 30000, // 30 seconds (Railway is faster than Render cold starts)
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -31,7 +31,6 @@ api.interceptors.request.use(
       baseURL: config.baseURL,
       fullURL: `${config.baseURL}${config.url}`,
       params: config.params,
-      attempt: config._retryCount || 1,
     });
     
     const token = localStorage.getItem('authToken');
@@ -47,10 +46,9 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - Handle errors and retry logic
+// Response interceptor - Handle errors
 api.interceptors.response.use(
   (response) => {
-
     if (response.config.url.includes('/search')) {
       console.log('🔍 Search Response:', {
         url: response.config.url,
@@ -64,13 +62,10 @@ api.interceptors.response.use(
       status: response.status,
       statusText: response.statusText,
       url: response.config.url,
-      fullURL: `${response.config.baseURL}${response.config.url}`,
-      attempt: response.config._retryCount || 1,
     });
     return response;
   },
   async (error) => {
-
     if (error.config?.url.includes('/search')) {
       console.error('🔍 Search Error:', {
         url: error.config?.url,
@@ -80,30 +75,6 @@ api.interceptors.response.use(
       });
     }
     
-    const config = error.config;
-
-    // Initialize retry count
-    if (!config._retryCount) {
-      config._retryCount = 0;
-    }
-
-    // Retry logic for timeout and network errors
-    const shouldRetry = 
-      (error.code === 'ECONNABORTED' || error.message.includes('timeout')) &&
-      config._retryCount < 2; // Retry up to 2 times (3 total attempts)
-
-    if (shouldRetry) {
-      config._retryCount += 1;
-      const retryDelay = config._retryCount * 2000; // 2s, 4s delays
-      
-      console.warn(`⏱️ Timeout on attempt ${config._retryCount}. Retrying in ${retryDelay/1000}s...`);
-      
-      // Wait before retrying
-      await new Promise(resolve => setTimeout(resolve, retryDelay));
-      
-      return api(config);
-    }
-
     // Log errors
     if (error.response) {
       console.error('🔴 API Error Response:', {
@@ -111,7 +82,6 @@ api.interceptors.response.use(
         statusText: error.response.statusText,
         data: error.response.data,
         url: error.config?.url,
-        fullURL: error.config ? `${error.config.baseURL}${error.config.url}` : 'unknown'
       });
       
       if (error.response.status === 401) {
@@ -125,7 +95,6 @@ api.interceptors.response.use(
         code: error.code,
         baseURL: error.config?.baseURL,
         url: error.config?.url,
-        attempts: config._retryCount + 1,
       });
     } else {
       console.error('🔴 Request Setup Error:', error.message);
