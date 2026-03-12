@@ -46,8 +46,9 @@ class CardPaymentController extends Controller
             // Generate unique reference
             $reference = 'OS_CARD_' . strtoupper(Str::random(10)) . '_' . time();
             
-            $amount = $order->total_amount;
-            $commissionData = $this->commissionService->calculateCommission($order);
+            $amount = $order->total;
+            $sellerId = $order->items->first()->product->seller_id ?? null;
+            $commissionData = $this->commissionService::calculate($amount, $sellerId);
 
             // Create payment record
             $payment = Payment::create([
@@ -58,9 +59,9 @@ class CardPaymentController extends Controller
                 'transaction_reference' => $reference,
                 'amount' => $amount,
                 'currency' => 'KES',
-                'platform_commission_rate' => $commissionData['rate'],
+                'platform_commission_rate' => $commissionData['commission_rate'],
                 'platform_commission_amount' => $commissionData['commission_amount'],
-                'seller_payout_amount' => $commissionData['seller_amount'],
+                'seller_payout_amount' => $commissionData['seller_payout'],
                 'status' => 'pending',
                 'payout_status' => 'pending',
                 'metadata' => [
@@ -71,7 +72,7 @@ class CardPaymentController extends Controller
             ]);
 
             // Initialize Paystack transaction
-            $callbackUrl = config('app.url') . '/api/v1/payments/card/callback';
+            $callbackUrl = rtrim(config('app.url'), '/') . '/api/v1/payments/card/callback';
             
             $response = $this->paystackService->initializeTransaction(
                 email: $validated['email'],

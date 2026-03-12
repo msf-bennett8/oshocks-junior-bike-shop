@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\Seller\ProductController as SellerProductController
 use App\Http\Controllers\Dashboard\OwnerDashboardController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\Dashboard\PayoutController;
+use App\Http\Controllers\CardPaymentController;
 
 // ============================================================================
 // OAUTH ROUTES - STATELESS (No CSRF, No Session)
@@ -176,13 +177,17 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     
     // Payments
     Route::post('/payments/mpesa/initiate', [PaymentController::class, 'initiateMpesa']);
-    Route::post('/payments/card/initiate', [PaymentController::class, 'initiateCard']);
+    //Route::post('/payments/card/initiate', [PaymentController::class, 'initiateCard']);
     Route::get('/payments/{id}', [PaymentController::class, 'show']);
     Route::post('/payments/record', [PaymentController::class, 'recordPayment']);
 
     // Paystack callback and webhook (public)
-    Route::get('/v1/payments/card/callback', [CardPaymentController::class, 'callback']);
-    Route::post('/v1/payments/card/webhook', [CardPaymentController::class, 'webhook']);
+    Route::get('/payments/card/callback', [CardPaymentController::class, 'callback']);
+    Route::post('/payments/card/webhook', [CardPaymentController::class, 'webhook']);
+
+    // Card Payments (Paystack) - Protected
+    Route::post('/payments/card/initialize', [CardPaymentController::class, 'initialize']);
+    Route::get('/payments/card/verify/{reference}', [CardPaymentController::class, 'verify']);
 
     // Reviews
     Route::post('/reviews', [ReviewController::class, 'store']);
@@ -360,10 +365,6 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     // M-Pesa callback (public - called by Safaricom)
     Route::post('/v1/payments/mpesa/callback', [PaymentController::class, 'mpesaCallback']);
-
-    // Card Payments (Paystack)
-    Route::post('/payments/card/initialize', [CardPaymentController::class, 'initialize']);
-    Route::get('/payments/card/verify/{reference}', [CardPaymentController::class, 'verify']);
     
     // Health check
     Route::get('/health', function () {
