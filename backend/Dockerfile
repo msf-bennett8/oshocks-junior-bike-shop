@@ -33,6 +33,17 @@ RUN composer install --optimize-autoloader --no-interaction --no-scripts --no-de
 # Copy the rest of the application
 COPY . .
 
+# Create storage directories in /tmp (writable in Railway)
+RUN mkdir -p /tmp/storage/framework/sessions \
+    /tmp/storage/framework/views \
+    /tmp/storage/framework/cache/data \
+    /tmp/storage/logs \
+    /tmp/storage/app/public \
+    bootstrap/cache \
+    && ln -sf /tmp/storage storage \
+    && chown -R www-data:www-data /tmp/storage bootstrap/cache \
+    && chmod -R 775 /tmp/storage bootstrap/cache
+
 # Create .env file from example if it doesn't exist, or create minimal one
 RUN if [ ! -f .env ]; then \
     echo "APP_NAME=Oshocks" > .env && \
@@ -47,17 +58,13 @@ RUN if [ ! -f .env ]; then \
     echo "DB_PORT=\${MYSQLPORT:-3306}" >> .env && \
     echo "DB_DATABASE=\${MYSQLDATABASE}" >> .env && \
     echo "DB_USERNAME=\${MYSQLUSER}" >> .env && \
-    echo "DB_PASSWORD=\${MYSQLPASSWORD}" >> .env; \
+    echo "DB_PASSWORD=\${MYSQLPASSWORD}" >> .env && \
+    echo "CACHE_DRIVER=array" >> .env && \
+    echo "SESSION_DRIVER=array" >> .env; \
     fi
 
-# Create storage directories and set permissions
-RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache/data \
-    bootstrap/cache storage/logs \
-    && chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
-
 # Generate APP_KEY and optimize
-RUN php artisan key:generate --force || true
+RUN php artisan key:generate --force 2>/dev/null || true
 
 # Create server.php for PHP built-in server
 RUN printf '<?php\n\
@@ -72,10 +79,13 @@ EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+    CMD curl -f http://localhost:8080/api/health || exit 1
 
-# Start command - check if required env vars exist before running migrations
-CMD echo "=== Checking Environment ===" && \
+# Start command with proper setup
+CMD echo "=== Setting up Storage ===" && \
+    mkdir -p /tmp/storage/framework/sessions /tmp/storage/framework/views /tmp/storage/framework/cache/data /tmp/storage/logs /tmp/storage/app/public && \
+    chmod -R 775 /tmp/storage && \
+    echo "=== Checking Environment ===" && \
     if [ -z "$MYSQLHOST" ] || [ -z "$MYSQLDATABASE" ]; then \
         echo "WARNING: Database environment variables not set. Skipping migrations."; \
     else \

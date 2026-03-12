@@ -1,4 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { 
+  ShoppingCart, 
+  Package, 
+  Wallet, 
+  Zap, 
+  ThumbsUp, 
+  Shield, 
+  Headphones, 
+  BadgeCheck, 
+  Wrench, 
+  Store, 
+  Truck, 
+  CreditCard,
+  ArrowRight,
+  UserPlus
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { productAPI } from '../../services/api';
@@ -123,7 +139,7 @@ const HomePage = () => {
 
       <div className="min-h-screen bg-gray-50">
         {/* Hero Section */}
-        <section className="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-700 text-white py-16 md:py-24 lg:py-32 relative overflow-hidden">
+        <section className="bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 text-white py-16 md:py-24 lg:py-32 relative overflow-hidden">
           <div className="absolute inset-0 bg-black opacity-10"></div>
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
@@ -140,15 +156,15 @@ const HomePage = () => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Link
                   to="/shop"
-                  className="w-full sm:w-auto px-8 py-4 bg-white text-purple-600 font-bold rounded-lg hover:bg-gray-100 transition shadow-xl hover:shadow-2xl transform hover:-translate-y-1 duration-200 text-lg"
+                  className="w-full sm:w-auto px-8 py-4 bg-white text-green-600 font-bold rounded-lg hover:bg-gray-100 transition shadow-xl hover:shadow-2xl transform hover:-translate-y-1 duration-200 text-lg flex items-center justify-center gap-2"
                 >
-                  Shop Now
+                  Shop Now <ArrowRight className="w-5 h-5" />
                 </Link>
                 <Link
                   to="/book-service"
-                  className="w-full sm:w-auto px-8 py-4 bg-purple-800 border-2 border-white text-white font-bold rounded-lg hover:bg-purple-900 transition shadow-xl hover:shadow-2xl transform hover:-translate-y-1 duration-200 text-lg"
+                  className="w-full sm:w-auto px-8 py-4 bg-orange-500 border-2 border-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 hover:border-orange-600 transition shadow-xl hover:shadow-2xl transform hover:-translate-y-1 duration-200 text-lg flex items-center justify-center gap-2"
                 >
-                  Book Repair Service
+                  <Wrench className="w-5 h-5" /> Book Repair Service
                 </Link>
               </div>
             </div>
@@ -160,28 +176,36 @@ const HomePage = () => {
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
               <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-md hover:shadow-lg transition">
-                <div className="text-5xl mb-4">🚚</div>
+                <div className="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center text-white mb-4">
+                  <Truck className="w-8 h-8" />
+                </div>
                 <h3 className="text-xl font-bold mb-2 text-gray-800">Fast Delivery</h3>
                 <p className="text-gray-700 text-sm leading-relaxed">
                   Fast and reliable delivery in Nairobi Metropolitan. Track your order in real-time from our stores to your doorstep.
                 </p>
               </div>
-              <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-md hover:shadow-lg transition">
-                <div className="text-5xl mb-4">💳</div>
+              <div className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-md hover:shadow-lg transition">
+                <div className="w-16 h-16 bg-orange-500 rounded-xl flex items-center justify-center text-white mb-4">
+                  <CreditCard className="w-8 h-8" />
+                </div>
                 <h3 className="text-xl font-bold mb-2 text-gray-800">Flexible Payments</h3>
                 <p className="text-gray-700 text-sm leading-relaxed">
                   Pay conveniently with M-Pesa, Airtel Money, bank cards, or cash on delivery. Secure transactions guaranteed.
                 </p>
               </div>
-              <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-md hover:shadow-lg transition">
-                <div className="text-5xl mb-4">🔧</div>
+              <div className="p-6 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl shadow-md hover:shadow-lg transition">
+                <div className="w-16 h-16 bg-emerald-500 rounded-xl flex items-center justify-center text-white mb-4">
+                  <Wrench className="w-8 h-8" />
+                </div>
                 <h3 className="text-xl font-bold mb-2 text-gray-800">Professional Repairs</h3>
                 <p className="text-gray-700 text-sm leading-relaxed">
                   Expert bike mechanics available for repairs, maintenance, and custom builds. Book appointments online easily.
                 </p>
               </div>
-              <div className="p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-md hover:shadow-lg transition">
-                <div className="text-5xl mb-4">🏪</div>
+              <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-md hover:shadow-lg transition">
+                <div className="w-16 h-16 bg-purple-500 rounded-xl flex items-center justify-center text-white mb-4">
+                  <Store className="w-8 h-8" />
+                </div>
                 <h3 className="text-xl font-bold mb-2 text-gray-800">Multi-Vendor Platform</h3>
                 <p className="text-gray-700 text-sm leading-relaxed">
                   Access products from multiple verified sellers. More choices, competitive prices, quality assured.
@@ -204,7 +228,9 @@ const HomePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition group">
                 <div className="flex items-start space-x-4">
-                  <div className="text-4xl group-hover:scale-110 transition-transform">🛍️</div>
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-green-600 group-hover:scale-110 transition-transform">
+                    <ShoppingCart className="w-6 h-6" />
+                  </div>
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2 text-gray-800">Buy & Sell</h3>
                     <p className="text-gray-600 text-sm mb-3">
@@ -219,7 +245,9 @@ const HomePage = () => {
 
               <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition group">
                 <div className="flex items-start space-x-4">
-                  <div className="text-4xl group-hover:scale-110 transition-transform">🔧</div>
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                    <Wrench className="w-6 h-6" />
+                  </div>
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2 text-gray-800">Repair Services</h3>
                     <p className="text-gray-600 text-sm mb-3">
@@ -234,7 +262,9 @@ const HomePage = () => {
 
               <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition group">
                 <div className="flex items-start space-x-4">
-                  <div className="text-4xl group-hover:scale-110 transition-transform">📦</div>
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform">
+                    <Package className="w-6 h-6" />
+                  </div>
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2 text-gray-800">Custom Orders</h3>
                     <p className="text-gray-600 text-sm mb-3">
@@ -249,7 +279,9 @@ const HomePage = () => {
 
               <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition group">
                 <div className="flex items-start space-x-4">
-                  <div className="text-4xl group-hover:scale-110 transition-transform">👥</div>
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
+                    <UserPlus className="w-6 h-6" />
+                  </div>
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2 text-gray-800">Become a Seller</h3>
                     <p className="text-gray-600 text-sm mb-3">
@@ -264,7 +296,9 @@ const HomePage = () => {
 
               <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition group">
                 <div className="flex items-start space-x-4">
-                  <div className="text-4xl group-hover:scale-110 transition-transform">📱</div>
+                  <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
+                    <BadgeCheck className="w-6 h-6" />
+                  </div>
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2 text-gray-800">Trade-In Program</h3>
                     <p className="text-gray-600 text-sm mb-3">
@@ -279,7 +313,9 @@ const HomePage = () => {
 
               <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition group">
                 <div className="flex items-start space-x-4">
-                  <div className="text-4xl group-hover:scale-110 transition-transform">💬</div>
+                  <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center text-pink-600 group-hover:scale-110 transition-transform">
+                    <Headphones className="w-6 h-6" />
+                  </div>
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2 text-gray-800">Expert Support</h3>
                     <p className="text-gray-600 text-sm mb-3">
@@ -601,37 +637,49 @@ const HomePage = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3">✅</div>
+                <div className="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center text-green-600 mx-auto mb-3">
+                  <BadgeCheck className="w-8 h-8" />
+                </div>
                 <h3 className="text-lg font-bold mb-2">Quality Verified</h3>
                 <p className="text-gray-600 text-sm">All our products are tested and undergo strict verification for authenticity and quality standards.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3">💰</div>
+                <div className="w-16 h-16 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 mx-auto mb-3">
+                  <Wallet className="w-8 h-8" />
+                </div>
                 <h3 className="text-lg font-bold mb-2">Best Prices</h3>
                 <p className="text-gray-600 text-sm">Competitive pricing from multiple sellers ensures you get the best deals on cycling products.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3">🔒</div>
+                <div className="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mx-auto mb-3">
+                  <Shield className="w-8 h-8" />
+                </div>
                 <h3 className="text-lg font-bold mb-2">Secure Shopping</h3>
                 <p className="text-gray-600 text-sm">Your transactions are protected with encrypted payments and buyer protection policies.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3">⚡</div>
+                <div className="w-16 h-16 bg-yellow-100 rounded-xl flex items-center justify-center text-yellow-600 mx-auto mb-3">
+                  <Zap className="w-8 h-8" />
+                </div>
                 <h3 className="text-lg font-bold mb-2">Fast Processing</h3>
                 <p className="text-gray-600 text-sm">Your orders are processed within 24 hours and shipped quickly to your preferred location.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3">😊</div>
+                <div className="w-16 h-16 bg-rose-100 rounded-xl flex items-center justify-center text-rose-600 mx-auto mb-3">
+                  <ThumbsUp className="w-8 h-8" />
+                </div>
                 <h3 className="text-lg font-bold mb-2">Satisfaction Guarantee</h3>
                 <p className="text-gray-600 text-sm">Not happy with your purchase? Easy returns and refunds within 7 days of delivery.</p>
               </div>
               
               <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="text-5xl mb-3">📞</div>
+                <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mx-auto mb-3">
+                  <Headphones className="w-8 h-8" />
+                </div>
                 <h3 className="text-lg font-bold mb-2">24/7 Support</h3>
                 <p className="text-gray-600 text-sm">Our customer support team is always available to help with your inquiries and concerns.</p>
               </div>
@@ -644,18 +692,24 @@ const HomePage = () => {
           <div className="container mx-auto px-4">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-10 text-gray-800">Explore More</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-              <Link to="/shop" className="p-6 bg-purple-50 rounded-xl hover:bg-purple-100 transition text-center group border-2 border-transparent hover:border-purple-300">
-                <div className="text-4xl md:text-5xl mb-3 group-hover:scale-110 transition-transform">🏪</div>
+              <Link to="/shop" className="p-6 bg-green-50 rounded-xl hover:bg-green-100 transition text-center group border-2 border-transparent hover:border-green-300">
+                <div className="w-14 h-14 bg-green-500 rounded-xl flex items-center justify-center text-white mx-auto mb-3 group-hover:scale-110 transition-transform">
+                  <Store className="w-7 h-7" />
+                </div>
                 <h3 className="font-bold text-base md:text-lg text-gray-800">Shop</h3>
                 <p className="text-xs md:text-sm text-gray-600 mt-2">Browse products</p>
               </Link>
               <Link to="/about" className="p-6 bg-blue-50 rounded-xl hover:bg-blue-100 transition text-center group border-2 border-transparent hover:border-blue-300">
-                <div className="text-4xl md:text-5xl mb-3 group-hover:scale-110 transition-transform">ℹ️</div>
+                <div className="w-14 h-14 bg-blue-500 rounded-xl flex items-center justify-center text-white mx-auto mb-3 group-hover:scale-110 transition-transform">
+                  <BadgeCheck className="w-7 h-7" />
+                </div>
                 <h3 className="font-bold text-base md:text-lg text-gray-800">About Us</h3>
                 <p className="text-xs md:text-sm text-gray-600 mt-2">Our story</p>
               </Link>
-              <Link to="/contact" className="p-6 bg-green-50 rounded-xl hover:bg-green-100 transition text-center group border-2 border-transparent hover:border-green-300">
-                <div className="text-4xl md:text-5xl mb-3 group-hover:scale-110 transition-transform">📞</div>
+              <Link to="/contact" className="p-6 bg-emerald-50 rounded-xl hover:bg-emerald-100 transition text-center group border-2 border-transparent hover:border-emerald-300">
+                <div className="w-14 h-14 bg-emerald-500 rounded-xl flex items-center justify-center text-white mx-auto mb-3 group-hover:scale-110 transition-transform">
+                  <Headphones className="w-7 h-7" />
+                </div>
                 <h3 className="font-bold text-base md:text-lg text-gray-800">Contact</h3>
                 <p className="text-xs md:text-sm text-gray-600 mt-2">Get in touch</p>
               </Link>

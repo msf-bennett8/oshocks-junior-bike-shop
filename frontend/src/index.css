@@ -6,9 +6,12 @@
    CSS VARIABLES - Brand Colors & Reusable Values
    ============================================================================ */
 :root {
-  --color-primary: #667eea;
-  --color-primary-dark: #5568d3;
-  --shadow-primary: 0 10px 30px -5px rgba(102, 126, 234, 0.3);
+  --color-primary: #22c55e;
+  --color-primary-dark: #16a34a;
+  --color-secondary: #f97316;
+  --color-secondary-dark: #ea580c;
+  --shadow-primary: 0 10px 30px -5px rgba(34, 197, 94, 0.3);
+  --shadow-secondary: 0 10px 30px -5px rgba(249, 115, 22, 0.3);
 }
 
 /* ============================================================================
@@ -52,10 +55,10 @@
   }
   
   .btn-primary {
-    @apply bg-gradient-to-r from-purple-600 to-indigo-600 text-white 
-           hover:from-purple-700 hover:to-indigo-700 
+    @apply bg-gradient-to-r from-orange-500 to-orange-600 text-white 
+           hover:from-orange-600 hover:to-orange-700 
            shadow-md hover:shadow-lg active:scale-95
-           focus:ring-purple-500;
+           focus:ring-orange-500;
   }
   
   .btn-secondary {
@@ -64,9 +67,9 @@
   }
   
   .btn-outline {
-    @apply border-2 border-purple-600 text-purple-600 bg-white
-           hover:bg-purple-600 hover:text-white 
-           active:scale-95 focus:ring-purple-500;
+    @apply border-2 border-green-600 text-green-600 bg-white
+           hover:bg-green-600 hover:text-white 
+           active:scale-95 focus:ring-green-500;
   }
   
   /* Button Sizes - Mobile Optimized */

@@ -35,6 +35,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\CheckRole::class,
             'optional' => \App\Http\Middleware\OptionalAuth::class,
         ]);
+        
+        // Trust Railway proxies and force HTTPS
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
