@@ -41,7 +41,7 @@ class PaymentController extends Controller
         ]);
 
         try {
-            $order = Order::with('items.product.seller')->findOrFail($validated['order_id']);
+            $order = Order::with('orderItems.product.seller')->findOrFail($validated['order_id']);
             
             // Check if order is already paid
             if ($order->payment_status === 'paid') {
@@ -56,16 +56,17 @@ class PaymentController extends Controller
             
             // Calculate amounts
             $amount = $order->total;
-            $sellerId = $order->items->first()->product->seller_id ?? null;
+            $sellerId = $order->orderItems->first()->product->seller_id ?? null;
             $commissionData = $this->commissionService::calculate($amount, $sellerId);
 
             // Create payment record
             $payment = Payment::create([
                 'order_id' => $order->id,
-                'seller_id' => $order->items->first()->product->seller_id ?? null,
+                'seller_id' => $order->orderItems->first()->product->seller_id ?? null,
                 'sale_channel' => 'online_delivery',
                 'payment_method' => 'mpesa_stk',
                 'transaction_reference' => $transactionRef,
+                'transaction_id' => $transactionRef,
                 'amount' => $amount,
                 'currency' => 'KES',
                 'platform_commission_rate' => $commissionData['commission_rate'],
@@ -76,7 +77,7 @@ class PaymentController extends Controller
                 'phone_number' => $validated['phone_number'],
                 'metadata' => [
                     'order_number' => $order->order_number,
-                    'items_count' => $order->items->count(),
+                    'items_count' => $order->orderItems->count(),
                 ],
             ]);
 
@@ -105,6 +106,7 @@ class PaymentController extends Controller
                     'data' => [
                         'payment_id' => $payment->id,
                         'transaction_reference' => $transactionRef,
+                        'transaction_id' => $transactionRef,
                         'checkout_request_id' => $stkResponse['checkout_request_id'],
                         'customer_message' => $stkResponse['customer_message'],
                     ]

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import authService from '../../services/authService';
+import paymentService from '../../services/paymentService';
 
 const CheckoutPage = () => {
   const { cartItems, clearCart } = useCart();
@@ -243,6 +244,39 @@ const countyInfo = {
     }
   };
   
+    // M-Pesa Payment Handler
+    const handleMpesaPayment = async (orderId, phoneNumber, amount) => {
+      try {
+        const response = await paymentService.initiateMpesa({
+          order_id: orderId,
+          phone_number: phoneNumber
+        });
+
+        if (!response.success) {
+          throw new Error(response.message || 'Failed to initiate M-Pesa payment');
+        }
+
+        // Poll for payment status
+        return new Promise((resolve, reject) => {
+          paymentService.pollPaymentStatus(
+            response.data.payment_id,
+            (status, data) => {
+              console.log('Payment status:', status);
+              if (status === 'completed') {
+                resolve(data);
+              } else if (status === 'failed') {
+                reject(new Error(data.error_message || 'Payment failed'));
+              }
+            },
+            30, // max attempts
+            3000 // 3 second interval
+          ).catch(reject);
+        });
+      } catch (error) {
+        throw error;
+      }
+    };
+
     // Replace the handlePaymentSubmit function in CheckoutPage.jsx
     const handlePaymentSubmit = async (e) => {
       e.preventDefault();
@@ -315,6 +349,24 @@ const countyInfo = {
         const createdOrder = result.data.order;
         const createdItems = result.data.items;
 
+        // Handle M-Pesa payment if selected
+        if (paymentMethod === 'mpesa') {
+          try {
+            setLoading(true);
+            // Show "Check your phone" message
+            setErrors({ info: 'Check your phone for M-Pesa STK push and enter your PIN...' });
+            
+            // Initiate M-Pesa payment
+            await handleMpesaPayment(createdOrder.id, mpesaPhone, createdOrder.total);
+            
+            // Payment successful - continue to success page
+          } catch (mpesaError) {
+            setErrors({ submit: mpesaError.message || 'M-Pesa payment failed. Please try again.' });
+            setLoading(false);
+            return; // Don't navigate to success page
+          }
+        }
+
         // Prepare data for success page
         const successOrderData = {
           orderNumber: createdOrder.order_number,
@@ -338,7 +390,7 @@ const countyInfo = {
                     'Credit/Debit Card',
             transactionId: createdOrder.transaction_reference,
             amount: createdOrder.total,
-            status: createdOrder.payment_status,
+            status: paymentMethod === 'mpesa' ? 'paid' : createdOrder.payment_status,
             shippingCost: createdOrder.shipping_fee
           },
           deliveryInstructions: createdOrder.delivery_instructions || ''

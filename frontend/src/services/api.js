@@ -5,7 +5,7 @@
 import axios from 'axios';
 
 // Base API URL - Railway backend
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://your-railway-app.up.railway.app/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://oshocks-backend-production.up.railway.app/api/v1';
 
 console.log('🌐 API Service Initialized');
 console.log('📍 Base URL:', API_BASE_URL);
