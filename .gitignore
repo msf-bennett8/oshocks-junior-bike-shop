@@ -65,3 +65,5 @@ yarn-error.log*
 firebase-admin-key.json
 railway-env.txt
 railway-env-variables.txt
+backend/.env.save
+.env.save
