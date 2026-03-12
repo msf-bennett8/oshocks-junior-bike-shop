@@ -281,7 +281,7 @@ const NotificationsPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-green-600 mx-auto mb-4"></div>
           <p className="text-gray-600 text-lg">Loading notifications...</p>
         </div>
       </div>
@@ -290,7 +290,7 @@ const NotificationsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-8 px-4">
+      <div className="bg-gradient-to-r from-green-500 to-emerald-700 text-white py-8 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <button
@@ -320,7 +320,7 @@ const NotificationsPage = () => {
             </div>
             <div>
               <h1 className="text-4xl font-bold">Notifications</h1>
-              <p className="text-blue-100">
+              <p className="text-green-100">
                 {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'All caught up!'}
               </p>
             </div>
@@ -353,7 +353,7 @@ const NotificationsPage = () => {
                       toggleNotificationSetting(key);
                     }}
                     className={`relative w-12 h-6 rounded-full transition-colors ${
-                      value ? 'bg-blue-600' : 'bg-gray-300'
+                      value ? 'bg-green-600' : 'bg-gray-300'
                     }`}
                   >
                     <span
@@ -408,7 +408,7 @@ const NotificationsPage = () => {
                     type="checkbox"
                     checked={selectedNotifications.length === filteredNotifications.length && filteredNotifications.length > 0}
                     onChange={selectAll}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 accent-green-600"
                   />
                   <span className="text-sm text-gray-700">
                     {selectedNotifications.length > 0 
@@ -431,7 +431,7 @@ const NotificationsPage = () => {
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                   >
                     <MailOpen className="w-4 h-4" />
                     <span className="text-sm font-medium">Mark all as read</span>
@@ -465,8 +465,8 @@ const NotificationsPage = () => {
                 <div
                   key={notification.id}
                   className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-all ${
-                    !notification.isRead ? 'border-l-4 border-blue-600' : ''
-                  } ${isSelected ? 'ring-2 ring-blue-600' : ''}`}
+                    !notification.isRead ? 'border-l-4 border-green-600' : ''
+                  } ${isSelected ? 'ring-2 ring-green-600' : ''}`}
                 >
                   <div className="p-4">
                     <div className="flex items-start gap-4">
@@ -486,7 +486,7 @@ const NotificationsPage = () => {
                           <h3 className="font-semibold text-gray-900">
                             {notification.title}
                             {!notification.isRead && (
-                              <span className="ml-2 inline-block w-2 h-2 bg-blue-600 rounded-full"></span>
+                              <span className="ml-2 inline-block w-2 h-2 bg-green-600 rounded-full"></span>
                             )}
                           </h3>
                           <div className="flex items-center gap-2 flex-shrink-0">
@@ -505,7 +505,7 @@ const NotificationsPage = () => {
                               markAsRead(notification.id);
                               window.location.href = notification.actionUrl;
                             }}
-                            className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                            className="text-sm font-medium text-green-600 hover:text-green-700"
                           >
                             {notification.actionLabel}
                           </button>
@@ -542,10 +542,10 @@ const NotificationsPage = () => {
         )}
       </div>
 
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-12 px-4 mt-12">
+      <div className="bg-gradient-to-r from-green-500 to-emerald-700 text-white py-12 px-4 mt-12">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Quick Actions</h2>
-          <p className="text-blue-100 mb-6">
+          <p className="text-green-100 mb-6">
             Manage your shopping experience
           </p>
           <div className="grid md:grid-cols-3 gap-4">
@@ -555,7 +555,7 @@ const NotificationsPage = () => {
             >
               <Package className="w-8 h-8 mx-auto mb-3" />
               <h3 className="font-semibold mb-1">My Orders</h3>
-              <p className="text-sm text-blue-100">Track and manage orders</p>
+              <p className="text-sm text-green-100">Track and manage orders</p>
             </a>
             <a
               href="/wishlist"
@@ -563,7 +563,7 @@ const NotificationsPage = () => {
             >
               <Heart className="w-8 h-8 mx-auto mb-3" />
               <h3 className="font-semibold mb-1">Wishlist</h3>
-              <p className="text-sm text-blue-100">View saved items</p>
+              <p className="text-sm text-green-100">View saved items</p>
             </a>
             <a
               href="/messages"
@@ -571,7 +571,7 @@ const NotificationsPage = () => {
             >
               <MessageSquare className="w-8 h-8 mx-auto mb-3" />
               <h3 className="font-semibold mb-1">Messages</h3>
-              <p className="text-sm text-blue-100">Chat with support</p>
+              <p className="text-sm text-green-100">Chat with support</p>
             </a>
           </div>
         </div>

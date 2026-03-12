@@ -110,7 +110,11 @@ const HomePage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center max-w-md mx-auto p-8">
-          <div className="text-6xl mb-4">⚠️</div>
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Connection Error</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <p className="text-sm text-gray-500 mb-4">
@@ -118,9 +122,9 @@ const HomePage = () => {
           </p>
           <button
             onClick={fetchProducts}
-            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold"
+            className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold flex items-center justify-center gap-2 mx-auto"
           >
-            Try Again
+            Try Again <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -236,8 +240,8 @@ const HomePage = () => {
                     <p className="text-gray-600 text-sm mb-3">
                       Browse bikes, parts, and accessories. Ask for delivery and it will be delivered to your doorstep.
                     </p>
-                    <Link to="/shop" className="text-purple-600 font-semibold text-sm hover:underline">
-                      Start Shopping →
+                    <Link to="/shop" className="text-green-600 font-semibold text-sm hover:underline flex items-center gap-1">
+                      Start Shopping <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>
                 </div>
@@ -253,8 +257,8 @@ const HomePage = () => {
                     <p className="text-gray-600 text-sm mb-3">
                       Professional bike repairs and maintenance by experienced mechanics. Quick turnaround, quality guaranteed.
                     </p>
-                    <Link to="/book-service" className="text-purple-600 font-semibold text-sm hover:underline">
-                      Book Now →
+                    <Link to="/book-service" className="text-blue-600 font-semibold text-sm hover:underline flex items-center gap-1">
+                      Book Now <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>
                 </div>
@@ -270,8 +274,8 @@ const HomePage = () => {
                     <p className="text-gray-600 text-sm mb-3">
                       Can't find what you need? Request custom bike builds or special parts. We'll source it for you.
                     </p>
-                    <Link to="/contact" className="text-purple-600 font-semibold text-sm hover:underline">
-                      Inquire →
+                    <Link to="/contact" className="text-orange-600 font-semibold text-sm hover:underline flex items-center gap-1">
+                      Inquire <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>
                 </div>
@@ -287,8 +291,8 @@ const HomePage = () => {
                     <p className="text-gray-600 text-sm mb-3">
                       Join our marketplace and reach other cycling enthusiasts. Easy setup, powerful tools.
                     </p>
-                    <Link to="/seller/register" className="text-purple-600 font-semibold text-sm hover:underline">
-                      Register →
+                    <Link to="/seller/register" className="text-purple-600 font-semibold text-sm hover:underline flex items-center gap-1">
+                      Register <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>
                 </div>
@@ -304,8 +308,8 @@ const HomePage = () => {
                     <p className="text-gray-600 text-sm mb-3">
                       Upgrade your bike with our trade-in program. Get fair value for your old bike towards a new purchase.
                     </p>
-                    <Link to="/trade-in" className="text-purple-600 font-semibold text-sm hover:underline">
-                      Learn More →
+                    <Link to="/trade-in" className="text-indigo-600 font-semibold text-sm hover:underline flex items-center gap-1">
+                      Learn More <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>
                 </div>
@@ -321,8 +325,8 @@ const HomePage = () => {
                     <p className="text-gray-600 text-sm mb-3">
                       Get cycling advice, product recommendations, and technical support from our team.
                     </p>
-                    <Link to="/contact" className="text-purple-600 font-semibold text-sm hover:underline">
-                      Contact Us →
+                    <Link to="/contact" className="text-pink-600 font-semibold text-sm hover:underline flex items-center gap-1">
+                      Contact Us <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>
                 </div>
@@ -341,10 +345,10 @@ const HomePage = () => {
               </div>
               <Link
                 to="/shop"
-                className="text-purple-600 hover:text-purple-700 font-semibold flex items-center text-lg group"
+                className="text-green-600 hover:text-green-700 font-semibold flex items-center text-lg group"
               >
                 View All 
-                <span className="ml-1 group-hover:translate-x-1 transition-transform">→</span>
+                <ArrowRight className="ml-1 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
@@ -353,9 +357,9 @@ const HomePage = () => {
                 {/* Loading message with animation */}
                 <div className="text-center py-8">
                   <div className="inline-flex items-center justify-center space-x-3">
-                    <div className="w-3 h-3 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-3 h-3 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-3 h-3 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    <div className="w-3 h-3 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-3 h-3 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-3 h-3 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                   </div>
                   <p className="text-gray-700 mt-4 font-semibold text-lg">Loading products...</p>
                   
@@ -380,7 +384,9 @@ const HomePage = () => {
               </div>
             ) : products.length === 0 ? (
               <div className="text-center py-16 md:py-20 bg-gray-50 rounded-xl shadow-inner">
-                <div className="text-6xl md:text-7xl mb-4">📦</div>
+                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Package className="w-12 h-12 text-gray-400" />
+                </div>
                 <p className="text-gray-600 text-lg md:text-xl mb-2 font-semibold">No products available yet</p>
                 <p className="text-gray-500 text-sm md:text-base">Check back soon for exciting new arrivals!</p>
               </div>
@@ -414,19 +420,24 @@ const HomePage = () => {
                                 onLoad={() => handleImageLoad(product.id)}
                                 onError={(e) => {
                                   e.target.style.display = 'none';
-                                  e.target.parentElement.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-gray-400 text-6xl">🚴</div>';
+                                  e.target.parentElement.innerHTML = '<div class="absolute inset-0 flex items-center justify-center bg-gray-50"><svg class="w-20 h-20 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div>';
                                 }}
                               />
                             </>
                           ) : (
-                            <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-6xl">
-                              🚴
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+                              <svg className="w-20 h-20 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
                             </div>
                           )}
                           
                           {product.is_featured && (
-                            <span className="absolute top-3 right-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                              ⭐ Featured
+                            <span className="absolute top-3 right-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                              </svg>
+                              Featured
                             </span>
                           )}
                           
@@ -516,7 +527,7 @@ const HomePage = () => {
                         </div>
 
                         <div className="p-4">
-                          <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2 h-12 text-sm hover:text-purple-600 transition">
+                          <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2 h-12 text-sm hover:text-green-600 transition">
                             {product.name}
                           </h3>
                           
@@ -528,7 +539,7 @@ const HomePage = () => {
                           
                           <div className="flex justify-between items-center mt-3">
                             <div>
-                              <span className="text-xl font-bold text-purple-600">
+                              <span className="text-xl font-bold text-green-600">
                                 KSh {Number(product.price).toLocaleString()}
                               </span>
                               {product.compare_price && Number(product.compare_price) > Number(product.price) && (
@@ -614,9 +625,9 @@ const HomePage = () => {
                   <div className="text-center mt-10 md:mt-12">
                     <Link
                       to="/shop"
-                      className="inline-block px-8 py-4 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition shadow-lg hover:shadow-xl text-lg"
+                      className="inline-block px-8 py-4 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition shadow-lg hover:shadow-xl text-lg flex items-center justify-center gap-2 mx-auto"
                     >
-                      Explore All {products.length}+ Products
+                      Explore All {products.length}+ Products <ArrowRight className="w-5 h-5" />
                     </Link>
                   </div>
                 )}
@@ -626,7 +637,7 @@ const HomePage = () => {
         </section>
 
         {/* Why Choose Oshocks */}
-        <section className="py-12 md:py-16 bg-gradient-to-br from-purple-50 to-indigo-50">
+        <section className="py-12 md:py-16 bg-gradient-to-br from-green-50 to-emerald-50">
           <div className="container mx-auto px-4">
             <div className="text-center mb-10">
               <h2 className="text-3xl md:text-4xl font-bold mb-3 text-gray-800">Why Choose Oshocks?</h2>
@@ -713,8 +724,12 @@ const HomePage = () => {
                 <h3 className="font-bold text-base md:text-lg text-gray-800">Contact</h3>
                 <p className="text-xs md:text-sm text-gray-600 mt-2">Get in touch</p>
               </Link>
-              <Link to="/faq" className="p-6 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition text-center group border-2 border-transparent hover:border-yellow-300">
-                <div className="text-4xl md:text-5xl mb-3 group-hover:scale-110 transition-transform">❓</div>
+              <Link to="/faq" className="p-6 bg-orange-50 rounded-xl hover:bg-orange-100 transition text-center group border-2 border-transparent hover:border-orange-300">
+                <div className="w-14 h-14 bg-orange-500 rounded-xl flex items-center justify-center text-white mx-auto mb-3 group-hover:scale-110 transition-transform">
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
                 <h3 className="font-bold text-base md:text-lg text-gray-800">FAQ</h3>
                 <p className="text-xs md:text-sm text-gray-600 mt-2">Find answers</p>
               </Link>
@@ -723,7 +738,7 @@ const HomePage = () => {
         </section>
 
         {/* Call to Action */}
-        <section className="py-16 md:py-24 bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-700 text-white relative overflow-hidden">
+        <section className="py-16 md:py-24 bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 text-white relative overflow-hidden">
           <div className="absolute inset-0 bg-black opacity-10"></div>
           <div className="container mx-auto px-4 text-center relative z-10">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6">Ready to Start Your Cycling Journey?</h2>
@@ -734,15 +749,15 @@ const HomePage = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
                 to="/shop"
-                className="w-full sm:w-auto inline-block px-10 py-4 bg-white text-purple-600 font-bold rounded-lg hover:bg-gray-100 transition shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 duration-200 text-lg"
+                className="w-full sm:w-auto inline-block px-10 py-4 bg-white text-green-600 font-bold rounded-lg hover:bg-gray-100 transition shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 duration-200 text-lg flex items-center justify-center gap-2"
               >
-                Browse Products
+                Browse Products <ArrowRight className="w-5 h-5" />
               </Link>
               <Link
                 to="/seller/register"
-                className="w-full sm:w-auto inline-block px-10 py-4 bg-purple-800 border-2 border-white text-white font-bold rounded-lg hover:bg-purple-900 transition shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 duration-200 text-lg"
+                className="w-full sm:w-auto inline-block px-10 py-4 bg-orange-500 border-2 border-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 hover:border-orange-600 transition shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 duration-200 text-lg flex items-center justify-center gap-2"
               >
-                Become a Seller
+                <UserPlus className="w-5 h-5" /> Become a Seller
               </Link>
             </div>
           </div>

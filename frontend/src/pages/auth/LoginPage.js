@@ -154,13 +154,13 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Logo and Header */}
         <div className="text-center">
           <Link to="/" className="inline-block">
             <div className="flex items-center justify-center space-x-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">OS</span>
               </div>
               <span className="text-2xl font-bold text-gray-900">Oshocks</span>
@@ -211,7 +211,7 @@ const LoginPage = () => {
                     onChange={handleChange}
                     className={`block w-full pl-10 pr-3 py-2.5 border ${
                       validationErrors.login ? 'border-red-300' : 'border-gray-300'
-                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors`}
                     placeholder="email@example.com or username or +254712345678"
                   />
                 </div>
@@ -236,9 +236,9 @@ const LoginPage = () => {
                   autoComplete="current-password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`block w-full pl-10 pr-10 py-2.5 border ${
-                    validationErrors.password ? 'border-red-300' : 'border-gray-300'
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+                    className={`block w-full pl-10 pr-10 py-2.5 border ${
+                      validationErrors.password ? 'border-red-300' : 'border-gray-300'
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors`}
                   placeholder="Enter your password"
                 />
                 <button
@@ -267,7 +267,7 @@ const LoginPage = () => {
                   type="checkbox"
                   checked={formData.rememberMe}
                   onChange={handleChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                  className="h-4 w-4 text-green-500 focus:ring-green-500 border-gray-300 rounded cursor-pointer"
                 />
                 <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700 cursor-pointer">
                   Remember me
@@ -276,7 +276,7 @@ const LoginPage = () => {
 
               <Link
                 to="/forgot-password"
-                className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors"
+                className="text-sm font-medium text-green-600 hover:text-green-500 transition-colors"
               >
                 Forgot password?
               </Link>
@@ -286,7 +286,7 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               {isSubmitting ? (
                 <>
@@ -345,7 +345,7 @@ const LoginPage = () => {
           Don't have an account?{' '}
           <Link
             to="/register"
-            className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+            className="font-medium text-orange-500 hover:text-orange-600 transition-colors"
           >
             Sign up for free
           </Link>

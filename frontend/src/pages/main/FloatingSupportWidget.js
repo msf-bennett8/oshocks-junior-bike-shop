@@ -33,7 +33,7 @@ const FloatingSupportWidget = () => {
       {isVisible && (
         <button
           onClick={toggleWidget}
-          className={`fixed right-0 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center z-50 ${
+          className={`fixed right-0 top-1/2 transform -translate-y-1/2 bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center z-50 ${
             isOpen ? 'w-0 opacity-0' : 'w-12 h-16 rounded-l-full'
           }`}
           aria-label="Open support panel"
@@ -51,7 +51,7 @@ const FloatingSupportWidget = () => {
             }`}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4">
+            <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-lg font-bold">Need Help?</h3>
                 <button
@@ -62,7 +62,7 @@ const FloatingSupportWidget = () => {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              <p className="text-sm text-blue-100 mb-3">Contact Support!</p>
+              <p className="text-sm text-green-100 mb-3">Contact Support!</p>
               
               {/* Full Support Page Button */}
               <button
@@ -108,9 +108,9 @@ const FloatingSupportWidget = () => {
 
                 <a
                   href="mailto:support@oshocks.co.ke"
-                  className="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg hover:shadow-md transition-all"
+                  className="flex items-center space-x-3 p-4 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg hover:shadow-md transition-all"
                 >
-                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
                     <Mail className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -185,8 +185,8 @@ const FloatingSupportWidget = () => {
               </div>
 
               {/* Response Time */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-xs text-blue-800">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p className="text-xs text-green-800">
                   <strong>Average Response Time:</strong> Within 2 hours during business hours
                 </p>
               </div>

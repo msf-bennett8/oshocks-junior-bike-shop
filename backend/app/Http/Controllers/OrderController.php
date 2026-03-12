@@ -190,6 +190,31 @@ class OrderController extends Controller
         }
     }
 
+        /**
+     * Get user's orders
+     */
+    public function index(Request $request)
+    {
+        $user = auth('sanctum')->user();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required'
+            ], 401);
+        }
+
+        $orders = Order::with(['orderItems.product', 'seller'])
+            ->where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $orders
+        ]);
+    }
+
     /**
      * Get order by order number
      */

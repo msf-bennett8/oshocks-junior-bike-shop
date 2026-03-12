@@ -66,7 +66,7 @@ const ScrollToTop = ({
       {showProgress && (
         <div className="fixed top-0 left-0 right-0 z-50 h-0.5 sm:h-1 bg-gray-200">
           <div
-            className="h-full bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 transition-all duration-150 ease-out"
+            className="h-full bg-gradient-to-r from-green-500 via-emerald-500 to-green-500 transition-all duration-150 ease-out"
             style={{ width: `${scrollProgress}%` }}
           />
         </div>
@@ -101,13 +101,13 @@ const ScrollToTop = ({
                 fill="none"
                 strokeDasharray={`${2 * Math.PI * 22}`}
                 strokeDashoffset={`${2 * Math.PI * 22 * (1 - scrollProgress / 100)}`}
-                className="text-purple-600 transition-all duration-150"
+                className="text-green-500 transition-all duration-150"
                 strokeLinecap="round"
               />
             </svg>
 
             {/* Main Button - Responsive sizing */}
-            <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full shadow-lg sm:shadow-xl md:shadow-2xl flex items-center justify-center transform transition-all duration-300 group-hover:scale-110 group-hover:shadow-purple-500/50 group-active:scale-95">
+            <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full shadow-lg sm:shadow-xl md:shadow-2xl flex items-center justify-center transform transition-all duration-300 group-hover:scale-110 group-hover:shadow-green-500/50 group-active:scale-95">
               {/* Arrow Icon - Responsive sizing */}
               <svg 
                 className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white group-hover:animate-bounce" 
@@ -125,7 +125,7 @@ const ScrollToTop = ({
             </div>
 
             {/* Pulse Effect */}
-            <div className="absolute inset-0 rounded-full bg-purple-600 opacity-0 group-hover:opacity-25 group-hover:animate-ping pointer-events-none" />
+            <div className="absolute inset-0 rounded-full bg-green-500 opacity-0 group-hover:opacity-25 group-hover:animate-ping pointer-events-none" />
           </div>
 
           {/* Tooltip - Hidden on mobile, visible on larger screens */}
@@ -176,7 +176,7 @@ export const SimpleScrollToTop = ({ threshold = 300, pathname = null, smooth = t
   return (
     <button
       onClick={scrollToTop}
-      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 z-40 bg-gradient-to-br from-purple-600 to-indigo-600 text-white p-3 sm:p-4 rounded-full shadow-lg sm:shadow-xl md:shadow-2xl hover:shadow-purple-500/50 hover:scale-110 active:scale-95 transition-all duration-300 group"
+      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 z-40 bg-gradient-to-br from-green-500 to-emerald-600 text-white p-3 sm:p-4 rounded-full shadow-lg sm:shadow-xl md:shadow-2xl hover:shadow-green-500/50 hover:scale-110 active:scale-95 transition-all duration-300 group"
       aria-label="Scroll to top"
     >
       <svg 
@@ -231,7 +231,7 @@ export const CornerScrollToTop = ({ threshold = 300, pathname = null, smooth = t
   return (
     <button
       onClick={scrollToTop}
-      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 z-40 bg-white border-2 border-purple-600 text-purple-600 px-3 py-2 sm:px-4 sm:py-3 rounded-lg shadow-lg sm:shadow-xl hover:bg-purple-600 hover:text-white transition-all duration-300 group flex items-center gap-1.5 sm:gap-2 font-semibold text-sm sm:text-base"
+      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 z-40 bg-white border-2 border-green-500 text-green-600 px-3 py-2 sm:px-4 sm:py-3 rounded-lg shadow-lg sm:shadow-xl hover:bg-green-500 hover:text-white transition-all duration-300 group flex items-center gap-1.5 sm:gap-2 font-semibold text-sm sm:text-base"
       aria-label="Scroll to top"
     >
       <span className="text-lg sm:text-xl group-hover:animate-bounce">⬆️</span>

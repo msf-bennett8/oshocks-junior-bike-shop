@@ -60,6 +60,17 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    // Alias for easier access
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function seller()
+    {
+        return $this->belongsTo(SellerProfile::class, 'seller_id');
+    }
+
     public function payment()
     {
         return $this->hasOne(Payment::class);

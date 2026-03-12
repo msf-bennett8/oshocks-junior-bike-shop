@@ -152,14 +152,14 @@ const FAQPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16 md:py-20">
+      <div className="bg-gradient-to-r from-green-500 to-emerald-700 text-white py-16 md:py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <HelpCircle className="w-16 h-16 mx-auto mb-4" />
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Frequently Asked Questions
             </h1>
-            <p className="text-xl text-blue-100 mb-8">
+            <p className="text-xl text-green-100 mb-8">
               Find answers to common questions about ordering, payments, shipping, and more
             </p>
             
@@ -171,7 +171,7 @@ const FAQPage = () => {
                 placeholder="Search for answers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full pl-12 pr-4 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-300"
               />
             </div>
           </div>
@@ -188,7 +188,7 @@ const FAQPage = () => {
                 onClick={() => setSelectedCategory(category.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
                   selectedCategory === category.id
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-green-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -226,7 +226,7 @@ const FAQPage = () => {
                       {faq.question}
                     </span>
                     <ChevronDown
-                      className={`w-5 h-5 text-blue-600 flex-shrink-0 transition-transform ${
+                      className={`w-5 h-5 text-green-600 flex-shrink-0 transition-transform ${
                         openItem === index ? 'transform rotate-180' : ''
                       }`}
                     />
@@ -244,7 +244,7 @@ const FAQPage = () => {
           )}
 
           {/* Still Have Questions Section */}
-          <div className="mt-16 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-8 md:p-12">
+          <div className="mt-16 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-8 md:p-12">
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
                 Still have questions?
@@ -256,14 +256,14 @@ const FAQPage = () => {
 
             <div className="grid md:grid-cols-3 gap-6">
               <div className="bg-white rounded-lg p-6 text-center hover:shadow-md transition-shadow">
-                <div className="bg-blue-100 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageCircle className="w-7 h-7 text-blue-600" />
+                <div className="bg-green-100 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MessageCircle className="w-7 h-7 text-green-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Live Chat</h3>
                 <p className="text-gray-600 text-sm mb-4">
                   Chat with our team in real-time
                 </p>
-                <button className="text-blue-600 font-semibold hover:text-blue-700">
+                <button className="text-green-600 font-semibold hover:text-green-700">
                   Start Chat
                 </button>
               </div>
@@ -282,14 +282,14 @@ const FAQPage = () => {
               </div>
 
               <div className="bg-white rounded-lg p-6 text-center hover:shadow-md transition-shadow">
-                <div className="bg-purple-100 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <HelpCircle className="w-7 h-7 text-purple-600" />
+                <div className="bg-green-100 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <HelpCircle className="w-7 h-7 text-green-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Help Center</h3>
                 <p className="text-gray-600 text-sm mb-4">
                   Browse guides and tutorials
                 </p>
-                <button className="text-purple-600 font-semibold hover:text-purple-700">
+                <button className="text-green-600 font-semibold hover:text-green-700">
                   Visit Center
                 </button>
               </div>

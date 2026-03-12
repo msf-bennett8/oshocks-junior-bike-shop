@@ -317,7 +317,7 @@ const BikeFinder = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-green-600 mx-auto mb-4"></div>
           <p className="text-gray-600 text-lg">Finding the perfect bikes for you...</p>
         </div>
       </div>
@@ -328,13 +328,13 @@ const BikeFinder = () => {
     <div className="min-h-screen bg-gray-50">
       <style>{scrollbarStyles}</style>
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-8 md:py-12 px-4">
+      <div className="bg-gradient-to-r from-green-500 to-emerald-700 text-white py-8 md:py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-center mb-4">
             <Bike className="w-10 h-10 md:w-12 md:h-12 mr-3" />
             <h1 className="text-3xl md:text-5xl font-bold">Bike Finder</h1>
           </div>
-          <p className="text-center text-blue-100 text-base md:text-lg mb-6">
+          <p className="text-center text-green-100 text-base md:text-lg mb-6">
             Find Your Perfect Ride - Browse {bikes.length}+ Bikes
           </p>
 
@@ -347,7 +347,7 @@ const BikeFinder = () => {
                 placeholder="Search by brand, model, or features..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 md:pl-12 pr-10 md:pr-12 py-3 md:py-4 rounded-lg text-gray-900 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full pl-10 md:pl-12 pr-10 md:pr-12 py-3 md:py-4 rounded-lg text-gray-900 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-green-300"
               />
               {searchQuery && (
                 <button
@@ -374,13 +374,13 @@ const BikeFinder = () => {
                   onClick={() => setSelectedCategory(category.id)}
                   className={`flex-shrink-0 flex items-center space-x-1.5 md:space-x-2 px-3 md:px-4 py-2 md:py-2.5 rounded-full whitespace-nowrap transition-all text-xs md:text-sm font-medium ${
                     selectedCategory === category.id
-                      ? 'bg-blue-600 text-white shadow-md'
+                      ? 'bg-green-600 text-white shadow-md'
                       : 'bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-200'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5 md:w-4 md:h-4" />
                   <span>{category.name}</span>
-                  <span className={`text-xs ${selectedCategory === category.id ? 'text-blue-200' : 'text-gray-500'}`}>
+                  <span className={`text-xs ${selectedCategory === category.id ? 'text-green-200' : 'text-gray-500'}`}>
                     ({category.count})
                   </span>
                 </button>
@@ -400,7 +400,7 @@ const BikeFinder = () => {
             <Filter className="w-5 h-5" />
             <span className="font-semibold">Filters</span>
             {(selectedFeatures.length > 0 || selectedBrand !== 'all') && (
-              <span className="px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full">
+              <span className="px-2 py-0.5 bg-green-600 text-white text-xs rounded-full">
                 {selectedFeatures.length + (selectedBrand !== 'all' ? 1 : 0)}
               </span>
             )}
@@ -417,7 +417,7 @@ const BikeFinder = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={clearAllFilters}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                    className="text-sm text-green-600 hover:text-green-700 font-medium"
                   >
                     Clear
                   </button>
@@ -440,7 +440,7 @@ const BikeFinder = () => {
                 <select
                   value={selectedBrand}
                   onChange={(e) => setSelectedBrand(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer transition-all hover:border-gray-400"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 cursor-pointer transition-all hover:border-gray-400"
                 >
                   {brands.map((brand) => (
                     <option key={brand} value={brand === 'All Brands' ? 'all' : brand.toLowerCase()}>
@@ -484,7 +484,7 @@ const BikeFinder = () => {
                         type="checkbox"
                         checked={selectedFeatures.includes(feature)}
                         onChange={() => toggleFeature(feature)}
-                        className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
+                        className="w-3 h-3 text-green-600 border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:ring-offset-0 cursor-pointer accent-green-600"
                       />
                       <span className="ml-2.5 text-sm text-gray-700 group-hover:text-gray-900 select-none">{feature}</span>
                     </label>
@@ -507,7 +507,7 @@ const BikeFinder = () => {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   >
                     <option value="popularity">Popularity</option>
                     <option value="price-low">Price: Low to High</option>
@@ -520,13 +520,13 @@ const BikeFinder = () => {
                   <div className="flex border border-gray-300 rounded-lg">
                     <button
                       onClick={() => setViewMode('grid')}
-                      className={`flex-1 px-3 py-2 text-sm ${viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600'}`}
+                      className={`flex-1 px-3 py-2 text-sm ${viewMode === 'grid' ? 'bg-green-600 text-white' : 'bg-white text-gray-600'}`}
                     >
                       Grid
                     </button>
                     <button
                       onClick={() => setViewMode('list')}
-                      className={`flex-1 px-3 py-2 text-sm ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600'}`}
+                      className={`flex-1 px-3 py-2 text-sm ${viewMode === 'list' ? 'bg-green-600 text-white' : 'bg-white text-gray-600'}`}
                     >
                       List
                     </button>
@@ -538,7 +538,7 @@ const BikeFinder = () => {
               {(selectedCategory !== 'all' || selectedBrand !== 'all' || selectedFeatures.length > 0) && (
                 <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-gray-200">
                   {selectedCategory !== 'all' && (
-                    <span className="inline-flex items-center gap-1 px-2 md:px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs md:text-sm">
+                    <span className="inline-flex items-center gap-1 px-2 md:px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs md:text-sm">
                       {categories.find(c => c.id === selectedCategory)?.name}
                       <button onClick={() => setSelectedCategory('all')}>
                         <X className="w-3 h-3" />
@@ -573,7 +573,7 @@ const BikeFinder = () => {
                 <p className="text-sm md:text-base text-gray-600 mb-4">Try adjusting your filters or search criteria</p>
                 <button
                   onClick={clearAllFilters}
-                  className="px-4 md:px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm md:text-base"
+                  className="px-4 md:px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm md:text-base"
                 >
                   Clear All Filters
                 </button>
@@ -625,7 +625,7 @@ const BikeFinder = () => {
 
                     <div className="p-3 md:p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold text-blue-600 uppercase">
+                        <span className="text-xs font-semibold text-green-600 uppercase">
                           {bike.brand}
                         </span>
                         <span className="text-xs text-gray-500 capitalize">
@@ -670,7 +670,7 @@ const BikeFinder = () => {
                           </span>
                         ))}
                         {bike.features.length > 3 && (
-                          <span className="px-2 py-0.5 text-blue-600 text-xs">
+                          <span className="px-2 py-0.5 text-green-600 text-xs">
                             +{bike.features.length - 3} more
                           </span>
                         )}
@@ -691,7 +691,7 @@ const BikeFinder = () => {
                           disabled={!bike.inStock}
                           className={`flex items-center gap-1 md:gap-2 px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-colors ${
                             bike.inStock
-                              ? 'bg-blue-600 text-white hover:bg-blue-700'
+                              ? 'bg-green-600 text-white hover:bg-green-700'
                               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                           }`}
                         >
@@ -712,7 +712,7 @@ const BikeFinder = () => {
                   <button className="px-3 md:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 text-sm md:text-base">
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <button className="px-3 md:px-4 py-2 bg-blue-600 text-white rounded-lg text-sm md:text-base">
+                  <button className="px-3 md:px-4 py-2 bg-green-600 text-white rounded-lg text-sm md:text-base">
                     1
                   </button>
                   <button className="px-3 md:px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm md:text-base">
@@ -736,8 +736,8 @@ const BikeFinder = () => {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 text-center">
             <div>
-              <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
-                <CheckCircle className="w-6 h-6 md:w-8 md:h-8 text-blue-600" />
+              <div className="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                <CheckCircle className="w-6 h-6 md:w-8 md:h-8 text-green-600" />
               </div>
               <h3 className="text-sm md:text-base font-semibold text-gray-900 mb-1 md:mb-2">Quality Guaranteed</h3>
               <p className="text-xs md:text-sm text-gray-600">All bikes inspected and certified</p>
@@ -768,20 +768,20 @@ const BikeFinder = () => {
       </div>
 
       {/* Help Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-8 md:py-12 px-4">
+      <div className="bg-gradient-to-r from-green-500 to-emerald-700 text-white py-8 md:py-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">Need Help Choosing?</h2>
-          <p className="text-sm md:text-base text-blue-100 mb-4 md:mb-6">
+          <p className="text-sm md:text-base text-green-100 mb-4 md:mb-6">
             Our expert team is here to help you find the perfect bike for your needs
           </p>
           <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 md:gap-4">
-            <button className="px-4 md:px-6 py-2.5 md:py-3 bg-white text-blue-600 rounded-lg text-sm md:text-base font-semibold hover:bg-blue-50 transition-colors">
+            <button className="px-4 md:px-6 py-2.5 md:py-3 bg-white text-green-600 rounded-lg text-sm md:text-base font-semibold hover:bg-green-50 transition-colors">
               Chat with Expert
             </button>
-            <button className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-white text-white rounded-lg text-sm md:text-base font-semibold hover:bg-white hover:text-blue-600 transition-colors">
+            <button className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-white text-white rounded-lg text-sm md:text-base font-semibold hover:bg-white hover:text-green-600 transition-colors">
               Bike Size Guide
             </button>
-            <button className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-white text-white rounded-lg text-sm md:text-base font-semibold hover:bg-white hover:text-blue-600 transition-colors">
+            <button className="px-4 md:px-6 py-2.5 md:py-3 border-2 border-white text-white rounded-lg text-sm md:text-base font-semibold hover:bg-white hover:text-green-600 transition-colors">
               Compare Bikes
             </button>
           </div>
@@ -799,9 +799,9 @@ const BikeFinder = () => {
             <input
               type="email"
               placeholder="Enter your email"
-              className="flex-1 px-4 py-2.5 md:py-3 rounded-lg border border-gray-300 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-2.5 md:py-3 rounded-lg border border-gray-300 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-green-500"
             />
-            <button className="px-4 md:px-6 py-2.5 md:py-3 bg-blue-600 text-white rounded-lg text-sm md:text-base font-semibold hover:bg-blue-700 transition-colors whitespace-nowrap">
+            <button className="px-4 md:px-6 py-2.5 md:py-3 bg-green-600 text-white rounded-lg text-sm md:text-base font-semibold hover:bg-green-700 transition-colors whitespace-nowrap">
               Subscribe
             </button>
           </div>

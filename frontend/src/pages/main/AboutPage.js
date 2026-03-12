@@ -35,14 +35,14 @@ const AboutPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 md:py-24">
+      <div className="bg-gradient-to-r from-green-500 to-emerald-700 text-white py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <Bike className="w-16 h-16 mx-auto mb-6" />
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               About Oshocks Junior Bike Shop
             </h1>
-            <p className="text-xl md:text-2xl text-blue-100">
+            <p className="text-xl md:text-2xl text-green-100">
               Kenya's Premier Cycling Marketplace
             </p>
           </div>
@@ -66,7 +66,7 @@ const AboutPage = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
             {stats.map((stat, index) => (
               <div key={index} className="bg-white rounded-lg shadow-md p-6 text-center">
-                <div className="text-3xl md:text-4xl font-bold text-blue-600 mb-2">
+                <div className="text-3xl md:text-4xl font-bold text-green-600 mb-2">
                   {stat.number}
                 </div>
                 <div className="text-gray-600 text-sm md:text-base">{stat.label}</div>
@@ -81,7 +81,7 @@ const AboutPage = () => {
           <div className="grid md:grid-cols-2 gap-8 mb-16">
             {features.map((feature, index) => (
               <div key={index} className="bg-white rounded-lg shadow-md p-8 hover:shadow-lg transition-shadow">
-                <div className="text-blue-600 mb-4">{feature.icon}</div>
+                <div className="text-green-600 mb-4">{feature.icon}</div>
                 <h3 className="text-xl font-bold mb-3 text-gray-900">{feature.title}</h3>
                 <p className="text-gray-700 leading-relaxed">{feature.description}</p>
               </div>
@@ -89,7 +89,7 @@ const AboutPage = () => {
           </div>
 
           {/* Story Section */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-8 md:p-12 mb-12">
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-8 md:p-12 mb-12">
             <h2 className="text-3xl font-bold mb-6 text-gray-900">Our Story</h2>
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>
@@ -107,7 +107,7 @@ const AboutPage = () => {
           {/* Technology & Innovation */}
           <div className="bg-white rounded-lg shadow-md p-8 md:p-12 mb-12">
             <div className="flex items-center gap-3 mb-6">
-              <Globe className="w-8 h-8 text-blue-600" />
+              <Globe className="w-8 h-8 text-green-600" />
               <h2 className="text-3xl font-bold text-gray-900">Technology & Innovation</h2>
             </div>
             <p className="text-gray-700 leading-relaxed mb-4">
@@ -119,16 +119,16 @@ const AboutPage = () => {
           </div>
 
           {/* Commitment Section */}
-          <div className="bg-blue-600 text-white rounded-lg p-8 md:p-12 text-center">
+          <div className="bg-green-600 text-white rounded-lg p-8 md:p-12 text-center">
             <h2 className="text-3xl font-bold mb-6">Our Commitment to You</h2>
-            <p className="text-lg text-blue-100 leading-relaxed mb-6 max-w-3xl mx-auto">
+            <p className="text-lg text-green-100 leading-relaxed mb-6 max-w-3xl mx-auto">
               We're committed to providing authentic products, competitive prices, reliable delivery, and exceptional customer service. Whether you're a casual rider or an elite cyclist, we're here to support your cycling journey every step of the way.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="/products" className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors">
+              <a href="/products" className="bg-white text-green-600 px-8 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors">
                 Shop Now
               </a>
-              <a href="/contact" className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+              <a href="/contact" className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors">
                 Contact Us
               </a>
             </div>
