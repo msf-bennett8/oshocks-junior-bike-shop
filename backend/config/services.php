@@ -96,4 +96,16 @@ return [
         'default_transaction_desc' => env('MPESA_DEFAULT_TRANSACTION_DESC', 'Payment for goods'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Paystack Configuration
+    |--------------------------------------------------------------------------
+    */
+    'paystack' => [
+        'public_key' => env('PAYSTACK_PUBLIC_KEY'),
+        'secret_key' => env('PAYSTACK_SECRET_KEY'),
+        'environment' => env('PAYSTACK_ENVIRONMENT', 'test'),
+        'currency' => env('PAYSTACK_CURRENCY', 'KES'),
+    ],
+
 ];

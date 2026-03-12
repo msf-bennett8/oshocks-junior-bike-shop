@@ -7,12 +7,13 @@
     "require": {
         "php": "^8.2",
         "cloudinary-labs/cloudinary-laravel": "^3.0",
+        "fakerphp/faker": "^1.23",
+        "flutterwavedev/flutterwave-v3": "^1.1",
         "guzzlehttp/guzzle": "^7.9.2",
         "laravel/framework": "^11.31",
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.16",
         "laravel/tinker": "^2.10.1",
-        "fakerphp/faker": "^1.23",
         "socialiteproviders/strava": "^4.1"
     },
     "require-dev": {

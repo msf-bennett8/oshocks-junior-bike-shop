@@ -180,6 +180,10 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('/payments/{id}', [PaymentController::class, 'show']);
     Route::post('/payments/record', [PaymentController::class, 'recordPayment']);
 
+    // Paystack callback and webhook (public)
+    Route::get('/v1/payments/card/callback', [CardPaymentController::class, 'callback']);
+    Route::post('/v1/payments/card/webhook', [CardPaymentController::class, 'webhook']);
+
     // Reviews
     Route::post('/reviews', [ReviewController::class, 'store']);
     Route::put('/reviews/{id}', [ReviewController::class, 'update']);
@@ -343,21 +347,25 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     });
 });
 
-// ============================================================================
-// DYNAMIC PUBLIC ROUTES - MUST COME LAST
-// ============================================================================
-// These routes use dynamic parameters and MUST be defined after all specific routes
-// to prevent them from catching specific route patterns
-Route::prefix('v1')->group(function () {
-    // Get order by order number (public for tracking)
-    // This MUST come after /orders/pending-payments and other specific routes
-    Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
-});
+    // ============================================================================
+    // DYNAMIC PUBLIC ROUTES - MUST COME LAST
+    // ============================================================================
+    // These routes use dynamic parameters and MUST be defined after all specific routes
+    // to prevent them from catching specific route patterns
+    Route::prefix('v1')->group(function () {
+        // Get order by order number (public for tracking)
+        // This MUST come after /orders/pending-payments and other specific routes
+        Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
+    });
 
-// M-Pesa callback (public - called by Safaricom)
-Route::post('/v1/payments/mpesa/callback', [PaymentController::class, 'mpesaCallback']);
+    // M-Pesa callback (public - called by Safaricom)
+    Route::post('/v1/payments/mpesa/callback', [PaymentController::class, 'mpesaCallback']);
 
-// Health check
-Route::get('/health', function () {
-    return response()->json(['status' => 'ok', 'timestamp' => now()]);
-});
+    // Card Payments (Paystack)
+    Route::post('/payments/card/initialize', [CardPaymentController::class, 'initialize']);
+    Route::get('/payments/card/verify/{reference}', [CardPaymentController::class, 'verify']);
+    
+    // Health check
+    Route::get('/health', function () {
+        return response()->json(['status' => 'ok', 'timestamp' => now()]);
+    });
