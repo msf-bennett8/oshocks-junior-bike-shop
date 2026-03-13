@@ -181,10 +181,6 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('/payments/{id}', [PaymentController::class, 'show']);
     Route::post('/payments/record', [PaymentController::class, 'recordPayment']);
 
-    // Paystack callback and webhook (public)
-    Route::get('/payments/card/callback', [CardPaymentController::class, 'callback']);
-    Route::post('/payments/card/webhook', [CardPaymentController::class, 'webhook']);
-
     // Card Payments (Paystack) - Protected
     Route::post('/payments/card/initialize', [CardPaymentController::class, 'initialize']);
     Route::get('/payments/card/verify/{reference}', [CardPaymentController::class, 'verify']);
@@ -365,6 +361,10 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     // M-Pesa callback (public - called by Safaricom)
     Route::post('/v1/payments/mpesa/callback', [PaymentController::class, 'mpesaCallback']);
+    
+    // Paystack callback and webhook (public - called by Paystack)
+    Route::get('/v1/payments/card/callback', [CardPaymentController::class, 'callback']);
+    Route::post('/v1/payments/card/webhook', [CardPaymentController::class, 'webhook']);
     
     // Health check
     Route::get('/health', function () {

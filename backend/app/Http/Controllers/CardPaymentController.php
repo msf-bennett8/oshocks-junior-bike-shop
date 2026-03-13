@@ -48,7 +48,7 @@ class CardPaymentController extends Controller
             
             $amount = $order->total;
             $sellerId = $order->items->first()->product->seller_id ?? null;
-            $commissionData = $this->commissionService::calculate($amount, $sellerId);
+            $commissionData = $this->commissionService->calculate($amount, $sellerId);
 
             // Create payment record
             $payment = Payment::create([
@@ -56,6 +56,7 @@ class CardPaymentController extends Controller
                 'seller_id' => $order->items->first()->product->seller_id ?? null,
                 'sale_channel' => 'online_delivery',
                 'payment_method' => 'card',
+                'transaction_id' => $reference,
                 'transaction_reference' => $reference,
                 'amount' => $amount,
                 'currency' => 'KES',
@@ -211,7 +212,7 @@ class CardPaymentController extends Controller
         }
     }
 
-    /**
+        /**
      * Handle Paystack webhook
      */
     public function webhook(Request $request)
@@ -219,10 +220,25 @@ class CardPaymentController extends Controller
         // Verify webhook signature
         $signature = $request->header('x-paystack-signature');
         $secret = config('services.paystack.secret_key');
+        
+        // Validate we have required values
+        if (empty($signature)) {
+            Log::warning('Paystack webhook: Missing signature header');
+            return response()->json(['status' => 'missing signature'], 400);
+        }
+        
+        if (empty($secret)) {
+            Log::error('Paystack webhook: Secret key not configured');
+            return response()->json(['status' => 'server config error'], 500);
+        }
+        
         $computed = hash_hmac('sha512', $request->getContent(), $secret);
 
         if (!hash_equals($computed, $signature)) {
-            Log::warning('Invalid Paystack webhook signature');
+            Log::warning('Invalid Paystack webhook signature', [
+                'ip' => $request->ip(),
+                'signature' => substr($signature, 0, 10) . '...',
+            ]);
             return response()->json(['status' => 'invalid signature'], 400);
         }
 
@@ -232,17 +248,23 @@ class CardPaymentController extends Controller
         Log::info('Paystack webhook received', ['event' => $event]);
 
         if ($event === 'charge.success') {
-            $reference = $data['reference'];
+            $reference = $data['reference'] ?? null;
+            
+            if (!$reference) {
+                Log::warning('Paystack webhook: charge.success missing reference');
+                return response()->json(['status' => 'missing reference'], 400);
+            }
+            
             $payment = Payment::where('transaction_reference', $reference)->first();
 
             if ($payment && $payment->status === 'pending') {
                 $payment->update([
                     'status' => 'completed',
-                    'external_transaction_id' => (string) $data['id'],
-                    'payment_collected_at' => $data['paid_at'],
+                    'external_transaction_id' => (string) ($data['id'] ?? ''),
+                    'payment_collected_at' => $data['paid_at'] ?? now(),
                     'verified_at' => now(),
                     'payment_details' => json_encode([
-                        'channel' => $data['channel'],
+                        'channel' => $data['channel'] ?? null,
                         'card_last4' => $data['authorization']['last4'] ?? null,
                         'card_brand' => $data['authorization']['brand'] ?? null,
                     ]),
@@ -251,6 +273,17 @@ class CardPaymentController extends Controller
                 $payment->order->update([
                     'payment_status' => 'paid',
                     'status' => 'processing'
+                ]);
+                
+                Log::info('Paystack webhook processed charge.success', [
+                    'payment_id' => $payment->id,
+                    'reference' => $reference
+                ]);
+            } else {
+                Log::info('Paystack webhook: Payment not found or already processed', [
+                    'reference' => $reference,
+                    'payment_exists' => $payment ? 'yes' : 'no',
+                    'status' => $payment?->status
                 ]);
             }
         }

@@ -32,12 +32,16 @@ class PaystackService
     ): array {
         $payload = [
             'email' => $email,
-            'amount' => (int) ($amount * 100), // Paystack uses kobo/cents
+            'amount' => (int) ($amount * 100),
             'currency' => $this->currency,
             'reference' => $reference,
             'metadata' => $metadata,
-            'callback_url' => $callbackUrl,
         ];
+
+        // Only add callback_url if provided
+        if ($callbackUrl) {
+            $payload['callback_url'] = $callbackUrl;
+        }
 
         Log::info('Initializing Paystack transaction', [
             'reference' => $reference,
