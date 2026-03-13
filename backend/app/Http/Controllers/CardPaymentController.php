@@ -258,15 +258,27 @@ class CardPaymentController extends Controller
             $payment = Payment::where('transaction_reference', $reference)->first();
 
             if ($payment && $payment->status === 'pending') {
+                // Extract authorization data for saved cards
+                $authorization = $data['authorization'] ?? [];
+                $isReusable = $authorization['reusable'] ?? false;
+                
                 $payment->update([
                     'status' => 'completed',
                     'external_transaction_id' => (string) ($data['id'] ?? ''),
+                    'authorization_code' => $authorization['authorization_code'] ?? null,
+                    'card_last4' => $authorization['last4'] ?? null,
+                    'card_brand' => $authorization['brand'] ?? null,
+                    'card_expiry_month' => $authorization['exp_month'] ?? null,
+                    'card_expiry_year' => $authorization['exp_year'] ?? null,
+                    'is_reusable' => $isReusable,
                     'payment_collected_at' => $data['paid_at'] ?? now(),
                     'verified_at' => now(),
                     'payment_details' => json_encode([
                         'channel' => $data['channel'] ?? null,
-                        'card_last4' => $data['authorization']['last4'] ?? null,
-                        'card_brand' => $data['authorization']['brand'] ?? null,
+                        'card_last4' => $authorization['last4'] ?? null,
+                        'card_brand' => $authorization['brand'] ?? null,
+                        'authorization_code' => $authorization['authorization_code'] ?? null,
+                        'reusable' => $isReusable,
                     ]),
                 ]);
 
@@ -323,6 +335,179 @@ class CardPaymentController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Verification error'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get user's saved cards (reusable authorizations)
+     */
+    public function getSavedCards(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            // Get unique saved cards from successful payments
+            $savedCards = Payment::whereHas('order', function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
+                ->whereNotNull('authorization_code')
+                ->where('is_reusable', true)
+                ->where('status', 'completed')
+                ->select('authorization_code', 'card_last4', 'card_brand', 'card_expiry_month', 'card_expiry_year')
+                ->distinct('authorization_code')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $savedCards
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to get saved cards', [
+                'error' => $e->getMessage(),
+                'user_id' => $request->user()?->id
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve saved cards'
+            ], 500);
+        }
+    }
+
+    /**
+     * Charge saved card directly (inline payment)
+     */
+    public function chargeSavedCard(Request $request)
+    {
+        $validated = $request->validate([
+            'order_id' => 'required|exists:orders,id',
+            'authorization_code' => 'required|string',
+            'email' => 'required|email',
+        ]);
+
+        try {
+            $order = Order::with('items.product.seller', 'user')->findOrFail($validated['order_id']);
+
+            if ($order->payment_status === 'paid') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order is already paid'
+                ], 400);
+            }
+
+            // Verify this authorization_code belongs to the user
+            $existingPayment = Payment::where('authorization_code', $validated['authorization_code'])
+                ->whereHas('order', function ($query) use ($order) {
+                    $query->where('user_id', $order->user_id);
+                })
+                ->where('is_reusable', true)
+                ->where('status', 'completed')
+                ->first();
+
+            if (!$existingPayment) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid or expired saved card'
+                ], 400);
+            }
+
+            // Generate new reference
+            $reference = 'OS_CARD_SAVED_' . strtoupper(Str::random(10)) . '_' . time();
+            
+            $amount = $order->total;
+            $sellerId = $order->items->first()->product->seller_id ?? null;
+            $commissionData = $this->commissionService->calculate($amount, $sellerId);
+
+            // Create payment record
+            $payment = Payment::create([
+                'order_id' => $order->id,
+                'seller_id' => $sellerId,
+                'sale_channel' => 'online_delivery',
+                'payment_method' => 'card',
+                'transaction_id' => $reference,
+                'transaction_reference' => $reference,
+                'authorization_code' => $validated['authorization_code'],
+                'card_last4' => $existingPayment->card_last4,
+                'card_brand' => $existingPayment->card_brand,
+                'card_expiry_month' => $existingPayment->card_expiry_month,
+                'card_expiry_year' => $existingPayment->card_expiry_year,
+                'is_reusable' => true,
+                'amount' => $amount,
+                'currency' => 'KES',
+                'platform_commission_rate' => $commissionData['commission_rate'],
+                'platform_commission_amount' => $commissionData['commission_amount'],
+                'seller_payout_amount' => $commissionData['seller_payout'],
+                'status' => 'pending',
+                'payout_status' => 'pending',
+                'metadata' => [
+                    'order_number' => $order->order_number,
+                    'customer_email' => $validated['email'],
+                    'payment_type' => 'card_saved',
+                    'previous_payment_id' => $existingPayment->id,
+                ],
+            ]);
+
+            // Charge the saved card directly
+            $response = $this->paystackService->chargeSavedCard(
+                authorizationCode: $validated['authorization_code'],
+                email: $validated['email'],
+                amount: $amount,
+                reference: $reference,
+                metadata: [
+                    'order_id' => $order->id,
+                    'payment_id' => $payment->id,
+                    'customer_id' => $order->user_id,
+                ]
+            );
+
+            if ($response['success'] && $response['status'] === 'success') {
+                // Payment successful immediately
+                $payment->update([
+                    'status' => 'completed',
+                    'external_transaction_id' => (string) $response['transaction_id'],
+                    'payment_collected_at' => $response['paid_at'],
+                    'verified_at' => now(),
+                ]);
+
+                $payment->order->update([
+                    'payment_status' => 'paid',
+                    'status' => 'processing'
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Payment successful',
+                    'data' => [
+                        'payment_id' => $payment->id,
+                        'reference' => $reference,
+                        'status' => 'completed',
+                        'amount' => $response['amount'],
+                    ]
+                ]);
+            }
+
+            // Failed
+            $payment->update([
+                'status' => 'failed',
+                'error_message' => $response['error'],
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $response['error'] ?? 'Failed to charge saved card'
+            ], 400);
+
+        } catch (\Exception $e) {
+            Log::error('Saved card charge failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment processing failed'
             ], 500);
         }
     }

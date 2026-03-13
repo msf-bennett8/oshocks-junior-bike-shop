@@ -184,6 +184,8 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Card Payments (Paystack) - Protected
     Route::post('/payments/card/initialize', [CardPaymentController::class, 'initialize']);
     Route::get('/payments/card/verify/{reference}', [CardPaymentController::class, 'verify']);
+    Route::get('/payments/card/saved-cards', [CardPaymentController::class, 'getSavedCards']);
+    Route::post('/payments/card/charge-saved', [CardPaymentController::class, 'chargeSavedCard']);
 
     // Reviews
     Route::post('/reviews', [ReviewController::class, 'store']);

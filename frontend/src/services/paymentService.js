@@ -218,10 +218,62 @@ const paymentService = {
       'mpesa_stk': 'M-Pesa (STK Push)',
       'mpesa_manual': 'M-Pesa (Manual)',
       'card': 'Credit/Debit Card',
+      'card_saved': 'Saved Card',
       'bank_transfer': 'Bank Transfer',
       'cash': 'Cash on Delivery'
     };
     return names[method] || method;
+  },
+
+  // ============================================================================
+  // SAVED CARDS (Tokenized payments)
+  // ============================================================================
+
+  /**
+   * Get user's saved cards (from previous successful payments)
+   * @returns {Promise} List of saved cards with authorization codes
+   */
+  getSavedCards: async () => {
+    try {
+      console.log('💳 Fetching saved cards...');
+      const response = await api.get('/payments/card/saved-cards');
+      console.log('✅ Saved cards:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Failed to fetch saved cards:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Charge saved card directly (inline payment, no redirect)
+   * @param {object} paymentData - {
+   *   order_id: number,
+   *   authorization_code: string,
+   *   email: string
+   * }
+   * @returns {Promise} Payment result
+   */
+  chargeSavedCard: async (paymentData) => {
+    try {
+      console.log('========================================');
+      console.log('💳 [chargeSavedCard] Charging saved card');
+      console.log('========================================');
+      console.log('📋 Payment Data:', JSON.stringify(paymentData, null, 2));
+      
+      const response = await api.post('/payments/card/charge-saved', paymentData);
+      
+      console.log('✅ [chargeSavedCard] SUCCESS:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('========================================');
+      console.error('❌ [chargeSavedCard] FAILED');
+      console.error('========================================');
+      console.error('📊 Status:', error.response?.status);
+      console.error('📦 Response:', JSON.stringify(error.response?.data, null, 2));
+      console.error('========================================');
+      throw error;
+    }
   }
 };
 

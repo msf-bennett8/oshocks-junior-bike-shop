@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CreditCard, Truck, MapPin, Phone, Mail, User, ShoppingBag, AlertCircle, CheckCircle, Loader, Shield } from 'lucide-react';
+import { CreditCard, Truck, MapPin, Phone, Mail, User, ShoppingBag, AlertCircle, CheckCircle, Loader, Shield, Wallet } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
@@ -41,6 +41,12 @@ const CheckoutPage = () => {
     expiryDate: '',
     cvv: ''
   });
+  
+  // Saved cards state
+  const [savedCards, setSavedCards] = useState([]);
+  const [selectedSavedCard, setSelectedSavedCard] = useState(null);
+  const [showAddNewCard, setShowAddNewCard] = useState(false);
+  const [loadingSavedCards, setLoadingSavedCards] = useState(false);
   
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [errors, setErrors] = useState({});
@@ -428,44 +434,78 @@ const countyInfo = {
                   try {
                     setLoading(true);
                     
-                    console.log('========================================');
-                    console.log('💳 [handlePaymentSubmit] CARD PAYMENT FLOW');
-                    console.log('========================================');
-                    console.log('📋 Order ID:', createdOrder.id);
-                    console.log('📋 Order Number:', createdOrder.order_number);
-                    console.log('📋 Email:', shippingInfo.email);
-                    console.log('🚀 Calling: paymentService.initiateCard()');
-                    
-                    // Initiate card payment via Paystack
-                    const cardResponse = await paymentService.initiateCard({
-                      order_id: createdOrder.id,
-                      email: shippingInfo.email
-                    });
-                    
-                    console.log('✅ initiateCard returned:', JSON.stringify(cardResponse, null, 2));
+                    // Check if using saved card or new card
+                    if (selectedSavedCard && !showAddNewCard) {
+                      // === INLINE PAYMENT WITH SAVED CARD ===
+                      console.log('========================================');
+                      console.log('💳 [handlePaymentSubmit] SAVED CARD PAYMENT');
+                      console.log('========================================');
+                      console.log('📋 Order ID:', createdOrder.id);
+                      console.log('📋 Using saved card:', selectedSavedCard.card_brand, '****', selectedSavedCard.card_last4);
+                      
+                      const cardResponse = await paymentService.chargeSavedCard({
+                        order_id: createdOrder.id,
+                        email: shippingInfo.email,
+                        authorization_code: selectedSavedCard.authorization_code
+                      });
+                      
+                      console.log('✅ Saved card charged:', cardResponse);
+                      
+                      if (cardResponse.success && cardResponse.data.status === 'completed') {
+                        // Payment successful immediately - no redirect needed!
+                        clearCart();
+                        navigate('/order-success', {
+                          state: { 
+                            orderNumber: createdOrder.order_number,
+                            paymentMethod: 'card_saved',
+                            reference: cardResponse.data.reference
+                          }
+                        });
+                        return;
+                      } else {
+                        throw new Error(cardResponse.message || 'Saved card payment failed');
+                      }
+                    } else {
+                      // === FIRST TIME USER - REDIRECT TO PAYSTACK ===
+                      console.log('========================================');
+                      console.log('💳 [handlePaymentSubmit] NEW CARD PAYMENT (Redirect)');
+                      console.log('========================================');
+                      console.log('📋 Order ID:', createdOrder.id);
+                      console.log('📋 Order Number:', createdOrder.order_number);
+                      console.log('📋 Email:', shippingInfo.email);
+                      console.log('🚀 Calling: paymentService.initiateCard()');
+                      
+                      // Initiate card payment via Paystack
+                      const cardResponse = await paymentService.initiateCard({
+                        order_id: createdOrder.id,
+                        email: shippingInfo.email
+                      });
+                      
+                      console.log('✅ initiateCard returned:', JSON.stringify(cardResponse, null, 2));
 
-                        console.log('🔍 Checking cardResponse.success:', cardResponse.success);
-            console.log('🔍 Checking cardResponse.data:', cardResponse.data);
-            console.log('🔍 Authorization URL:', cardResponse.data?.authorization_url);
-            
-            if (cardResponse.success && cardResponse.data.authorization_url) {
-              console.log('✅ Valid auth URL found, saving to localStorage and redirecting...');
-              // Save order info to localStorage for after-payment verification
-              localStorage.setItem('pendingOrderId', createdOrder.id);
-              localStorage.setItem('pendingOrderNumber', createdOrder.order_number);
-              
-              // Redirect to Paystack checkout
-              window.location.href = cardResponse.data.authorization_url;
-              return; // Stop here - user will be redirected back after payment
-            } else {
-              throw new Error(cardResponse.message || 'Failed to initialize card payment');
-            }
-          } catch (cardError) {
-            setErrors({ submit: cardError.message || 'Card payment initialization failed. Please try again.' });
-            setLoading(false);
-            return; // Don't navigate to success page
-          }
-        }
+                      console.log('🔍 Checking cardResponse.success:', cardResponse.success);
+                      console.log('🔍 Checking cardResponse.data:', cardResponse.data);
+                      console.log('🔍 Authorization URL:', cardResponse.data?.authorization_url);
+                      
+                      if (cardResponse.success && cardResponse.data.authorization_url) {
+                        console.log('✅ Valid auth URL found, saving to localStorage and redirecting...');
+                        // Save order info to localStorage for after-payment verification
+                        localStorage.setItem('pendingOrderId', createdOrder.id);
+                        localStorage.setItem('pendingOrderNumber', createdOrder.order_number);
+                        
+                        // Redirect to Paystack checkout
+                        window.location.href = cardResponse.data.authorization_url;
+                        return; // Stop here - user will be redirected back after payment
+                      } else {
+                        throw new Error(cardResponse.message || 'Failed to initialize card payment');
+                      }
+                    }
+                  } catch (cardError) {
+                    setErrors({ submit: cardError.message || 'Card payment failed. Please try again.' });
+                    setLoading(false);
+                    return; // Don't navigate to success page
+                  }
+                }
 
         // Prepare data for success page
         const successOrderData = {
@@ -535,6 +575,35 @@ const countyInfo = {
       }));
     }
   }, [user]);
+
+    // Load saved cards when user is authenticated and on payment step
+    useEffect(() => {
+      if (user && step === 2) {
+        loadSavedCards();
+      }
+    }, [user, step]);
+
+    const loadSavedCards = async () => {
+      setLoadingSavedCards(true);
+      try {
+        const response = await paymentService.getSavedCards();
+        if (response.success && response.data.length > 0) {
+          setSavedCards(response.data);
+          // Auto-select first card if available
+          setSelectedSavedCard(response.data[0]);
+          setShowAddNewCard(false);
+        } else {
+          setSavedCards([]);
+          setShowAddNewCard(true);
+        }
+      } catch (error) {
+        console.error('Failed to load saved cards:', error);
+        setSavedCards([]);
+        setShowAddNewCard(true);
+      } finally {
+        setLoadingSavedCards(false);
+      }
+    };
   
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-KE', {
@@ -876,7 +945,9 @@ const countyInfo = {
                                 className="h-8 w-auto object-contain"
                               />
                             </div>
-                            <div className="text-sm text-gray-600">Credit/Debit Card</div>
+                            <div className="text-sm text-gray-600">
+                              {savedCards.length > 0 ? 'Card (Saved or New)' : 'Credit/Debit Card'}
+                            </div>
                           </div>
                         </button>
 
@@ -934,20 +1005,102 @@ const countyInfo = {
                   {/* Card Payment */}
                   {paymentMethod === 'card' && (
                     <div className="mb-6">
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <CreditCard className="w-5 h-5 text-blue-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-blue-900 mb-1">Secure Card Payment</h3>
-                            <p className="text-sm text-blue-700">
-                              You'll be redirected to our secure payment partner (Paystack) to complete your card payment.
-                            </p>
+                      {/* Loading State */}
+                      {loadingSavedCards && (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader className="w-6 h-6 animate-spin text-orange-600 mr-2" />
+                          <span className="text-sm text-gray-600">Checking for saved cards...</span>
+                        </div>
+                      )}
+
+                      {/* Saved Cards Section */}
+                      {!loadingSavedCards && savedCards.length > 0 && (
+                        <div className="mb-4">
+                          <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+                            <Wallet className="w-5 h-5 mr-2 text-orange-600" />
+                            Your Saved Cards
+                          </h3>
+                          
+                          <div className="space-y-2 mb-4">
+                            {savedCards.map((card, index) => (
+                              <button
+                                key={index}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedSavedCard(card);
+                                  setShowAddNewCard(false);
+                                }}
+                                className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition ${
+                                  selectedSavedCard?.authorization_code === card.authorization_code && !showAddNewCard
+                                    ? 'border-orange-500 bg-orange-50'
+                                    : 'border-gray-200 hover:border-orange-300'
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="w-12 h-8 bg-gray-100 rounded flex items-center justify-center">
+                                    {card.card_brand === 'visa' && (
+                                      <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-4 w-auto" />
+                                    )}
+                                    {card.card_brand === 'mastercard' && (
+                                      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6 w-auto" />
+                                    )}
+                                    {!['visa', 'mastercard'].includes(card.card_brand) && (
+                                      <CreditCard className="w-6 h-6 text-gray-600" />
+                                    )}
+                                  </div>
+                                  <div className="text-left">
+                                    <p className="font-medium text-gray-900">
+                                      •••• •••• •••• {card.card_last4}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      Expires {card.card_expiry_month}/{card.card_expiry_year}
+                                    </p>
+                                  </div>
+                                </div>
+                                {selectedSavedCard?.authorization_code === card.authorization_code && !showAddNewCard && (
+                                  <CheckCircle className="w-5 h-5 text-orange-600" />
+                                )}
+                              </button>
+                            ))}
+                            
+                            {/* Add New Card Option */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowAddNewCard(true);
+                                setSelectedSavedCard(null);
+                              }}
+                              className={`w-full p-4 border-2 rounded-lg flex items-center justify-center gap-2 transition ${
+                                showAddNewCard
+                                  ? 'border-orange-500 bg-orange-50'
+                                  : 'border-gray-200 hover:border-orange-300 border-dashed'
+                              }`}
+                            >
+                              <CreditCard className="w-5 h-5 text-gray-600" />
+                              <span className="text-gray-700 font-medium">Use a different card</span>
+                            </button>
                           </div>
                         </div>
-                      </div>
+                      )}
+
+                      {/* New Card Info (shown when no saved cards or user selects "different card") */}
+                      {(showAddNewCard || savedCards.length === 0) && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <CreditCard className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-blue-900 mb-1">Secure Card Payment</h3>
+                              <p className="text-sm text-blue-700">
+                                You'll be redirected to our secure payment partner (Paystack) to complete your card payment.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       
+                      {/* Features List */}
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <CheckCircle className="w-4 h-4 text-green-600" />
@@ -961,13 +1114,22 @@ const countyInfo = {
                           <CheckCircle className="w-4 h-4 text-green-600" />
                           <span>Instant payment confirmation</span>
                         </div>
+                        {savedCards.length > 0 && !showAddNewCard && (
+                          <div className="flex items-center gap-2 text-sm text-green-700 font-medium">
+                            <CheckCircle className="w-4 h-4 text-green-600" />
+                            <span>One-click payment with saved card!</span>
+                          </div>
+                        )}
                       </div>
 
-                      <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <p className="text-xs text-gray-500">
-                          <strong>Note:</strong> After clicking "Pay", you'll be taken to a secure checkout page. Once payment is complete, you'll be redirected back to your order confirmation.
-                        </p>
-                      </div>
+                      {/* Note for new cards */}
+                      {(showAddNewCard || savedCards.length === 0) && (
+                        <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <p className="text-xs text-gray-500">
+                            <strong>Note:</strong> After clicking "Pay", you'll be taken to a secure checkout page. Once payment is complete, you'll be redirected back to your order confirmation.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
 

@@ -221,4 +221,60 @@ class PaystackService
     {
         return $this->publicKey;
     }
+
+    /**
+     * Charge saved card using authorization_code (no redirect needed)
+     */
+    public function chargeSavedCard(
+        string $authorizationCode,
+        string $email,
+        float $amount,
+        string $reference,
+        array $metadata = []
+    ): array {
+        $payload = [
+            'authorization_code' => $authorizationCode,
+            'email' => $email,
+            'amount' => (int) ($amount * 100),
+            'currency' => $this->currency,
+            'reference' => $reference,
+            'metadata' => $metadata,
+        ];
+
+        Log::info('Charging saved card', [
+            'reference' => $reference,
+            'amount' => $amount,
+            'email' => $email
+        ]);
+
+        $response = Http::withToken($this->secretKey)
+            ->post("{$this->baseUrl}/transaction/charge_authorization", $payload);
+
+        if ($response->successful()) {
+            $data = $response->json('data');
+            Log::info('Saved card charged successfully', [
+                'reference' => $reference,
+                'status' => $data['status']
+            ]);
+            
+            return [
+                'success' => true,
+                'status' => $data['status'],
+                'amount' => $data['amount'] / 100,
+                'reference' => $data['reference'],
+                'transaction_id' => $data['id'],
+                'paid_at' => $data['paid_at'] ?? now(),
+            ];
+        }
+
+        Log::error('Saved card charge failed', [
+            'reference' => $reference,
+            'response' => $response->json()
+        ]);
+
+        return [
+            'success' => false,
+            'error' => $response->json('message') ?? 'Failed to charge saved card',
+        ];
+    }
 }
