@@ -88,8 +88,8 @@
 }
 
 .status-message.info {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: #fff3e0;
+  color: #ea580c;
 }
 
 .status-message.error {
@@ -116,9 +116,9 @@
 
 /* Info message style for "Check your phone" */
 .info-message {
-  background: #e3f2fd;
-  border: 1px solid #1976d2;
-  color: #1976d2;
+  background: #fff3e0;
+  border: 1px solid #f97316;
+  color: #ea580c;
   padding: 12px;
   border-radius: 8px;
   margin-bottom: 16px;

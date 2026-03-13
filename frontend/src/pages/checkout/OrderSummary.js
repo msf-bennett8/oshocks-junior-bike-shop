@@ -162,7 +162,7 @@ const OrderSummary = ({
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <button
           onClick={onTrackOrder}
-          className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+          className="flex items-center justify-center gap-2 px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-semibold"
         >
           <Truck className="w-5 h-5" />
           Track Order
@@ -199,7 +199,7 @@ const OrderSummary = ({
           {/* Order Status Timeline */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-              <Package className="w-6 h-6 text-blue-600" />
+              <Package className="w-6 h-6 text-green-600" />
               Order Status
             </h2>
 
@@ -290,15 +290,15 @@ const OrderSummary = ({
             </div>
 
             {order.trackingNumber && (
-              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-blue-900">Tracking Number</p>
-                    <p className="text-lg font-bold text-blue-600 mt-1">
+                    <p className="text-sm font-medium text-green-900">Tracking Number</p>
+                    <p className="text-lg font-bold text-green-600 mt-1">
                       {order.trackingNumber}
                     </p>
                   </div>
-                  <button className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
+                  <button className="flex items-center gap-1 text-sm text-green-600 hover:text-green-700 font-medium">
                     Track Package
                     <ExternalLink className="w-4 h-4" />
                   </button>
@@ -311,12 +311,12 @@ const OrderSummary = ({
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold flex items-center gap-2">
-                <Package className="w-6 h-6 text-blue-600" />
+                <Package className="w-6 h-6 text-green-600" />
                 Order Items ({order.items.length})
               </h2>
               <button
                 onClick={() => setExpandedItems(!expandedItems)}
-                className="text-blue-600 hover:text-blue-700 flex items-center gap-1 text-sm font-medium"
+                className="text-green-600 hover:text-green-700 flex items-center gap-1 text-sm font-medium"
               >
                 {expandedItems ? (
                   <>
@@ -345,7 +345,7 @@ const OrderSummary = ({
                     <p className="text-sm text-gray-600 mt-1">{item.category}</p>
                     <div className="flex items-center gap-4 mt-2">
                       <span className="text-sm text-gray-600">Qty: {item.quantity}</span>
-                      <span className="text-sm font-semibold text-blue-600">
+                      <span className="text-sm font-semibold text-gray-900">
                         {formatPrice(item.price)}
                       </span>
                     </div>
@@ -373,7 +373,7 @@ const OrderSummary = ({
               className="w-full flex items-center justify-between mb-4"
             >
               <h2 className="text-xl font-bold flex items-center gap-2">
-                <MapPin className="w-6 h-6 text-blue-600" />
+                <MapPin className="w-6 h-6 text-green-600" />
                 Shipping Address
               </h2>
               {showShippingDetails ? (
@@ -457,7 +457,7 @@ const OrderSummary = ({
               className="w-full flex items-center justify-between mb-4"
             >
               <h2 className="text-xl font-bold flex items-center gap-2">
-                <CreditCard className="w-6 h-6 text-blue-600" />
+                <CreditCard className="w-6 h-6 text-green-600" />
                 Payment Information
               </h2>
               {showPaymentDetails ? (
@@ -497,8 +497,8 @@ const OrderSummary = ({
                 </div>
 
                 {order.transactionId && (
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm text-blue-900">
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-900">
                       <strong>Transaction ID:</strong> {order.transactionId}
                     </p>
                   </div>
@@ -547,27 +547,27 @@ const OrderSummary = ({
                 </div>
                 <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-300">
                   <span>Total</span>
-                  <span className="text-blue-600">{formatPrice(order.total)}</span>
+                  <span className="text-gray-900">{formatPrice(order.total)}</span>
                 </div>
               </div>
             </div>
 
             {/* Customer Support */}
-            <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-lg p-6">
+            <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-lg p-6">
               <h3 className="text-lg font-bold mb-2 flex items-center gap-2">
                 <MessageSquare className="w-5 h-5" />
                 Need Help?
               </h3>
-              <p className="text-blue-100 text-sm mb-4">
+              <p className="text-green-100 text-sm mb-4">
                 Our support team is ready to assist you
               </p>
               <button
                 onClick={onContactSupport}
-                className="w-full bg-white text-blue-600 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+                className="w-full bg-white text-green-600 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors"
               >
                 Contact Support
               </button>
-              <div className="mt-4 space-y-2 text-sm text-blue-100">
+              <div className="mt-4 space-y-2 text-sm text-green-100">
                 <p className="flex items-center gap-2">
                   <Phone className="w-4 h-4" />
                   +254 712 345 678

@@ -78,7 +78,7 @@ const MaintenancePage = () => {
       icon: <Shield className="w-6 h-6" />,
       title: 'Enhanced Security',
       description: 'Stronger protection for your data and transactions',
-      color: 'bg-blue-500'
+      color: 'bg-green-500'
     },
     {
       icon: <Sparkles className="w-6 h-6" />,
@@ -130,8 +130,8 @@ const MaintenancePage = () => {
   ];
 
   const socialLinks = [
-    { icon: <Twitter className="w-5 h-5" />, name: 'Twitter', link: '#', color: 'hover:bg-blue-400' },
-    { icon: <Facebook className="w-5 h-5" />, name: 'Facebook', link: '#', color: 'hover:bg-blue-600' },
+    { icon: <Twitter className="w-5 h-5" />, name: 'Twitter', link: '#', color: 'hover:bg-green-400' },
+    { icon: <Facebook className="w-5 h-5" />, name: 'Facebook', link: '#', color: 'hover:bg-green-600' },
     { icon: <Instagram className="w-5 h-5" />, name: 'Instagram', link: '#', color: 'hover:bg-pink-500' }
   ];
 

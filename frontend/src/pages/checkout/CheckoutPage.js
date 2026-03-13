@@ -664,21 +664,21 @@ const countyInfo = {
         <div className="mb-8">
           <div className="flex items-center justify-center">
             <div className="flex items-center">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-orange-600 text-white' : 'bg-gray-300 text-gray-600'}`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step > 1 ? 'bg-green-600 text-white' : step === 1 ? 'bg-orange-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
                 1
               </div>
               <span className="ml-2 font-medium text-gray-700">Shipping</span>
             </div>
-            <div className={`w-24 h-1 mx-4 ${step >= 2 ? 'bg-orange-600' : 'bg-gray-300'}`}></div>
+            <div className={`w-24 h-1 mx-4 ${step >= 2 ? 'bg-green-600' : 'bg-gray-300'}`}></div>
             <div className="flex items-center">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-orange-600 text-white' : 'bg-gray-300 text-gray-600'}`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step > 2 ? 'bg-green-600 text-white' : step === 2 ? 'bg-orange-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
                 2
               </div>
               <span className="ml-2 font-medium text-gray-700">Payment</span>
             </div>
-            <div className={`w-24 h-1 mx-4 ${step >= 3 ? 'bg-orange-600' : 'bg-gray-300'}`}></div>
+            <div className={`w-24 h-1 mx-4 ${step >= 3 ? 'bg-green-600' : 'bg-gray-300'}`}></div>
             <div className="flex items-center">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-orange-600 text-white' : 'bg-gray-300 text-gray-600'}`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step > 3 ? 'bg-green-600 text-white' : step === 3 ? 'bg-orange-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
                 3
               </div>
               <span className="ml-2 font-medium text-gray-700">Confirm</span>
@@ -692,7 +692,7 @@ const countyInfo = {
             {step === 1 && (
               <div className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex items-center mb-6">
-                  <Truck className="w-6 h-6 text-orange-600 mr-2" />
+                  <Truck className="w-6 h-6 text-green-600 mr-2" />
                   <h2 className="text-2xl font-bold text-gray-900">Shipping Information</h2>
                 </div>
                 
@@ -708,7 +708,7 @@ const countyInfo = {
                           type="text"
                           value={shippingInfo.firstName}
                           onChange={(e) => setShippingInfo({...shippingInfo, firstName: e.target.value})}
-                          className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.firstName ? 'border-red-500' : 'border-gray-300'}`}
+                          className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${errors.firstName ? 'border-red-500' : 'border-gray-300'}`}
                           placeholder="John"
                         />
                       </div>
@@ -725,7 +725,7 @@ const countyInfo = {
                           type="text"
                           value={shippingInfo.lastName}
                           onChange={(e) => setShippingInfo({...shippingInfo, lastName: e.target.value})}
-                          className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.lastName ? 'border-red-500' : 'border-gray-300'}`}
+                          className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${errors.lastName ? 'border-red-500' : 'border-gray-300'}`}
                           placeholder="Doe"
                         />
                       </div>
@@ -744,7 +744,7 @@ const countyInfo = {
                           type="email"
                           value={shippingInfo.email}
                           onChange={(e) => setShippingInfo({...shippingInfo, email: e.target.value})}
-                          className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+                          className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
                           placeholder="john@example.com"
                         />
                       </div>
@@ -761,7 +761,7 @@ const countyInfo = {
                           type="tel"
                           value={shippingInfo.phone}
                           onChange={(e) => setShippingInfo({...shippingInfo, phone: e.target.value})}
-                          className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
+                          className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
                           placeholder="0712345678 or 254712345678"
                         />
                       </div>
@@ -779,7 +779,7 @@ const countyInfo = {
                         type="text"
                         value={shippingInfo.address}
                         onChange={(e) => setShippingInfo({...shippingInfo, address: e.target.value})}
-                        className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
+                        className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
                         placeholder="123 Main Street, Apartment 4B"
                       />
                     </div>
@@ -794,7 +794,7 @@ const countyInfo = {
                     <button
                       type="button"
                       onClick={() => setShowCountyModal(true)}
-                      className={`w-full px-4 py-2 border rounded-lg text-left focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.city ? 'border-red-500' : 'border-gray-300'} hover:border-orange-400 text-gray-900`}
+                      className={`w-full px-4 py-2 border rounded-lg text-left focus:ring-2 focus:ring-green-500 focus:border-transparent ${errors.city ? 'border-red-500' : 'border-gray-300'} hover:border-orange-400 text-gray-900`}
                     >
                       {shippingInfo.city ? (
                         <div className="flex items-center gap-2">
@@ -820,7 +820,7 @@ const countyInfo = {
                         }
                       }}
                       disabled={!shippingInfo.city}
-                      className={`w-full px-4 py-2 border rounded-lg text-left focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.zone ? 'border-red-500' : 'border-gray-300'} ${!shippingInfo.city ? 'bg-gray-100 cursor-not-allowed text-gray-400' : 'hover:border-orange-400 text-gray-900'}`}
+                      className={`w-full px-4 py-2 border rounded-lg text-left focus:ring-2 focus:ring-green-500 focus:border-transparent ${errors.zone ? 'border-red-500' : 'border-gray-300'} ${!shippingInfo.city ? 'bg-gray-100 cursor-not-allowed text-gray-400' : 'hover:border-orange-400 text-gray-900'}`}
                     >
                       {shippingInfo.zone ? (
                         <div className="flex flex-col gap-1">
@@ -862,7 +862,7 @@ const countyInfo = {
                     type="text"
                     value={shippingInfo.postalCode}
                     onChange={(e) => setShippingInfo({...shippingInfo, postalCode: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="00100"
                   />
                 </div>
@@ -873,7 +873,7 @@ const countyInfo = {
                   <textarea
                     value={shippingInfo.deliveryInstructions || ''}
                     onChange={(e) => setShippingInfo({...shippingInfo, deliveryInstructions: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="e.g., Please call before delivery, gate code is 1234, leave with security..."
                     rows="3"
                   />
@@ -885,7 +885,7 @@ const countyInfo = {
                   
                   <button
                     type="submit"
-                    className="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition"
+                    className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition"
                   >
                     Continue to Payment
                   </button>
@@ -896,7 +896,7 @@ const countyInfo = {
             {step === 2 && (
               <div className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex items-center mb-6">
-                  <CreditCard className="w-6 h-6 text-orange-600 mr-2" />
+                  <CreditCard className="w-6 h-6 text-green-600 mr-2" />
                   <h2 className="text-2xl font-bold text-gray-900">Payment Method</h2>
                 </div>
                 
@@ -994,7 +994,7 @@ const countyInfo = {
                           type="tel"
                           value={mpesaPhone}
                           onChange={(e) => setMpesaPhone(e.target.value)}
-                          className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.mpesaPhone ? 'border-red-500' : 'border-gray-300'}`}
+                          className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${errors.mpesaPhone ? 'border-red-500' : 'border-gray-300'}`}
                           placeholder="0712345678 or 254712345678"
                         />
                       </div>
@@ -1017,7 +1017,7 @@ const countyInfo = {
                       {!loadingSavedCards && savedCards.length > 0 && (
                         <div className="mb-4">
                           <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-                            <Wallet className="w-5 h-5 mr-2 text-orange-600" />
+                            <Wallet className="w-5 h-5 mr-2 text-green-600" />
                             Your Saved Cards
                           </h3>
                           
@@ -1033,7 +1033,7 @@ const countyInfo = {
                                 className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition ${
                                   selectedSavedCard?.authorization_code === card.authorization_code && !showAddNewCard
                                     ? 'border-orange-500 bg-orange-50'
-                                    : 'border-gray-200 hover:border-orange-300'
+                                    : 'border-gray-200 hover:border-green-300'
                                 }`}
                               >
                                 <div className="flex items-center gap-3">
@@ -1073,7 +1073,7 @@ const countyInfo = {
                               className={`w-full p-4 border-2 rounded-lg flex items-center justify-center gap-2 transition ${
                                 showAddNewCard
                                   ? 'border-orange-500 bg-orange-50'
-                                  : 'border-gray-200 hover:border-orange-300 border-dashed'
+                                  : 'border-gray-200 hover:border-green-300 border-dashed'
                               }`}
                             >
                               <CreditCard className="w-5 h-5 text-gray-600" />
@@ -1085,14 +1085,14 @@ const countyInfo = {
 
                       {/* New Card Info (shown when no saved cards or user selects "different card") */}
                       {(showAddNewCard || savedCards.length === 0) && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
                           <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                              <CreditCard className="w-5 h-5 text-blue-600" />
+                            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <CreditCard className="w-5 h-5 text-green-600" />
                             </div>
                             <div>
-                              <h3 className="font-semibold text-blue-900 mb-1">Secure Card Payment</h3>
-                              <p className="text-sm text-blue-700">
+                              <h3 className="font-semibold text-green-900 mb-1">Secure Card Payment</h3>
+                              <p className="text-sm text-green-700">
                                 You'll be redirected to our secure payment partner (Paystack) to complete your card payment.
                               </p>
                             </div>
@@ -1136,14 +1136,14 @@ const countyInfo = {
                   {/* Cash on Delivery */}
                   {paymentMethod === 'cod' && (
                     <div className="mb-6">
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <h3 className="font-semibold text-blue-900 mb-2 flex items-center">
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                        <h3 className="font-semibold text-orange-900 mb-2 flex items-center">
                           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           Cash on Delivery Information
                         </h3>
-                        <ul className="text-sm text-blue-800 space-y-2 list-disc list-inside">
+                        <ul className="text-sm text-orange-800 space-y-2 list-disc list-inside">
                           <li>Pay with cash when your order is delivered</li>
                           <li>Please have exact change ready for the delivery person</li>
                           <li>Inspect your items before making payment</li>
@@ -1172,15 +1172,15 @@ const countyInfo = {
                           type="checkbox"
                           checked={agreedToTerms}
                           onChange={(e) => setAgreedToTerms(e.target.checked)}
-                          className="mt-1 mr-2 w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                          className="mt-1 mr-2 w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-green-500"
                         />
                         <span className="text-sm text-gray-700">
                           I agree to the{' '}
-                          <Link to="/terms-of-service" className="text-orange-600 hover:underline font-medium">
+                          <Link to="/terms-of-service" className="text-green-600 hover:underline font-medium">
                             Terms and Conditions
                           </Link>
                           {' and '}
-                          <Link to="/privacy-policy" className="text-orange-600 hover:underline font-medium">
+                          <Link to="/privacy-policy" className="text-green-600 hover:underline font-medium">
                             Privacy Policy
                           </Link>
                           {' *'}
@@ -1227,19 +1227,19 @@ const countyInfo = {
           {/* Policy Links Footer */}
             <div className="text-xs text-gray-600 bg-gray-50 p-3 rounded-lg">
               By completing this purchase, you agree to our{' '}
-              <Link to="/terms-of-service" className="text-orange-600 hover:underline font-medium">
+              <Link to="/terms-of-service" className="text-green-600 hover:underline font-medium">
                 Terms of Service
               </Link>
               {', '}
-              <Link to="/privacy-policy" className="text-orange-600 hover:underline font-medium">
+              <Link to="/privacy-policy" className="text-green-600 hover:underline font-medium">
                 Privacy Policy
               </Link>
               {', '}
-              <Link to="/shipping-policy" className="text-orange-600 hover:underline font-medium">
+              <Link to="/shipping-policy" className="text-green-600 hover:underline font-medium">
                 Shipping Policy
               </Link>
               {', and '}
-              <Link to="/refund-policy" className="text-orange-600 hover:underline font-medium">
+              <Link to="/refund-policy" className="text-green-600 hover:underline font-medium">
                 Refund Policy
               </Link>
               .
@@ -1249,7 +1249,7 @@ const countyInfo = {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
               <div className="flex items-center mb-4">
-                <ShoppingBag className="w-5 h-5 text-orange-600 mr-2" />
+                <ShoppingBag className="w-5 h-5 text-green-600 mr-2" />
                 <h3 className="text-lg font-bold text-gray-900">Order Summary</h3>
               </div>
               
@@ -1303,21 +1303,21 @@ const countyInfo = {
               
               {/* Shipping Info Display */}
               {shippingInfo.city && shippingInfo.zone && (
-                <div className="bg-orange-50 rounded-lg p-3 mb-4">
-                  <div className="flex items-center text-sm text-orange-800 mb-1">
+                <div className="bg-green-50 rounded-lg p-3 mb-4">
+                  <div className="flex items-center text-sm text-green-800 mb-1">
                     <Truck className="w-4 h-4 mr-1" />
                     <span className="font-semibold">
                       {shippingInfo.city === 'Nairobi County' ? 'Same-day delivery available' : 'Delivery in 2-3 days'}
                     </span>
                   </div>
-                  <p className="text-xs text-orange-700">
+                  <p className="text-xs text-green-700">
                     Shipping to: <span className="font-semibold">
                       {shippingInfo.zone.includes(' - ') 
                         ? shippingInfo.zone.split(' - ')[1] 
                         : shippingInfo.zone}
                     </span>
                   </p>
-                  <p className="text-xs text-orange-600">
+                  <p className="text-xs text-green-600">
                     {shippingInfo.city} ({shippingInfo.zone.split(' - ')[0]})
                   </p>
                 </div>
@@ -1363,7 +1363,7 @@ const countyInfo = {
                 <p className="text-xs text-gray-600 mb-2">Need help?</p>
                 <Link 
                   to="/contact-support" 
-                  className="flex items-center text-xs text-orange-600 hover:text-orange-700 transition-colors"
+                  className="flex items-center text-xs text-green-600 hover:text-green-700 transition-colors"
                 >
                   <Phone className="w-3 h-3 mr-1" />
                   <span>Contact Support</span>
@@ -1387,8 +1387,8 @@ const countyInfo = {
             </div>
             
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                <Truck className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                <Truck className="w-6 h-6 text-green-600" />
               </div>
               <div>
                 <h4 className="font-semibold text-gray-900">Fast Delivery</h4>
@@ -1407,13 +1407,13 @@ const countyInfo = {
             </div>
 
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4">
-                <Shield className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                <Shield className="w-6 h-6 text-green-600" />
               </div>
               <div>
                 <h4 className="font-semibold text-gray-900">Privacy Protected</h4>
                 <p className="text-sm text-gray-600">
-                  <Link to="/privacy-policy" className="text-orange-600 hover:underline">
+                  <Link to="/privacy-policy" className="text-green-600 hover:underline">
                     View our privacy policy
                   </Link>
                 </p>
@@ -1429,7 +1429,7 @@ const countyInfo = {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-white">
               <div className="flex justify-between items-center">
                 <div>
                   <h3 className="text-2xl font-bold">Select County/City</h3>
@@ -1462,10 +1462,10 @@ const countyInfo = {
                       setAvailableZones(countyZones[county] || []);
                       setShowCountyModal(false);
                     }}
-                    className={`w-full text-left p-5 border-2 rounded-xl transition-all hover:border-orange-500 hover:shadow-lg ${
+                    className={`w-full text-left p-5 border-2 rounded-xl transition-all hover:border-green-500 hover:shadow-lg ${
                       shippingInfo.city === county
-                        ? 'border-orange-500 bg-orange-50'
-                        : 'border-gray-200 hover:bg-orange-50'
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-gray-200 hover:bg-green-50'
                     }`}
                   >
                     <div className="flex items-start gap-4">
@@ -1495,7 +1495,7 @@ const countyInfo = {
                       {/* Selected Indicator */}
                       {shippingInfo.city === county && (
                         <div className="flex-shrink-0">
-                          <CheckCircle className="w-6 h-6 text-orange-600" />
+                          <CheckCircle className="w-6 h-6 text-green-600" />
                         </div>
                       )}
                     </div>
@@ -1508,7 +1508,7 @@ const countyInfo = {
             <div className="border-t border-gray-200 p-4 bg-gray-50">
               <button
                 onClick={() => setShowCountyModal(false)}
-                className="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition"
+                className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition"
               >
                 {shippingInfo.city ? 'Continue' : 'Close'}
               </button>
@@ -1558,7 +1558,7 @@ const countyInfo = {
                       <div className="p-4 border-b border-gray-200">
                         <div className="flex justify-between items-center">
                           <h4 className="font-bold text-gray-900 text-lg">{zone.name}</h4>
-                          <div className="bg-orange-100 text-orange-700 px-4 py-2 rounded-lg font-bold text-lg whitespace-nowrap">
+                          <div className="bg-green-100 text-green-700 px-4 py-2 rounded-lg font-bold text-lg whitespace-nowrap">
                             KSh {zone.cost.toLocaleString()}
                           </div>
                         </div>
@@ -1581,8 +1581,8 @@ const countyInfo = {
                                 }}
                                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                                   isSelected
-                                    ? 'bg-orange-600 text-white shadow-md'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-orange-100 hover:text-orange-700'
+                                    ? 'bg-green-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-green-100 hover:text-green-700'
                                 }`}
                               >
                                 {location}
@@ -1601,7 +1601,7 @@ const countyInfo = {
             <div className="border-t border-gray-200 p-4 bg-gray-50">
               <button
                 onClick={() => setShowZoneModal(false)}
-                className="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition"
+                className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition"
               >
                 {shippingInfo.zone ? 'Confirm Selection' : 'Close'}
               </button>

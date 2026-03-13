@@ -169,7 +169,7 @@ const ComingSoonPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
       {/* Animated Background Pattern */}
       <div className="fixed inset-0 opacity-5 pointer-events-none">
         <div className="absolute inset-0" style={{
@@ -182,16 +182,16 @@ const ComingSoonPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <div className="flex items-center space-x-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
+              <div className="w-14 h-14 bg-gradient-to-br from-green-600 to-emerald-700 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
                 <span className="text-white font-bold text-2xl">OS</span>
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Oshocks Junior Bike Shop</h1>
-                <p className="text-sm text-blue-600 font-semibold">Kenya's Premier Cycling Marketplace</p>
+                <p className="text-sm text-green-600 font-semibold">Kenya's Premier Cycling Marketplace</p>
               </div>
             </div>
             <div className="hidden md:flex items-center space-x-6">
-              <a href="tel:+254712345678" className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition-colors">
+              <a href="tel:+254712345678" className="flex items-center space-x-2 text-gray-600 hover:text-green-600 transition-colors">
                 <Phone className="w-4 h-4" />
                 <span className="text-sm font-medium">+254 712 345 678</span>
               </a>
@@ -211,7 +211,7 @@ const ComingSoonPage = () => {
       <div className="relative py-16 sm:py-24 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full mb-6 animate-pulse">
+            <div className="inline-flex items-center space-x-2 bg-orange-100 text-orange-700 px-4 py-2 rounded-full mb-6 animate-pulse">
               <Clock className="w-4 h-4" />
               <span className="text-sm font-semibold">Launching Soon</span>
             </div>
@@ -219,7 +219,7 @@ const ComingSoonPage = () => {
             <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
               Your Cycling Journey
               <br />
-              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                 Starts Here
               </span>
             </h1>
@@ -238,8 +238,8 @@ const ComingSoonPage = () => {
                   { label: 'Minutes', value: timeLeft.minutes },
                   { label: 'Seconds', value: timeLeft.seconds }
                 ].map((item, index) => (
-                  <div key={index} className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 border-2 border-blue-100 transform hover:scale-105 transition-transform">
-                    <div className="text-3xl sm:text-5xl font-bold text-blue-600 mb-2">
+                  <div key={index} className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 border-2 border-orange-100 transform hover:scale-105 transition-transform">
+                    <div className="text-3xl sm:text-5xl font-bold text-orange-500 mb-2">
                       {String(item.value).padStart(2, '0')}
                     </div>
                     <div className="text-xs sm:text-sm text-gray-600 font-semibold uppercase tracking-wide">
@@ -269,7 +269,7 @@ const ComingSoonPage = () => {
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="Enter your email address"
                         required
-                        className="w-full px-4 py-4 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-lg"
+                        className="w-full px-4 py-4 rounded-lg border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-all text-lg"
                       />
                     </div>
                     
@@ -279,7 +279,7 @@ const ComingSoonPage = () => {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="Phone number (optional)"
-                        className="w-full px-4 py-4 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all text-lg"
+                        className="w-full px-4 py-4 rounded-lg border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-all text-lg"
                       />
                     </div>
 
@@ -296,8 +296,8 @@ const ComingSoonPage = () => {
                             onClick={() => handleInterestToggle(interest.id)}
                             className={`flex items-center justify-center space-x-2 px-3 py-2 rounded-lg border-2 transition-all ${
                               selectedInterest.includes(interest.id)
-                                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                : 'border-gray-300 bg-white text-gray-700 hover:border-blue-300'
+                                ? 'border-orange-500 bg-orange-50 text-orange-700'
+                                : 'border-gray-300 bg-white text-gray-700 hover:border-green-300'
                             }`}
                           >
                             {interest.icon}
@@ -310,7 +310,7 @@ const ComingSoonPage = () => {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-lg font-bold text-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                      className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-lg font-bold text-lg hover:from-orange-600 hover:to-orange-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                     >
                       {loading ? (
                         <>
@@ -380,7 +380,7 @@ const ComingSoonPage = () => {
       </div>
 
       {/* Launch Benefits */}
-      <div className="py-16 bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
+      <div className="py-16 bg-gradient-to-br from-green-600 to-emerald-700 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
@@ -419,7 +419,7 @@ const ComingSoonPage = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 border-2 border-gray-200 hover:border-blue-300 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+              <div key={index} className="group bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 border-2 border-gray-200 hover:border-green-300 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
                 <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform shadow-lg`}>
                   {feature.icon}
                 </div>
@@ -436,7 +436,7 @@ const ComingSoonPage = () => {
       </div>
 
       {/* Progress Milestones */}
-      <div className="py-16 bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="py-16 bg-gradient-to-br from-gray-50 to-green-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
@@ -450,7 +450,7 @@ const ComingSoonPage = () => {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {milestones.map((milestone, index) => (
               <div key={index} className="bg-white rounded-2xl p-6 shadow-lg border-2 border-gray-200 text-center">
-                <div className="text-4xl sm:text-5xl font-bold text-blue-600 mb-2">
+                <div className="text-4xl sm:text-5xl font-bold text-orange-500 mb-2">
                   {milestone.value}
                 </div>
                 <div className="text-sm sm:text-base text-gray-700 font-semibold mb-3">
@@ -483,8 +483,8 @@ const ComingSoonPage = () => {
               
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-6 h-6 text-green-600" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">Location</h3>
@@ -511,7 +511,7 @@ const ComingSoonPage = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">Email</h3>
-                    <a href="mailto:info@oshocksjunior.co.ke" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    <a href="mailto:info@oshocksjunior.co.ke" className="text-gray-600 hover:text-green-600 transition-colors">
                       info@oshocksjunior.co.ke
                     </a>
                   </div>
@@ -575,7 +575,7 @@ const ComingSoonPage = () => {
       </div>
 
       {/* Final CTA */}
-      <div className="py-20 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white">
+      <div className="py-20 bg-gradient-to-br from-green-600 via-emerald-600 to-teal-600 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl sm:text-5xl font-bold mb-6">
             Ready to Ride?
@@ -587,14 +587,14 @@ const ComingSoonPage = () => {
           {!subscribed && (
             <button
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="inline-flex items-center space-x-3 bg-white text-blue-600 px-10 py-5 rounded-full font-bold text-lg hover:bg-blue-50 transition-all shadow-2xl hover:shadow-3xl transform hover:scale-105"
+              className="inline-flex items-center space-x-3 bg-white text-green-600 px-10 py-5 rounded-full font-bold text-lg hover:bg-green-50 transition-all shadow-2xl hover:shadow-3xl transform hover:scale-105"
             >
               <span>Subscribe for Updates</span>
               <ArrowRight className="w-6 h-6" />
             </button>
           )}
           
-          <div className="mt-12 flex items-center justify-center space-x-8 text-blue-100">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-700 rounded-lg flex items-center justify-center">
             <div className="text-center">
               <div className="text-3xl font-bold text-white mb-1">100%</div>
               <div className="text-sm">Secure</div>
@@ -633,7 +633,7 @@ const ComingSoonPage = () => {
                 accessories, and gear from trusted sellers nationwide.
               </p>
               <div className="flex items-center space-x-4">
-                <a href="https://facebook.com" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors">
+                <a href="https://facebook.com" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-green-600 transition-colors">
                   <Facebook className="w-5 h-5" />
                 </a>
                 <a href="https://twitter.com" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-sky-500 transition-colors">
@@ -679,11 +679,11 @@ const ComingSoonPage = () => {
               </p>
               <div className="flex items-center space-x-6 text-sm">
                 <span className="flex items-center space-x-2">
-                  <MapPin className="w-4 h-4 text-blue-500" />
+                  <MapPin className="w-4 h-4 text-green-500" />
                   <span>Nairobi, Kenya</span>
                 </span>
                 <span className="flex items-center space-x-2">
-                  <Mail className="w-4 h-4 text-blue-500" />
+                  <Mail className="w-4 h-4 text-green-500" />
                   <a href="mailto:info@oshocksjunior.co.ke" className="hover:text-white transition-colors">
                     info@oshocksjunior.co.ke
                   </a>
@@ -698,7 +698,7 @@ const ComingSoonPage = () => {
       {!subscribed && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-full shadow-2xl hover:from-blue-700 hover:to-indigo-700 transition-all flex items-center justify-center group hover:scale-110 z-50"
+          className="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-full shadow-2xl hover:from-orange-600 hover:to-orange-700 transition-all flex items-center justify-center group hover:scale-110 z-50"
           title="Subscribe for updates"
         >
           <Bell className="w-6 h-6 group-hover:animate-bounce" />

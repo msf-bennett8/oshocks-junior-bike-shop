@@ -289,7 +289,7 @@ const DeliveryAgents = () => {
       case 'available':
         return 'bg-green-500';
       case 'on-delivery':
-        return 'bg-blue-500';
+        return 'bg-green-500';
       case 'on-break':
         return 'bg-yellow-500';
       case 'unavailable':
@@ -365,7 +365,7 @@ const DeliveryAgents = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading delivery agents...</p>
         </div>
       </div>
@@ -374,16 +374,16 @@ const DeliveryAgents = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-8">
+      <div className="bg-gradient-to-r from-green-600 to-green-800 text-white py-8">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-4xl font-bold mb-2">Delivery Agents</h1>
-              <p className="text-blue-100">Manage your delivery workforce</p>
+              <p className="text-green-100">Manage your delivery workforce</p>
             </div>
             <button
               onClick={() => openModal('add')}
-              className="mt-4 md:mt-0 flex items-center gap-2 bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              className="mt-4 md:mt-0 flex items-center gap-2 bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors"
             >
               <Plus className="w-5 h-5" />
               Add New Agent
@@ -400,8 +400,8 @@ const DeliveryAgents = () => {
                 <p className="text-gray-600 text-sm">Total Agents</p>
                 <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalAgents}</p>
               </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <Users className="w-8 h-8 text-blue-600" />
+              <div className="bg-green-100 p-3 rounded-lg">
+                <Users className="w-8 h-8 text-green-600" />
               </div>
             </div>
           </div>
@@ -422,10 +422,10 @@ const DeliveryAgents = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">On Delivery</p>
-                <p className="text-3xl font-bold text-blue-600 mt-1">{stats.onDelivery}</p>
+                <p className="text-3xl font-bold text-green-600 mt-1">{stats.onDelivery}</p>
               </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <Truck className="w-8 h-8 text-blue-600" />
+              <div className="bg-green-100 p-3 rounded-lg">
+                <Truck className="w-8 h-8 text-green-600" />
               </div>
             </div>
           </div>
@@ -446,10 +446,10 @@ const DeliveryAgents = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-600 text-sm">Total Deliveries</p>
-                <p className="text-3xl font-bold text-purple-600 mt-1">{stats.totalDeliveries.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-orange-500 mt-1">{stats.totalDeliveries.toLocaleString()}</p>
               </div>
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <Package className="w-8 h-8 text-purple-600" />
+              <div className="bg-orange-100 p-3 rounded-lg">
+                <Package className="w-8 h-8 text-orange-500" />
               </div>
             </div>
           </div>
@@ -465,7 +465,7 @@ const DeliveryAgents = () => {
                   placeholder="Search by name, email, phone, or location..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -475,7 +475,7 @@ const DeliveryAgents = () => {
                 onClick={() => setViewMode('cards')}
                 className={`px-4 py-3 rounded-lg border ${
                   viewMode === 'cards'
-                    ? 'bg-blue-600 text-white border-blue-600'
+                    ? 'bg-green-600 text-white border-green-600'
                     : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
                 }`}
               >
@@ -485,7 +485,7 @@ const DeliveryAgents = () => {
                 onClick={() => setViewMode('table')}
                 className={`px-4 py-3 rounded-lg border ${
                   viewMode === 'table'
-                    ? 'bg-blue-600 text-white border-blue-600'
+                    ? 'bg-green-600 text-white border-green-600'
                     : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
                 }`}
               >
@@ -516,7 +516,7 @@ const DeliveryAgents = () => {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   >
                     <option value="performance">Performance</option>
                     <option value="rating">Highest Rated</option>
@@ -531,7 +531,7 @@ const DeliveryAgents = () => {
                   <select
                     value={filters.status}
                     onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   >
                     <option value="">All Status</option>
                     <option value="active">Active</option>
@@ -545,7 +545,7 @@ const DeliveryAgents = () => {
                   <select
                     value={filters.availability}
                     onChange={(e) => setFilters({ ...filters, availability: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   >
                     <option value="">All</option>
                     <option value="available">Available</option>
@@ -560,7 +560,7 @@ const DeliveryAgents = () => {
                   <select
                     value={filters.vehicleType}
                     onChange={(e) => setFilters({ ...filters, vehicleType: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   >
                     <option value="">All Vehicles</option>
                     <option value="Motorcycle">Motorcycle</option>
@@ -591,11 +591,11 @@ const DeliveryAgents = () => {
                   placeholder="Filter by location..."
                   value={filters.location}
                   onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                 />
                 <button
                   onClick={clearFilters}
-                  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
+                  className="flex items-center gap-2 text-sm text-green-600 hover:text-green-700"
                 >
                   <X className="w-4 h-4" />
                   Clear Filters
@@ -667,13 +667,13 @@ const DeliveryAgents = () => {
                     </div>
                     <div>
                       <p className="text-xs text-gray-500">Today</p>
-                      <p className="text-lg font-bold text-blue-600">{agent.completedToday}</p>
+                      <p className="text-lg font-bold text-green-600">{agent.completedToday}</p>
                     </div>
                   </div>
 
                   {agent.currentDelivery && (
-                    <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                      <p className="text-xs text-blue-600 font-semibold mb-1">Current Delivery</p>
+                    <div className="mb-4 p-3 bg-green-50 rounded-lg">
+                      <p className="text-xs text-green-600 font-semibold mb-1">Current Delivery</p>
                       <p className="text-sm text-gray-900">{agent.currentDelivery}</p>
                     </div>
                   )}
@@ -681,7 +681,7 @@ const DeliveryAgents = () => {
                   <div className="flex gap-2">
                     <button
                       onClick={() => openModal('view', agent)}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
                     >
                       <Eye className="w-4 h-4" />
                       View
@@ -782,7 +782,7 @@ const DeliveryAgents = () => {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => openModal('view', agent)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
                             title="View Details"
                           >
                             <Eye className="w-4 h-4" />
@@ -818,7 +818,7 @@ const DeliveryAgents = () => {
             <p className="text-gray-600 mb-6">Try adjusting your filters or search terms</p>
             <button
               onClick={clearFilters}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
             >
               Clear Filters
             </button>
@@ -831,7 +831,7 @@ const DeliveryAgents = () => {
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {modalType === 'view' && selectedAgent && (
               <div>
-                <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 rounded-t-lg">
+                <div className="bg-gradient-to-r from-green-600 to-green-800 text-white p-6 rounded-t-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="relative">
@@ -844,18 +844,18 @@ const DeliveryAgents = () => {
                       </div>
                       <div>
                         <h2 className="text-2xl font-bold">{selectedAgent.name}</h2>
-                        <p className="text-blue-100">{selectedAgent.email}</p>
+                        <p className="text-green-100">{selectedAgent.email}</p>
                         <div className="flex items-center gap-2 mt-2">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(selectedAgent.status)}`}>
                             {selectedAgent.status}
                           </span>
-                          <span className="text-sm text-blue-100">{getAvailabilityText(selectedAgent.availability)}</span>
+                          <span className="text-sm text-green-100">{getAvailabilityText(selectedAgent.availability)}</span>
                         </div>
                       </div>
                     </div>
                     <button
                       onClick={closeModal}
-                      className="text-white hover:bg-blue-700 p-2 rounded-lg"
+                      className="text-white hover:bg-green-700 p-2 rounded-lg"
                     >
                       <X className="w-6 h-6" />
                     </button>
@@ -864,9 +864,9 @@ const DeliveryAgents = () => {
 
                 <div className="p-6">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="bg-green-50 p-4 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
-                        <Star className="w-5 h-5 text-blue-600" />
+                        <Star className="w-5 h-5 text-green-600" />
                         <p className="text-sm text-gray-600">Rating</p>
                       </div>
                       <p className="text-2xl font-bold text-gray-900">{selectedAgent.rating}</p>
@@ -882,7 +882,7 @@ const DeliveryAgents = () => {
                     </div>
                     <div className="bg-purple-50 p-4 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
-                        <Package className="w-5 h-5 text-purple-600" />
+                        <Package className="w-5 h-5 text-orange-500" />
                         <p className="text-sm text-gray-600">Deliveries</p>
                       </div>
                       <p className="text-2xl font-bold text-gray-900">{selectedAgent.totalDeliveries}</p>
@@ -976,9 +976,9 @@ const DeliveryAgents = () => {
                   </div>
 
                   {selectedAgent.currentDelivery && (
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mb-6">
+                    <div className="bg-green-50 p-4 rounded-lg border border-blue-200 mb-6">
                       <div className="flex items-center gap-2 mb-2">
-                        <Activity className="w-5 h-5 text-blue-600" />
+                        <Activity className="w-5 h-5 text-green-600" />
                         <h3 className="text-lg font-bold text-gray-900">Current Delivery</h3>
                       </div>
                       <p className="text-gray-700">{selectedAgent.currentDelivery}</p>
@@ -991,7 +991,7 @@ const DeliveryAgents = () => {
                         closeModal();
                         openModal('edit', selectedAgent);
                       }}
-                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
                     >
                       <Edit className="w-5 h-5" />
                       Edit Agent
@@ -1009,14 +1009,14 @@ const DeliveryAgents = () => {
 
             {(modalType === 'add' || modalType === 'edit') && (
               <div>
-                <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 rounded-t-lg">
+                <div className="bg-gradient-to-r from-green-600 to-green-800 text-white p-6 rounded-t-lg">
                   <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-bold">
                       {modalType === 'add' ? 'Add New Agent' : 'Edit Agent'}
                     </h2>
                     <button
                       onClick={closeModal}
-                      className="text-white hover:bg-blue-700 p-2 rounded-lg"
+                      className="text-white hover:bg-green-700 p-2 rounded-lg"
                     >
                       <X className="w-6 h-6" />
                     </button>
@@ -1034,7 +1034,7 @@ const DeliveryAgents = () => {
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="Enter agent name"
                       />
                     </div>
@@ -1048,7 +1048,7 @@ const DeliveryAgents = () => {
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="agent@example.com"
                       />
                     </div>
@@ -1062,7 +1062,7 @@ const DeliveryAgents = () => {
                         required
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="+254 712 345 678"
                       />
                     </div>
@@ -1076,7 +1076,7 @@ const DeliveryAgents = () => {
                         required
                         value={formData.location}
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="e.g., Nairobi CBD"
                       />
                     </div>
@@ -1089,7 +1089,7 @@ const DeliveryAgents = () => {
                         required
                         value={formData.vehicleType}
                         onChange={(e) => setFormData({ ...formData, vehicleType: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       >
                         <option value="">Select vehicle type</option>
                         <option value="Motorcycle">Motorcycle</option>
@@ -1107,7 +1107,7 @@ const DeliveryAgents = () => {
                         type="text"
                         value={formData.vehicleNumber}
                         onChange={(e) => setFormData({ ...formData, vehicleNumber: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="e.g., KCA 123A"
                       />
                     </div>
@@ -1120,7 +1120,7 @@ const DeliveryAgents = () => {
                         type="text"
                         value={formData.licenseNumber}
                         onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="e.g., DL-123456"
                       />
                     </div>
@@ -1134,7 +1134,7 @@ const DeliveryAgents = () => {
                         required
                         value={formData.idNumber}
                         onChange={(e) => setFormData({ ...formData, idNumber: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="National ID Number"
                       />
                     </div>
@@ -1143,7 +1143,7 @@ const DeliveryAgents = () => {
                   <div className="flex gap-3 mt-8">
                     <button
                       type="submit"
-                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold"
                     >
                       {modalType === 'add' ? (
                         <>

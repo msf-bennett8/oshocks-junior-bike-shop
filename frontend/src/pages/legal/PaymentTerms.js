@@ -46,9 +46,9 @@ const PaymentTerms = () => {
       id: 'card',
       name: 'Credit/Debit Card',
       icon: CreditCard,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
       description: 'Visa, Mastercard, and other major cards',
       processingTime: 'Instant',
       fees: 'No additional fees',
@@ -92,7 +92,7 @@ const PaymentTerms = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading Payment Terms...</p>
         </div>
       </div>
@@ -134,7 +134,7 @@ const PaymentTerms = () => {
         <div className="max-w-6xl mx-auto px-4 py-3">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg px-2 py-1"
+            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-lg px-2 py-1"
             aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
@@ -387,26 +387,26 @@ const PaymentTerms = () => {
             </p>
 
             <div className="grid md:grid-cols-2 gap-6 mt-6">
-              <div className="border border-blue-200 rounded-lg p-6 bg-blue-50">
-                <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center">
+              <div className="border border-green-200 rounded-lg p-6 bg-green-50">
+                <h3 className="text-lg font-semibold text-green-900 mb-3 flex items-center">
                   <Shield className="w-5 h-5 mr-2" />
                   Encryption & Security
                 </h3>
                 <ul className="space-y-2 text-sm text-gray-700">
                   <li className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
                     <span>256-bit SSL encryption for all transactions</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
                     <span>PCI DSS Level 1 compliant payment processors</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
                     <span>No storage of card details on our servers</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
                     <span>Secure tokenization of payment information</span>
                   </li>
                 </ul>
@@ -620,35 +620,35 @@ const PaymentTerms = () => {
               <h3 className="text-xl font-semibold text-gray-900 mb-3">What to Do if Payment Fails</h3>
               <ol className="space-y-3 text-gray-700">
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">1.</span>
+                  <span className="font-semibold text-orange-500 mr-3">1.</span>
                   <div>
                     <strong>Check your payment method:</strong> Ensure sufficient balance, correct details, and that 
                     your payment method is active and valid.
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">2.</span>
+                  <span className="font-semibold text-orange-500 mr-3">2.</span>
                   <div>
                     <strong>Try again:</strong> Return to the checkout page and attempt the payment again. Sometimes 
                     temporary network issues can cause failures.
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">3.</span>
+                  <span className="font-semibold text-orange-500 mr-3">3.</span>
                   <div>
                     <strong>Use an alternative payment method:</strong> If one method fails repeatedly, try a different 
                     payment option (e.g., switch from card to M-Pesa).
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">4.</span>
+                  <span className="font-semibold text-orange-500 mr-3">4.</span>
                   <div>
                     <strong>Contact your bank or M-Pesa:</strong> If issues persist, contact your payment provider to 
                     ensure there are no restrictions on your account.
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">5.</span>
+                  <span className="font-semibold text-orange-500 mr-3">5.</span>
                   <div>
                     <strong>Contact our support team:</strong> If you continue experiencing issues, reach out to our 
                     customer service at support@oshocksjunior.co.ke with your order details.

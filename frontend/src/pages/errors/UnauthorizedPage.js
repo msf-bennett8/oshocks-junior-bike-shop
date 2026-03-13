@@ -71,7 +71,7 @@ const UnauthorizedPage = () => {
       icon: <Package className="w-6 h-6" />,
       title: 'Order History',
       description: 'View and track all your orders',
-      color: 'bg-blue-500'
+      color: 'bg-green-500'
     },
     {
       icon: <Heart className="w-6 h-6" />,
@@ -180,7 +180,7 @@ const UnauthorizedPage = () => {
           </p>
 
           {timeLeft && timeLeft > 0 && (
-            <div className="inline-flex items-center space-x-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm">
+            <div className="inline-flex items-center space-x-2 bg-orange-100 text-orange-800 px-4 py-2 rounded-full text-sm">
               <RefreshCw className="w-4 h-4" />
               <span>Session expired {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')} ago</span>
             </div>

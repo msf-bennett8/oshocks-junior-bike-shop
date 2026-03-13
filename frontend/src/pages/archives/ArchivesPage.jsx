@@ -409,7 +409,7 @@ const ArchivesPage = () => {
 
   const getCategoryIcon = (category) => {
     const icons = {
-      security: { icon: Shield, color: 'text-purple-600', bg: 'bg-purple-100' },
+      security: { icon: Shield, color: 'text-orange-500', bg: 'bg-orange-100' },
       order: { icon: ShoppingCart, color: 'text-blue-600', bg: 'bg-blue-100' },
       payment: { icon: DollarSign, color: 'text-green-600', bg: 'bg-green-100' },
       product: { icon: Package, color: 'text-orange-600', bg: 'bg-orange-100' },
@@ -431,7 +431,7 @@ const ArchivesPage = () => {
 
   const getArchiveReasonBadge = (reason) => {
     const styles = {
-      manual_deletion: { bg: 'bg-purple-100', text: 'text-purple-800', label: 'Manual' },
+      manual_deletion: { bg: 'bg-orange-100', text: 'text-purple-800', label: 'Manual' },
       standard_retention: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Auto Retention' },
       high_severity_retention: { bg: 'bg-orange-100', text: 'text-orange-800', label: 'High Severity' },
       suspicious_retention: { bg: 'bg-red-100', text: 'text-red-800', label: 'Suspicious' }
@@ -518,7 +518,7 @@ const ArchivesPage = () => {
               icon={Archive}
               label="Total Archived"
               value={stats.total_archived?.toLocaleString() || '0'}
-              color="bg-blue-600"
+              color="bg-green-600"
             />
             <StatCard
               icon={Clock}
@@ -530,7 +530,7 @@ const ArchivesPage = () => {
               icon={Database}
               label="Storage Used"
               value={stats.storage_size || '0 MB'}
-              color="bg-purple-600"
+              color="bg-orange-500"
             />
             <StatCard
               icon={Calendar}
@@ -592,7 +592,7 @@ const ArchivesPage = () => {
                 <select
                   value={filters.event_category}
                   onChange={(e) => setFilters({ ...filters, event_category: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">All Categories</option>
                   <option value="security">Security</option>
@@ -610,7 +610,7 @@ const ArchivesPage = () => {
                 <select
                   value={filters.severity}
                   onChange={(e) => setFilters({ ...filters, severity: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">All Severities</option>
                   <option value="low">Low</option>
@@ -626,7 +626,7 @@ const ArchivesPage = () => {
                 <select
                   value={filters.archive_reason}
                   onChange={(e) => setFilters({ ...filters, archive_reason: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">All Reasons</option>
                   <option value="manual_deletion">Manual Deletion</option>
@@ -643,7 +643,7 @@ const ArchivesPage = () => {
                   type="date"
                   value={filters.start_date}
                   onChange={(e) => setFilters({ ...filters, start_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                 />
               </div>
             </div>
@@ -895,8 +895,8 @@ const ArchivesPage = () => {
               <div className="p-4 md:p-6 border-b border-gray-200 flex-shrink-0">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                   <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                    <div className="p-3 bg-purple-100 rounded-full">
-                      <Calendar className="w-6 h-6 text-purple-600" />
+                    <div className="p-3 bg-orange-100 rounded-full">
+                      <Calendar className="w-6 h-6 text-orange-500" />
                     </div>
                     <div>
                       <h2 className="text-lg md:text-xl font-bold text-gray-900">Select Time Range for Deletion</h2>
@@ -939,7 +939,7 @@ const ArchivesPage = () => {
                               : 'border-gray-200 hover:border-purple-300'
                           }`}
                         >
-                          <Calendar className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-purple-600" />
+                          <Calendar className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-orange-500" />
                           <p className="text-xs md:text-sm font-semibold text-gray-900">{labels[option]}</p>
                           <p className="text-xs text-gray-500 mt-0.5 md:mt-1">{range.start}</p>
                         </button>
@@ -966,8 +966,8 @@ const ArchivesPage = () => {
                       onClick={handleCustomDateRangeSelect}
                       className={`text-xs md:text-sm font-medium ${
                         dateRangeSelection.mode === 'custom'
-                          ? 'text-purple-600'
-                          : 'text-gray-500 hover:text-purple-600'
+                          ? 'text-orange-500'
+                          : 'text-gray-500 hover:text-orange-500'
                       }`}
                     >
                       {dateRangeSelection.mode === 'custom' ? '✓ Custom Mode Active' : 'Select Custom'}
@@ -1032,7 +1032,7 @@ const ArchivesPage = () => {
                 <button
                   onClick={previewTimeRangeDeletion}
                   disabled={!dateRangeSelection.mode || processing}
-                  className="flex-1 px-4 py-2.5 md:py-2 text-sm md:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2.5 md:py-2 text-sm md:text-base bg-purorange-500ple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {processing ? (
                     <>

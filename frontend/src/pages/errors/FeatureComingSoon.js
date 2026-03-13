@@ -178,13 +178,13 @@ const FeatureComingSoonPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-700 rounded-xl flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-xl">OS</span>
               </div>
               <div>
@@ -219,7 +219,7 @@ const FeatureComingSoonPage = () => {
             {/* Left Content */}
             <div>
               {/* Badge */}
-              <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 px-4 py-2 rounded-full mb-6 border border-blue-200">
+              <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-orange-100 to-orange-50 text-orange-700 px-4 py-2 rounded-full mb-6 border border-orange-200">
                 {currentType.icon}
                 <span className="text-sm font-semibold">{currentType.title}</span>
               </div>
@@ -229,7 +229,7 @@ const FeatureComingSoonPage = () => {
                 {featureData.name}
               </h1>
               
-              <p className="text-xl sm:text-2xl text-blue-600 font-semibold mb-6">
+              <p className="text-xl sm:text-2xl text-orange-500 font-semibold mb-6">
                 {featureData.tagline}
               </p>
 
@@ -253,11 +253,11 @@ const FeatureComingSoonPage = () => {
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-semibold text-gray-700">Development Progress</span>
-                  <span className="text-sm font-bold text-blue-600">{featureData.progress}%</span>
+                  <span className="text-sm font-bold text-orange-500">{featureData.progress}%</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                   <div 
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 h-3 rounded-full transition-all duration-1000 ease-out"
+                    className="bg-gradient-to-r from-orange-500 to-orange-600 h-3 rounded-full transition-all duration-1000 ease-out"
                     style={{ width: `${featureData.progress}%` }}
                   />
                 </div>
@@ -265,8 +265,8 @@ const FeatureComingSoonPage = () => {
 
               {/* Notification Form */}
               {!notified ? (
-                <form onSubmit={handleNotifyMe} className="bg-white rounded-xl shadow-lg p-6 border-2 border-blue-100">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">
+
+                           <form onSubmit={handleNotifyMe} className="bg-white rounded-xl shadow-lg p-6 border-2 border-orange-100">       <h3 className="text-lg font-bold text-gray-900 mb-2">
                     Get Notified at Launch
                   </h3>
                   <p className="text-sm text-gray-600 mb-4">
@@ -279,12 +279,12 @@ const FeatureComingSoonPage = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email"
                       required
-                      className="flex-1 px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+                      className="flex-1 px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none transition-all"
                     />
                     <button
                       type="submit"
                       disabled={loading}
-                      className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                      className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                     >
                       {loading ? (
                         <>
@@ -350,9 +350,9 @@ const FeatureComingSoonPage = () => {
               </div>
 
               {/* Floating Stats */}
-              <div className="absolute -bottom-6 -right-6 bg-white rounded-xl shadow-xl p-4 border-2 border-blue-100 hidden lg:block">
+              <div className="absolute -bottom-6 -right-6 bg-white rounded-xl shadow-xl p-4 border-2 border-orange-100 hidden lg:block">
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center text-white">
                     <Users className="w-6 h-6" />
                   </div>
                   <div>
@@ -380,7 +380,7 @@ const FeatureComingSoonPage = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {currentType.benefits.map((benefit, index) => (
-              <div key={index} className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 border-2 border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all">
+              <div key={index} className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 border-2 border-gray-200 hover:border-green-300 hover:shadow-lg transition-all">
                 <div className={`w-12 h-12 bg-gradient-to-br ${currentType.color} rounded-lg flex items-center justify-center text-white mb-4`}>
                   {benefit.icon}
                 </div>
@@ -392,7 +392,7 @@ const FeatureComingSoonPage = () => {
       </div>
 
       {/* What to Expect Section */}
-      <div className="py-16 bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className="py-16 bg-gradient-to-br from-green-50 to-emerald-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
@@ -406,7 +406,7 @@ const FeatureComingSoonPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {expectations.map((item, index) => (
               <div key={index} className="bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition-all border border-gray-200">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white mb-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center text-white mb-4">
                   {item.icon}
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
@@ -456,7 +456,7 @@ const FeatureComingSoonPage = () => {
                 <div className="ml-11">
                   <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                     <div 
-                      className={`h-2 rounded-full transition-all duration-1000 ${stage.completed ? 'bg-green-500' : 'bg-blue-500'}`}
+                      className={`h-2 rounded-full transition-all duration-1000 ${stage.completed ? 'bg-green-500' : 'bg-orange-500'}`}
                       style={{ width: `${stage.percentage}%` }}
                     />
                   </div>
@@ -468,13 +468,13 @@ const FeatureComingSoonPage = () => {
       </div>
 
       {/* Available Now Section */}
-      <div className="py-16 bg-gradient-to-br from-gray-900 to-blue-900 text-white">
+      <div className="py-16 bg-gradient-to-br from-gray-900 to-green-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
               Available Now
             </h2>
-            <p className="text-xl text-blue-200">
+            <p className="text-xl text-green-200">
               While you wait, check out these features already live on our platform
             </p>
           </div>
@@ -516,10 +516,10 @@ const FeatureComingSoonPage = () => {
 
           <div className="space-y-4">
             {faqs.map((faq, index) => (
-              <details key={index} className="bg-gradient-to-r from-gray-50 to-white rounded-xl p-6 border-2 border-gray-200 hover:border-blue-300 transition-all group">
+              <details key={index} className="bg-gradient-to-r from-gray-50 to-white rounded-xl p-6 border-2 border-gray-200 hover:border-green-300 transition-all group">
                 <summary className="font-bold text-gray-900 cursor-pointer list-none flex items-center justify-between">
                   <span className="text-lg">{faq.question}</span>
-                  <AlertCircle className="w-5 h-5 text-blue-600 group-open:rotate-180 transition-transform" />
+                  <AlertCircle className="w-5 h-5 text-green-600 group-open:rotate-180 transition-transform" />
                 </summary>
                 <p className="mt-4 text-gray-600 leading-relaxed">
                   {faq.answer}
@@ -531,7 +531,7 @@ const FeatureComingSoonPage = () => {
       </div>
 
       {/* Final CTA */}
-      <div className="py-20 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 text-white">
+      <div className="py-20 bg-gradient-to-br from-green-600 via-emerald-600 to-teal-600 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 backdrop-blur-lg rounded-full mb-6">
             <Heart className="w-10 h-10" />
@@ -539,21 +539,21 @@ const FeatureComingSoonPage = () => {
           <h2 className="text-4xl sm:text-5xl font-bold mb-6">
             Can't Wait to Launch This!
           </h2>
-          <p className="text-xl sm:text-2xl mb-10 text-blue-100">
+          <p className="text-xl sm:text-2xl mb-10 text-green-100">
             We're working hard to bring you {featureData.name}. Stay tuned for updates!
           </p>
           
           {!notified && (
             <button
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="inline-flex items-center space-x-3 bg-white text-blue-600 px-10 py-5 rounded-full font-bold text-lg hover:bg-blue-50 transition-all shadow-2xl hover:shadow-3xl transform hover:scale-105"
+              className="inline-flex items-center space-x-3 bg-white text-green-600 px-10 py-5 rounded-full font-bold text-lg hover:bg-green-50 transition-all shadow-2xl hover:shadow-3xl transform hover:scale-105"
             >
               <Bell className="w-6 h-6" />
               <span>Get Notified</span>
             </button>
           )}
 
-          <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-8 text-blue-100">
+          <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-8 text-green-100">
             <div className="text-center">
               <div className="text-3xl font-bold text-white mb-1">500+</div>
               <div className="text-sm">Waiting List</div>

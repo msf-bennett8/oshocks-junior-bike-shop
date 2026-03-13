@@ -92,8 +92,8 @@ const PaymentCallback = () => {
       <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
         {status === 'verifying' && (
           <>
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Loader className="w-10 h-10 text-blue-600 animate-spin" />
+            <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Loader className="w-10 h-10 text-orange-500 animate-spin" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               Verifying Payment...

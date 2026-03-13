@@ -167,7 +167,7 @@ const CartPage = () => {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
               <Link
                 to="/shop"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg text-sm sm:text-base"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-md hover:shadow-lg text-sm sm:text-base"
               >
                 <ShoppingCart className="w-5 h-5" />
                 Start Shopping
@@ -191,9 +191,9 @@ const CartPage = () => {
                   <Link
                     key={category}
                     to={`/category/${category.toLowerCase().replace(' ', '-')}`}
-                    className="p-3 sm:p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-600 hover:shadow-md transition-all"
+                    className="p-3 sm:p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-green-600 hover:shadow-md transition-all"
                   >
-                    <Package className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-blue-600" />
+                    <Package className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-green-600" />
                     <p className="text-xs sm:text-sm font-medium text-gray-800">{category}</p>
                   </Link>
                 ))}
@@ -217,7 +217,7 @@ const CartPage = () => {
         {/* Notification Toast */}
         {notification && (
           <div className={`fixed top-4 right-4 z-50 px-4 sm:px-6 py-3 rounded-lg shadow-lg animate-fadeIn ${
-            notification.type === 'success' ? 'bg-green-600' : 'bg-blue-600'
+            notification.type === 'success' ? 'bg-green-600' : 'bg-green-600'
           } text-white text-sm sm:text-base max-w-xs sm:max-w-sm`}>
             {notification.message}
           </div>
@@ -229,7 +229,7 @@ const CartPage = () => {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
-                  <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+                  <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
                   Shopping Cart
                 </h1>
                 <p className="text-sm sm:text-base text-gray-600 mt-1">
@@ -238,7 +238,7 @@ const CartPage = () => {
               </div>
               <button
                 onClick={handleContinueShopping}
-                className="hidden sm:flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
+                className="hidden sm:flex items-center gap-2 text-green-600 hover:text-blue-700 font-medium text-sm sm:text-base"
               >
                 <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                 Continue Shopping
@@ -294,7 +294,7 @@ const CartPage = () => {
                     <p className="text-xs text-gray-500 hidden sm:block">Orders over KES 5,000</p>
                   </div>
                   <div className="p-2">
-                    <RefreshCw className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-blue-600" />
+                    <RefreshCw className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-green-600" />
                     <p className="text-xs font-medium text-gray-800">30-Day Returns</p>
                     <p className="text-xs text-gray-500 hidden sm:block">Money-back guarantee</p>
                   </div>
@@ -314,7 +314,7 @@ const CartPage = () => {
               {/* Recommended Products */}
               <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
                 <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                  <TrendingUp className="w-5 h-5 text-green-600" />
                   You Might Also Like
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -385,8 +385,8 @@ const CartPage = () => {
                                   addingRecommendedToCart === product.id
                                     ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                     : cartItems.some(item => item.id === product.id || item.product_id === product.id)
-                                    ? 'bg-blue-500 text-white hover:bg-blue-600 hover:scale-110'
-                                    : 'bg-white text-gray-700 hover:bg-blue-100 hover:text-blue-600 hover:scale-110'
+                                    ? 'bg-green-500 text-white hover:bg-green-600 hover:scale-110'
+                                    : 'bg-white text-gray-700 hover:bg-blue-100 hover:text-green-600 hover:scale-110'
                                 }`}
                                 title={cartItems.some(item => item.id === product.id || item.product_id === product.id) ? 'In cart' : 'Add to cart'}
                               >
@@ -458,13 +458,13 @@ const CartPage = () => {
                           </div>
                           
                           <div className="p-2 sm:p-3">
-                            <h3 className="font-semibold text-xs sm:text-sm text-gray-900 mb-1 line-clamp-2 h-8 hover:text-blue-600 transition">
+                            <h3 className="font-semibold text-xs sm:text-sm text-gray-900 mb-1 line-clamp-2 h-8 hover:text-green-600 transition">
                               {product.name}
                             </h3>
                             
                             <div className="flex justify-between items-center mb-2">
                               <div>
-                                <span className="text-sm sm:text-base font-bold text-blue-600">
+                                <span className="text-sm sm:text-base font-bold text-green-600">
                                   {formatPrice(product.price)}
                                 </span>
                                 {product.originalPrice && (
@@ -560,7 +560,7 @@ const CartPage = () => {
                   </p>
                   <Link
                     to="/contact-support"
-                    className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                    className="text-xs sm:text-sm text-green-600 hover:text-blue-700 font-medium flex items-center gap-1"
                   >
                     Contact Support
                     <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 rotate-180" />

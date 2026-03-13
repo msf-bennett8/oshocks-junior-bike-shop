@@ -120,7 +120,7 @@ const ForbiddenPage = () => {
             </div>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Logged in as:</span>
-              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium capitalize">
+              <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium capitalize">
                 {userRole}
               </span>
             </div>
@@ -195,12 +195,12 @@ const ForbiddenPage = () => {
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-12">
           <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">Your Current Permissions</h3>
           <div className="max-w-3xl mx-auto">
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-6">
+            <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-6">
               <div className="flex items-center space-x-3">
-                <User className="w-8 h-8 text-blue-600" />
+                <User className="w-8 h-8 text-green-600" />
                 <div>
-                  <h4 className="font-bold text-blue-900 capitalize text-lg">{userRole} Account</h4>
-                  <p className="text-blue-700 text-sm">You have standard {userRole} permissions</p>
+                  <h4 className="font-bold text-green-900 capitalize text-lg">{userRole} Account</h4>
+                  <p className="text-green-700 text-sm">You have standard {userRole} permissions</p>
                 </div>
               </div>
             </div>

@@ -263,8 +263,8 @@ const BecomeDeliveryAgent = () => {
           <p className="text-lg text-gray-600 mb-6">
             Thank you for applying to become a delivery agent with Oshocks Junior Bike Shop.
           </p>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
-            <h3 className="font-semibold text-blue-900 mb-2">What Happens Next?</h3>
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+            <h3 className="font-semibold text-green-900 mb-2">What Happens Next?</h3>
             <ul className="text-left text-blue-800 space-y-2">
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
@@ -289,7 +289,7 @@ const BecomeDeliveryAgent = () => {
           </p>
           <button
             onClick={() => window.location.href = '/'}
-            className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+            className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold"
           >
             Back to Home
           </button>
@@ -301,25 +301,25 @@ const BecomeDeliveryAgent = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
+      <div className="bg-gradient-to-r from-green-600 to-green-800 text-white py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Become a Delivery Agent</h1>
-            <p className="text-xl text-blue-100 mb-8">
+            <p className="text-xl text-green-100 mb-8">
               Join our growing team of delivery professionals and earn on your own schedule
             </p>
             <div className="flex flex-wrap justify-center gap-8 text-center">
               <div>
                 <div className="text-3xl font-bold">50K - 150K</div>
-                <div className="text-blue-100">Monthly Earnings</div>
+                <div className="text-green-100">Monthly Earnings</div>
               </div>
               <div>
                 <div className="text-3xl font-bold">500+</div>
-                <div className="text-blue-100">Active Agents</div>
+                <div className="text-green-100">Active Agents</div>
               </div>
               <div>
                 <div className="text-3xl font-bold">4.8★</div>
-                <div className="text-blue-100">Average Rating</div>
+                <div className="text-green-100">Average Rating</div>
               </div>
             </div>
           </div>
@@ -332,8 +332,8 @@ const BecomeDeliveryAgent = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {benefits.map((benefit, index) => (
             <div key={index} className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                <benefit.icon className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                <benefit.icon className="w-6 h-6 text-green-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">{benefit.title}</h3>
               <p className="text-gray-600">{benefit.description}</p>
@@ -354,7 +354,7 @@ const BecomeDeliveryAgent = () => {
                     <div
                       className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold transition-colors ${
                         currentStep >= step.number
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-green-600 text-white'
                           : 'bg-gray-200 text-gray-600'
                       }`}
                     >
@@ -369,7 +369,7 @@ const BecomeDeliveryAgent = () => {
                   {index < steps.length - 1 && (
                     <div
                       className={`h-1 w-8 md:w-16 mx-2 transition-colors ${
-                        currentStep > step.number ? 'bg-blue-600' : 'bg-gray-200'
+                        currentStep > step.number ? 'bg-green-600' : 'bg-gray-200'
                       }`}
                     ></div>
                   )}
@@ -393,7 +393,7 @@ const BecomeDeliveryAgent = () => {
                       type="text"
                       value={formData.firstName}
                       onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 ${
                         errors.firstName ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="John"
@@ -411,7 +411,7 @@ const BecomeDeliveryAgent = () => {
                       type="text"
                       value={formData.lastName}
                       onChange={(e) => handleInputChange('lastName', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 ${
                         errors.lastName ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Kamau"
@@ -429,7 +429,7 @@ const BecomeDeliveryAgent = () => {
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 ${
                         errors.email ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="john@example.com"
@@ -447,7 +447,7 @@ const BecomeDeliveryAgent = () => {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 ${
                         errors.phone ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="+254 712 345 678"
@@ -465,7 +465,7 @@ const BecomeDeliveryAgent = () => {
                       type="date"
                       value={formData.dateOfBirth}
                       onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 ${
                         errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'
                       }`}
                     />
@@ -482,7 +482,7 @@ const BecomeDeliveryAgent = () => {
                       type="text"
                       value={formData.idNumber}
                       onChange={(e) => handleInputChange('idNumber', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 ${
                         errors.idNumber ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="12345678"
@@ -551,7 +551,7 @@ const BecomeDeliveryAgent = () => {
                     <select
                       value={formData.county}
                       onChange={(e) => handleInputChange('county', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 ${
                         errors.county ? 'border-red-500' : 'border-gray-300'
                       }`}
                     >
@@ -573,7 +573,7 @@ const BecomeDeliveryAgent = () => {
                       type="text"
                       value={formData.subCounty}
                       onChange={(e) => handleInputChange('subCounty', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                       placeholder="Enter sub-county"
                     />
                   </div>
@@ -586,7 +586,7 @@ const BecomeDeliveryAgent = () => {
                       type="text"
                       value={formData.ward}
                       onChange={(e) => handleInputChange('ward', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                       placeholder="Enter ward"
                     />
                   </div>
@@ -599,7 +599,7 @@ const BecomeDeliveryAgent = () => {
                       type="text"
                       value={formData.street}
                       onChange={(e) => handleInputChange('street', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 ${
                         errors.street ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="Kenyatta Avenue"
@@ -617,7 +617,7 @@ const BecomeDeliveryAgent = () => {
                       type="text"
                       value={formData.building}
                       onChange={(e) => handleInputChange('building', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                       placeholder="Building name or apartment number"
                     />
                   </div>
@@ -637,7 +637,7 @@ const BecomeDeliveryAgent = () => {
                     <select
                       value={formData.vehicleType}
                       onChange={(e) => handleInputChange('vehicleType', e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 ${
                         errors.vehicleType ? 'border-red-500' : 'border-gray-300'
                       }`}
                     >
@@ -661,7 +661,7 @@ const BecomeDeliveryAgent = () => {
                           type="text"
                           value={formData.vehicleNumber}
                           onChange={(e) => handleInputChange('vehicleNumber', e.target.value)}
-                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 ${
                             errors.vehicleNumber ? 'border-red-500' : 'border-gray-300'
                           }`}
                           placeholder="KCA 123A"
@@ -679,7 +679,7 @@ const BecomeDeliveryAgent = () => {
                           type="text"
                           value={formData.vehicleMake}
                           onChange={(e) => handleInputChange('vehicleMake', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                           placeholder="e.g., Honda, Toyota"
                         />
                       </div>
@@ -692,7 +692,7 @@ const BecomeDeliveryAgent = () => {
                           type="text"
                           value={formData.vehicleModel}
                           onChange={(e) => handleInputChange('vehicleModel', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                           placeholder="e.g., CB150, Hilux"
                         />
                       </div>
@@ -705,7 +705,7 @@ const BecomeDeliveryAgent = () => {
                           type="number"
                           value={formData.vehicleYear}
                           onChange={(e) => handleInputChange('vehicleYear', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                           placeholder="2020"
                           min="1990"
                           max={new Date().getFullYear()}
@@ -755,7 +755,7 @@ const BecomeDeliveryAgent = () => {
                             type="date"
                             value={formData.insuranceExpiry}
                             onChange={(e) => handleInputChange('insuranceExpiry', e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                           />
                         </div>
                       )}
@@ -802,7 +802,7 @@ const BecomeDeliveryAgent = () => {
                           type="text"
                           value={formData.licenseNumber}
                           onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                           placeholder="DL-123456"
                         />
                       </div>
@@ -814,7 +814,7 @@ const BecomeDeliveryAgent = () => {
                         <select
                           value={formData.licenseCategory}
                           onChange={(e) => handleInputChange('licenseCategory', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                         >
                           <option value="">Select Category</option>
                           <option value="A">A - Motorcycles</option>
@@ -832,7 +832,7 @@ const BecomeDeliveryAgent = () => {
                           type="date"
                           value={formData.licenseExpiry}
                           onChange={(e) => handleInputChange('licenseExpiry', e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                         />
                       </div>
                     </>
@@ -889,7 +889,7 @@ const BecomeDeliveryAgent = () => {
                         type="number"
                         value={formData.yearsExperience}
                         onChange={(e) => handleInputChange('yearsExperience', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                         placeholder="2"
                         min="0"
                         max="50"
@@ -904,7 +904,7 @@ const BecomeDeliveryAgent = () => {
                         type="text"
                         value={formData.previousCompanies}
                         onChange={(e) => handleInputChange('previousCompanies', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                         placeholder="Company names, separated by commas"
                       />
                     </div>
@@ -963,7 +963,7 @@ const BecomeDeliveryAgent = () => {
                     type="date"
                     value={formData.startDate}
                     onChange={(e) => handleInputChange('startDate', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                     min={new Date().toISOString().split('T')[0]}
                   />
                 </div>
@@ -981,11 +981,11 @@ const BecomeDeliveryAgent = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       National ID or Passport <span className="text-red-500">*</span>
                     </label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-500 transition-colors">
                       {uploadedFiles.idDocument ? (
-                        <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg">
+                        <div className="flex items-center justify-between bg-green-50 p-4 rounded-lg">
                           <div className="flex items-center gap-3">
-                            <FileText className="w-8 h-8 text-blue-600" />
+                            <FileText className="w-8 h-8 text-green-600" />
                             <div className="text-left">
                               <p className="font-medium text-gray-900">{uploadedFiles.idDocument.name}</p>
                               <p className="text-sm text-gray-500">{(uploadedFiles.idDocument.size / 1024).toFixed(2)} KB</p>
@@ -1013,7 +1013,7 @@ const BecomeDeliveryAgent = () => {
                           />
                           <label
                             htmlFor="idDocument"
-                            className="mt-4 inline-block px-6 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700"
+                            className="mt-4 inline-block px-6 py-2 bg-green-600 text-white rounded-lg cursor-pointer hover:bg-green-700"
                           >
                             Choose File
                           </label>
@@ -1029,11 +1029,11 @@ const BecomeDeliveryAgent = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Profile Photo <span className="text-red-500">*</span>
                     </label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-500 transition-colors">
                       {uploadedFiles.profilePhoto ? (
-                        <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg">
+                        <div className="flex items-center justify-between bg-green-50 p-4 rounded-lg">
                           <div className="flex items-center gap-3">
-                            <FileText className="w-8 h-8 text-blue-600" />
+                            <FileText className="w-8 h-8 text-green-600" />
                             <div className="text-left">
                               <p className="font-medium text-gray-900">{uploadedFiles.profilePhoto.name}</p>
                               <p className="text-sm text-gray-500">{(uploadedFiles.profilePhoto.size / 1024).toFixed(2)} KB</p>
@@ -1061,7 +1061,7 @@ const BecomeDeliveryAgent = () => {
                           />
                           <label
                             htmlFor="profilePhoto"
-                            className="mt-4 inline-block px-6 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700"
+                            className="mt-4 inline-block px-6 py-2 bg-green-600 text-white rounded-lg cursor-pointer hover:bg-green-700"
                           >
                             Choose File
                           </label>
@@ -1078,11 +1078,11 @@ const BecomeDeliveryAgent = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Driving License <span className="text-red-500">*</span>
                       </label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-500 transition-colors">
                         {uploadedFiles.licenseDocument ? (
-                          <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg">
+                          <div className="flex items-center justify-between bg-green-50 p-4 rounded-lg">
                             <div className="flex items-center gap-3">
-                              <FileText className="w-8 h-8 text-blue-600" />
+                              <FileText className="w-8 h-8 text-green-600" />
                               <div className="text-left">
                                 <p className="font-medium text-gray-900">{uploadedFiles.licenseDocument.name}</p>
                                 <p className="text-sm text-gray-500">{(uploadedFiles.licenseDocument.size / 1024).toFixed(2)} KB</p>
@@ -1110,7 +1110,7 @@ const BecomeDeliveryAgent = () => {
                             />
                             <label
                               htmlFor="licenseDocument"
-                              className="mt-4 inline-block px-6 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700"
+                              className="mt-4 inline-block px-6 py-2 bg-green-600 text-white rounded-lg cursor-pointer hover:bg-green-700"
                             >
                               Choose File
                             </label>
@@ -1129,11 +1129,12 @@ const BecomeDeliveryAgent = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Vehicle Registration/Logbook (Optional)
                         </label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-500 transition-colors">
                           {uploadedFiles.vehicleDocument ? (
-                            <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg">
+                            <div className="flex items-center justify-between bg-
+                             p-4 rounded-lg">
                               <div className="flex items-center gap-3">
-                                <FileText className="w-8 h-8 text-blue-600" />
+                                <FileText className="w-8 h-8 text-green-600" />
                                 <div className="text-left">
                                   <p className="font-medium text-gray-900">{uploadedFiles.vehicleDocument.name}</p>
                                   <p className="text-sm text-gray-500">{(uploadedFiles.vehicleDocument.size / 1024).toFixed(2)} KB</p>
@@ -1159,7 +1160,7 @@ const BecomeDeliveryAgent = () => {
                               />
                               <label
                                 htmlFor="vehicleDocument"
-                                className="mt-4 inline-block px-6 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700"
+                                className="mt-4 inline-block px-6 py-2 bg-green-600 text-white rounded-lg cursor-pointer hover:bg-green-700"
                               >
                                 Choose File
                               </label>
@@ -1173,11 +1174,11 @@ const BecomeDeliveryAgent = () => {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Insurance Certificate (Optional)
                           </label>
-                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
+                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-green-500 transition-colors">
                             {uploadedFiles.insuranceDocument ? (
-                              <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg">
+                              <div className="flex items-center justify-between bg-green-50 p-4 rounded-lg">
                                 <div className="flex items-center gap-3">
-                                  <FileText className="w-8 h-8 text-blue-600" />
+                                  <FileText className="w-8 h-8 text-green-600" />
                                   <div className="text-left">
                                     <p className="font-medium text-gray-900">{uploadedFiles.insuranceDocument.name}</p>
                                     <p className="text-sm text-gray-500">{(uploadedFiles.insuranceDocument.size / 1024).toFixed(2)} KB</p>
@@ -1203,7 +1204,7 @@ const BecomeDeliveryAgent = () => {
                                 />
                                 <label
                                   htmlFor="insuranceDocument"
-                                  className="mt-4 inline-block px-6 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700"
+                                  className="mt-4 inline-block px-6 py-2 bg-green-600 text-white rounded-lg cursor-pointer hover:bg-green-700"
                                 >
                                   Choose File
                                 </label>
@@ -1234,7 +1235,7 @@ const BecomeDeliveryAgent = () => {
                         type="text"
                         value={formData.emergencyName}
                         onChange={(e) => handleInputChange('emergencyName', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 ${
                           errors.emergencyName ? 'border-red-500' : 'border-gray-300'
                         }`}
                         placeholder="Enter emergency contact name"
@@ -1252,7 +1253,7 @@ const BecomeDeliveryAgent = () => {
                         type="tel"
                         value={formData.emergencyPhone}
                         onChange={(e) => handleInputChange('emergencyPhone', e.target.value)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 ${
                           errors.emergencyPhone ? 'border-red-500' : 'border-gray-300'
                         }`}
                         placeholder="+254 712 345 678"
@@ -1270,7 +1271,7 @@ const BecomeDeliveryAgent = () => {
                         type="text"
                         value={formData.emergencyRelation}
                         onChange={(e) => handleInputChange('emergencyRelation', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                         placeholder="e.g., Spouse, Parent, Sibling"
                       />
                     </div>
@@ -1316,7 +1317,7 @@ const BecomeDeliveryAgent = () => {
                       className="mt-1 mr-3"
                     />
                     <span className="text-sm text-gray-700">
-                      I agree to the <a href="#" className="text-blue-600 hover:underline">Terms and Conditions</a> and <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a> <span className="text-red-500">*</span>
+                      I agree to the <a href="#" className="text-green-600 hover:underline">Terms and Conditions</a> and <a href="#" className="text-green-600 hover:underline">Privacy Policy</a> <span className="text-red-500">*</span>
                     </span>
                   </label>
                   {errors.agreeTerms && (
@@ -1339,11 +1340,11 @@ const BecomeDeliveryAgent = () => {
                   )}
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <div className="flex gap-3">
-                    <AlertCircle className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <AlertCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-semibold text-blue-900 mb-1">Before you submit:</p>
+                      <p className="font-semibold text-green-900 mb-1">Before you submit:</p>
                       <ul className="text-sm text-blue-800 space-y-1">
                         <li>• Double-check all information is accurate</li>
                         <li>• Ensure all required documents are uploaded</li>
@@ -1372,7 +1373,7 @@ const BecomeDeliveryAgent = () => {
                 <button
                   type="button"
                   onClick={nextStep}
-                  className={`flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold ${
+                  className={`flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold ${
                     currentStep === 1 ? 'ml-auto' : ''
                   }`}
                 >
@@ -1474,7 +1475,7 @@ const BecomeDeliveryAgent = () => {
                 href="tel:+254712345678"
                 className="flex items-center gap-3 px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                <Phone className="w-5 h-5 text-blue-600" />
+                <Phone className="w-5 h-5 text-green-600" />
                 <div className="text-left">
                   <p className="text-xs text-gray-500">Call Us</p>
                   <p className="font-semibold text-gray-900">+254 712 345 678</p>
@@ -1484,7 +1485,7 @@ const BecomeDeliveryAgent = () => {
                 href="mailto:careers@oshocks.com"
                 className="flex items-center gap-3 px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                <Mail className="w-5 h-5 text-blue-600" />
+                <Mail className="w-5 h-5 text-green-600" />
                 <div className="text-left">
                   <p className="text-xs text-gray-500">Email Us</p>
                   <p className="font-semibold text-gray-900">careers@oshocks.com</p>

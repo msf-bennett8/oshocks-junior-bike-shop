@@ -139,8 +139,8 @@ const OrderHistory = () => {
 
   const getStatusConfig = (status) => {
     const configs = {
-      processing: { icon: Clock, color: 'text-blue-600 bg-blue-50', label: 'Processing' },
-      shipped: { icon: Truck, color: 'text-purple-600 bg-purple-50', label: 'Shipped' },
+      processing: { icon: Clock, color: 'text-green-600 bg-green-50', label: 'Processing' },
+      shipped: { icon: Truck, color: 'text-orange-500 bg-orange-50', label: 'Shipped' },
       delivered: { icon: CheckCircle, color: 'text-green-600 bg-green-50', label: 'Delivered' },
       cancelled: { icon: XCircle, color: 'text-red-600 bg-red-50', label: 'Cancelled' }
     };

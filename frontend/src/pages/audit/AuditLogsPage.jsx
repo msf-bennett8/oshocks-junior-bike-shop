@@ -341,11 +341,11 @@ const previewDateRangeDeletion = async () => {
 
   const getCategoryIcon = (category) => {
     const icons = {
-      security: { icon: Shield, color: 'text-purple-600', bg: 'bg-purple-100' },
+      security: { icon: Shield, color: 'text-orange-500', bg: 'bg-orange-100' },
       order: { icon: ShoppingCart, color: 'text-blue-600', bg: 'bg-blue-100' },
       payment: { icon: DollarSign, color: 'text-green-600', bg: 'bg-green-100' },
       product: { icon: Package, color: 'text-orange-600', bg: 'bg-orange-100' },
-      user: { icon: User, color: 'text-indigo-600', bg: 'bg-indigo-100' }
+      user: { icon: User, color: 'text-green-600', bg: 'bg-green-100' }
     };
     return icons[category?.toLowerCase()] || icons.security;
   };
@@ -458,7 +458,7 @@ const previewDateRangeDeletion = async () => {
 
               <button
                 onClick={() => navigate('/archives/archives')}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-purple-700 transition-colors"
               >
                 <Archive className="w-4 h-4" />
                 View Archives
@@ -514,7 +514,7 @@ const previewDateRangeDeletion = async () => {
                         onClick={() => setShowDateRangeModal(true)}
                         className="w-full text-left px-4 py-2 hover:bg-purple-50 rounded-lg text-sm font-medium text-gray-700 flex items-center gap-2"
                       >
-                        <Calendar className="w-4 h-4 text-purple-600" />
+                        <Calendar className="w-4 h-4 text-orange-500" />
                         Delete by Date Range
                       </button>
                       
@@ -542,7 +542,7 @@ const previewDateRangeDeletion = async () => {
               icon={Activity}
               label="Total Events"
               value={stats.total_logs?.toLocaleString() || '0'}
-              color="bg-blue-600"
+              color="bg-green-600"
               filterKey="all"
               filterValue=""
               isActive={activeFilter === 'all'}
@@ -562,7 +562,7 @@ const previewDateRangeDeletion = async () => {
               icon={Shield}
               label="Security Events"
               value={stats.by_category?.find(c => c.event_category === 'security')?.count || '0'}
-              color="bg-purple-600"
+              color="bg-orange-500"
               filterKey="event_category"
               filterValue="security"
               isActive={activeFilter === 'event_category' && filters.event_category === 'security'}
@@ -652,7 +652,7 @@ const previewDateRangeDeletion = async () => {
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-orange-500"
               />
             </div>
             <button
@@ -673,7 +673,7 @@ const previewDateRangeDeletion = async () => {
                 <select
                   value={filters.event_category}
                   onChange={(e) => setFilters({ ...filters, event_category: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-orange-500"
                 >
                   <option value="">All Categories</option>
                   <option value="security">Security</option>
@@ -691,7 +691,7 @@ const previewDateRangeDeletion = async () => {
                 <select
                   value={filters.severity}
                   onChange={(e) => setFilters({ ...filters, severity: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-orange-500"
                 >
                   <option value="">All Severities</option>
                   <option value="low">Low</option>
@@ -707,7 +707,7 @@ const previewDateRangeDeletion = async () => {
                 <select
                   value={filters.is_suspicious}
                   onChange={(e) => setFilters({ ...filters, is_suspicious: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-orange-500"
                 >
                   <option value="">All Events</option>
                   <option value="1">Suspicious Only</option>
@@ -723,7 +723,7 @@ const previewDateRangeDeletion = async () => {
                   type="date"
                   value={filters.date_from}
                   onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-orange-500"
                 />
               </div>
             </div>
@@ -1102,8 +1102,8 @@ const previewDateRangeDeletion = async () => {
               <div className="p-4 md:p-6 border-b border-gray-200 flex-shrink-0">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-center gap-2 md:gap-3">
-                    <div className="p-2 md:p-3 bg-purple-100 rounded-full flex-shrink-0">
-                      <Calendar className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
+                    <div className="p-2 md:p-3 bg-orange-100 rounded-full flex-shrink-0">
+                      <Calendar className="w-5 h-5 md:w-6 md:h-6 text-orange-500" />
                     </div>
                     <div>
                       <h2 className="text-lg md:text-xl font-bold text-gray-900">Select Time Range for Deletion</h2>
@@ -1135,7 +1135,7 @@ const previewDateRangeDeletion = async () => {
                           : 'border-gray-200 hover:border-purple-300'
                       }`}
                     >
-                      <Calendar className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-purple-600" />
+                      <Calendar className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-orange-500" />
                       <p className="text-xs md:text-sm font-semibold text-gray-900">Last 30 Days</p>
                       <p className="text-xs text-gray-500 mt-0.5 md:mt-1 leading-tight">
                         {(() => {
@@ -1153,7 +1153,7 @@ const previewDateRangeDeletion = async () => {
                           : 'border-gray-200 hover:border-purple-300'
                       }`}
                     >
-                      <Calendar className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-purple-600" />
+                      <Calendar className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-orange-500" />
                       <p className="text-xs md:text-sm font-semibold text-gray-900">Last 3 Months</p>
                       <p className="text-xs text-gray-500 mt-0.5 md:mt-1 leading-tight">
                         {(() => {
@@ -1171,7 +1171,7 @@ const previewDateRangeDeletion = async () => {
                           : 'border-gray-200 hover:border-purple-300'
                       }`}
                     >
-                      <Calendar className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-purple-600" />
+                      <Calendar className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-orange-500" />
                       <p className="text-xs md:text-sm font-semibold text-gray-900">Last 6 Months</p>
                       <p className="text-xs text-gray-500 mt-0.5 md:mt-1 leading-tight">
                         {(() => {
@@ -1189,7 +1189,7 @@ const previewDateRangeDeletion = async () => {
                           : 'border-gray-200 hover:border-purple-300'
                       }`}
                     >
-                      <Calendar className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-purple-600" />
+                      <Calendar className="w-5 h-5 md:w-6 md:h-6 mx-auto mb-1 md:mb-2 text-orange-500" />
                       <p className="text-xs md:text-sm font-semibold text-gray-900">Last 1 Year</p>
                       <p className="text-xs text-gray-500 mt-0.5 md:mt-1 leading-tight">
                         {(() => {
@@ -1219,8 +1219,8 @@ const previewDateRangeDeletion = async () => {
                       onClick={handleCustomDateRangeSelect}
                       className={`text-xs md:text-sm font-medium ${
                         dateRangeSelection.mode === 'custom'
-                          ? 'text-purple-600'
-                          : 'text-gray-500 hover:text-purple-600'
+                          ? 'text-orange-500'
+                          : 'text-gray-500 hover:text-orange-500'
                       }`}
                     >
                       {dateRangeSelection.mode === 'custom' ? '✓ Custom Mode Active' : 'Select Custom'}
@@ -1285,7 +1285,7 @@ const previewDateRangeDeletion = async () => {
                 <button
                   onClick={previewDateRangeDeletion}
                   disabled={!dateRangeSelection.mode}
-                  className="flex-1 px-4 py-2 text-sm md:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 text-sm md:text-base bg-orange-500 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   <Eye className="w-4 h-4" />
                   <span>Preview Deletion</span>

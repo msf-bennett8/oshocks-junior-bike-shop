@@ -266,8 +266,8 @@ const OrderTracker = () => {
               onChange={(e) => setOrderId(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Enter Order ID (e.g., OS12345678)"
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
-            />
+
+                       className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"   />
             <button
               onClick={handleTrackOrder}
               disabled={loading}
@@ -295,7 +295,7 @@ const OrderTracker = () => {
                 </div>
                 <div className="text-right">
                   <div className="text-sm text-gray-600">Estimated Delivery</div>
-                  <div className="text-lg font-semibold text-orange-600">
+                  <div className="text-lg font-semibold text-green-600">
                     {new Date(orderData.estimatedDelivery).toLocaleDateString('en-GB', {
                       day: 'numeric',
                       month: 'long',
@@ -305,14 +305,14 @@ const OrderTracker = () => {
                 </div>
               </div>
 
-              <div className="bg-orange-50 border-l-4 border-orange-600 p-4 rounded-r-lg">
+              <div className="bg-green-50 border-l-4 border-green-600 p-4 rounded-r-lg">
                 <div className="flex items-center gap-3">
-                  <Truck className="w-8 h-8 text-orange-600" />
+                  <Truck className="w-8 h-8 text-green-600" />
                   <div>
-                    <h3 className="font-semibold text-orange-900">
+                    <h3 className="font-semibold text-green-900">
                       {orderData.timeline.find(t => t.current)?.title || 'Order Confirmed'}
                     </h3>
-                    <p className="text-orange-700 text-sm">
+                    <p className="text-green-700 text-sm">
                       {orderData.timeline.find(t => t.current)?.description || 'Your order has been received'}
                     </p>
                   </div>
@@ -373,7 +373,7 @@ const OrderTracker = () => {
               <div className="space-y-3">
                 {orderData.tracking.updates.map((update, index) => (
                   <div key={index} className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg">
-                    <MapPin className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                    <MapPin className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">{update.status}</p>
                       <p className="text-sm text-gray-600">{update.location}</p>
@@ -434,7 +434,7 @@ const OrderTracker = () => {
                   )}
                   <div className="flex justify-between items-center pt-3 border-t border-gray-200">
                     <span className="text-lg font-bold text-gray-900">Total Amount</span>
-                    <span className="text-2xl font-bold text-orange-600">{formatCurrency(orderData.payment.amount)}</span>
+                    <span className="text-2xl font-bold text-gray-900">{formatCurrency(orderData.payment.amount)}</span>
                   </div>
                 </div>
               </div>
@@ -525,21 +525,21 @@ const OrderTracker = () => {
             </div>
 
             {/* Need Help Section */}
-            <div className="bg-gradient-to-r from-orange-600 to-orange-700 rounded-lg shadow-md p-6 text-white">
+            <div className="bg-gradient-to-r from-green-600 to-emerald-700 rounded-lg shadow-md p-6 text-white">
               <h3 className="text-xl font-bold mb-2">Need Help?</h3>
-              <p className="mb-4 text-orange-100">
+              <p className="mb-4 text-green-100">
                 Our customer support team is here to assist you with any questions about your order.
               </p>
               <div className="flex flex-wrap gap-4">
                 <button 
                   onClick={() => navigate('/contact-support')}
-                  className="px-6 py-2 bg-white text-orange-600 rounded-lg font-semibold hover:bg-orange-50 transition-colors"
+                  className="px-6 py-2 bg-white text-green-600 rounded-lg font-semibold hover:bg-green-50 transition-colors"
                 >
                   Contact Support
                 </button>
                 <a
                   href="tel:+254712345678"
-                  className="px-6 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-400 transition-colors"
+                  className="px-6 py-2 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-400 transition-colors"
                 >
                   Call Us
                 </a>

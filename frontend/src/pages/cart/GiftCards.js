@@ -175,13 +175,13 @@ const GiftCards = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
+      <div className="bg-gradient-to-r from-green-600 to-orange-500 text-white py-16">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-center mb-4">
             <Gift className="w-12 h-12 mr-4" />
             <h1 className="text-4xl md:text-5xl font-bold">Gift Cards</h1>
           </div>
-          <p className="text-center text-xl text-blue-100 max-w-2xl mx-auto">
+          <p className="text-center text-xl text-green-100 max-w-2xl mx-auto">
             Give the perfect gift for cycling enthusiasts. Let them choose their dream bike or accessories!
           </p>
         </div>
@@ -195,7 +195,7 @@ const GiftCards = () => {
               onClick={() => setActiveTab('purchase')}
               className={`flex-1 px-2 sm:px-4 md:px-6 py-3 font-semibold transition-colors flex flex-col sm:flex-row items-center justify-center ${
                 activeTab === 'purchase'
-                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  ? 'border-b-2 border-green-600 text-green-600'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
@@ -206,7 +206,7 @@ const GiftCards = () => {
               onClick={() => setActiveTab('check')}
               className={`flex-1 px-2 sm:px-4 md:px-6 py-3 font-semibold transition-colors flex flex-col sm:flex-row items-center justify-center ${
                 activeTab === 'check'
-                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  ? 'border-b-2 border-green-600 text-green-600'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
@@ -217,7 +217,7 @@ const GiftCards = () => {
               onClick={() => setActiveTab('redeem')}
               className={`flex-1 px-2 sm:px-4 md:px-6 py-3 font-semibold transition-colors flex flex-col sm:flex-row items-center justify-center ${
                 activeTab === 'redeem'
-                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  ? 'border-b-2 border-green-600 text-green-600'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
@@ -278,7 +278,7 @@ const GiftCards = () => {
                         onClick={() => setSelectedDesign(design.id)}
                         className={`p-4 rounded-lg border-2 transition-all ${
                           selectedDesign === design.id
-                            ? 'border-blue-600 bg-blue-50'
+                            ? 'border-orange-500 bg-orange-50'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
@@ -334,8 +334,8 @@ const GiftCards = () => {
                       }}
                       className={`p-4 rounded-lg border-2 transition-all font-semibold ${
                         selectedAmount === amount
-                          ? 'border-blue-600 bg-blue-600 text-white'
-                          : 'border-gray-200 text-gray-700 hover:border-blue-400'
+                          ? 'border-green-600 bg-green-600 text-white'
+                          : 'border-gray-200 text-gray-700 hover:border-green-400'
                       }`}
                     >
                       KES {amount.toLocaleString()}
@@ -358,7 +358,7 @@ const GiftCards = () => {
                       }}
                       placeholder="Enter amount"
                       min="500"
-                      className="w-full pl-14 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full pl-14 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -373,11 +373,11 @@ const GiftCards = () => {
                     onClick={() => setDeliveryMethod('email')}
                     className={`p-4 rounded-lg border-2 transition-all ${
                       deliveryMethod === 'email'
-                        ? 'border-blue-600 bg-blue-50'
+                        ? 'border-orange-500 bg-orange-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <Mail className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                    <Mail className="w-8 h-8 mx-auto mb-2 text-orange-500" />
                     <p className="font-semibold text-gray-800">Email</p>
                     <p className="text-xs text-gray-600 mt-1">Instant delivery</p>
                   </button>
@@ -386,11 +386,11 @@ const GiftCards = () => {
                     onClick={() => setDeliveryMethod('sms')}
                     className={`p-4 rounded-lg border-2 transition-all ${
                       deliveryMethod === 'sms'
-                        ? 'border-blue-600 bg-blue-50'
+                        ? 'border-orange-500 bg-orange-50'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <Smartphone className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                    <Smartphone className="w-8 h-8 mx-auto mb-2 text-orange-500" />
                     <p className="font-semibold text-gray-800">SMS</p>
                     <p className="text-xs text-gray-600 mt-1">Text message</p>
                   </button>
@@ -413,7 +413,7 @@ const GiftCards = () => {
                         value={recipientEmail}
                         onChange={(e) => setRecipientEmail(e.target.value)}
                         placeholder={deliveryMethod === 'email' ? 'recipient@example.com' : '+254 712 345 678'}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
                   </div>
@@ -429,7 +429,7 @@ const GiftCards = () => {
                         value={recipientName}
                         onChange={(e) => setRecipientName(e.target.value)}
                         placeholder="Zablon Bennett"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
                   </div>
@@ -445,7 +445,7 @@ const GiftCards = () => {
                         value={senderName}
                         onChange={(e) => setSenderName(e.target.value)}
                         placeholder="Your name"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
                   </div>
@@ -461,7 +461,7 @@ const GiftCards = () => {
                         value={deliveryDate}
                         onChange={(e) => setDeliveryDate(e.target.value)}
                         min={new Date().toISOString().split('T')[0]}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
                     <p className="text-xs text-gray-500 mt-1">Leave empty for immediate delivery</p>
@@ -479,7 +479,7 @@ const GiftCards = () => {
                         placeholder="Write a personal message..."
                         rows="4"
                         maxLength="250"
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
                       />
                     </div>
                     <p className="text-xs text-gray-500 mt-1">{personalMessage.length}/250 characters</p>
@@ -490,7 +490,7 @@ const GiftCards = () => {
               {/* Payment Methods Info */}
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
                 <div className="flex items-start">
-                  <CreditCard className="w-6 h-6 text-blue-600 mr-3 flex-shrink-0 mt-1" />
+                  <CreditCard className="w-6 h-6 text-orange-500 mr-3 flex-shrink-0 mt-1" />
                   <div>
                     <h4 className="font-semibold text-blue-900 mb-2">Payment Options</h4>
                     <p className="text-sm text-blue-800">
@@ -508,7 +508,7 @@ const GiftCards = () => {
                 className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center ${
                   addedToCart
                     ? 'bg-green-600 text-white'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl'
+                    : 'bg-orange-500 hover:bg-orange-600 text-white shadow-lg hover:shadow-xl'
                 }`}
               >
                 {addedToCart ? (
@@ -526,7 +526,7 @@ const GiftCards = () => {
 
               <p className="text-center text-sm text-gray-600">
                 By purchasing, you agree to our{' '}
-                <a href="/terms" className="text-blue-600 hover:underline">
+                <a href="/terms" className="text-orange-500 hover:underline">
                   Gift Card Terms & Conditions
                 </a>
               </p>
@@ -549,12 +549,12 @@ const GiftCards = () => {
                     value={checkBalance}
                     onChange={(e) => setCheckBalance(e.target.value.toUpperCase())}
                     placeholder="XXXX-XXXX-XXXX-XXXX"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg font-mono"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg font-mono"
                   />
                 </div>
                 <button
                   onClick={handleCheckBalance}
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                 >
                   Check Balance
                 </button>
@@ -583,21 +583,21 @@ const GiftCards = () => {
               <h3 className="text-xl font-bold mb-4">How to Check Your Balance</h3>
               <div className="space-y-4">
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
+                  <div className="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
                   <div>
                     <p className="font-semibold text-gray-800">Locate Your Gift Card Code</p>
                     <p className="text-gray-600 text-sm">Find the code in your email or SMS message from when you received the gift card.</p>
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
+                  <div className="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
                   <div>
                     <p className="font-semibold text-gray-800">Enter the Code Above</p>
                     <p className="text-gray-600 text-sm">Type or paste your gift card code in the field provided.</p>
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
+                  <div className="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
                   <div>
                     <p className="font-semibold text-gray-800">View Your Balance</p>
                     <p className="text-gray-600 text-sm">Your current balance and card details will be displayed instantly.</p>
@@ -627,7 +627,7 @@ const GiftCards = () => {
                       value={redeemCode}
                       onChange={(e) => setRedeemCode(e.target.value.toUpperCase())}
                       placeholder="XXXX-XXXX-XXXX-XXXX"
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg font-mono"
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg font-mono"
                     />
                     <button
                       type="button"
@@ -641,7 +641,7 @@ const GiftCards = () => {
                 </div>
                 <button
                   onClick={handleRedeem}
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                 >
                   Redeem Gift Card
                 </button>
@@ -666,21 +666,21 @@ const GiftCards = () => {
               <h3 className="text-xl font-bold mb-4">How to Use Your Gift Card</h3>
               <div className="space-y-4">
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
+                  <div className="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
                   <div>
                     <p className="font-semibold text-gray-800">During Checkout</p>
                     <p className="text-gray-600 text-sm">Enter your gift card code in the payment section when checking out.</p>
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
+                  <div className="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
                   <div>
                     <p className="font-semibold text-gray-800">Add to Account Balance</p>
                     <p className="text-gray-600 text-sm">Redeem your gift card here to add funds to your account for future purchases.</p>
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
+                  <div className="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
                   <div>
                     <p className="font-semibold text-gray-800">Check Remaining Balance</p>
                     <p className="text-gray-600 text-sm">Any unused balance stays on your card for future purchases.</p>
@@ -706,7 +706,7 @@ const GiftCards = () => {
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Check className="w-8 h-8 text-blue-600" />
+                <Check className="w-8 h-8 text-orange-500" />
               </div>
               <h3 className="font-bold mb-2">Never Expires</h3>
               <p className="text-gray-600 text-sm">No expiration date means they can shop whenever they're ready</p>

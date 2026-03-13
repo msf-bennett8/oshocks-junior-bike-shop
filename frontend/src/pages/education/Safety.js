@@ -13,7 +13,7 @@ const Safety = () => {
       id: 'riding',
       icon: <AlertTriangle className="w-6 h-6" />,
       title: 'Cycling Safety Guidelines',
-      color: 'bg-blue-500',
+      color: 'bg-orange-500',
       items: [
         {
           title: 'Essential Safety Gear',
@@ -172,7 +172,7 @@ const Safety = () => {
                       <div key={idx} className="border-b border-gray-200 last:border-0 pb-4 last:pb-0">
                         <button
                           onClick={() => toggleSection(`${category.id}-${idx}`)}
-                          className="w-full flex items-center justify-between text-left hover:text-blue-600 transition-colors"
+                          className="w-full flex items-center justify-between text-left hover:text-green-600 transition-colors"
                         >
                           <h3 className="text-lg font-semibold text-gray-800">{item.title}</h3>
                           {openSection === `${category.id}-${idx}` ? (
@@ -182,7 +182,7 @@ const Safety = () => {
                           )}
                         </button>
                         {openSection === `${category.id}-${idx}` && (
-                          <div className="mt-3 text-gray-600 leading-relaxed pl-4 border-l-2 border-blue-500">
+                          <div className="mt-3 text-gray-600 leading-relaxed pl-4 border-l-2 border-orange-500">
                             {item.content}
                           </div>
                         )}
@@ -228,14 +228,14 @@ const Safety = () => {
           </div>
 
           {/* Report Safety Concerns */}
-          <div className="mt-12 bg-blue-50 rounded-lg shadow-md p-8">
+          <div className="mt-12 bg-green-50 rounded-lg shadow-md p-8">
             <div className="text-center max-w-2xl mx-auto">
-              <Users className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+              <Users className="w-12 h-12 text-green-600 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-gray-800 mb-4">Report Safety Concerns</h2>
               <p className="text-gray-700 mb-6">
                 If you encounter any safety issues with products purchased from our marketplace, experience unsafe seller behavior, or have concerns about product authenticity, please report it immediately to our team. Your safety reports help us maintain a secure marketplace for all users.
               </p>
-              <button className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+              <button className="bg-orange-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors">
                 Report a Safety Concern
               </button>
             </div>

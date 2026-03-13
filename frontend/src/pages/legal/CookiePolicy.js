@@ -113,7 +113,7 @@ const CookiePolicy = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading Cookie Policy...</p>
         </div>
       </div>
@@ -127,7 +127,7 @@ const CookiePolicy = () => {
         <div className="max-w-5xl mx-auto px-4 py-3">
           <button
             onClick={() => window.history.back()}
-            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg px-2 py-1"
+            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-lg px-2 py-1"
             aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
@@ -137,7 +137,7 @@ const CookiePolicy = () => {
       </div>
 
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 px-4">
+      <header className="bg-gradient-to-r from-green-600 to-green-800 text-white py-16 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-center mb-4" aria-hidden="true">
             <Cookie className="w-16 h-16" />
@@ -145,10 +145,10 @@ const CookiePolicy = () => {
           <h1 className="text-4xl md:text-5xl font-bold text-center mb-4">
             Cookie Policy
           </h1>
-          <p className="text-xl text-center text-blue-100">
+          <p className="text-xl text-center text-green-100">
             Oshocks Junior Bike Shop - Kenya's Premier Cycling Marketplace
           </p>
-          <p className="text-center text-blue-200 mt-4">
+          <p className="text-center text-green-200 mt-4">
             <time dateTime={lastUpdated}>Last Updated: {lastUpdated}</time>
           </p>
         </div>
@@ -158,7 +158,7 @@ const CookiePolicy = () => {
       <nav className="bg-white border-b border-gray-200 sticky top-[52px] z-40 shadow-sm" aria-label="Page navigation">
         <div className="max-w-5xl mx-auto px-4 py-3 overflow-x-auto">
           <div className="flex space-x-4 min-w-max">
-            <a href="#what-are-cookies" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#what-are-cookies" className="text-sm text-gray-600 hover:text-green-600 whitespace-nowrap transition-colors">
               What Are Cookies
             </a>
             <a href="#cookie-types" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
@@ -194,12 +194,12 @@ const CookiePolicy = () => {
               cookies we use, why we use them, and how you can manage your cookie preferences.
             </p>
             
-            <div className="bg-blue-50 border-l-4 border-blue-600 p-4 mt-6" role="note">
+            <div className="bg-green-50 border-l-4 border-green-600 p-4 mt-6" role="note">
               <div className="flex">
-                <Info className="w-5 h-5 text-blue-600 mr-3 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                <Info className="w-5 h-5 text-green-600 mr-3 flex-shrink-0 mt-0.5" aria-hidden="true" />
                 <div>
-                  <h3 className="font-semibold text-blue-900 mb-1">Your Control</h3>
-                  <p className="text-sm text-blue-800">
+                  <h3 className="font-semibold text-green-900 mb-1">Your Control</h3>
+                  <p className="text-sm text-green-800">
                     You can control and manage cookies in various ways. Please note that removing or blocking cookies 
                     can impact your user experience and may prevent certain features from working properly.
                   </p>
@@ -226,7 +226,7 @@ const CookiePolicy = () => {
                 <article key={category.id} className="border border-gray-200 rounded-lg overflow-hidden">
                   <button
                     onClick={() => toggleSection(category.id)}
-                    className="w-full flex items-center justify-between p-6 bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+                    className="w-full flex items-center justify-between p-6 bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-inset"
                     aria-expanded={isExpanded}
                     aria-controls={`cookie-category-${category.id}`}
                   >
@@ -291,19 +291,19 @@ const CookiePolicy = () => {
               </p>
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">•</span>
+                  <span className="text-green-600 mr-2">•</span>
                   <span>Shopping cart and checkout functionality</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">•</span>
+                  <span className="text-green-600 mr-2">•</span>
                   <span>User account and authentication</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">•</span>
+                  <span className="text-green-600 mr-2">•</span>
                   <span>Your preferences and settings</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">•</span>
+                  <span className="text-green-600 mr-2">•</span>
                   <span>Security and fraud prevention</span>
                 </li>
               </ul>
@@ -355,8 +355,8 @@ const CookiePolicy = () => {
               </div>
 
               <div className="flex items-start">
-                <div className="bg-blue-100 rounded-full p-2 mr-4 mt-1">
-                  <Settings className="w-5 h-5 text-blue-600" />
+                <div className="bg-green-100 rounded-full p-2 mr-4 mt-1">
+                  <Settings className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-1">Personalization</h3>
@@ -632,17 +632,17 @@ const CookiePolicy = () => {
         </section>
 
         {/* Contact Information */}
-        <section id="contact" className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-md p-8 text-white scroll-mt-32">
+        <section id="contact" className="bg-gradient-to-r from-green-600 to-green-800 rounded-lg shadow-md p-8 text-white scroll-mt-32">
           <h2 className="text-3xl font-bold mb-6">Questions About Cookies?</h2>
-          <p className="mb-6 text-blue-100">
+          <p className="mb-6 text-green-100">
             If you have any questions or concerns about our use of cookies or this Cookie Policy, please don't hesitate 
             to contact us. We're here to help and ensure your privacy is protected.
           </p>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <h3 className="font-semibold mb-2">Email Us</h3>
-              <p className="text-blue-100">privacy@oshocksjunior.co.ke</p>
-              <p className="text-blue-100">support@oshocksjunior.co.ke</p>
+              <p className="text-green-100">privacy@oshocksjunior.co.ke</p>
+              <p className="text-green-100">support@oshocksjunior.co.ke</p>
             </div>
             <div>
               <h3 className="font-semibold mb-2">Visit Our Shop</h3>
@@ -650,8 +650,8 @@ const CookiePolicy = () => {
               <p className="text-blue-100">Nairobi, Kenya</p>
             </div>
           </div>
-          <div className="mt-6 pt-6 border-t border-blue-500">
-            <p className="text-sm text-blue-200">
+          <div className="mt-6 pt-6 border-t border-green-500">
+            <p className="text-sm text-green-200">
               For general inquiries about our marketplace, products, or services, please visit our Contact page or use 
               our live chat feature. For privacy-related concerns, please use the privacy email address above.
             </p>

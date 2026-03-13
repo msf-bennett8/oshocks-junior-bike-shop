@@ -77,7 +77,7 @@ const StravaCallback = () => {
   }, []); // Empty dependency array - only run once
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-orange-50 flex items-center justify-center py-12 px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8 text-center">
         {status === 'error' && (
           <>
@@ -90,14 +90,14 @@ const StravaCallback = () => {
 
         {status === 'processing' && (
           <>
-            <Loader className="w-16 h-16 text-orange-600 mx-auto mb-4 animate-spin" />
+            <Loader className="w-16 h-16 text-green-600 mx-auto mb-4 animate-spin" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Signing you in with Strava</h2>
             <p className="text-gray-600">Please wait while we complete the authentication...</p>
             <div className="mt-4">
               <div className="animate-pulse flex space-x-2 justify-center">
-                <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
-                <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
-                <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
+                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                <div className="w-2 h-2 bg-green-600 rounded-full"></div>
               </div>
             </div>
           </>

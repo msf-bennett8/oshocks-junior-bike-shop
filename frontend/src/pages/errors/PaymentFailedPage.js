@@ -189,7 +189,7 @@ const PaymentFailedPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">OS</span>
               </div>
               <div>
@@ -291,14 +291,14 @@ const PaymentFailedPage = () => {
           </div>
 
           {/* Suggestions */}
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+          <div className="bg-green-50 rounded-lg p-4 border border-green-100">
             <h3 className="text-sm font-semibold text-blue-900 mb-3 flex items-center">
               <HelpCircle className="w-4 h-4 mr-2" />
               What You Can Do
             </h3>
             <ul className="space-y-2">
               {currentError.suggestions.map((suggestion, index) => (
-                <li key={index} className="flex items-start text-sm text-blue-900">
+                <li key={index} className="flex items-start text-sm text-green-900">
                   <span className="mr-2 mt-1">•</span>
                   <span>{suggestion}</span>
                 </li>
@@ -316,7 +316,7 @@ const PaymentFailedPage = () => {
             <button
               onClick={handleRetryPayment}
               disabled={retrying}
-              className="flex items-center justify-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center space-x-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {retrying ? (
                 <>
@@ -333,7 +333,7 @@ const PaymentFailedPage = () => {
 
             <button
               onClick={() => window.location.href = '/checkout'}
-              className="flex items-center justify-center space-x-2 bg-white text-blue-700 px-6 py-3 rounded-lg font-semibold border-2 border-blue-700 hover:bg-blue-50 transition-all"
+              className="flex items-center justify-center space-x-2 bg-white text-orange-500 px-6 py-3 rounded-lg font-semibold border-2 border-orange-500 hover:bg-orange-50 transition-all"
             >
               <CreditCard className="w-5 h-5" />
               <span>Try Another Method</span>
@@ -380,8 +380,8 @@ const PaymentFailedPage = () => {
 
             <div className="bg-white rounded-lg p-4 border border-gray-200">
               <div className="flex items-center space-x-3 mb-2">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <CreditCard className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <CreditCard className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">Card Payment</h4>
@@ -407,9 +407,9 @@ const PaymentFailedPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <a
               href="mailto:support@oshocksjunior.co.ke"
-              className="flex flex-col items-center p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200 hover:shadow-md transition-all group"
+              className="flex flex-col items-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200 hover:shadow-md transition-all group"
             >
-              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                 <Mail className="w-6 h-6 text-white" />
               </div>
               <span className="font-semibold text-gray-900 mb-1">Email Us</span>
@@ -468,11 +468,11 @@ const PaymentFailedPage = () => {
           <div className="text-center text-sm text-gray-600">
             <p className="mb-2">© 2025 Oshocks Junior Bike Shop. All rights reserved.</p>
             <div className="flex items-center justify-center space-x-4">
-              <a href="/privacy" className="hover:text-blue-600 transition-colors">Privacy Policy</a>
+              <a href="/privacy" className="hover:text-green-600 transition-colors">Privacy Policy</a>
               <span>•</span>
-              <a href="/terms-of-service" className="hover:text-blue-600 transition-colors">Terms of Service</a>
+              <a href="/terms-of-service" className="hover:text-green-600 transition-colors">Terms of Service</a>
               <span>•</span>
-              <a href="/help" className="hover:text-blue-600 transition-colors">Help Center</a>
+              <a href="/help" className="hover:text-green-600 transition-colors">Help Center</a>
             </div>
           </div>
         </div>

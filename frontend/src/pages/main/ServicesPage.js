@@ -205,18 +205,18 @@ const ServicesPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-20 md:py-28">
+      <div className="bg-gradient-to-r from-green-600 to-green-700 text-white py-20 md:py-28">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <Wrench className="w-20 h-20 mx-auto mb-6" />
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
               Bike Services by Experienced Mechanics
             </h1>
-            <p className="text-xl md:text-2xl text-blue-100 mb-8">
+            <p className="text-xl md:text-2xl text-green-100 mb-8">
               Expert maintenance and repair to keep you riding safe and smooth
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="#services" className="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold hover:bg-blue-50 transition-colors text-lg">
+              <a href="#services" className="bg-white text-green-600 px-8 py-4 rounded-lg font-semibold hover:bg-green-50 transition-colors text-lg">
                 View Services
               </a>
               <a href="#contact" className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white/10 transition-colors text-lg">
@@ -241,7 +241,7 @@ const ServicesPage = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {whyChooseUs.map((item, index) => (
               <div key={index} className="text-center">
-                <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
+                <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600">
                   {item.icon}
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{item.title}</h3>
@@ -278,11 +278,11 @@ const ServicesPage = () => {
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full">
-                    <span className="text-blue-600 font-bold">{service.price}</span>
+                    <span className="text-green-600 font-bold">{service.price}</span>
                   </div>
                 </div>
                 <div className="p-6">
-                  <div className="text-blue-600 mb-4">{service.icon}</div>
+                  <div className="text-green-600 mb-4">{service.icon}</div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">{service.title}</h3>
                   <p className="text-gray-600 mb-4">{service.subtitle}</p>
                   <p className="text-gray-700 mb-4 line-clamp-2">{service.description}</p>
@@ -291,7 +291,7 @@ const ServicesPage = () => {
                       <Clock className="w-4 h-4" />
                       <span>{service.turnaround}</span>
                     </div>
-                    <button className="text-blue-600 font-semibold hover:text-blue-700">
+                    <button className="text-green-600 font-semibold hover:text-green-700">
                       Learn More →
                     </button>
                   </div>
@@ -316,7 +316,7 @@ const ServicesPage = () => {
           <div className="grid md:grid-cols-4 gap-8 max-w-6xl mx-auto">
             {processSteps.map((step, index) => (
               <div key={index} className="text-center relative">
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
+                <div className="bg-gradient-to-r from-green-600 to-orange-500 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
                   {step.step}
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h3>
@@ -346,7 +346,7 @@ const ServicesPage = () => {
           <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+                <thead className="bg-gradient-to-r from-green-600 to-green-700 text-white">
                   <tr>
                     <th className="px-6 py-4 text-left">Service</th>
                     <th className="px-6 py-4 text-left">Starting Price</th>
@@ -392,14 +392,14 @@ const ServicesPage = () => {
       </div>
 
       {/* Contact/Booking Section */}
-      <div id="contact" className="py-16 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+      <div id="contact" className="py-16 bg-gradient-to-r from-green-600 to-green-700 text-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
                 Book Your Service Today
               </h2>
-              <p className="text-xl text-blue-100">
+              <p className="text-xl text-green-100">
                 Visit our shop or schedule an appointment online
               </p>
             </div>
@@ -411,24 +411,24 @@ const ServicesPage = () => {
                   <MapPin className="w-6 h-6 flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold mb-1">Visit Our Shop</h3>
-                    <p className="text-blue-100">Nairobi, Kenya</p>
-                    <p className="text-blue-100 text-sm">Open Mon-Sat, 8AM-6PM</p>
+                    <p className="text-green-100">Nairobi, Kenya</p>
+                    <p className="text-green-100 text-sm">Open Mon-Sat, 8AM-6PM</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
                   <Phone className="w-6 h-6 flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold mb-1">Call Us</h3>
-                    <p className="text-blue-100">+254 798 558 285</p>
-                    <p className="text-blue-100 text-sm">Available during business hours</p>
+                    <p className="text-green-100">+254 798 558 285</p>
+                    <p className="text-green-100 text-sm">Available during business hours</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
                   <Mail className="w-6 h-6 flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold mb-1">Email Us</h3>
-                    <p className="text-blue-100">oshocksjuniorbikeshop@gmail.com</p>
-                    <p className="text-blue-100 text-sm">We'll respond within 24 hours</p>
+                    <p className="text-green-100">oshocksjuniorbikeshop@gmail.com</p>
+                    <p className="text-green-100 text-sm">We'll respond within 24 hours</p>
                   </div>
                 </div>
               </div>
@@ -470,7 +470,7 @@ const ServicesPage = () => {
                     rows="3"
                     className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
                   ></textarea>
-                  <button className="w-full bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center justify-center gap-2">
+                  <button className="w-full bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors flex items-center justify-center gap-2">
                     <Calendar className="w-5 h-5" />
                     Book Appointment
                   </button>
@@ -513,7 +513,7 @@ const ServicesPage = () => {
                   <p className="text-lg text-gray-600">{selectedService.subtitle}</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-3xl font-bold text-blue-600">{selectedService.price}</div>
+                  <div className="text-3xl font-bold text-blgreen-600ue-600">{selectedService.price}</div>
                 </div>
               </div>
               <p className="text-gray-700 mb-6">{selectedService.description}</p>
@@ -547,7 +547,7 @@ const ServicesPage = () => {
                 </div>
               </div>
 
-              <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-4 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all flex items-center justify-center gap-2">
+              <button className="w-full bg-gradient-to-r from-green-600 to-orange-500 text-white px-6 py-4 rounded-lg font-semibold hover:from-green-700 hover:to-orange-600 transition-all flex items-center justify-center gap-2">
                 <Calendar className="w-5 h-5" />
                 Book This Service
               </button>

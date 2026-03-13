@@ -217,7 +217,7 @@ const Wishlist = () => {
           duration: 3000,
           icon: '🛒',
           style: {
-            background: '#10B981',
+            background: '#22c55e',
             color: '#fff',
           },
         });
@@ -361,9 +361,9 @@ const addSelectedToCart = async () => {
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-700 border-red-300';
-      case 'medium': return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-      case 'low': return 'bg-green-100 text-green-700 border-green-300';
+      case 'high': return 'bg-orange-100 text-orange-700 border-orange-300'; // Orange = urgent
+      case 'medium': return 'bg-green-100 text-green-700 border-green-300'; // Green = normal
+      case 'low': return 'bg-gray-100 text-gray-700 border-gray-300';
       default: return 'bg-gray-100 text-gray-700 border-gray-300';
     }
   };
@@ -376,7 +376,7 @@ const addSelectedToCart = async () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <Heart className="w-8 h-8 text-red-500 fill-red-500" />
+                <Heart className="w-8 h-8 text-green-500 fill-green-500" />
                 My Wishlist
               </h1>
               <p className="text-gray-600 mt-1">{wishlistItems.length} items saved</p>
@@ -384,7 +384,7 @@ const addSelectedToCart = async () => {
             <div className="flex gap-2">
               <button
                 onClick={generateShareableLink}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
               >
                 <Share2 className="w-4 h-4" />
                 <span className="hidden sm:inline">Share</span>
@@ -411,9 +411,9 @@ const addSelectedToCart = async () => {
             
             {expandedStats && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                <div className="bg-blue-50 rounded-lg p-4">
+                <div className="bg-green-50 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <DollarSign className="w-5 h-5 text-blue-600" />
+                    <DollarSign className="w-5 h-5 text-green-600" />
                     <span className="text-sm text-gray-600">Total Value</span>
                   </div>
                   <p className="text-2xl font-bold text-blue-600">KES {stats.total.toLocaleString()}</p>
@@ -461,7 +461,7 @@ const addSelectedToCart = async () => {
                       className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm ${
                         addingToCart === 'bulk'
                           ? 'bg-gray-400 text-white cursor-not-allowed'
-                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                          : 'bg-green-600 text-white hover:bg-green-700'
                       }`}
                     >
                       {addingToCart === 'bulk' ? (
@@ -499,7 +499,7 @@ const addSelectedToCart = async () => {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 >
                   {sortOptions.map(option => (
                     <option key={option.value} value={option.value}>
@@ -511,13 +511,13 @@ const addSelectedToCart = async () => {
                 <div className="flex gap-1 border border-gray-300 rounded-lg p-1">
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:bg-gray-100'}`}
+                    className={`p-2 rounded ${viewMode === 'grid' ? 'bg-orange-100 text-orange-600' : 'text-gray-600 hover:bg-gray-100'}`}
                   >
                     <Grid className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:bg-gray-100'}`}
+                    className={`p-2 rounded ${viewMode === 'list' ? 'bg-orange-100 text-orange-600' : 'text-gray-600 hover:bg-gray-100'}`}
                   >
                     <List className="w-4 h-4" />
                   </button>
@@ -534,7 +534,7 @@ const addSelectedToCart = async () => {
                     <select
                       value={filterCategory}
                       onChange={(e) => setFilterCategory(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     >
                       {categories.map(cat => (
                         <option key={cat} value={cat}>
@@ -554,14 +554,14 @@ const addSelectedToCart = async () => {
                         value={priceRange[0]}
                         onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
                         placeholder="Min"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                       <input
                         type="number"
                         value={priceRange[1]}
                         onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 100000])}
                         placeholder="Max"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       />
                     </div>
                   </div>
@@ -574,12 +574,12 @@ const addSelectedToCart = async () => {
         {/* Items Display */}
         {filteredItems.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-12 text-center">
-            <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <Heart className="w-16 h-16 text-green-200 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No items found</h3>
             <p className="text-gray-600 mb-6">Try adjusting your filters or add items to your wishlist</p>
             <a
               href="/shop"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
               <ShoppingCart className="w-5 h-5" />
               Browse Shop
@@ -603,7 +603,7 @@ const addSelectedToCart = async () => {
                         className="w-full h-48 object-cover"
                       />
                       {item.discount > 0 && (
-                        <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-lg text-sm font-bold">
+                        <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded-lg text-sm font-bold">
                           -{item.discount}%
                         </div>
                       )}
@@ -684,7 +684,7 @@ const addSelectedToCart = async () => {
                         disabled={!item.inStock || addingToCart === item.id}
                         className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg font-medium transition-colors ${
                           item.inStock && addingToCart !== item.id
-                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                            ? 'bg-green-600 text-white hover:bg-green-700'
                             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
                       >
@@ -805,7 +805,7 @@ const addSelectedToCart = async () => {
                             disabled={!item.inStock || addingToCart === item.id}
                             className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-colors ${
                               item.inStock && addingToCart !== item.id
-                                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                ? 'bg-green-600 text-white hover:bg-green-700'
                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                             }`}
                           >
@@ -851,7 +851,7 @@ const addSelectedToCart = async () => {
                       className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-sm ${
                         addingToCart === 'bulk'
                           ? 'bg-gray-400 text-white cursor-not-allowed'
-                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                          : 'bg-green-600 text-white hover:bg-green-700'
                       }`}
                     >
                       {addingToCart === 'bulk' ? (
@@ -906,7 +906,7 @@ const addSelectedToCart = async () => {
               />
               <button
                 onClick={copyLink}
-                className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
               >
                 {linkCopied ? (
                   <>

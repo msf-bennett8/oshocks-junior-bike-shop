@@ -269,7 +269,7 @@ const CheckoutForm = ({
                     currentStep > step.number
                       ? 'bg-green-600 border-green-600 text-white'
                       : currentStep === step.number
-                      ? 'bg-blue-600 border-blue-600 text-white'
+                      ? 'bg-orange-500 border-orange-500 text-white'
                       : 'bg-white border-gray-300 text-gray-400'
                   }`}
                 >
@@ -330,7 +330,7 @@ const CheckoutForm = ({
                           name="firstName"
                           value={formData.firstName}
                           onChange={handleChange}
-                          className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                             errors.firstName ? 'border-red-500' : 'border-gray-300'
                           }`}
                           placeholder="John"
@@ -356,7 +356,7 @@ const CheckoutForm = ({
                           name="lastName"
                           value={formData.lastName}
                           onChange={handleChange}
-                          className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                             errors.lastName ? 'border-red-500' : 'border-gray-300'
                           }`}
                           placeholder="Doe"
@@ -383,7 +383,7 @@ const CheckoutForm = ({
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                           errors.email ? 'border-red-500' : 'border-gray-300'
                         }`}
                         placeholder="john.doe@example.com"
@@ -409,7 +409,7 @@ const CheckoutForm = ({
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
-                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                           errors.phone ? 'border-red-500' : 'border-gray-300'
                         }`}
                         placeholder="0712 345 678"
@@ -434,7 +434,7 @@ const CheckoutForm = ({
                       name="subscribeNewsletter"
                       checked={formData.subscribeNewsletter}
                       onChange={handleChange}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-green-500"
                     />
                     <label htmlFor="subscribeNewsletter" className="text-sm text-gray-700">
                       Subscribe to newsletter for exclusive deals and cycling tips
@@ -467,7 +467,7 @@ const CheckoutForm = ({
                         name="address"
                         value={formData.address}
                         onChange={handleChange}
-                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                           errors.address ? 'border-red-500' : 'border-gray-300'
                         }`}
                         placeholder="123 Kimathi Street, Building Name"
@@ -494,7 +494,7 @@ const CheckoutForm = ({
                           name="city"
                           value={formData.city}
                           onChange={handleChange}
-                          className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                             errors.city ? 'border-red-500' : 'border-gray-300'
                           }`}
                           placeholder="Nairobi"
@@ -519,7 +519,7 @@ const CheckoutForm = ({
                           name="county"
                           value={formData.county}
                           onChange={handleChange}
-                          className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                             errors.county ? 'border-red-500' : 'border-gray-300'
                           }`}
                         >
@@ -549,7 +549,7 @@ const CheckoutForm = ({
                       name="postalCode"
                       value={formData.postalCode}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                       placeholder="00100"
                     />
                   </div>
@@ -564,7 +564,7 @@ const CheckoutForm = ({
                       value={formData.deliveryInstructions}
                       onChange={handleChange}
                       rows="3"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                       placeholder="e.g., Leave at reception, Call before delivery, Gate code: #123"
                     />
                   </div>
@@ -577,7 +577,7 @@ const CheckoutForm = ({
                       name="saveInfo"
                       checked={formData.saveInfo}
                       onChange={handleChange}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-green-500"
                     />
                     <label htmlFor="saveInfo" className="text-sm text-gray-700">
                       Save this address for future orders
@@ -606,7 +606,7 @@ const CheckoutForm = ({
                         onClick={() => handleChange({ target: { name: 'paymentMethod', value: method.id } })}
                         className={`relative border-2 rounded-lg p-4 cursor-pointer transition-all ${
                           formData.paymentMethod === method.id
-                            ? 'border-blue-600 bg-blue-50'
+                            ? 'border-orange-500 bg-orange-50'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
@@ -617,7 +617,7 @@ const CheckoutForm = ({
                         )}
                         <div className="flex items-center gap-4">
                           <div className={`${
-                            formData.paymentMethod === method.id ? 'text-blue-600' : 'text-gray-600'
+                            formData.paymentMethod === method.id ? 'text-orange-500' : 'text-gray-600'
                           }`}>
                             {method.icon}
                           </div>
@@ -626,7 +626,7 @@ const CheckoutForm = ({
                             <p className="text-sm text-gray-600">{method.description}</p>
                           </div>
                           {formData.paymentMethod === method.id && (
-                            <Check className="w-6 h-6 text-blue-600" />
+                            <Check className="w-6 h-6 text-orange-500" />
                           )}
                         </div>
                       </div>
@@ -687,7 +687,7 @@ const CheckoutForm = ({
                               handleChange({ target: { name: 'cardNumber', value } });
                             }
                           }}
-                          className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                             errors.cardNumber ? 'border-red-500' : 'border-gray-300'
                           }`}
                           placeholder="1234 5678 9012 3456"
@@ -719,7 +719,7 @@ const CheckoutForm = ({
                                 handleChange({ target: { name: 'cardExpiry', value } });
                               }
                             }}
-                            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                               errors.cardExpiry ? 'border-red-500' : 'border-gray-300'
                             }`}
                             placeholder="MM/YY"
@@ -747,7 +747,7 @@ const CheckoutForm = ({
                                 handleChange({ target: { name: 'cardCVV', value } });
                               }
                             }}
-                            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                               errors.cardCVV ? 'border-red-500' : 'border-gray-300'
                             }`}
                             placeholder="123"
@@ -771,7 +771,7 @@ const CheckoutForm = ({
                           name="cardName"
                           value={formData.cardName}
                           onChange={handleChange}
-                          className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                             errors.cardName ? 'border-red-500' : 'border-gray-300'
                           }`}
                           placeholder="JOHN DOE"
@@ -818,17 +818,17 @@ const CheckoutForm = ({
                         name="agreeTerms"
                         checked={formData.agreeTerms}
                         onChange={handleChange}
-                        className={`w-4 h-4 mt-1 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 ${
+                        className={`w-4 h-4 mt-1 text-blue-600 rounded focus:ring-2 focus:ring-green-500 ${
                           errors.agreeTerms ? 'border-red-500' : ''
                         }`}
                       />
                       <label htmlFor="agreeTerms" className="text-sm text-gray-700">
                         I agree to the{' '}
-                        <a href="#" className="text-blue-600 hover:underline">
+                        <a href="#" className="text-green-600 hover:underline">
                           Terms and Conditions
                         </a>{' '}
                         and{' '}
-                        <a href="#" className="text-blue-600 hover:underline">
+                        <a href="#" className="text-green-600 hover:underline">
                           Privacy Policy
                         </a>
                       </label>
@@ -868,7 +868,7 @@ const CheckoutForm = ({
                   <button
                     type="button"
                     onClick={handleNext}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                    className="flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-semibold"
                   >
                     Continue
                     <ChevronRight className="w-5 h-5" />
@@ -877,7 +877,7 @@ const CheckoutForm = ({
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (
                       <>
@@ -917,7 +917,7 @@ const CheckoutForm = ({
                         {item.name}
                       </p>
                       <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
-                      <p className="text-sm font-semibold text-blue-600">
+                      <p className="text-sm font-semibold text-gray-900">
                         {formatPrice(item.price * item.quantity)}
                       </p>
                     </div>
@@ -943,19 +943,19 @@ const CheckoutForm = ({
                 )}
                 <div className="flex justify-between text-base font-bold pt-2 border-t">
                   <span>Total</span>
-                  <span className="text-blue-600">
+                  <span className="text-gray-900">
                     {formatPrice(totalAmount + (formData.paymentMethod === 'cash' ? 100 : 0))}
                   </span>
                 </div>
               </div>
 
               {/* Delivery Estimate */}
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <div className="flex items-center gap-2 text-sm text-blue-900">
-                  <Clock className="w-4 h-4" />
+              <div className="mt-4 p-3 bg-green-50 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-green-900">
+                  <Clock className="w-4 h-4 text-green-600" />
                   <span className="font-medium">Estimated Delivery</span>
                 </div>
-                <p className="text-sm text-blue-700 mt-1">3-5 business days</p>
+                <p className="text-sm text-green-700 mt-1">3-5 business days</p>
               </div>
 
               {/* Security Badge */}
@@ -1021,7 +1021,7 @@ const CheckoutFormDemo = () => {
 
   if (showSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-10 h-10 text-green-600" />
@@ -1051,7 +1051,7 @@ const CheckoutFormDemo = () => {
           </p>
           <button
             onClick={() => setShowSuccess(false)}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors"
           >
             Place Another Order
           </button>

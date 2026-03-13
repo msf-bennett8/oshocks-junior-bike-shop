@@ -147,7 +147,7 @@ const ShopPage = () => {
               dispatch(fetchCategories());
               dispatch(fetchProducts(filters));
             }}
-            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold"
+            className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition font-semibold"
           >
             Try Again
           </button>
@@ -181,7 +181,7 @@ const ShopPage = () => {
               placeholder="Search products..."
               value={filters.search}
               onChange={handleSearchChange}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-transparent"
             />
           </div>
 
@@ -192,7 +192,7 @@ const ShopPage = () => {
               className="flex-1 flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
             >
               <span className="font-medium text-sm">Categories</span>
-              <span className="text-xs text-purple-600 font-semibold truncate ml-2">{getCategoryName()}</span>
+              <span className="text-xs text-orange-500 font-semibold truncate ml-2">{getCategoryName()}</span>
             </button>
             
             <button
@@ -200,7 +200,7 @@ const ShopPage = () => {
               className="flex-1 flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
             >
               <SlidersHorizontal className="w-4 h-4" />
-              <span className="text-xs text-purple-600 font-semibold truncate ml-2">{getSortName()}</span>
+              <span className="text-xs text-orange-500 font-semibold truncate ml-2">{getSortName()}</span>
             </button>
           </div>
         </div>
@@ -225,7 +225,7 @@ const ShopPage = () => {
                         placeholder="Search products..."
                         value={filters.search}
                         onChange={handleSearchChange}
-                        className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                        className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-transparent text-sm"
                       />
                     </div>
                   </div>
@@ -238,7 +238,7 @@ const ShopPage = () => {
                         onClick={() => handleCategoryChange('')}
                         className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${
                           filters.category === '' 
-                            ? 'bg-purple-600 text-white' 
+                            ? 'bg-orange-500 text-white' 
                             : 'hover:bg-gray-100'
                         }`}
                       >
@@ -257,7 +257,7 @@ const ShopPage = () => {
                             onClick={() => handleCategoryChange(category.id)}
                             className={`w-full text-left px-3 py-2 rounded-lg transition-colors text-sm ${
                               filters.category === category.id 
-                                ? 'bg-purple-600 text-white' 
+                                ? 'bg-orange-500 text-white' 
                                 : 'hover:bg-gray-100'
                             }`}
                           >
@@ -277,7 +277,7 @@ const ShopPage = () => {
                         setFilters(prev => ({ ...prev, sort: e.target.value, page: 1 }));
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-transparent text-sm"
                     >
                       <option value="latest">Latest</option>
                       <option value="price_low">Price: Low to High</option>
@@ -352,7 +352,7 @@ const ShopPage = () => {
                           onClick={() => handlePageChange(page)}
                           className={`px-4 py-2 rounded-lg border transition ${
                             page === filters.page
-                              ? 'bg-purple-600 text-white border-purple-600'
+                              ? 'bg-orange-500 text-white border-orange-500'
                               : 'bg-white hover:bg-gray-50 text-gray-700'
                           }`}
                         >
@@ -408,7 +408,7 @@ const ShopPage = () => {
                 onClick={() => handleCategoryChange('')}
                 className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
                   filters.category === '' 
-                    ? 'bg-purple-600 text-white' 
+                    ? 'bg-orange-500 text-white' 
                     : 'bg-gray-100 hover:bg-gray-200'
                 }`}
               >
@@ -427,7 +427,7 @@ const ShopPage = () => {
                     onClick={() => handleCategoryChange(category.id)}
                     className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
                       filters.category === category.id 
-                        ? 'bg-purple-600 text-white' 
+                        ? 'bg-orange-500 text-white' 
                         : 'bg-gray-100 hover:bg-gray-200'
                     }`}
                   >
@@ -466,7 +466,7 @@ const ShopPage = () => {
                   onClick={() => handleSortChange(option.value)}
                   className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
                     filters.sort === option.value 
-                      ? 'bg-purple-600 text-white' 
+                      ? 'bg-orange-500 text-white' 
                       : 'bg-gray-100 hover:bg-gray-200'
                   }`}
                 >
@@ -596,7 +596,7 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded }) => {
         {/* Badges - Top Left */}
         <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex flex-col gap-2">
           {product.is_new_arrival && (
-            <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-md shadow">NEW</span>
+            <span className="bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-md shadow">NEW</span>
           )}
           {product.compare_at_price && Number(product.compare_at_price) > Number(product.price) && (
             <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md shadow">
@@ -682,7 +682,7 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded }) => {
 
         {/* Price */}
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-2xl font-bold text-purple-600">
+          <span className="text-2xl font-bold text-orange-500">
             KSh {Number(product.price).toLocaleString()}
           </span>
           {product.compare_at_price && Number(product.compare_at_price) > Number(product.price) && (
@@ -721,7 +721,7 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded }) => {
             className={`flex-1 py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 text-sm sm:text-base ${
               product.quantity === 0
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
+                : 'bg-green-600 text-white hover:bg-green-700 active:scale-95'
             }`}
           >
             {isAdding ? (

@@ -193,7 +193,7 @@ const OrderSuccessPage = () => {
   if (!orderData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
       </div>
     );
   }
@@ -215,9 +215,9 @@ const OrderSuccessPage = () => {
             Thank you for shopping with Oshocks Junior Bike Shop
           </p>
           
-          <div className="inline-flex items-center bg-orange-50 border border-orange-200 rounded-lg px-6 py-3 mb-4">
-            <Package className="w-5 h-5 text-orange-600 mr-2" />
-            <span className="text-orange-900 font-semibold">
+          <div className="inline-flex items-center bg-green-50 border border-green-200 rounded-lg px-6 py-3 mb-4">
+            <Package className="w-5 h-5 text-green-600 mr-2" />
+            <span className="text-green-900 font-semibold">
               Order #{orderData.orderNumber}
             </span>
           </div>
@@ -255,7 +255,7 @@ const OrderSuccessPage = () => {
             
             <button
               onClick={handleShareOrder}
-              className="bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center"
+              className="bg-orange-500 text-white py-3 px-4 rounded-lg font-semibold hover:bg-orange-600 transition flex items-center justify-center"
             >
               <Share2 className="w-5 h-5 mr-2" />
               Share Order
@@ -276,7 +276,7 @@ const OrderSuccessPage = () => {
             {/* Delivery Timeline */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                <Truck className="w-6 h-6 text-orange-600 mr-2" />
+                <Truck className="w-6 h-6 text-green-600 mr-2" />
                 Delivery Information
               </h2>
               
@@ -346,7 +346,7 @@ const OrderSuccessPage = () => {
               {/* Shipping Address */}
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-                  <MapPin className="w-5 h-5 text-orange-600 mr-2" />
+                  <MapPin className="w-5 h-5 text-green-600 mr-2" />
                   Shipping Address
                 </h3>
                 <div className="bg-gray-50 rounded-lg p-4">
@@ -372,7 +372,7 @@ const OrderSuccessPage = () => {
             {/* Order Items */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                <ShoppingBag className="w-6 h-6 text-orange-600 mr-2" />
+                <ShoppingBag className="w-6 h-6 text-green-600 mr-2" />
                 Order Items ({orderData.items.length})
               </h2>
               
@@ -404,33 +404,33 @@ const OrderSuccessPage = () => {
             </div>
             
             {/* What's Next Section */}
-            <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-6">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">What Happens Next?</h2>
               
               <div className="space-y-3">
                 <div className="flex items-start">
-                  <ArrowRight className="w-5 h-5 text-orange-600 mr-3 mt-0.5 flex-shrink-0" />
+                  <ArrowRight className="w-5 h-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
                   <p className="text-gray-700">
                     You'll receive an email confirmation with your order details
                   </p>
                 </div>
                 
                 <div className="flex items-start">
-                  <ArrowRight className="w-5 h-5 text-orange-600 mr-3 mt-0.5 flex-shrink-0" />
+                  <ArrowRight className="w-5 h-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
                   <p className="text-gray-700">
                     We'll send you tracking information once your order ships
                   </p>
                 </div>
                 
                 <div className="flex items-start">
-                  <ArrowRight className="w-5 h-5 text-orange-600 mr-3 mt-0.5 flex-shrink-0" />
+                  <ArrowRight className="w-5 h-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
                   <p className="text-gray-700">
                     Our delivery partner will contact you before delivery
                   </p>
                 </div>
                 
                 <div className="flex items-start">
-                  <ArrowRight className="w-5 h-5 text-orange-600 mr-3 mt-0.5 flex-shrink-0" />
+                  <ArrowRight className="w-5 h-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
                   <p className="text-gray-700">
                     You can track your order anytime from your account dashboard
                   </p>
@@ -524,9 +524,9 @@ const OrderSuccessPage = () => {
             </div>
             
             {/* Need Help */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6">
               <h3 className="font-bold text-gray-900 mb-3 flex items-center">
-                <MessageCircle className="w-5 h-5 text-blue-600 mr-2" />
+                <MessageCircle className="w-5 h-5 text-green-600 mr-2" />
                 Need Help?
               </h3>
               
@@ -537,7 +537,7 @@ const OrderSuccessPage = () => {
               <div className="space-y-2">
                 <a
                   href="tel:+254712345678"
-                  className="flex items-center text-sm text-blue-600 hover:text-blue-700"
+                  className="flex items-center text-sm text-green-600 hover:text-green-700"
                 >
                   <Phone className="w-4 h-4 mr-2" />
                   +254 712 345 678
@@ -545,14 +545,14 @@ const OrderSuccessPage = () => {
                 
                 <a
                   href="mailto:support@oshocksjr.com"
-                  className="flex items-center text-sm text-blue-600 hover:text-blue-700"
+                  className="flex items-center text-sm text-green-600 hover:text-green-700"
                 >
                   <Mail className="w-4 h-4 mr-2" />
                   support@oshocksjr.com
                 </a>
               </div>
               
-              <button className="w-full mt-4 bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center justify-center">
+              <button className="w-full mt-4 bg-green-600 text-white py-2 px-4 rounded-lg text-sm font-semibold hover:bg-green-700 transition flex items-center justify-center">
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Live Chat Support
               </button>
@@ -560,13 +560,13 @@ const OrderSuccessPage = () => {
             
             {/* Continue Shopping Prompt */}
             {countdown > 0 && (
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
-                <p className="text-sm text-orange-900 mb-2">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                <p className="text-sm text-green-900 mb-2">
                   Continue shopping in <strong>{countdown}</strong> seconds
                 </p>
                 <button
                   onClick={handleContinueShopping}
-                  className="text-orange-600 text-sm font-semibold hover:text-orange-700"
+                  className="text-green-600 text-sm font-semibold hover:text-green-700"
                 >
                   Browse More Products →
                 </button>
@@ -613,9 +613,9 @@ const OrderSuccessPage = () => {
                   <h3 className="font-semibold text-gray-900 mb-2 text-sm line-clamp-2 h-10">
                     {product.name}
                   </h3>
-                  <div className="flex items-center justify-between mb-3">
+                                      <div className="flex items-center justify-between mb-3">
                     <div>
-                      <p className="text-orange-600 font-bold">{formatCurrency(product.price)}</p>
+                      <p className="text-gray-900 font-bold">{formatCurrency(product.price)}</p>
                       {product.originalPrice && (
                         <p className="text-xs text-gray-400 line-through">
                           {formatCurrency(product.originalPrice)}
@@ -629,7 +629,7 @@ const OrderSuccessPage = () => {
                       // Add to cart functionality can be added here
                       window.location.href = `/product/${product.id}`;
                     }}
-                    className="w-full bg-orange-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-orange-700 transition"
+                    className="w-full bg-orange-500 text-white py-2 rounded-lg text-sm font-semibold hover:bg-orange-600 transition"
                   >
                     View Product
                   </button>
@@ -674,8 +674,8 @@ const OrderSuccessPage = () => {
             </p>
 
             {/* Rating Section */}
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
-                <p className="text-sm font-semibold text-orange-900 mb-2 text-center">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <p className="text-sm font-semibold text-green-900 mb-2 text-center">
                   How was your experience?
                 </p>
                 <div className="flex justify-center gap-2">
@@ -733,7 +733,7 @@ const OrderSuccessPage = () => {
             <div className="text-center mt-4">
               <Link
                 to="/contact"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-green-600 hover:text-green-700 font-medium"
               >
                 Need help? Contact Support
               </Link>

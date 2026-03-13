@@ -123,7 +123,7 @@ export default function RefundPolicyPage() {
             This policy applies to all products purchased through Oshocks Junior Bike Shop, including items sold by third-party vendors on our marketplace. However, some product categories may have specific conditions outlined in the sections below.
           </p>
 
-          <div className="bg-blue-50 p-4 rounded-lg">
+          <div className="bg-green-50 p-4 rounded-lg">
             <h5 className="font-semibold text-gray-900 mb-2">Multi-Vendor Marketplace Notice</h5>
             <p className="text-sm text-gray-700">
               For items sold by third-party vendors, return policies may vary slightly. Each product page clearly displays the seller's specific return terms. However, all sellers on our platform must meet our minimum standards for customer satisfaction.
@@ -145,8 +145,8 @@ export default function RefundPolicyPage() {
             {eligibilityChecklist.map((item) => {
               const Icon = item.icon;
               return (
-                <div key={item.id} className="flex items-start gap-3 bg-blue-50 p-4 rounded-lg hover:bg-blue-100 transition-colors">
-                  <div className="bg-blue-500 p-2 rounded-lg flex-shrink-0">
+                <div key={item.id} className="flex items-start gap-3 bg-green-50 p-4 rounded-lg hover:bg-green-100 transition-colors">
+                  <div className="bg-green-500 p-2 rounded-lg flex-shrink-0">
                     <Icon className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">
@@ -195,13 +195,13 @@ export default function RefundPolicyPage() {
 
           <div>
             <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <Calculator className="w-5 h-5 text-blue-600" />
+              <Calculator className="w-5 h-5 text-green-600" />
               Condition-Based Refund Rates
             </h4>
             <div className="overflow-x-auto rounded-lg border border-gray-200">
               <table className="w-full border-collapse bg-white">
                 <thead>
-                  <tr className="bg-gradient-to-r from-blue-600 to-green-600 text-white">
+                  <tr className="bg-gradient-to-r from-green-600 to-orange-500 text-white">
                     <th className="px-4 py-3 text-left font-semibold">Item Condition</th>
                     <th className="px-4 py-3 text-left font-semibold">Timeframe</th>
                     <th className="px-4 py-3 text-left font-semibold">Refund Amount</th>
@@ -253,9 +253,9 @@ export default function RefundPolicyPage() {
       category: 'tools',
       content: (
         <div className="space-y-6">
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-lg border-2 border-blue-200">
+          <div className="bg-gradient-to-br from-green-50 to-orange-50 p-6 rounded-lg border-2 border-blue-200">
             <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <Calculator className="w-6 h-6 text-blue-600" />
+              <Calculator className="w-6 h-6 text-green-600" />
               Calculate Your Estimated Refund
             </h4>
             
@@ -269,7 +269,7 @@ export default function RefundPolicyPage() {
                   value={refundCalculator.orderAmount}
                   onChange={(e) => setRefundCalculator({...refundCalculator, orderAmount: e.target.value})}
                   placeholder="e.g., 15000"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
               </div>
               
@@ -282,7 +282,7 @@ export default function RefundPolicyPage() {
                   value={refundCalculator.daysElapsed}
                   onChange={(e) => setRefundCalculator({...refundCalculator, daysElapsed: e.target.value})}
                   placeholder="e.g., 10"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
               </div>
               
@@ -293,7 +293,7 @@ export default function RefundPolicyPage() {
                 <select
                   value={refundCalculator.condition}
                   onChange={(e) => setRefundCalculator({...refundCalculator, condition: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 >
                   <option value="unopened">Unopened/Unused</option>
                   <option value="opened">Opened/Used (Good Condition)</option>
@@ -305,7 +305,7 @@ export default function RefundPolicyPage() {
             
             <button
               onClick={calculateRefund}
-              className="w-full bg-gradient-to-r from-blue-600 to-green-600 text-white py-3 rounded-lg font-bold hover:from-blue-700 hover:to-green-700 transition-all shadow-md hover:shadow-lg"
+              className="w-full bg-gradient-tbg-gradient-to-r from-green-600 to-orange-500o-r from-blue-600 to-green-600 text-white py-3 rounded-lg font-bold hover:from-blue-700 hover:to-green-700 transition-all shadow-md hover:shadow-lg"
             >
               Calculate Refund Amount
             </button>
@@ -346,7 +346,7 @@ export default function RefundPolicyPage() {
                             
                             <div className="bg-white p-4 rounded-lg shadow-sm md:col-span-2">
                               <p className="text-sm text-gray-600 mb-1">Processing Time</p>
-                              <p className="text-lg font-bold text-blue-600">{calculatorResult.processingTime}</p>
+                              <p className="text-lg font-bold text-green-600">{calculatorResult.processingTime}</p>
                               <p className="text-xs text-gray-500 mt-1">From approval to account credit</p>
                             </div>
                           </div>
@@ -359,7 +359,7 @@ export default function RefundPolicyPage() {
             )}
           </div>
           
-          <div className="bg-blue-50 p-4 rounded-lg">
+          <div className="bg-green-50 p-4 rounded-lg">
             <p className="text-sm text-gray-700">
               <strong>Note:</strong> This calculator provides estimates only. Final refund amounts are determined after inspection of returned items. Shipping costs and payment processing fees may affect the final amount.
             </p>
@@ -494,9 +494,9 @@ export default function RefundPolicyPage() {
             </div>
           </div>
 
-          <div className="bg-blue-50 p-5 rounded-lg border-l-4 border-blue-500">
+          <div className="bg-green-50 p-5 rounded-lg border-l-4 border-green-500">
             <h5 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-              <Shield className="w-5 h-5 text-blue-600" />
+              <Shield className="w-5 h-5 text-green-600" />
               Exception: Defective Items
             </h5>
             <p className="text-sm text-gray-700">
@@ -528,18 +528,18 @@ export default function RefundPolicyPage() {
               return (
                 <div key={item.step} className="flex gap-4">
                   <div className="flex flex-col items-center">
-                    <div className="bg-gradient-to-br from-blue-600 to-green-600 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-lg">
+                    <div className="bg-gradient-to-br from-green-600 to-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-lg">
                       {item.step}
                     </div>
                     {index < refundTimeline.length - 1 && (
-                      <div className="w-1 h-full bg-gradient-to-b from-blue-300 to-green-300 my-2 rounded-full"></div>
+                      <div className="w-1 h-full bg-gradient-to-b from-green-300 to-orange-300 my-2 rounded-full"></div>
                     )}
                   </div>
                   <div className="flex-1 pb-8">
-                    <div className="bg-white p-5 rounded-lg shadow-md border-l-4 border-blue-600 hover:shadow-lg transition-shadow">
+                    <div className="bg-white p-5 rounded-lg shadow-md border-l-4 border-green-600 hover:shadow-lg transition-shadow">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <Icon className="w-5 h-5 text-blue-600" />
+                          <Icon className="w-5 h-5 text-green-600" />
                           <h4 className="font-bold text-gray-900">{item.title}</h4>
                         </div>
                         <span className="text-sm bg-gradient-to-r from-blue-100 to-green-100 text-blue-700 px-3 py-1 rounded-full font-semibold">
@@ -554,7 +554,7 @@ export default function RefundPolicyPage() {
             })}
           </div>
 
-          <div className="bg-gradient-to-br from-purple-50 to-blue-50 p-6 rounded-lg border-2 border-purple-200">
+          <div className="bg-gradient-to-br from-green-50 to-orange-50 p-6 rounded-lg border-2 border-purple-200">
             <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
               <Truck className="w-6 h-6 text-purple-600" />
               How to Initiate a Return
@@ -562,7 +562,7 @@ export default function RefundPolicyPage() {
             <div className="space-y-3">
               <div className="bg-white p-5 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 <p className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                  <span className="bg-blue-100 text-blue-700 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">1</span>
+                  <span className="bg-green-100 text-blue-700 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold">1</span>
                   Through Your Account (Recommended)
                 </p>
                 <ol className="list-decimal pl-5 space-y-2 text-sm text-gray-700">
@@ -580,7 +580,7 @@ export default function RefundPolicyPage() {
                 </p>
                 <div className="grid md:grid-cols-2 gap-3 text-sm text-gray-700">
                   <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-blue-600" />
+                    <Mail className="w-4 h-4 text-green-600" />
                     <span>Email: returns@oshocksjunior.co.ke</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -633,10 +633,10 @@ export default function RefundPolicyPage() {
             </div>
           </div>
 
-          <div className="bg-blue-50 p-4 rounded-lg">
+          <div className="bg-green-50 p-4 rounded-lg">
             <h5 className="font-semibold text-gray-900 mb-2">Shipping Address for Returns</h5>
             <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <MapPin className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-gray-700">
                 <p className="font-semibold">Oshocks Junior Returns Department</p>
                 <p>[Your Street Address]</p>
@@ -691,7 +691,7 @@ export default function RefundPolicyPage() {
               </div>
             </div>
 
-            <div className="bg-blue-50 p-5 rounded-lg border-2 border-blue-200 hover:shadow-lg transition-shadow">
+            <div className="bg-green-50 p-5 rounded-lg border-2 border-blue-200 hover:shadow-lg transition-shadow">
               <div className="flex items-center gap-3 mb-4">
                 <div className="bg-blue-600 p-3 rounded-lg shadow-md">
                   <CreditCard className="w-6 h-6 text-white" />
@@ -703,19 +703,19 @@ export default function RefundPolicyPage() {
               </div>
               <ul className="space-y-2 text-sm text-gray-700">
                 <li className="flex items-start gap-2">
-                  <Clock className="w-4 h-4 text-blue-600 mt-0.5" />
+                  <Clock className="w-4 h-4 text-green-600 mt-0.5" />
                   <span><strong>Processing Time:</strong> 5-10 business days</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CreditCard className="w-4 h-4 text-blue-600 mt-0.5" />
+                  <CreditCard className="w-4 h-4 text-green-600 mt-0.5" />
                   <span><strong>Method:</strong> Original card used</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Mail className="w-4 h-4 text-blue-600 mt-0.5" />
+                  <Mail className="w-4 h-4 text-green-600 mt-0.5" />
                   <span><strong>Notification:</strong> Email + bank statement</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5" />
+                  <AlertCircle className="w-4 h-4 text-green-600 mt-0.5" />
                   <span><strong>Timeline:</strong> Depends on card issuer</span>
                 </li>
               </ul>
@@ -793,7 +793,7 @@ export default function RefundPolicyPage() {
 
           <div className="bg-gradient-to-r from-blue-50 to-green-50 p-5 rounded-lg border-2 border-blue-200">
             <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-              <Calculator className="w-5 h-5 text-blue-600" />
+              <Calculator className="w-5 h-5 text-green-600" />
               Refund Amount Breakdown
             </h4>
             <div className="space-y-2 text-sm">
@@ -888,21 +888,21 @@ export default function RefundPolicyPage() {
           <div>
             <h4 className="font-semibold text-gray-900 mb-3">What to Do Upon Delivery</h4>
             <div className="grid md:grid-cols-3 gap-4">
-              <div className="bg-white p-5 rounded-lg shadow-md border-t-4 border-blue-600 hover:shadow-lg transition-shadow">
+              <div className="bg-white p-5 rounded-lg shadow-md border-t-4 border-green-600 hover:shadow-lg transition-shadow">
                 <div className="text-4xl mb-3">📦</div>
                 <h5 className="font-bold text-gray-900 mb-2">1. Inspect Immediately</h5>
                 <p className="text-sm text-gray-700">
                   Check package and contents before signing delivery. Document any visible damage with photos.
                 </p>
               </div>
-              <div className="bg-white p-5 rounded-lg shadow-md border-t-4 border-blue-600 hover:shadow-lg transition-shadow">
+              <div className="bg-white p-5 rounded-lg shadow-md border-t-4 border-green-600 hover:shadow-lg transition-shadow">
                 <div className="text-4xl mb-3">📸</div>
                 <h5 className="font-bold text-gray-900 mb-2">2. Take Photos</h5>
                 <p className="text-sm text-gray-700">
                   Photograph any defects, damage, packaging issues, or missing items for your claim documentation.
                 </p>
               </div>
-              <div className="bg-white p-5 rounded-lg shadow-md border-t-4 border-blue-600 hover:shadow-lg transition-shadow">
+              <div className="bg-white p-5 rounded-lg shadow-md border-t-4 border-green-600 hover:shadow-lg transition-shadow">
                 <div className="text-4xl mb-3">📞</div>
                 <h5 className="font-bold text-gray-900 mb-2">3. Contact Us ASAP</h5>
                 <p className="text-sm text-gray-700">
@@ -1004,7 +1004,7 @@ export default function RefundPolicyPage() {
             </p>
           </div>
 
-          <div className="bg-blue-50 p-4 rounded-lg">
+          <div className="bg-green-50 p-4 rounded-lg">
             <h5 className="font-semibold text-gray-900 mb-2">Required Documentation</h5>
             <ul className="space-y-1 text-sm text-gray-700">
               <li>✓ Photos of defect or damage (multiple angles)</li>
@@ -1026,10 +1026,10 @@ export default function RefundPolicyPage() {
         <div className="space-y-6">
           <div>
             <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <Shield className="w-5 h-5 text-blue-600" />
+              <Shield className="w-5 h-5 text-green-600" />
               Warranty Claims
             </h4>
-            <div className="bg-blue-50 p-5 rounded-lg border-l-4 border-blue-500">
+            <div className="bg-green-50 p-5 rounded-lg border-l-4 border-green-500">
               <p className="text-gray-700 mb-3">
                 Many bicycle products come with manufacturer warranties separate from our return policy. For warranty claims:
               </p>
@@ -1039,7 +1039,7 @@ export default function RefundPolicyPage() {
                   <span><strong>0-90 days:</strong> Contact us first - we handle the claim for you and provide full support</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5" />
+                  <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
                   <span><strong>91+ days:</strong> Contact manufacturer directly (we provide all necessary information)</span>
                 </li>
                 <li className="flex items-start gap-2">
@@ -1119,7 +1119,7 @@ export default function RefundPolicyPage() {
               <ul className="space-y-2 text-sm text-gray-700">
                 <li className="flex items-start gap-2">
                   <Mail className="w-4 h-4 text-green-600 mt-0.5" />
-                  <span>Contact our B2B team at <a href="mailto:wholesale@oshocksjunior.co.ke" className="text-blue-600 hover:underline font-semibold">wholesale@oshocksjunior.co.ke</a></span>
+                  <span>Contact our B2B team at <a href="mailto:wholesale@oshocksjunior.co.ke" className="text-green-600 hover:underline font-semibold">wholesale@oshocksjunior.co.ke</a></span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
@@ -1177,7 +1177,7 @@ export default function RefundPolicyPage() {
                 If you're not satisfied with a return decision:
               </p>
               <ol className="space-y-2 text-sm text-gray-700 list-decimal pl-5">
-                <li>Contact our Returns Manager at <a href="mailto:returns.manager@oshocksjunior.co.ke" className="text-blue-600 hover:underline font-semibold">returns.manager@oshocksjunior.co.ke</a></li>
+                <li>Contact our Returns Manager at <a href="mailto:returns.manager@oshocksjunior.co.ke" className="text-green-600 hover:underline font-semibold">returns.manager@oshocksjunior.co.ke</a></li>
                 <li>Escalate to Customer Service Director if needed</li>
                 <li>Final arbitration available through Kenyan Consumer Protection Authority</li>
               </ol>
@@ -1243,7 +1243,7 @@ export default function RefundPolicyPage() {
               </div>
             </div>
 
-            <div className="bg-blue-50 p-5 rounded-lg border-2 border-blue-200 hover:shadow-lg transition-all">
+            <div className="bg-green-50 p-5 rounded-lg border-2 border-blue-200 hover:shadow-lg transition-all">
               <div className="flex items-center gap-3 mb-4">
                 <div className="bg-blue-600 p-3 rounded-lg">
                   <Mail className="w-6 h-6 text-white" />
@@ -1257,7 +1257,7 @@ export default function RefundPolicyPage() {
                 <p className="text-gray-700">
                   <strong>Response:</strong> Within 24 hours
                 </p>
-                <a href="mailto:returns@oshocksjunior.co.ke" className="text-blue-600 hover:underline font-semibold block">
+                <a href="mailto:returns@oshocksjunior.co.ke" className="text-green-600 hover:underline font-semibold block">
                   returns@oshocksjunior.co.ke
                 </a>
                 <p className="text-xs text-gray-600">Include order number for faster service</p>
@@ -1286,16 +1286,16 @@ export default function RefundPolicyPage() {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-gray-50 to-blue-50 p-6 rounded-lg border-2 border-blue-200">
+          <div className="bg-gradient-to-br from-gray-50 to-green-50 p-6 rounded-lg border-2 border-blue-200">
             <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <MapPin className="w-6 h-6 text-blue-600" />
+              <MapPin className="w-6 h-6 text-green-600" />
               Visit Our Returns Center
             </h4>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <h5 className="font-semibold text-gray-900 mb-3">Physical Location</h5>
                 <div className="space-y-2 text-sm text-gray-700">
-                  <p className="font-semibold text-blue-600">Oshocks Junior Bike Shop</p>
+                  <p className="font-semibold text-green-600">Oshocks Junior Bike Shop</p>
                   <p>[Your Street Address]</p>
                   <p>Nairobi, Kenya</p>
                   <div className="mt-3 pt-3 border-t border-gray-300">
@@ -1376,7 +1376,7 @@ export default function RefundPolicyPage() {
       category: 'support',
       content: (
         <div className="space-y-4">
-          <div className="bg-white p-5 rounded-lg shadow-md border-l-4 border-blue-600">
+          <div className="bg-white p-5 rounded-lg shadow-md border-l-4 border-green-600">
             <h5 className="font-bold text-gray-900 mb-2">How long do I have to return an item?</h5>
             <p className="text-sm text-gray-700">
               You have 30 days from the delivery date to initiate a return for most items. Defective items have an extended 90-day window.
@@ -1445,23 +1445,23 @@ export default function RefundPolicyPage() {
             We may update this Refund Policy from time to time to reflect changes in our business practices, legal requirements, or customer feedback.
           </p>
           
-          <div className="bg-blue-50 p-5 rounded-lg border-l-4 border-blue-500">
+          <div className="bg-green-50 p-5 rounded-lg border-l-4 border-green-500">
             <h4 className="font-semibold text-gray-900 mb-3">How We Notify You</h4>
             <ul className="space-y-2 text-sm text-gray-700">
               <li className="flex items-start gap-2">
-                <Mail className="w-4 h-4 text-blue-600 mt-0.5" />
+                <Mail className="w-4 h-4 text-green-600 mt-0.5" />
                 <span>Email notification to all registered customers</span>
               </li>
               <li className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5" />
+                <AlertCircle className="w-4 h-4 text-green-600 mt-0.5" />
                 <span>Prominent banner on website for 30 days</span>
               </li>
               <li className="flex items-start gap-2">
-                <Clock className="w-4 h-4 text-blue-600 mt-0.5" />
+                <Clock className="w-4 h-4 text-green-600 mt-0.5" />
                 <span>Updated "Last Modified" date at top of policy</span>
               </li>
               <li className="flex items-start gap-2">
-                <FileText className="w-4 h-4 text-blue-600 mt-0.5" />
+                <FileText className="w-4 h-4 text-green-600 mt-0.5" />
                 <span>Summary of changes in notification email</span>
               </li>
             </ul>
@@ -1483,7 +1483,7 @@ export default function RefundPolicyPage() {
             <h4 className="font-semibold text-gray-900 mb-3">Version History</h4>
             <div className="space-y-2 text-sm text-gray-700">
               <div className="flex items-start gap-3 bg-white p-3 rounded">
-                <span className="font-bold text-blue-600">v3.0</span>
+                <span className="font-bold text-green-600">v3.0</span>
                 <div>
                   <p className="font-semibold">October 11, 2025</p>
                   <p className="text-xs">Added refund calculator and marketplace seller returns</p>
@@ -1527,7 +1527,7 @@ export default function RefundPolicyPage() {
       <div className="bg-white shadow-lg sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex items-center gap-4 mb-4">
-            <div className="bg-gradient-to-br from-blue-600 to-green-600 p-3 rounded-lg shadow-lg">
+            <div className="bg-gradient-to-br from-green-600 to-orange-500 p-3 rounded-lg shadow-lg">
               <RotateCcw className="w-8 h-8 text-white" />
             </div>
             <div>
@@ -1545,7 +1545,7 @@ export default function RefundPolicyPage() {
               <span>30-Day Return Window</span>
             </div>
             <div className="flex-1"></div>
-            <button className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors">
+            <button className="flex items-center gap-2 text-green-600 hover:text-blue-800 transition-colors">
               <Download className="w-4 h-4" />
               <span>Download PDF</span>
             </button>
@@ -1564,8 +1564,8 @@ export default function RefundPolicyPage() {
       {/* Quick Stats */}
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow border-t-4 border-blue-600">
-            <div className="text-4xl font-bold text-blue-600 mb-1">30</div>
+          <div className="bg-white p-5 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow border-t-4 border-green-600">
+            <div className="text-4xl font-bold text-green-600 mb-1">30</div>
             <div className="text-sm text-gray-600">Days Return Window</div>
           </div>
           <div className="bg-white p-5 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow border-t-4 border-green-600">
@@ -1594,7 +1594,7 @@ export default function RefundPolicyPage() {
                 placeholder="Search policy sections..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
             <div className="flex gap-2 overflow-x-auto">
@@ -1613,7 +1613,7 @@ export default function RefundPolicyPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-all ${
                     activeTab === tab.id
-                      ? 'bg-gradient-to-r from-blue-600 to-green-600 text-white shadow-md'
+                      ? 'bg-gradient-to-r from-green-600 to-orange-500 text-white shadow-md'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -1629,7 +1629,7 @@ export default function RefundPolicyPage() {
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <BookOpen className="w-6 h-6 text-blue-600" />
+            <BookOpen className="w-6 h-6 text-green-600" />
             Table of Contents
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -1637,7 +1637,7 @@ export default function RefundPolicyPage() {
               <a
                 key={section.id}
                 href={`#${section.id}`}
-                className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline transition-colors p-2 rounded hover:bg-blue-50"
+                className="flex items-center gap-2 text-green-600 hover:text-blue-800 hover:underline transition-colors p-2 rounded hover:bg-green-50"
                 onClick={(e) => {
                   e.preventDefault();
                   document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth' });
@@ -1669,7 +1669,7 @@ export default function RefundPolicyPage() {
                   >
                     <div className="flex items-center gap-4">
                       <div className="bg-gradient-to-br from-blue-100 to-green-100 p-3 rounded-lg">
-                        <Icon className="w-6 h-6 text-blue-600" />
+                        <Icon className="w-6 h-6 text-green-600" />
                       </div>
                       <h2 className="text-xl font-bold text-gray-900 text-left">
                         {section.title}
@@ -1703,7 +1703,7 @@ export default function RefundPolicyPage() {
                 setSearchQuery('');
                 setActiveTab('all');
               }}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors"
             >
               Clear Search
             </button>
@@ -1711,14 +1711,14 @@ export default function RefundPolicyPage() {
         )}
 
         {/* CTA Section */}
-        <div className="mt-12 bg-gradient-to-br from-blue-600 to-green-600 p-8 rounded-lg shadow-xl text-white">
+        <div className="mt-12 bg-gradient-to-br from-green-600 to-orange-500 p-8 rounded-lg shadow-xl text-white">
           <div className="text-center">
             <h3 className="text-2xl md:text-3xl font-bold mb-4">Need to Start a Return?</h3>
             <p className="mb-6 text-blue-100 max-w-2xl mx-auto">
               Our team is ready to help you with a fast and easy return process. Get your refund processed within 5-10 business days.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-white text-blue-600 px-8 py-3 rounded-lg font-bold hover:bg-blue-50 transition-colors shadow-md flex items-center justify-center gap-2">
+              <button className="bg-white text-green-600 px-8 py-3 rounded-lg font-bold hover:bg-green-50 transition-colors shadow-md flex items-center justify-center gap-2">
                 <RotateCcw className="w-5 h-5" />
                 Start Return Request
               </button>
@@ -1734,15 +1734,15 @@ export default function RefundPolicyPage() {
         <div className="mt-8 grid md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             <div className="flex items-center gap-3 mb-3">
-              <div className="bg-blue-100 p-2 rounded-lg">
-                <FileText className="w-6 h-6 text-blue-600" />
+              <div className="bg-green-100 p-2 rounded-lg">
+                <FileText className="w-6 h-6 text-green-600" />
               </div>
               <h4 className="font-bold text-gray-900">Shipping Policy</h4>
             </div>
             <p className="text-sm text-gray-700 mb-4">
               Learn about our delivery times, shipping costs, and tracking options.
             </p>
-            <a href="/shipping-policy" className="text-blue-600 hover:underline font-semibold text-sm flex items-center gap-1">
+            <a href="/shipping-policy" className="text-green-600 hover:underline font-semibold text-sm flex items-center gap-1">
               Read More <ArrowRight className="w-4 h-4" />
             </a>
           </div>
@@ -1782,7 +1782,7 @@ export default function RefundPolicyPage() {
         <div className="mt-8 text-center">
           <a
             href="/"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold hover:underline transition-colors"
+            className="inline-flex items-center gap-2 text-green-600 hover:text-blue-800 font-semibold hover:underline transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -1804,7 +1804,7 @@ export default function RefundPolicyPage() {
 
       {/* Floating Help Button */}
       <div className="fixed bottom-6 right-6 z-50">
-        <button className="bg-gradient-to-br from-blue-600 to-green-600 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group">
+        <button className="bg-gradient-to-br from-green-600 to-orange-500 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group">
           <MessageSquare className="w-6 h-6 group-hover:rotate-12 transition-transform" />
         </button>
         <div className="absolute bottom-full right-0 mb-2 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">

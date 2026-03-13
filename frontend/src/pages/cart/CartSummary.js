@@ -208,12 +208,12 @@ const paymentMethods = [
   return (
     <div className={`bg-white rounded-lg shadow-lg border border-gray-200 ${sticky ? 'lg:sticky lg:top-4' : ''} ${className}`}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 sm:p-4 rounded-t-lg">
+      <div className="bg-gradient-to-r from-green-600 to-green-700 text-white p-3 sm:p-4 rounded-t-lg">
         <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
           <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
           Order Summary
         </h2>
-        <p className="text-blue-100 text-xs sm:text-sm mt-1">{itemCount} {itemCount === 1 ? 'item' : 'items'}</p>
+        <p className="text-green-100 text-xs sm:text-sm mt-1">{itemCount} {itemCount === 1 ? 'item' : 'items'}</p>
       </div>
 
       <div className="p-3 sm:p-4 md:p-5 lg:p-6 space-y-4 sm:space-y-5 md:space-y-6">
@@ -243,7 +243,7 @@ const paymentMethods = [
           {subtotal < freeShippingThreshold && !appliedPromo?.type === 'shipping' && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3">
               <div className="flex items-start gap-2">
-                <Info className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                <Info className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <p className="text-xs sm:text-sm text-blue-800">
                     Add <span className="font-bold">{formatPrice(freeShippingThreshold - subtotal)}</span> more for FREE shipping!
@@ -282,7 +282,7 @@ const paymentMethods = [
           <div className="flex justify-between items-center">
             <span className="text-base sm:text-lg font-bold text-gray-900">Total</span>
             <div className="text-right">
-              <p className="text-xl sm:text-2xl font-bold text-blue-600">{formatPrice(total)}</p>
+              <p className="text-xl sm:text-2xl font-bold text-green-600">{formatPrice(total)}</p>
               {totalSavings > 0 && (
                 <p className="text-xs sm:text-sm text-green-600">
                   You save {formatPrice(totalSavings)}!
@@ -325,7 +325,7 @@ const paymentMethods = [
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                     placeholder="Enter code"
-                    className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     onKeyPress={(e) => e.key === 'Enter' && handleApplyPromo()}
                   />
                   <button
@@ -369,7 +369,7 @@ const paymentMethods = [
               <div className="flex-1 min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-gray-700">Delivering to</p>
                 <p className="text-xs sm:text-sm text-gray-600 truncate">{deliveryLocation}</p>
-                <button className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 mt-1">
+                <button className="text-xs sm:text-sm text-green-600 hover:text-blue-700 mt-1">
                   Change location
                 </button>
               </div>
@@ -399,7 +399,7 @@ const paymentMethods = [
                   onClick={() => setSelectedPayment(method.id)}
                   className={`w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border-2 rounded-lg transition-all ${
                     selectedPayment === method.id
-                      ? 'border-blue-600 bg-blue-50'
+                      ? 'border-orange-500 bg-orange-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -409,7 +409,7 @@ const paymentMethods = [
                     <p className="text-xs text-gray-500 truncate">{method.description}</p>
                   </div>
                   {selectedPayment === method.id && (
-                    <Check className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
                   )}
                 </button>
               ))}
@@ -420,7 +420,7 @@ const paymentMethods = [
         {/* Checkout Button */}
         <button
           onClick={onCheckout}
-          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg font-bold text-base sm:text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+          className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg font-bold text-base sm:text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
         >
           <span>Proceed to Checkout</span>
           <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />

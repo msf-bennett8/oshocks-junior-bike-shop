@@ -103,7 +103,7 @@ const CartItem = ({
         <div className="flex-1 min-w-0">
           <h4 className="font-medium text-xs sm:text-sm text-gray-800 line-clamp-2">{item.name}</h4>
           <p className="text-xs text-gray-500 mt-1">{formatPrice(item.price)} × {item.quantity}</p>
-          <p className="text-blue-600 font-bold text-sm sm:text-base mt-1">{formatPrice(itemTotal)}</p>
+          <p className="text-green-600 font-bold text-sm sm:text-base mt-1">{formatPrice(itemTotal)}</p>
         </div>
         
         {editable && (
@@ -182,7 +182,7 @@ const CartItem = ({
 
                 {/* Price Info */}
                 <div className="mb-2 sm:mb-3">
-                  <p className="text-blue-600 font-bold text-base sm:text-lg">
+                  <p className="text-green-600 font-bold text-base sm:text-lg">
                     {formatPrice(itemPrice)}
                   </p>
                   {item.originalPrice && Number(item.originalPrice) > itemPrice && (
@@ -289,7 +289,7 @@ const CartItem = ({
             {editable && onAddToWishlist && (
               <button
                 onClick={handleMoveToWishlist}
-                className="hidden sm:flex items-center gap-1 text-xs sm:text-sm text-blue-600 hover:text-blue-700 mt-2"
+                className="hidden sm:flex items-center gap-1 text-xs sm:text-sm text-green-600 hover:text-blue-700 mt-2"
               >
                 <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Save for Later

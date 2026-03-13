@@ -325,7 +325,7 @@ const DatabaseErrorPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-700 rounded-xl flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-xl">OS</span>
               </div>
               <div>
@@ -338,7 +338,7 @@ const DatabaseErrorPage = () => {
                 onClick={toggleNotifications}
                 className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
                   notificationsEnabled 
-                    ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' 
+                    ? 'bg-green-100 text-green-600 hover:bg-green-200' 
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
@@ -408,10 +408,10 @@ const DatabaseErrorPage = () => {
         {/* Auto-Retry Status */}
         {autoRetryEnabled && !retrying && (
           <div className="max-w-3xl mx-auto mb-6">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                  <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
                     <RefreshCw className="w-6 h-6 text-white animate-spin" />
                   </div>
                   <div>
@@ -421,18 +421,18 @@ const DatabaseErrorPage = () => {
                 </div>
                 <button
                   onClick={() => setAutoRetryEnabled(false)}
-                  className="text-sm text-blue-600 hover:text-blue-800 font-semibold transition-colors"
+                  className="text-sm text-green-600 hover:text-green-800 font-semibold transition-colors"
                 >
                   Disable
                 </button>
               </div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-gray-600">Next retry in:</span>
-                <span className="text-2xl font-bold text-blue-600">{formatTime(timeUntilRetry)}</span>
+                <span className="text-2xl font-bold text-orange-500">{formatTime(timeUntilRetry)}</span>
               </div>
-              <div className="w-full bg-blue-200 rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-orange-200 rounded-full h-2 overflow-hidden">
                 <div 
-                  className="bg-blue-600 h-full transition-all duration-1000"
+                  className="bg-orange-500 h-full transition-all duration-1000"
                   style={{ width: `${((30 - timeUntilRetry) / 30) * 100}%` }}
                 />
               </div>
@@ -653,12 +653,12 @@ const DatabaseErrorPage = () => {
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center justify-between">
               <div className="flex items-center">
-                <Activity className="w-5 h-5 mr-2 text-blue-600" />
+                <Activity className="w-5 h-5 mr-2 text-green-600" />
                 System Status
               </div>
               <a
                 href="/status"
-                className="text-sm text-blue-600 hover:text-blue-800 font-semibold flex items-center transition-colors"
+                className="text-sm text-green-600 hover:text-green-800 font-semibold flex items-center transition-colors"
               >
                 View Details
                 <ExternalLink className="w-4 h-4 ml-1" />
@@ -752,13 +752,13 @@ const DatabaseErrorPage = () => {
               Real-Time Metrics
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-blue-900">Affected Users</span>
-                  <Users className="w-5 h-5 text-blue-600" />
+                  <span className="text-sm font-medium text-green-900">Affected Users</span>
+                  <Users className="w-5 h-5 text-green-600" />
                 </div>
-                <p className="text-3xl font-bold text-blue-900">{affectedUsers}</p>
-                <p className="text-xs text-blue-700 mt-1">Currently experiencing issues</p>
+                <p className="text-3xl font-bold text-green-900">{affectedUsers}</p>
+                <p className="text-xs text-green-700 mt-1">Currently experiencing issues</p>
               </div>
               <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
                 <div className="flex items-center justify-between mb-2">
@@ -793,7 +793,7 @@ const DatabaseErrorPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
               <a
                 href="mailto:support@oshocksjunior.co.ke"
-                className="flex items-center space-x-3 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200 hover:shadow-md transition-all group"
+                className="flex items-center space-x-3 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200 hover:shadow-md transition-all group"
               >
                 <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Mail className="w-6 h-6 text-white" />
@@ -854,7 +854,7 @@ const DatabaseErrorPage = () => {
               className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
             >
               <span className="font-semibold text-gray-900 flex items-center space-x-2">
-                <Server className="w-5 h-5 text-blue-600" />
+                <Server className="w-5 h-5 text-green-600" />
                 <span>Technical Details (For Developers)</span>
               </span>
               <span className="text-sm text-gray-500">
@@ -916,7 +916,7 @@ const DatabaseErrorPage = () => {
                     <div className="flex space-x-3">
                       <button
                         onClick={downloadErrorReport}
-                        className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 text-sm font-medium"
+                        className="flex-1 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center space-x-2 text-sm font-medium"
                       >
                         <Download className="w-4 h-4" />
                         <span>Download Full Report</span>

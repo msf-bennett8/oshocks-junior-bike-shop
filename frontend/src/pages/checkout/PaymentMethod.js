@@ -364,8 +364,8 @@ const PaymentMethod = ({
 
             {paymentStatus === 'processing' && selectedMethod === 'card' && (
               <>
-                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+                <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">
                   Processing Payment
@@ -396,7 +396,7 @@ const PaymentMethod = ({
       {/* Main Payment Form */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
+        <div className="bg-gradient-to-r from-green-600 to-green-700 text-white p-6">
           <h2 className="text-2xl font-bold mb-2">Payment Method</h2>
           <p className="text-blue-100">Choose how you'd like to pay</p>
         </div>
@@ -429,7 +429,7 @@ const PaymentMethod = ({
                 onClick={() => setSelectedMethod(method.id)}
                 className={`relative border-2 rounded-lg p-4 cursor-pointer transition-all ${
                   selectedMethod === method.id
-                    ? 'border-blue-600 bg-blue-50'
+                    ? 'border-orange-500 bg-orange-50'
                     : 'border-gray-200 hover:border-gray-300 bg-white'
                 }`}
               >
@@ -441,7 +441,7 @@ const PaymentMethod = ({
                 
                 <div className="flex items-start gap-4">
                   <div className={`${
-                    selectedMethod === method.id ? 'text-blue-600' : 'text-gray-600'
+                    selectedMethod === method.id ? 'text-orange-500' : 'text-gray-600'
                   }`}>
                     {method.icon}
                   </div>
@@ -450,7 +450,7 @@ const PaymentMethod = ({
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-semibold text-gray-900">{method.name}</p>
                       {method.recommended && (
-                        <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded">
+                        <span className="bg-orange-100 text-orange-700 text-xs font-medium px-2 py-0.5 rounded">
                           Recommended
                         </span>
                       )}
@@ -470,7 +470,7 @@ const PaymentMethod = ({
                   </div>
 
                   {selectedMethod === method.id && (
-                    <Check className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                    <Check className="w-6 h-6 text-orange-500 flex-shrink-0" />
                   )}
                 </div>
               </div>
@@ -506,7 +506,7 @@ const PaymentMethod = ({
                       type="tel"
                       value={mpesaData.phoneNumber}
                       onChange={(e) => setMpesaData({ ...mpesaData, phoneNumber: e.target.value })}
-                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                         errors.mpesaPhone ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="0712 345 678"
@@ -528,10 +528,10 @@ const PaymentMethod = ({
             {/* Card Form */}
             {selectedMethod === 'card' && (
               <div className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
                   <div className="flex items-center gap-2">
-                    <Lock className="w-5 h-5 text-blue-600" />
-                    <p className="text-sm text-blue-900">
+                    <Lock className="w-5 h-5 text-green-600" />
+                    <p className="text-sm text-green-900">
                       Your card information is encrypted and secure
                     </p>
                   </div>
@@ -550,7 +550,7 @@ const PaymentMethod = ({
                         setCardData({ ...cardData, cardNumber: value });
                       }
                     }}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                       errors.cardNumber ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="1234 5678 9012 3456"
@@ -572,7 +572,7 @@ const PaymentMethod = ({
                     type="text"
                     value={cardData.cardName}
                     onChange={(e) => setCardData({ ...cardData, cardName: e.target.value.toUpperCase() })}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                       errors.cardName ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="JOHN DOE"
@@ -604,7 +604,7 @@ const PaymentMethod = ({
                             setCardData({ ...cardData, expiryDate: value });
                           }
                         }}
-                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                           errors.expiryDate ? 'border-red-500' : 'border-gray-300'
                         }`}
                         placeholder="MM/YY"
@@ -639,7 +639,7 @@ const PaymentMethod = ({
                           setCardData({ ...cardData, cvv: value });
                         }
                       }}
-                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                         errors.cvv ? 'border-red-500' : 'border-gray-300'
                       }`}
                       placeholder="123"
@@ -660,7 +660,7 @@ const PaymentMethod = ({
                     id="saveCard"
                     checked={cardData.saveCard}
                     onChange={(e) => setCardData({ ...cardData, saveCard: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                    className="w-4 h-4 text-green-600 rounded focus:ring-2 focus:ring-green-500 accent-green-600"
                   />
                   <label htmlFor="saveCard" className="text-sm text-gray-700">
                     Save card for future purchases
@@ -695,7 +695,7 @@ const PaymentMethod = ({
                   <select
                     value={bankData.bankName}
                     onChange={(e) => setBankData({ ...bankData, bankName: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   >
                     <option value="">Select your bank</option>
                     <option value="equity">Equity Bank</option>
@@ -716,7 +716,7 @@ const PaymentMethod = ({
                     type="text"
                     value={bankData.transactionRef}
                     onChange={(e) => setBankData({ ...bankData, transactionRef: e.target.value.toUpperCase() })}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                       errors.transactionRef ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="e.g., TXN123456789"
@@ -808,7 +808,7 @@ const PaymentMethod = ({
             <button
               onClick={handleSubmitPayment}
               disabled={isProcessing}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-lg font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+              className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 px-6 rounded-lg font-bold text-lg hover:from-orange-600 hover:to-orange-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-6"
             >
               {isProcessing ? (
                 <>
@@ -849,12 +849,12 @@ const PaymentMethod = ({
       </div>
 
       {/* Help Section */}
-      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
         <div className="flex items-start gap-2">
-          <HelpCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <HelpCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-blue-900 mb-1">Need help with payment?</p>
-            <p className="text-sm text-blue-700">
+            <p className="text-sm font-medium text-green-900 mb-1">Need help with payment?</p>
+            <p className="text-sm text-green-700">
               Contact our support team at{' '}
               <a href="tel:+254712345678" className="font-semibold hover:underline">
                 +254 712 345 678
@@ -929,7 +929,7 @@ const PaymentMethodDemo = () => {
               setPaymentComplete(false);
               setPaymentData(null);
             }}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors"
           >
             Make Another Payment
           </button>
@@ -1032,9 +1032,9 @@ const PaymentMethodDemo = () => {
         </div>
 
         {/* Integration Guide */}
-        <div className="mt-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg p-6">
+        <div className="mt-6 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg p-6">
           <h3 className="text-lg font-bold mb-3">Integration Guide</h3>
-          <div className="space-y-2 text-sm text-blue-100">
+          <div className="space-y-2 text-sm text-green-100">
             <p>• Connect M-Pesa: Safaricom Daraja API (STK Push)</p>
             <p>• Card payments: Stripe or Flutterwave integration</p>
             <p>• Bank transfers: Manual verification system</p>

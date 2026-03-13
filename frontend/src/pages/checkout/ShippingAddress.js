@@ -245,12 +245,12 @@ const ShippingAddress = ({
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-lg p-6 mb-6">
+      <div className="bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg shadow-lg p-6 mb-6">
         <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
           <MapPin className="w-6 h-6" />
           Shipping Address
         </h2>
-        <p className="text-blue-100">
+        <p className="text-green-100">
           {isAddingNew ? 'Add a new shipping address' : 'Select or manage your delivery addresses'}
         </p>
       </div>
@@ -259,7 +259,7 @@ const ShippingAddress = ({
       {!isAddingNew && (
         <button
           onClick={() => setIsAddingNew(true)}
-          className="w-full mb-6 flex items-center justify-center gap-2 px-6 py-4 bg-white border-2 border-dashed border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-semibold"
+          className="w-full mb-6 flex items-center justify-center gap-2 px-6 py-4 bg-white border-2 border-dashed border-orange-500 text-orange-500 rounded-lg hover:bg-orange-50 transition-colors font-semibold"
         >
           <Plus className="w-5 h-5" />
           Add New Address
@@ -295,7 +295,7 @@ const ShippingAddress = ({
                     onClick={() => setFormData({ ...formData, addressType: type.id })}
                     className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all ${
                       formData.addressType === type.id
-                        ? 'border-blue-600 bg-blue-50 text-blue-600'
+                        ? 'border-orange-500 bg-orange-50 text-orange-500'
                         : 'border-gray-200 hover:border-gray-300 text-gray-600'
                     }`}
                   >
@@ -316,7 +316,7 @@ const ShippingAddress = ({
                 name="label"
                 value={formData.label}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="e.g., Mom's House, Office, Apartment"
               />
             </div>
@@ -334,7 +334,7 @@ const ShippingAddress = ({
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                       errors.firstName ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="John"
@@ -359,7 +359,7 @@ const ShippingAddress = ({
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                       errors.lastName ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="Doe"
@@ -387,7 +387,7 @@ const ShippingAddress = ({
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                       errors.phone ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="0712 345 678"
@@ -412,7 +412,7 @@ const ShippingAddress = ({
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                       errors.email ? 'border-red-500' : 'border-gray-300'
                     }`}
                     placeholder="john@example.com"
@@ -439,7 +439,7 @@ const ShippingAddress = ({
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                     errors.address ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="123 Kimathi Street"
@@ -465,7 +465,7 @@ const ShippingAddress = ({
                   name="apartment"
                   value={formData.apartment}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Apt 4B, Floor 3"
                 />
               </div>
@@ -483,7 +483,7 @@ const ShippingAddress = ({
                   value={formData.city}
                   onChange={handleChange}
                   list="popular-cities"
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
                     errors.city ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="Nairobi"
@@ -511,7 +511,7 @@ const ShippingAddress = ({
                     name="county"
                     value={formData.county}
                     onChange={handleChange}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none ${
+                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none ${
                       errors.county ? 'border-red-500' : 'border-gray-300'
                     }`}
                   >
@@ -542,7 +542,7 @@ const ShippingAddress = ({
                 name="postalCode"
                 value={formData.postalCode}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="00100"
               />
             </div>
@@ -557,19 +557,19 @@ const ShippingAddress = ({
                 value={formData.deliveryInstructions}
                 onChange={handleChange}
                 rows="3"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="e.g., Leave at reception, Call before delivery, Gate code: #123"
               />
             </div>
 
             {/* Shipping Estimate */}
             {formData.county && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <Package className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <Package className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <p className="font-medium text-blue-900 mb-1">Shipping Estimate</p>
-                    <div className="flex items-center gap-4 text-sm text-blue-700">
+                    <p className="font-medium text-green-900 mb-1">Shipping Estimate</p>
+                    <div className="flex items-center gap-4 text-sm text-green-700">
                       <span className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />
                         {getShippingEstimate(formData.county).days} business days
@@ -593,7 +593,7 @@ const ShippingAddress = ({
                 name="isDefault"
                 checked={formData.isDefault}
                 onChange={handleChange}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-green-500"
               />
               <label htmlFor="isDefault" className="text-sm text-gray-700 flex items-center gap-1">
                 <Star className="w-4 h-4 text-yellow-500" />
@@ -605,7 +605,7 @@ const ShippingAddress = ({
             <div className="flex gap-3 pt-4 border-t">
               <button
                 onClick={handleSaveAddress}
-                className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 bg-orange-500 text-white py-3 px-6 rounded-lg font-semibold hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
               >
                 <Check className="w-5 h-5" />
                 {editingAddressId ? 'Update Address' : 'Save Address'}
@@ -630,7 +630,7 @@ const ShippingAddress = ({
             </h3>
             <button
               onClick={() => setShowAddressList(!showAddressList)}
-              className="text-blue-600 hover:text-blue-700 flex items-center gap-1"
+              className="text-green-600 hover:text-green-700 flex items-center gap-1"
             >
               {showAddressList ? (
                 <>
@@ -655,7 +655,7 @@ const ShippingAddress = ({
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                       placeholder="Search addresses..."
                     />
                   </div>
@@ -675,7 +675,7 @@ const ShippingAddress = ({
                       onClick={() => onSelectAddress(address)}
                       className={`relative border-2 rounded-lg p-4 cursor-pointer transition-all ${
                         isSelected
-                          ? 'border-blue-600 bg-blue-50'
+                          ? 'border-orange-500 bg-orange-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
@@ -689,7 +689,7 @@ const ShippingAddress = ({
                       )}
 
                       <div className="flex gap-4">
-                        <div className={`${isSelected ? 'text-blue-600' : 'text-gray-600'}`}>
+                        <div className={`${isSelected ? 'text-orange-500' : 'text-gray-600'}`}>
                           {addressType?.icon}
                         </div>
 
@@ -751,7 +751,7 @@ const ShippingAddress = ({
                                   e.stopPropagation();
                                   onSetDefaultAddress(address.id);
                                 }}
-                                className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 px-2 py-1 hover:bg-blue-50 rounded"
+                                className="text-xs text-green-600 hover:text-green-700 font-medium flex items-center gap-1 px-2 py-1 hover:bg-green-50 rounded"
                               >
                                 <Star className="w-3 h-3" />
                                 Set as Default
@@ -782,7 +782,7 @@ const ShippingAddress = ({
 
                         {isSelected && (
                           <div className="flex-shrink-0">
-                            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
                               <Check className="w-4 h-4 text-white" />
                             </div>
                           </div>
@@ -816,7 +816,7 @@ const ShippingAddress = ({
           </p>
           <button
             onClick={() => setIsAddingNew(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-semibold"
           >
             <Plus className="w-5 h-5" />
             Add Your First Address
@@ -1066,12 +1066,12 @@ const ShippingAddressDemo = () => {
 
         {/* Selected Address Display */}
         {selectedAddressId && (
-          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h3 className="font-bold text-blue-900 mb-2">Selected Address for Delivery:</h3>
+          <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-6">
+            <h3 className="font-bold text-green-900 mb-2">Selected Address for Delivery:</h3>
             {(() => {
               const selected = savedAddresses.find(a => a.id === selectedAddressId);
               return selected ? (
-                <div className="text-sm text-blue-700">
+                <div className="text-sm text-green-700">
                   <p className="font-semibold">
                     {selected.label && `${selected.label} - `}
                     {selected.firstName} {selected.lastName}

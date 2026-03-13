@@ -51,7 +51,7 @@ const ServerErrorPage = () => {
       description: 'Try reloading the page',
       icon: <RefreshCw className="w-6 h-6" />,
       action: handleRefresh,
-      color: 'bg-blue-500 hover:bg-blue-600'
+      color: 'bg-orange-500 hover:bg-orange-600'
     },
     {
       title: 'Go to Homepage',
@@ -78,7 +78,7 @@ const ServerErrorPage = () => {
     {
       title: 'Maintenance in Progress',
       description: 'We might be updating our systems to serve you better. This usually takes just a few minutes.',
-      icon: <Clock className="w-5 h-5 text-blue-500" />
+      icon: <Clock className="w-5 h-5 text-green-500" />
     },
     {
       title: 'Connection Problem',
@@ -156,15 +156,15 @@ const ServerErrorPage = () => {
         {/* Auto-refresh Countdown */}
         {autoRefresh && (
           <div className="max-w-2xl mx-auto mb-8">
-            <div className="bg-blue-500/20 backdrop-blur-sm border border-blue-500/30 rounded-xl p-4">
+            <div className="bg-orange-500/20 backdrop-blur-sm border border-orange-500/30 rounded-xl p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <RefreshCw className="w-5 h-5 text-blue-400 animate-spin" />
+                  <RefreshCw className="w-5 h-5 text-orange-400 animate-spin" />
                   <span className="text-white">Auto-refreshing in {countdown} seconds...</span>
                 </div>
                 <button
                   onClick={() => setAutoRefresh(false)}
-                  className="text-blue-400 hover:text-blue-300 text-sm underline"
+                  className="text-orange-400 hover:text-orange-300 text-sm underline"
                 >
                   Cancel
                 </button>

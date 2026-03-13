@@ -373,10 +373,10 @@ const Careers = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20 px-4">
+      <div className="bg-gradient-to-r from-green-600 to-green-800 text-white py-20 px-4">
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Join Our Team</h1>
-          <p className="text-xl md:text-2xl text-blue-100 mb-8">
+          <p className="text-xl md:text-2xl text-green-100 mb-8">
             Help us revolutionize cycling e-commerce in Kenya
           </p>
           <div className="flex flex-wrap justify-center gap-4 text-lg">
@@ -402,7 +402,7 @@ const Careers = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {companyValues.map((value, index) => (
             <div key={index} className="bg-white rounded-lg p-6 text-center shadow-md hover:shadow-xl transition-shadow">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 text-blue-600 rounded-full mb-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 text-green-600 rounded-full mb-4">
                 {value.icon}
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">{value.title}</h3>
@@ -422,7 +422,7 @@ const Careers = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {perks.map((perk, index) => (
               <div key={index} className="flex items-center gap-2 p-4 bg-gray-50 rounded-lg">
-                <ChevronRight className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                <ChevronRight className="w-5 h-5 text-green-600 flex-shrink-0" />
                 <span className="text-gray-900 font-medium">{perk}</span>
               </div>
             ))}
@@ -444,7 +444,7 @@ const Careers = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search job titles..."
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
               />
             </div>
             <button
@@ -464,7 +464,7 @@ const Careers = () => {
                   <select
                     value={selectedDepartment}
                     onChange={(e) => setSelectedDepartment(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                   >
                     {departments.map(dept => (
                       <option key={dept} value={dept}>
@@ -504,7 +504,7 @@ const Careers = () => {
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">{job.title}</h3>
                   <div className="flex flex-wrap gap-2">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                    <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
                       {job.department}
                     </span>
                     <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
@@ -536,7 +536,7 @@ const Careers = () => {
                   e.stopPropagation();
                   setSelectedJob(job);
                 }}
-                className="mt-4 w-full py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                className="mt-4 w-full py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
               >
                 View Details
               </button>
@@ -553,7 +553,7 @@ const Careers = () => {
                 setSelectedDepartment('all');
                 setSelectedLocation('all');
               }}
-              className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="mt-4 px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
             >
               Clear Filters
             </button>
@@ -569,7 +569,7 @@ const Careers = () => {
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">{selectedJob.title}</h2>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                  <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
                     {selectedJob.department}
                   </span>
                   <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
@@ -612,7 +612,7 @@ const Careers = () => {
                   <ul className="space-y-2">
                     {selectedJob.responsibilities.map((item, index) => (
                       <li key={index} className="flex items-start gap-2 text-gray-600">
-                        <ChevronRight className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <ChevronRight className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                         <span>{item}</span>
                       </li>
                     ))}
@@ -624,7 +624,7 @@ const Careers = () => {
                   <ul className="space-y-2">
                     {selectedJob.requirements.map((item, index) => (
                       <li key={index} className="flex items-start gap-2 text-gray-600">
-                        <ChevronRight className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <ChevronRight className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                         <span>{item}</span>
                       </li>
                     ))}
@@ -636,7 +636,7 @@ const Careers = () => {
                   <ul className="space-y-2">
                     {selectedJob.benefits.map((item, index) => (
                       <li key={index} className="flex items-start gap-2 text-gray-600">
-                        <ChevronRight className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <ChevronRight className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                         <span>{item}</span>
                       </li>
                     ))}
@@ -647,7 +647,7 @@ const Careers = () => {
               <div className="mt-8 flex gap-4">
                 <button
                   onClick={() => handleApply(selectedJob.id)}
-                  className="flex-1 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  className="flex-1 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
                 >
                   Apply Now
                 </button>
@@ -664,13 +664,13 @@ const Careers = () => {
       )}
 
       {/* Call to Action */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 px-4">
+      <div className="bg-gradient-to-r from-green-600 to-green-800 text-white py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Don't See a Perfect Fit?</h2>
-          <p className="text-xl text-blue-100 mb-8">
+          <p className="text-xl text-green-100 mb-8">
             We're always looking for talented individuals. Send us your CV and let us know how you can contribute to our mission.
           </p>
-          <button className="px-8 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors">
+          <button className="px-8 py-3 bg-white text-green-600 rounded-lg font-semibold hover:bg-green-50 transition-colors">
             Send General Application
           </button>
         </div>

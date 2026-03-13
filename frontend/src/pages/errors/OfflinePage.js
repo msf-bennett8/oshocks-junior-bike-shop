@@ -128,7 +128,7 @@ const OfflinePage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-green-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -197,7 +197,7 @@ const OfflinePage = () => {
         {/* Cached Data Available */}
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
           <div className="flex items-center space-x-2 mb-6">
-            <Download className="w-6 h-6 text-blue-500" />
+            <Download className="w-6 h-6 text-green-500" />
             <h3 className="text-2xl font-bold text-gray-900">Available Offline</h3>
           </div>
           <p className="text-gray-600 mb-6">
@@ -235,15 +235,15 @@ const OfflinePage = () => {
         </div>
 
         {/* Offline Tips */}
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8 mb-8">
-          <h3 className="text-xl font-bold text-blue-900 mb-4 flex items-center space-x-2">
+        <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-8 mb-8">
+          <h3 className="text-xl font-bold text-green-900 mb-4 flex items-center space-x-2">
             <AlertCircle className="w-6 h-6" />
             <span>What You Should Know</span>
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {offlineTips.map((tip, index) => (
               <div key={index} className="flex items-start space-x-3 bg-white p-4 rounded-lg">
-                <CheckCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                 <p className="text-gray-700">{tip}</p>
               </div>
             ))}
@@ -301,8 +301,8 @@ const OfflinePage = () => {
           <h3 className="text-xl font-bold text-gray-900 mb-4">What Happens When You Reconnect?</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
             <div className="flex flex-col items-center">
-              <div className="bg-blue-100 rounded-full p-4 mb-3">
-                <RefreshCw className="w-8 h-8 text-blue-500" />
+              <div className="bg-green-100 rounded-full p-4 mb-3">
+                <RefreshCw className="w-8 h-8 text-green-500" />
               </div>
               <h4 className="font-semibold text-gray-900 mb-1">Auto-Sync</h4>
               <p className="text-gray-600 text-sm">Your cart and wishlist will sync automatically</p>

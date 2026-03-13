@@ -180,7 +180,7 @@ const RateLimitExceededPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-700 rounded-xl flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-xl">OS</span>
               </div>
               <div>
@@ -320,8 +320,8 @@ const RateLimitExceededPage = () => {
                   Our system allows a maximum of <strong>{rateLimitData.maxRequests} requests per {rateLimitData.timeWindow}</strong>, 
                   and you've made <strong>{rateLimitData.currentRequests} requests</strong>.
                 </p>
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-                  <p className="text-sm text-blue-900 flex items-start">
+                <div className="bg-green-50 rounded-lg p-4 border border-green-100">
+                  <p className="text-sm text-green-900 flex items-start">
                     <Info className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
                     <span>This is a temporary restriction to ensure fair usage and maintain service quality for all users.</span>
                   </p>
@@ -353,13 +353,13 @@ const RateLimitExceededPage = () => {
                   <p className="text-xs text-yellow-700 mt-1">per {rateLimitData.timeWindow}</p>
                 </div>
 
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-100">
                   <div className="flex items-center space-x-2 mb-2">
-                    <Clock className="w-5 h-5 text-blue-600" />
-                    <p className="text-xs font-semibold text-blue-900 uppercase">Reset Time</p>
+                    <Clock className="w-5 h-5 text-green-600" />
+                    <p className="text-xs font-semibold text-green-900 uppercase">Reset Time</p>
                   </div>
-                  <p className="text-2xl font-bold text-blue-600">{formatTime(timeLeft)}</p>
-                  <p className="text-xs text-blue-700 mt-1">remaining</p>
+                  <p className="text-2xl font-bold text-green-600">{formatTime(timeLeft)}</p>
+                  <p className="text-xs text-green-700 mt-1">remaining</p>
                 </div>
               </div>
 
@@ -381,14 +381,14 @@ const RateLimitExceededPage = () => {
         <div className="max-w-4xl mx-auto mb-6">
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <HelpCircle className="w-5 h-5 mr-2 text-blue-600" />
+              <HelpCircle className="w-5 h-5 mr-2 text-green-600" />
               Why Do Rate Limits Exist?
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {reasons.map((reason, index) => (
                 <div key={index} className="bg-gradient-to-br from-gray-50 to-white rounded-lg p-4 border border-gray-200">
                   <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
                       {reason.icon}
                     </div>
                     <div>
@@ -404,12 +404,12 @@ const RateLimitExceededPage = () => {
 
         {/* Tips to Avoid Rate Limits */}
         <div className="max-w-4xl mx-auto mb-6">
-          <div className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-xl p-6 sm:p-8 text-white">
+          <div className="bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl shadow-xl p-6 sm:p-8 text-white">
             <h3 className="text-2xl font-bold mb-2 flex items-center">
               <Zap className="w-6 h-6 mr-2" />
               Tips to Avoid Rate Limits
             </h3>
-            <p className="text-blue-100 mb-6">
+            <p className="text-green-100 mb-6">
               Follow these best practices to stay within our usage limits
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -421,7 +421,7 @@ const RateLimitExceededPage = () => {
                     </div>
                     <div>
                       <h4 className="font-semibold mb-1">{tip.title}</h4>
-                      <p className="text-sm text-blue-100">{tip.description}</p>
+                      <p className="text-sm text-green-100">{tip.description}</p>
                     </div>
                   </div>
                 </div>
@@ -432,7 +432,7 @@ const RateLimitExceededPage = () => {
 
         {/* Alternative Actions */}
         <div className="max-w-4xl mx-auto mb-6">
-          <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl border border-gray-200 p-6">
+          <div className="bg-gradient-to-br from-gray-50 to-green-50 rounded-xl border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               While You Wait
             </h3>
@@ -462,7 +462,7 @@ const RateLimitExceededPage = () => {
           <details className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
             <summary className="font-semibold text-gray-900 cursor-pointer list-none flex items-center justify-between">
               <span className="flex items-center space-x-2">
-                <Activity className="w-5 h-5 text-blue-600" />
+                <Activity className="w-5 h-5 text-green-600" />
                 <span>Technical Details</span>
               </span>
               <span className="text-sm text-gray-500">Click to expand</span>
@@ -508,11 +508,11 @@ const RateLimitExceededPage = () => {
           <div className="text-center text-sm text-gray-600">
             <p className="mb-2">© 2025 Oshocks Junior Bike Shop. All rights reserved.</p>
             <div className="flex items-center justify-center space-x-4">
-              <a href="/api-docs" className="hover:text-blue-600 transition-colors">API Documentation</a>
+              <a href="/api-docs" className="hover:text-green-600 transition-colors">API Documentation</a>
               <span>•</span>
-              <a href="/terms-of-service" className="hover:text-blue-600 transition-colors">Terms of Service</a>
+              <a href="/terms-of-service" className="hover:text-green-600 transition-colors">Terms of Service</a>
               <span>•</span>
-              <a href="/help" className="hover:text-blue-600 transition-colors">Help Center</a>
+              <a href="/help" className="hover:text-green-600 transition-colors">Help Center</a>
             </div>
           </div>
         </div>

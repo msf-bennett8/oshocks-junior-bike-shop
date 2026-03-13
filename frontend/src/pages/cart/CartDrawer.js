@@ -46,11 +46,11 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateQuantity, onRemoveItem
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700 text-white flex-shrink-0">
+        <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-green-600 to-green-700 text-white flex-shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
             <h2 className="text-base sm:text-lg font-bold truncate">Shopping Cart</h2>
-            <span className="bg-white text-blue-600 text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full flex-shrink-0">
+            <span className="bg-white text-green-600 text-xs font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full flex-shrink-0">
               {cartItems.length}
             </span>
           </div>
@@ -93,7 +93,7 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateQuantity, onRemoveItem
                       {item.name}
                     </h3>
                     <p className="text-xs text-gray-500 mb-1">{item.category}</p>
-                    <p className="text-blue-600 font-bold text-sm sm:text-base">
+                    <p className="text-green-600 font-bold text-sm sm:text-base">
                       {formatPrice(item.price)}
                     </p>
 
@@ -159,7 +159,7 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateQuantity, onRemoveItem
               )}
               <div className="flex justify-between text-sm sm:text-base font-bold pt-2 border-t border-gray-300">
                 <span>Total</span>
-                <span className="text-blue-600">{formatPrice(total)}</span>
+                <span className="text-green-600">{formatPrice(total)}</span>
               </div>
             </div>
 
@@ -167,7 +167,7 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateQuantity, onRemoveItem
             <div className="space-y-2">
               <button
                 onClick={onCheckout}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg text-sm sm:text-base font-semibold hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
+                className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-2.5 sm:py-3 px-3 sm:px-4 rounded-lg text-sm sm:text-base font-semibold hover:from-green-700 hover:to-green-800 transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
               >
                 <span>Proceed to Checkout</span>
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
@@ -243,7 +243,7 @@ const CartDrawerDemo = () => {
         
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-blue-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+          className="bg-green-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-green-700 transition-colors flex items-center gap-2"
         >
           <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
           Open Cart ({cartItems.length})
