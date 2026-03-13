@@ -187,7 +187,7 @@ class CardPaymentController extends Controller
 
                 // Redirect to frontend success page
                 $frontendUrl = config('app.frontend_url', 'https://oshocks.com');
-                return redirect("{$frontendUrl}/payment/success?reference={$reference}");
+                return redirect("{$frontendUrl}/checkout/payment-callback?reference={$reference}");
             }
 
             // Failed or abandoned
@@ -197,7 +197,7 @@ class CardPaymentController extends Controller
             ]);
 
             $frontendUrl = config('app.frontend_url', 'https://oshocks.com');
-            return redirect("{$frontendUrl}/payment/failed?reference={$reference}");
+            return redirect("{$frontendUrl}/checkout/payment-callback?reference={$reference}&status=failed");
 
         } catch (\Exception $e) {
             Log::error('Card callback processing failed', [

@@ -219,6 +219,13 @@ const countyInfo = {
       else if (!/^(254|0)[17]\d{8}$/.test(mpesaPhone.replace(/\s/g, ''))) {
         newErrors.mpesaPhone = 'Enter valid M-Pesa number';
       }
+        } else if (paymentMethod === 'card') {
+      //validation pushed below
+      // No validation needed - Paystack handles card details securely
+      // User will be redirected to Paystack checkout page
+    }
+
+      /*
     } else if (paymentMethod === 'card') {
       if (!cardInfo.cardNumber.trim()) newErrors.cardNumber = 'Card number is required';
       else if (!/^\d{16}$/.test(cardInfo.cardNumber.replace(/\s/g, ''))) {
@@ -228,7 +235,7 @@ const countyInfo = {
       if (!cardInfo.expiryDate.trim()) newErrors.expiryDate = 'Expiry date is required';
       if (!cardInfo.cvv.trim()) newErrors.cvv = 'CVV is required';
       else if (!/^\d{3}$/.test(cardInfo.cvv)) newErrors.cvv = 'CVV must be 3 digits';
-    }
+    }*/
     
     if (!agreedToTerms) newErrors.terms = 'You must agree to terms and conditions';
     
@@ -290,10 +297,35 @@ const countyInfo = {
         allKeys: Object.keys(item)
       })));
       
-      setLoading(true);
-      
-      try {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+          setLoading(true);
+    
+    // ============================================================================
+    // COMPREHENSIVE DEBUG LOGGING - ORDER CREATION
+    // ============================================================================
+    console.log('========================================');
+    console.log('🛒 [handlePaymentSubmit] ORDER CREATION START');
+    console.log('========================================');
+    console.log('📋 Cart Items Count:', cartItems.length);
+    console.log('📋 Cart Items Detail:');
+    cartItems.forEach((item, idx) => {
+      console.log(`  [${idx}] id=${item.id}, product_id=${item.product_id}, name="${item.name}", price=${item.price}, qty=${item.quantity}`);
+      if (!item.product_id) console.error(`  ❌ [${idx}] CRITICAL: Missing product_id!`);
+    });
+    console.log('👤 Customer:', {
+      name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+      email: shippingInfo.email,
+      phone: shippingInfo.phone
+    });
+    console.log('📍 Shipping:', {
+      county: shippingInfo.city,
+      zone: shippingInfo.zone,
+      address: shippingInfo.address
+    });
+    console.log('💰 Totals:', { subtotal, shippingCost, tax, total });
+    
+    try {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+      console.log('🔧 API URL:', apiUrl);
         
         // Prepare order data
         // Extract specific location from zone selection
@@ -332,16 +364,40 @@ const countyInfo = {
           ...(token && { 'Authorization': `Bearer ${token}` })
         };
 
+        // DEBUG: Log everything before sending
+        console.log('========================================');
+        console.log('🚀 [DEBUG] ABOUT TO CREATE ORDER');
+        console.log('========================================');
+        console.log('📍 URL:', `${apiUrl}/orders/create`);
+        console.log('🔧 Headers:', JSON.stringify(headers, null, 2));
+        console.log('📦 Order Data:', JSON.stringify(orderData, null, 2));
+        console.log('📝 Items being sent:', JSON.stringify(orderData.items, null, 2));
+        
+        // Validate items have product_id
+        orderData.items.forEach((item, idx) => {
+          if (!item.id) {
+            console.error(`❌ [DEBUG] Item ${idx} MISSING id!`);
+          }
+        });
+
         // Create order
         const response = await fetch(`${apiUrl}/orders/create`, {
           method: 'POST',
           headers: headers,
           body: JSON.stringify(orderData)
         });
+        
+        console.log('📊 [DEBUG] Response status:', response.status);
+        console.log('📊 [DEBUG] Response ok:', response.ok);
 
         const result = await response.json();
 
+        console.log('📦 [DEBUG] Response body:', JSON.stringify(result, null, 2));
+        
         if (!response.ok || !result.success) {
+          console.error('❌ [DEBUG] Order creation failed!');
+          console.error('📊 Status:', response.status);
+          console.error('📦 Result:', result);
           throw new Error(result.message || 'Failed to create order');
         }
 
@@ -362,6 +418,50 @@ const countyInfo = {
             // Payment successful - continue to success page
           } catch (mpesaError) {
             setErrors({ submit: mpesaError.message || 'M-Pesa payment failed. Please try again.' });
+            setLoading(false);
+            return; // Don't navigate to success page
+          }
+        }
+
+                // Handle Card payment if selected
+                if (paymentMethod === 'card') {
+                  try {
+                    setLoading(true);
+                    
+                    console.log('========================================');
+                    console.log('💳 [handlePaymentSubmit] CARD PAYMENT FLOW');
+                    console.log('========================================');
+                    console.log('📋 Order ID:', createdOrder.id);
+                    console.log('📋 Order Number:', createdOrder.order_number);
+                    console.log('📋 Email:', shippingInfo.email);
+                    console.log('🚀 Calling: paymentService.initiateCard()');
+                    
+                    // Initiate card payment via Paystack
+                    const cardResponse = await paymentService.initiateCard({
+                      order_id: createdOrder.id,
+                      email: shippingInfo.email
+                    });
+                    
+                    console.log('✅ initiateCard returned:', JSON.stringify(cardResponse, null, 2));
+
+                        console.log('🔍 Checking cardResponse.success:', cardResponse.success);
+            console.log('🔍 Checking cardResponse.data:', cardResponse.data);
+            console.log('🔍 Authorization URL:', cardResponse.data?.authorization_url);
+            
+            if (cardResponse.success && cardResponse.data.authorization_url) {
+              console.log('✅ Valid auth URL found, saving to localStorage and redirecting...');
+              // Save order info to localStorage for after-payment verification
+              localStorage.setItem('pendingOrderId', createdOrder.id);
+              localStorage.setItem('pendingOrderNumber', createdOrder.order_number);
+              
+              // Redirect to Paystack checkout
+              window.location.href = cardResponse.data.authorization_url;
+              return; // Stop here - user will be redirected back after payment
+            } else {
+              throw new Error(cardResponse.message || 'Failed to initialize card payment');
+            }
+          } catch (cardError) {
+            setErrors({ submit: cardError.message || 'Card payment initialization failed. Please try again.' });
             setLoading(false);
             return; // Don't navigate to success page
           }
@@ -833,72 +933,40 @@ const countyInfo = {
                   
                   {/* Card Payment */}
                   {paymentMethod === 'card' && (
-                    <div className="space-y-4 mb-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Card Number *
-                        </label>
-                        <input
-                          type="text"
-                          value={cardInfo.cardNumber}
-                          onChange={(e) => setCardInfo({...cardInfo, cardNumber: formatCardNumber(e.target.value)})}
-                          maxLength="19"
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.cardNumber ? 'border-red-500' : 'border-gray-300'}`}
-                          placeholder="1234 5678 9012 3456"
-                        />
-                        {errors.cardNumber && <p className="text-red-500 text-xs mt-1">{errors.cardNumber}</p>}
+                    <div className="mb-6">
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <CreditCard className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-blue-900 mb-1">Secure Card Payment</h3>
+                            <p className="text-sm text-blue-700">
+                              You'll be redirected to our secure payment partner (Paystack) to complete your card payment.
+                            </p>
+                          </div>
+                        </div>
                       </div>
                       
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Cardholder Name *
-                        </label>
-                        <input
-                          type="text"
-                          value={cardInfo.cardName}
-                          onChange={(e) => setCardInfo({...cardInfo, cardName: e.target.value})}
-                          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.cardName ? 'border-red-500' : 'border-gray-300'}`}
-                          placeholder="JOHN DOE"
-                        />
-                        {errors.cardName && <p className="text-red-500 text-xs mt-1">{errors.cardName}</p>}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <span>Visa, Mastercard, American Express accepted</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <span>256-bit SSL encryption</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <span>Instant payment confirmation</span>
+                        </div>
                       </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Expiry Date *
-                          </label>
-                          <input
-                            type="text"
-                            value={cardInfo.expiryDate}
-                            onChange={(e) => {
-                              let value = e.target.value.replace(/\D/g, '');
-                              if (value.length >= 2) {
-                                value = value.slice(0, 2) + '/' + value.slice(2, 4);
-                              }
-                              setCardInfo({...cardInfo, expiryDate: value});
-                            }}
-                            maxLength="5"
-                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.expiryDate ? 'border-red-500' : 'border-gray-300'}`}
-                            placeholder="MM/YY"
-                          />
-                          {errors.expiryDate && <p className="text-red-500 text-xs mt-1">{errors.expiryDate}</p>}
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            CVV *
-                          </label>
-                          <input
-                            type="text"
-                            value={cardInfo.cvv}
-                            onChange={(e) => setCardInfo({...cardInfo, cvv: e.target.value.replace(/\D/g, '')})}
-                            maxLength="3"
-                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.cvv ? 'border-red-500' : 'border-gray-300'}`}
-                            placeholder="123"
-                          />
-                          {errors.cvv && <p className="text-red-500 text-xs mt-1">{errors.cvv}</p>}
-                        </div>
+
+                      <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="text-xs text-gray-500">
+                          <strong>Note:</strong> After clicking "Pay", you'll be taken to a secure checkout page. Once payment is complete, you'll be redirected back to your order confirmation.
+                        </p>
                       </div>
                     </div>
                   )}

@@ -11,10 +11,14 @@ import { Helmet } from 'react-helmet-async';
 import { useSelector, useDispatch } from 'react-redux';
 import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
+
 // Recorder Portal
 import RecorderDashboard from './pages/recorder/RecorderDashboard';
 import OrderDetailsPage from './pages/recorder/OrderDetailsPage';
 import RecordPaymentPage from './pages/recorder/RecordPaymentPage';
+
+//payment pages and callback
+import PaymentCallback from './pages/checkout/PaymentCallback';
 
 // ============================================================================
 // CONTEXT IMPORTS
@@ -145,6 +149,7 @@ const BikeMaintainance = lazy(() => import('./pages/education/BikeMaintainance')
 const CookiePolicy = lazy(() => import('./pages/legal/CookiePolicy'));
 const PaymentTerms = lazy(() => import('./pages/legal/PaymentTerms'));
 const ReturnPolicy = lazy(() => import('./pages/legal/ReturnPolicy'));
+
 // Audit Pages
 const AuditLogsPage = lazy(() => import('./pages/audit/AuditLogsPage'));
 const ArchivesPage = lazy(() => import('./pages/archives/ArchivesPage')); 
@@ -497,7 +502,8 @@ function App() {
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/blog/:slug" element={<BlogPostPage />} />
                 <Route path="/faq" element={<FAQPage />} />
-
+                <Route path="/checkout/payment-callback" element={<PaymentCallback />} />
+                
                 {/* ============================================
                     CART & CHECKOUT
                     ============================================ */}

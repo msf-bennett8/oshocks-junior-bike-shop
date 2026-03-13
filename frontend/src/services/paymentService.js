@@ -88,13 +88,54 @@ const paymentService = {
    * }
    * @returns {Promise} Card payment response
    */
-  initiateCard: async (paymentData) => {
+    initiateCard: async (paymentData) => {
     try {
-      console.log('💳 Initiating card payment:', paymentData);
-      const response = await api.post('/payments/card/initiate', paymentData);
+      console.log('========================================');
+      console.log('💳 [initiateCard] STARTING');
+      console.log('========================================');
+      console.log('📋 Payment Data:', JSON.stringify(paymentData, null, 2));
+      console.log('🔧 API Base URL:', api.defaults.baseURL);
+      console.log('🔐 Auth Token:', localStorage.getItem('authToken') ? 'EXISTS' : 'MISSING');
+      
+      // CRITICAL FIX: Using /initialize NOT /initiate
+      const endpoint = '/payments/card/initialize';
+      console.log('🚀 POST to:', api.defaults.baseURL + endpoint);
+      
+      const response = await api.post(endpoint, paymentData);
+      
+      console.log('✅ [initiateCard] SUCCESS - Status:', response.status);
+      console.log('📦 Response:', JSON.stringify(response.data, null, 2));
+      console.log('🔗 Auth URL:', response.data?.data?.authorization_url);
+      console.log('========================================');
+      
       return response.data;
     } catch (error) {
-      console.error('❌ Card payment initiation failed:', error);
+      console.error('========================================');
+      console.error('❌ [initiateCard] FAILED');
+      console.error('========================================');
+      console.error('📍 Request URL:', error.config?.url);
+      console.error('📍 Full Path:', error.config?.baseURL + error.config?.url);
+      console.error('📊 Status:', error.response?.status, error.response?.statusText);
+      console.error('📦 Response Data:', JSON.stringify(error.response?.data, null, 2));
+      console.error('📝 Error Message:', error.message);
+      console.error('========================================');
+      throw error;
+    }
+  },
+
+    /**
+   * Verify card payment by reference (for callback)
+   * @param {string} reference - Paystack transaction reference
+   * @returns {Promise} Verification response
+   */
+  verifyPayment: async (reference) => {
+    try {
+      console.log('🔍 Verifying card payment:', reference);
+      const response = await api.get(`/payments/card/verify/${reference}`);
+      console.log('✅ Verification response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Payment verification failed:', error);
       throw error;
     }
   },
