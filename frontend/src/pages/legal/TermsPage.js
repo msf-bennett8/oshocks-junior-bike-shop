@@ -68,9 +68,9 @@ export default function TermsPage() {
             Welcome to Oshocks Junior Bike Shop. These Terms and Conditions constitute a legally binding agreement between you and Oshocks Junior Bike Shop.
           </p>
 
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-500 p-4 sm:p-5 rounded-r-lg">
+          <div className="bg-gradient-to-r from-green-50 to-orange-50 border-l-4 border-green-500 p-4 sm:p-5 rounded-r-lg">
             <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2 text-sm sm:text-base">
-              <Info className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+              <Info className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
               By Using Our Platform, You Agree To:
             </h4>
             <div className="grid sm:grid-cols-2 gap-3">
@@ -115,7 +115,7 @@ export default function TermsPage() {
       category: 'buyers',
       content: (
         <div className="space-y-6">
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-4 sm:p-5 rounded-lg border-2 border-blue-200">
+          <div className="bg-gradient-to-br from-green-50 to-orange-50 p-4 sm:p-5 rounded-lg border-2 border-green-200">
             <p className="text-sm text-gray-700 mb-4">To access certain features, you must create an account by providing:</p>
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm">
@@ -144,20 +144,20 @@ export default function TermsPage() {
               </div>
               <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm">
                 <p className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm">
-                  <Info className="w-5 h-5 text-blue-600" />
+                  <Info className="w-5 h-5 text-green-600" />
                   Optional Information:
                 </p>
                 <ul className="space-y-2 text-xs sm:text-sm text-gray-700">
                   <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                     <span>Date of birth</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                     <span>Profile photo</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                     <span>Billing address</span>
                   </li>
                 </ul>
@@ -184,13 +184,13 @@ export default function TermsPage() {
             ].map((step) => {
               const Icon = step.icon;
               return (
-                <div key={step.num} className="flex items-start gap-3 sm:gap-4 bg-white p-3 sm:p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
-                  <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 shadow-md text-sm sm:text-base">
+                <div key={step.num} className="flex items-start gap-3 sm:gap-4 bg-white p-3 sm:p-4 rounded-lg shadow-sm border-l-4 border-green-500">
+                  <div className="bg-gradient-to-br from-green-600 to-orange-500 text-white w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 shadow-md text-sm sm:text-base">
                     {step.num}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                      <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
                       <h5 className="font-semibold text-gray-900 text-sm sm:text-base">{step.title}</h5>
                     </div>
                     <p className="text-xs sm:text-sm text-gray-700">{step.desc}</p>
@@ -233,24 +233,24 @@ export default function TermsPage() {
               </ul>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-5 rounded-lg border-2 border-blue-300">
+            <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 sm:p-5 rounded-lg border-2 border-green-300">
               <div className="flex items-center gap-3 mb-4">
-                <div className="bg-blue-600 p-2 sm:p-3 rounded-lg shadow-md">
+                <div className="bg-green-600 p-2 sm:p-3 rounded-lg shadow-md">
                   <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <h5 className="font-bold text-gray-900 text-base sm:text-lg">Cards</h5>
               </div>
               <ul className="space-y-2 text-xs sm:text-sm text-gray-700">
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-blue-600" />
+                  <CheckCircle className="w-4 h-4 text-green-600" />
                   <span>Visa, Mastercard</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-blue-600" />
+                  <CheckCircle className="w-4 h-4 text-green-600" />
                   <span>3D Secure auth</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-blue-600" />
+                  <CheckCircle className="w-4 h-4 text-green-600" />
                   <span>Save for future</span>
                 </li>
               </ul>
@@ -269,7 +269,7 @@ export default function TermsPage() {
           <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
             <table className="w-full border-collapse bg-white text-xs sm:text-sm">
               <thead>
-                <tr className="bg-gradient-to-r from-blue-600 to-green-600 text-white">
+                <tr className="bg-gradient-to-r from-green-600 to-orange-500 text-white">
                   <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-semibold">Location</th>
                   <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-semibold">Time</th>
                   <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-semibold">Cost</th>
@@ -325,9 +325,9 @@ export default function TermsPage() {
               </a>
             </div>
 
-            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg border-l-4 border-blue-500">
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg border-l-4 border-green-500">
               <div className="flex items-center gap-3 mb-4">
-                <div className="bg-blue-600 p-2 sm:p-3 rounded-lg">
+                <div className="bg-green-600 p-2 sm:p-3 rounded-lg">
                   <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div>
@@ -335,7 +335,7 @@ export default function TermsPage() {
                   <p className="text-xs text-gray-600">Response within 24 hours</p>
                 </div>
               </div>
-              <a href="mailto:legal@oshocksjunior.co.ke" className="text-sm sm:text-base text-blue-600 hover:underline font-semibold block break-all">
+              <a href="mailto:moituizablon8@gmail.com" className="text-sm sm:text-base text-green-600 hover:underline font-semibold block break-all">
                 legal@oshocksjunior.co.ke
               </a>
             </div>
@@ -369,7 +369,7 @@ export default function TermsPage() {
         <div className="max-w-6xl mx-auto px-4 py-4 sm:py-6">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
-              <div className="bg-gradient-to-br from-blue-600 to-green-600 p-2 sm:p-3 rounded-lg shadow-lg">
+              <div className="bg-gradient-to-br from-green-600 to-orange-500 p-2 sm:p-3 rounded-lg shadow-lg">
                 <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
               <div>
@@ -378,7 +378,7 @@ export default function TermsPage() {
               </div>
             </div>
             <div className="hidden sm:flex gap-2">
-              <button className="flex items-center gap-2 px-3 sm:px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm">
+              <button className="flex items-center gap-2 px-3 sm:px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm">
                 <Download className="w-4 h-4" />
                 <span className="hidden md:inline">Download</span>
               </button>
@@ -395,7 +395,7 @@ export default function TermsPage() {
               <span className="hidden sm:inline">Last Updated: {lastUpdated}</span>
               <span className="sm:hidden">{lastUpdated}</span>
             </div>
-            <div className="flex items-center gap-2 text-blue-600 font-semibold">
+            <div className="flex items-center gap-2 text-green-600 font-semibold">
               <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">Legally Binding Agreement</span>
               <span className="sm:hidden">Binding</span>
@@ -418,7 +418,7 @@ export default function TermsPage() {
                   placeholder="Search terms..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
                 />
               </div>
               <div className="flex gap-2">
@@ -448,7 +448,7 @@ export default function TermsPage() {
                     onClick={() => setActiveFilter(filter.id)}
                     className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg font-semibold transition-all text-xs sm:text-sm ${
                       activeFilter === filter.id
-                        ? 'bg-gradient-to-r from-blue-600 to-green-600 text-white shadow-md'
+                        ? 'bg-orange-500 text-white shadow-md'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -496,8 +496,8 @@ export default function TermsPage() {
                     className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-center gap-3 sm:gap-4">
-                      <div className="bg-gradient-to-br from-blue-100 to-green-100 p-2 sm:p-3 rounded-lg">
-                        <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                      <div className="bg-gradient-to-br from-green-100 to-orange-100 p-2 sm:p-3 rounded-lg">
+                        <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
                       </div>
                       <h2 className="text-base sm:text-xl font-bold text-gray-900 text-left">
                         {section.title}
@@ -531,7 +531,7 @@ export default function TermsPage() {
                 setSearchTerm('');
                 setActiveFilter('all');
               }}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
+              className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm sm:text-base"
             >
               Clear Search
             </button>
@@ -539,18 +539,18 @@ export default function TermsPage() {
         )}
 
         {/* Footer CTA */}
-        <div className="mt-12 bg-gradient-to-br from-blue-600 to-green-600 p-6 sm:p-8 rounded-lg shadow-xl text-white">
+        <div className="mt-12 bg-gradient-to-br from-green-600 to-orange-500 p-6 sm:p-8 rounded-lg shadow-xl text-white">
           <div className="text-center">
             <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4">Have Questions About Our Terms?</h3>
             <p className="mb-4 sm:mb-6 text-blue-100 max-w-2xl mx-auto text-sm sm:text-base">
               Our legal team is here to help clarify any questions you may have about these Terms and Conditions.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-              <button className="bg-white text-blue-600 px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-blue-50 transition-colors shadow-md flex items-center justify-center gap-2 text-sm sm:text-base">
+              <button className="bg-white text-green-600 px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-green-50 transition-colors shadow-md flex items-center justify-center gap-2 text-sm sm:text-base">
                 <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
                 Contact Legal Team
               </button>
-              <button className="bg-blue-700 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-blue-800 transition-colors shadow-md border-2 border-white flex items-center justify-center gap-2 text-sm sm:text-base">
+              <button className="bg-orange-500 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-orange-600 transition-colors shadow-md border-2 border-white flex items-center justify-center gap-2 text-sm sm:text-base">
                 <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
                 Live Chat Support
               </button>
@@ -562,15 +562,15 @@ export default function TermsPage() {
         <div className="mt-8 grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             <div className="flex items-center gap-3 mb-3">
-              <div className="bg-blue-100 p-2 rounded-lg">
-                <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+              <div className="bg-green-100 p-2 rounded-lg">
+                <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
               </div>
               <h4 className="font-bold text-gray-900 text-sm sm:text-base">Shipping Policy</h4>
             </div>
             <p className="text-xs sm:text-sm text-gray-700 mb-3 sm:mb-4">
               Learn about our delivery process and shipping rates.
             </p>
-            <a href="/shipping-policy" className="text-blue-600 hover:underline font-semibold text-xs sm:text-sm flex items-center gap-1">
+            <a href="/shipping-policy" className="text-green-600 hover:underline font-semibold text-xs sm:text-sm flex items-center gap-1">
               Read More <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
             </a>
           </div>
@@ -592,15 +592,15 @@ export default function TermsPage() {
 
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             <div className="flex items-center gap-3 mb-3">
-              <div className="bg-purple-100 p-2 rounded-lg">
-                <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+              <div className="bg-orange-100 p-2 rounded-lg">
+                <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
               </div>
               <h4 className="font-bold text-gray-900 text-sm sm:text-base">Contact Support</h4>
             </div>
             <p className="text-xs sm:text-sm text-gray-700 mb-3 sm:mb-4">
               Get help with your orders and account questions.
             </p>
-            <a href="/contact-support" className="text-purple-600 hover:underline font-semibold text-xs sm:text-sm flex items-center gap-1">
+            <a href="/contact-support" className="text-orange-600 hover:underline font-semibold text-xs sm:text-sm flex items-center gap-1">
               Contact Us <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
             </a>
           </div>
@@ -610,7 +610,7 @@ export default function TermsPage() {
         <div className="mt-8 text-center">
           <a
             href="/"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold hover:underline transition-colors text-sm sm:text-base"
+            className="inline-flex items-center gap-2 text-green-600 hover:text-green-800 font-semibold hover:underline transition-colors text-sm sm:text-base"
           >
             <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -632,7 +632,7 @@ export default function TermsPage() {
 
       {/* Floating Help Button */}
       <div className="fixed bottom-6 right-4 sm:right-6 z-50">
-        <button className="bg-gradient-to-br from-blue-600 to-green-600 text-white p-3 sm:p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group">
+        <button className="bg-gradient-to-br from-green-600 to-orange-500 text-white p-3 sm:p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group">
           <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-12 transition-transform" />
         </button>
       </div>

@@ -180,7 +180,7 @@ const ReturnPolicy = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading Return Policy...</p>
         </div>
       </div>
@@ -194,7 +194,7 @@ const ReturnPolicy = () => {
         <div className="max-w-6xl mx-auto px-4 py-3">
           <button
             onClick={() => window.history.back()}
-            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg px-2 py-1"
+            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-lg px-2 py-1"
             aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
@@ -204,7 +204,7 @@ const ReturnPolicy = () => {
       </div>
 
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16 px-4">
+      <header className="bg-gradient-to-r from-green-600 to-orange-500 text-white py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-center mb-4" aria-hidden="true">
             <RotateCcw className="w-16 h-16" />
@@ -226,7 +226,7 @@ const ReturnPolicy = () => {
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-6 text-center">
             <div>
-              <div className="text-3xl font-bold text-blue-600">30</div>
+              <div className="text-3xl font-bold text-green-600">30</div>
               <div className="text-sm text-gray-600 mt-1">Days Return Period</div>
             </div>
             <div>
@@ -249,25 +249,25 @@ const ReturnPolicy = () => {
       <nav className="bg-white border-b border-gray-200 sticky top-[52px] z-40 shadow-sm" aria-label="Page navigation">
         <div className="max-w-6xl mx-auto px-4 py-3 overflow-x-auto">
           <div className="flex space-x-4 min-w-max">
-            <a href="#overview" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#overview" className="text-sm text-gray-600 hover:text-green-600 whitespace-nowrap transition-colors">
               Overview
             </a>
-            <a href="#eligibility" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#eligibility" className="text-sm text-gray-600 hover:text-green-600 whitespace-nowrap transition-colors">
               Return Eligibility
             </a>
-            <a href="#process" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#process" className="text-sm text-gray-600 hover:text-green-600 whitespace-nowrap transition-colors">
               Return Process
             </a>
-            <a href="#non-returnable" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#non-returnable" className="text-sm text-gray-600 hover:text-green-600 whitespace-nowrap transition-colors">
               Non-Returnable Items
             </a>
-            <a href="#refunds" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#refunds" className="text-sm text-gray-600 hover:text-green-600 whitespace-nowrap transition-colors">
               Refunds
             </a>
-            <a href="#exchanges" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#exchanges" className="text-sm text-gray-600 hover:text-green-600 whitespace-nowrap transition-colors">
               Exchanges
             </a>
-            <a href="#contact" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#contact" className="text-sm text-gray-600 hover:text-green-600 whitespace-nowrap transition-colors">
               Contact
             </a>
           </div>
@@ -292,9 +292,9 @@ const ReturnPolicy = () => {
               a purchase to understand your rights and responsibilities.
             </p>
             
-            <div className="bg-blue-50 border-l-4 border-blue-600 p-4 mt-6" role="note">
+            <div className="bg-green-50 border-l-4 border-green-600 p-4 mt-6" role="note">
               <div className="flex">
-                <Shield className="w-5 h-5 text-blue-600 mr-3 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                <Shield className="w-5 h-5 text-green-600 mr-3 flex-shrink-0 mt-0.5" aria-hidden="true" />
                 <div>
                   <h3 className="font-semibold text-blue-900 mb-1">Your Satisfaction Guaranteed</h3>
                   <p className="text-sm text-blue-800">
@@ -380,21 +380,21 @@ const ReturnPolicy = () => {
               return (
                 <div key={step.step} className="relative">
                   {step.step !== returnProcess.length && (
-                    <div className="absolute left-6 top-14 bottom-0 w-0.5 bg-blue-200" aria-hidden="true"></div>
+                    <div className="absolute left-6 top-14 bottom-0 w-0.5 bg-green-200" aria-hidden="true"></div>
                   )}
                   
                   <div className="flex items-start">
-                    <div className="flex-shrink-0 w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg z-10">
+                    <div className="flex-shrink-0 w-12 h-12 bg-green-600 text-white rounded-full flex items-center justify-center font-bold text-lg z-10">
                       {step.step}
                     </div>
                     
                     <div className="ml-6 flex-1 bg-gray-50 rounded-lg p-6 border border-gray-200">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center">
-                          <Icon className="w-5 h-5 text-blue-600 mr-2" />
+                          <Icon className="w-5 h-5 text-green-600 mr-2" />
                           <h3 className="text-lg font-semibold text-gray-900">{step.title}</h3>
                         </div>
-                        <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full whitespace-nowrap">
+                        <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full whitespace-nowrap">
                           {step.timeline}
                         </span>
                       </div>
@@ -417,7 +417,7 @@ const ReturnPolicy = () => {
             <div className="grid md:grid-cols-3 gap-3">
               <div className="bg-white rounded p-3 border border-green-200">
                 <div className="font-semibold text-gray-900 text-sm">Email Support</div>
-                <a href="mailto:returns@oshocksjunior.co.ke" className="text-blue-600 hover:underline text-sm">
+                <a href="mailto:moituizablon8@gmail.com" className="text-green-600 hover:underline text-sm">
                   returns@oshocksjunior.co.ke
                 </a>
               </div>
@@ -483,7 +483,7 @@ const ReturnPolicy = () => {
             {refundOptions.map((option, idx) => (
               <div 
                 key={idx} 
-                className={`border rounded-lg p-6 ${option.recommended ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'}`}
+                className={`border rounded-lg p-6 ${option.recommended ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white'}`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -882,7 +882,7 @@ const ReturnPolicy = () => {
         </section>
 
         {/* Important Reminders */}
-        <section className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-lg shadow-md p-8 text-white mb-8">
+        <section className="bg-gradient-to-r from-green-600 to-orange-500 rounded-lg shadow-md p-8 text-white mb-8">
           <h2 className="text-3xl font-bold mb-6">Important Reminders</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div className="bg-white bg-opacity-10 rounded-lg p-4">
@@ -928,7 +928,7 @@ const ReturnPolicy = () => {
         </section>
 
         {/* Contact Information */}
-        <section id="contact" className="bg-gradient-to-r from-green-600 to-emerald-700 rounded-lg shadow-md p-8 text-white scroll-mt-32">
+        <section id="contact" className="bg-gradient-to-r from-green-600 to-orange-500 rounded-lg shadow-md p-8 text-white scroll-mt-32">
           <h2 className="text-3xl font-bold mb-6">Need Help with a Return?</h2>
           <p className="mb-6 text-green-100">
             Our customer service team is ready to assist you with any return or refund questions. We're committed to 
@@ -1009,28 +1009,28 @@ const ReturnPolicy = () => {
           <div className="grid md:grid-cols-2 gap-3">
             <a 
               href="/payment-terms" 
-              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-between"
+              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center justify-between"
             >
               <span>Payment Terms</span>
               <DollarSign className="w-4 h-4 text-gray-400" />
             </a>
             <a 
               href="/shipping-policy" 
-              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-between"
+               className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center justify-between"
             >
               <span>Shipping Policy</span>
               <TruckIcon className="w-4 h-4 text-gray-400" />
             </a>
             <a 
               href="/warranty-policy" 
-              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-between"
+              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center justify-between"
             >
               <span>Warranty Policy</span>
               <Shield className="w-4 h-4 text-gray-400" />
             </a>
             <a 
               href="/terms-of-service" 
-              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-between"
+              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center justify-between"
             >
               <span>Terms of Service</span>
               <CheckCircle className="w-4 h-4 text-gray-400" />

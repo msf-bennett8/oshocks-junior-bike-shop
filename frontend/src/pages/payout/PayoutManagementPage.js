@@ -237,7 +237,7 @@ const PayoutManagementPage = () => {
       {/* Summary Cards */}
       {activeTab === 'pending' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-3 bg-white bg-opacity-20 rounded-lg">
                 <Users size={24} />
@@ -261,7 +261,7 @@ const PayoutManagementPage = () => {
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white">
             <div className="flex items-center gap-3 mb-3">
               <div className="p-3 bg-white bg-opacity-20 rounded-lg">
                 <CheckCircle size={24} />
@@ -283,7 +283,7 @@ const PayoutManagementPage = () => {
               onClick={() => setActiveTab('pending')}
               className={`px-6 py-4 font-medium text-sm border-b-2 transition-colors ${
                 activeTab === 'pending'
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-green-600 text-green-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -302,7 +302,7 @@ const PayoutManagementPage = () => {
               onClick={() => setActiveTab('history')}
               className={`px-6 py-4 font-medium text-sm border-b-2 transition-colors ${
                 activeTab === 'history'
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-green-600 text-green-600'
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
@@ -328,7 +328,7 @@ const PayoutManagementPage = () => {
                     placeholder="Search sellers by name or email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
 
@@ -345,7 +345,7 @@ const PayoutManagementPage = () => {
               {/* Pending Payouts Table */}
               {isLoading ? (
                 <div className="text-center py-12">
-                  <RefreshCw className="animate-spin mx-auto mb-4 text-blue-600" size={32} />
+                  <RefreshCw className="animate-spin mx-auto mb-4 text-green-600" size={32} />
                   <p className="text-gray-600">Loading pending payouts...</p>
                 </div>
               ) : filteredPendingPayouts.length === 0 ? (
@@ -364,7 +364,7 @@ const PayoutManagementPage = () => {
                             type="checkbox"
                             checked={selectedSellers.length === filteredPendingPayouts.length}
                             onChange={handleSelectAll}
-                            className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                            className="w-4 h-4 text-green-600 rounded focus:ring-2 focus:ring-green-500"
                           />
                         </th>
                         <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Seller</th>
@@ -385,7 +385,7 @@ const PayoutManagementPage = () => {
                               type="checkbox"
                               checked={selectedSellers.includes(payout.seller_id)}
                               onChange={() => handleSelectSeller(payout.seller_id)}
-                              className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                              className="w-4 h-4 text-green-600 rounded focus:ring-2 focus:ring-green-500"
                             />
                           </td>
                           <td className="py-4">
@@ -420,7 +420,7 @@ const PayoutManagementPage = () => {
                               {payout.payment_method === 'mpesa' ? (
                                 <CreditCard size={16} className="text-green-600" />
                               ) : (
-                                <Building2 size={16} className="text-blue-600" />
+                                <Building2 size={16} className="text-green-600" />
                               )}
                               <span className="text-xs text-gray-700">{payout.payment_method || 'N/A'}</span>
                             </div>
@@ -431,7 +431,7 @@ const PayoutManagementPage = () => {
                           <td className="py-4 text-center">
                             <button
                               onClick={() => viewSellerDetails(payout)}
-                              className="inline-flex items-center gap-1 px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              className="inline-flex items-center gap-1 px-3 py-1 text-sm text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                             >
                               <Eye size={16} />
                               View Details
@@ -451,7 +451,7 @@ const PayoutManagementPage = () => {
             <div>
               {isLoading ? (
                 <div className="text-center py-12">
-                  <RefreshCw className="animate-spin mx-auto mb-4 text-blue-600" size={32} />
+                  <RefreshCw className="animate-spin mx-auto mb-4 text-green-600" size={32} />
                   <p className="text-gray-600">Loading payout history...</p>
                 </div>
               ) : payoutHistory.length === 0 ? (
@@ -492,7 +492,7 @@ const PayoutManagementPage = () => {
                                 {payout.payout_method === 'mpesa' ? (
                                   <CreditCard size={14} className="text-green-600" />
                                 ) : (
-                                  <Building2 size={14} className="text-blue-600" />
+                                  <Building2 size={14} className="text-green-600" />
                                 )}
                                 {payout.payout_method}
                               </span>
@@ -571,7 +571,7 @@ const PayoutManagementPage = () => {
                 <select
                   value={payoutForm.payout_method}
                   onChange={(e) => setPayoutForm({ ...payoutForm, payout_method: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   required
                 >
                   <option value="mpesa">M-Pesa</option>
@@ -589,7 +589,7 @@ const PayoutManagementPage = () => {
                   value={payoutForm.payout_reference}
                   onChange={(e) => setPayoutForm({ ...payoutForm, payout_reference: e.target.value })}
                   placeholder="e.g., MPESA-REF-20251107"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   required
                   minLength={5}
                 />
@@ -607,14 +607,14 @@ const PayoutManagementPage = () => {
                   value={payoutForm.notes}
                   onChange={(e) => setPayoutForm({ ...payoutForm, notes: e.target.value })}
                   placeholder="Add any additional notes..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                   rows={3}
                   maxLength={500}
                 />
               </div>
 
               {/* Summary */}
-              <div className="bg-blue-50 rounded-lg p-4 space-y-2">
+              <div className="bg-green-50 rounded-lg p-4 space-y-2">
                 <p className="text-sm font-medium text-gray-900">Payout Summary</p>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Selected Sellers:</span>
@@ -694,9 +694,9 @@ const PayoutManagementPage = () => {
             <div className="p-6">
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <p className="text-xs text-blue-600 font-medium mb-1">Transactions</p>
-                  <p className="text-2xl font-bold text-blue-900">
+                <div className="bg-green-50 rounded-lg p-4">
+                  <p className="text-xs text-green-600 font-medium mb-1">Transactions</p>
+                  <p className="text-2xl font-bold text-green-900">
                     {selectedSellerDetails.summary.transaction_count}
                   </p>
                 </div>
@@ -712,9 +712,9 @@ const PayoutManagementPage = () => {
                     {formatCurrency(selectedSellerDetails.summary.total_commission)}
                   </p>
                 </div>
-                <div className="bg-purple-50 rounded-lg p-4">
-                  <p className="text-xs text-purple-600 font-medium mb-1">Payout Amount</p>
-                  <p className="text-2xl font-bold text-purple-900">
+                <div className="bg-orange-50 rounded-lg p-4">
+                  <p className="text-xs text-orange-600 font-medium mb-1">Payout Amount</p>
+                  <p className="text-2xl font-bold text-orange-900">
                     {formatCurrency(selectedSellerDetails.summary.payout_amount)}
                   </p>
                 </div>
