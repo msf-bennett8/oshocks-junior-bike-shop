@@ -126,13 +126,13 @@ const BlogPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-green-500 to-emerald-700 text-white py-16 md:py-20">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16 md:py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Oshocks Cycling Blog
             </h1>
-            <p className="text-xl text-green-100 mb-8">
+            <p className="text-xl text-blue-100 mb-8">
               Tips, guides, and stories from Kenya's cycling community
             </p>
             
@@ -144,7 +144,7 @@ const BlogPage = () => {
                 placeholder="Search articles, tips, trails..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-300"
+                className="w-full pl-12 pr-4 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
               />
             </div>
           </div>
@@ -161,7 +161,7 @@ const BlogPage = () => {
                 onClick={() => setSelectedCategory(category.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
                   selectedCategory === category.id
-                    ? 'bg-green-600 text-white'
+                    ? 'bg-blue-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -178,8 +178,8 @@ const BlogPage = () => {
         {selectedCategory === 'all' && searchTerm === '' && featuredPosts.length > 0 && (
           <div className="mb-16">
             <div className="flex items-center gap-2 mb-6">
-
-                       <TrendingUp className="w-6 h-6 text-green-600" />     <h2 className="text-3xl font-bold text-gray-900">Featured Articles</h2>
+              <TrendingUp className="w-6 h-6 text-blue-600" />
+              <h2 className="text-3xl font-bold text-gray-900">Featured Articles</h2>
             </div>
             <div className="grid md:grid-cols-2 gap-8">
               {featuredPosts.map(post => (
@@ -191,7 +191,7 @@ const BlogPage = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute top-4 left-4">
-                      <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                      <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
                         Featured
                       </span>
                     </div>
@@ -207,7 +207,7 @@ const BlogPage = () => {
                         {post.author}
                       </span>
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-green-600 transition-colors">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
                       {post.title}
                     </h3>
                     <p className="text-gray-600 mb-4 line-clamp-3">
@@ -221,7 +221,7 @@ const BlogPage = () => {
                           </span>
                         ))}
                       </div>
-                      <button className="text-green-600 font-semibold flex items-center gap-1 hover:gap-2 transition-all">
+                      <button className="text-blue-600 font-semibold flex items-center gap-1 hover:gap-2 transition-all">
                         Read More <ArrowRight className="w-4 h-4" />
                       </button>
                     </div>
@@ -266,7 +266,7 @@ const BlogPage = () => {
                       <span>•</span>
                       <span>{post.readTime}</span>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-green-600 transition-colors line-clamp-2">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
                       {post.title}
                     </h3>
                     <p className="text-gray-600 text-sm mb-4 line-clamp-3">
@@ -277,7 +277,7 @@ const BlogPage = () => {
                         <User className="w-3 h-3" />
                         {post.author}
                       </span>
-                      <button className="text-green-600 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">
+                      <button className="text-blue-600 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">
                         Read <ArrowRight className="w-3 h-3" />
                       </button>
                     </div>
@@ -289,18 +289,18 @@ const BlogPage = () => {
         </div>
 
         {/* Newsletter Signup */}
-        <div className="bg-gradient-to-r from-green-500 to-emerald-700 rounded-xl p-8 md:p-12 text-white text-center">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-8 md:p-12 text-white text-center">
           <h2 className="text-3xl font-bold mb-4">Stay Updated</h2>
-          <p className="text-green-100 mb-6 max-w-2xl mx-auto">
+          <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
             Get the latest cycling tips, product reviews, and trail guides delivered straight to your inbox every week.
           </p>
           <div className="max-w-md mx-auto flex flex-col sm:flex-row gap-3">
             <input
               type="email"
               placeholder="Enter your email"
-              className="flex-1 px-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-300"
+              className="flex-1 px-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
-            <button className="bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors whitespace-nowrap">
+            <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors whitespace-nowrap">
               Subscribe
             </button>
           </div>

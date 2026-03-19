@@ -131,13 +131,13 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Logo and Header */}
         <div className="text-center">
           <Link to="/" className="inline-block">
             <div className="flex items-center justify-center space-x-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">OS</span>
               </div>
               <span className="text-2xl font-bold text-gray-900">Oshocks</span>
@@ -208,7 +208,7 @@ const ForgotPasswordPage = () => {
                     onChange={handleEmailChange}
                     className={`block w-full pl-10 pr-3 py-2.5 border ${
                       validationError ? 'border-red-300' : 'border-gray-300'
-                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors`}
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                     placeholder="you@example.com"
                   />
                 </div>
@@ -224,7 +224,7 @@ const ForgotPasswordPage = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {isSubmitting ? (
                   <>
@@ -243,7 +243,7 @@ const ForgotPasswordPage = () => {
               <button
                 type="button"
                 onClick={handleBackToLogin}
-                className="w-full flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors"
+                className="w-full flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Login
@@ -254,8 +254,8 @@ const ForgotPasswordPage = () => {
             <div className="space-y-6">
               {/* Email Icon */}
               <div className="flex justify-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                <Mail className="w-8 h-8 text-green-600" />
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Mail className="w-8 h-8 text-blue-600" />
                 </div>
               </div>
 
@@ -268,24 +268,24 @@ const ForgotPasswordPage = () => {
               {/* Instructions */}
               <div className="space-y-3">
                 <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
-                    <span className="text-xs font-bold text-green-600">1</span>
+                  <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
+                    <span className="text-xs font-bold text-blue-600">1</span>
                   </div>
                   <p className="text-sm text-gray-700">
                     Check your email inbox (and spam folder)
                   </p>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
-                    <span className="text-xs font-bold text-green-600">2</span>
+                  <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
+                    <span className="text-xs font-bold text-blue-600">2</span>
                   </div>
                   <p className="text-sm text-gray-700">
                     Click the password reset link in the email
                   </p>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
-                    <span className="text-xs font-bold text-green-600">3</span>
+                  <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
+                    <span className="text-xs font-bold text-blue-600">3</span>
                   </div>
                   <p className="text-sm text-gray-700">
                     Create a new password for your account
@@ -310,7 +310,7 @@ const ForgotPasswordPage = () => {
                   type="button"
                   onClick={handleResendEmail}
                   disabled={isSubmitting || resendCooldown > 0}
-                  className="w-full flex justify-center items-center py-3 px-4 border border-green-300 rounded-lg shadow-sm text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-full flex justify-center items-center py-3 px-4 border border-blue-300 rounded-lg shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isSubmitting ? (
                     <>
@@ -361,7 +361,7 @@ const ForgotPasswordPage = () => {
               Remember your password?{' '}
               <Link
                 to="/login"
-                className="font-medium text-orange-600 hover:text-orange-500 transition-colors"
+                className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
               >
                 Sign in
               </Link>
@@ -375,7 +375,7 @@ const ForgotPasswordPage = () => {
             </p>
             <Link
               to="/contact-support"
-              className="inline-flex items-center text-sm font-medium text-green-600 hover:text-green-500 transition-colors"
+              className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors"
             >
               Contact Support
               <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

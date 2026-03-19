@@ -184,20 +184,20 @@ const ContactSupportPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
-      <div className="bg-gradient-to-r from-green-500 to-emerald-700 text-white py-12">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="inline-block mb-6">
               <div className="flex items-center justify-center space-x-2">
                 <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
-                  <span className="text-green-600 font-bold text-xl">OS</span>
+                  <span className="text-blue-600 font-bold text-xl">OS</span>
                 </div>
                 <span className="text-2xl font-bold">Oshocks</span>
               </div>
             </div>
             <h1 className="text-4xl font-extrabold mb-4">How can we help you?</h1>
-            <p className="text-xl text-green-100 max-w-2xl mx-auto">
+            <p className="text-xl text-blue-100 max-w-2xl mx-auto">
               Our support team is here to assist you with any questions or concerns
             </p>
           </div>
@@ -233,37 +233,37 @@ const ContactSupportPage = () => {
               <h2 className="text-xl font-bold text-gray-900 mb-4">Contact Information</h2>
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
-                  <Phone className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                  <Phone className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">Phone</p>
-                    <a href="tel:+254715961213" className="text-sm text-green-600 hover:text-green-700">
-                      +254 715 061 213
+                    <a href="tel:+254712345678" className="text-sm text-blue-600 hover:text-blue-700">
+                      +254 712 345 678
                     </a>
                   </div>
                 </div>
 
                 <div className="flex items-start space-x-3">
-                  <Mail className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                  <Mail className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">Email</p>
-                    <a href="mailto:support@oshocks.co.ke" className="text-sm text-green-600 hover:text-green-700">
+                    <a href="mailto:support@oshocks.co.ke" className="text-sm text-blue-600 hover:text-blue-700">
                       support@oshocks.co.ke
                     </a>
                   </div>
                 </div>
 
                 <div className="flex items-start space-x-3">
-                  <MessageCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                  <MessageCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">WhatsApp</p>
-                    <a href="https://wa.me/254715061213" target="_blank" rel="noopener noreferrer" className="text-sm text-green-600 hover:text-green-700">
-                      +254 715 061 213
+                    <a href="https://wa.me/254712345678" target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:text-blue-700">
+                      +254 712 345 678
                     </a>
                   </div>
                 </div>
 
                 <div className="flex items-start space-x-3">
-                  <MapPin className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                  <MapPin className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">Location</p>
                     <p className="text-sm text-gray-600">
@@ -274,7 +274,7 @@ const ContactSupportPage = () => {
                 </div>
 
                 <div className="flex items-start space-x-3">
-                  <Clock className="w-5 h-5 text-green-600 flex-shrink-0 mt-1" />
+                  <Clock className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">Business Hours</p>
                     <p className="text-sm text-gray-600">
@@ -309,7 +309,7 @@ const ContactSupportPage = () => {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-md p-6">
+            <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-lg shadow-md p-6">
               <Headphones className="w-12 h-12 mb-3" />
               <h3 className="text-lg font-bold mb-2">Need Instant Help?</h3>
               <p className="text-sm text-blue-100 mb-4">
@@ -321,7 +321,7 @@ const ContactSupportPage = () => {
                     window.Tawk_API.maximize();
                   }
                 }}
-                className="w-full bg-white text-green-600 font-semibold py-2 px-4 rounded-lg hover:bg-green-50 transition-colors"
+                className="w-full bg-white text-blue-600 font-semibold py-2 px-4 rounded-lg hover:bg-blue-50 transition-colors"
               >
                 Start Live Chat
               </button>
@@ -348,7 +348,7 @@ const ContactSupportPage = () => {
                         onChange={handleChange}
                         className={`block w-full pl-10 pr-3 py-2.5 border ${
                           validationErrors.name ? 'border-red-300' : 'border-gray-300'
-                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent`}
+                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
                         placeholder="John Doe"
                       />
                     </div>
@@ -438,12 +438,12 @@ const ContactSupportPage = () => {
                           onClick={() => setFormData(prev => ({ ...prev, category: cat.value }))}
                           className={`p-3 border-2 rounded-lg text-left transition-all ${
                             formData.category === cat.value
-                              ? 'border-green-600 bg-green-50'
+                              ? 'border-blue-600 bg-blue-50'
                               : 'border-gray-200 hover:border-gray-300'
                           }`}
                         >
                           <Icon className={`w-5 h-5 mb-1 ${
-                            formData.category === cat.value ? 'text-green-600' : 'text-gray-400'
+                            formData.category === cat.value ? 'text-blue-600' : 'text-gray-400'
                           }`} />
                           <div className="text-xs font-medium text-gray-900">{cat.label}</div>
                         </button>
@@ -509,7 +509,7 @@ const ContactSupportPage = () => {
                     <label className="flex-1 cursor-pointer">
                       <div className={`border-2 border-dashed ${
                         validationErrors.attachment ? 'border-red-300' : 'border-gray-300'
-                      } rounded-lg p-4 text-center hover:border-green-400 transition-colors`}>
+                      } rounded-lg p-4 text-center hover:border-blue-400 transition-colors`}>
                         <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                         <p className="text-sm text-gray-600">
                           {formData.attachment ? formData.attachment.name : 'Click to upload (Max 5MB)'}
@@ -541,7 +541,7 @@ const ContactSupportPage = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {isSubmitting ? (
                     <>
@@ -567,14 +567,14 @@ const ContactSupportPage = () => {
                       <span className="font-medium text-gray-900">{faq.question}</span>
                       <ChevronRight className="w-5 h-5 text-gray-400 group-open:rotate-90 transition-transform" />
                     </summary>
-                    <div className="mt-2 p-4 text-sm text-gray-600 border-l-4 border-green-500 bg-green-50">
+                    <div className="mt-2 p-4 text-sm text-gray-600 border-l-4 border-blue-500 bg-blue-50">
                       {faq.answer}
                     </div>
                   </details>
                 ))}
               </div>
               <div className="mt-6 text-center">
-                <button className="inline-flex items-center text-sm font-medium text-green-600 hover:text-green-700">
+                <button className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700">
                   View All FAQs
                   <ExternalLink className="w-4 h-4 ml-1" />
                 </button>
@@ -588,7 +588,7 @@ const ContactSupportPage = () => {
         {showFAB && (
           <button
             onClick={toggleFAB}
-            className="fixed left-6 bottom-6 w-14 h-14 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-200 flex items-center justify-center z-50"
+            className="fixed left-6 bottom-6 w-14 h-14 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-200 flex items-center justify-center z-50"
           >
             {isFABOpen ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
           </button>
@@ -603,7 +603,7 @@ const ContactSupportPage = () => {
                 href="mailto:support@oshocks.co.ke"
                 className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                <Mail className="w-5 h-5 text-green-600" />
+                <Mail className="w-5 h-5 text-blue-600" />
                 <span className="text-sm font-medium text-gray-900">Email Us</span>
               </a>
               <a
@@ -612,14 +612,14 @@ const ContactSupportPage = () => {
                 rel="noopener noreferrer"
                 className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                <MessageCircle className="w-5 h-5 text-green-600" />
+                <MessageCircle className="w-5 h-5 text-blue-600" />
                 <span className="text-sm font-medium text-gray-900">WhatsApp</span>
               </a>
               <a
                 href="tel:+254712345678"
                 className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                <Phone className="w-5 h-5 text-green-600" />
+                <Phone className="w-5 h-5 text-blue-600" />
                 <span className="text-sm font-medium text-gray-900">Call Us</span>
               </a>
             </div>
@@ -644,7 +644,7 @@ const ContactSupportPage = () => {
                 isFABOpen ? 'translate-x-0' : 'translate-x-full'
               }`}
             >
-              <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4">
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-bold">Need Help?</h3>
                   <button
@@ -689,9 +689,9 @@ const ContactSupportPage = () => {
 
                   <a
                     href="mailto:support@oshocks.co.ke"
-                    className="flex items-center space-x-3 p-4 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg hover:shadow-md transition-all"
+                    className="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg hover:shadow-md transition-all"
                   >
-                    <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
                       <Mail className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -762,8 +762,8 @@ const ContactSupportPage = () => {
                   </div>
                 </div>
 
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <p className="text-xs text-green-800">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-xs text-blue-800">
                     <strong>Average Response Time:</strong> Within 2 hours during business hours
                   </p>
                 </div>

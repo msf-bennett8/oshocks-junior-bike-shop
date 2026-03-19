@@ -242,13 +242,13 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         {/* Logo and Header */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-block">
             <div className="flex items-center justify-center space-x-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">OS</span>
               </div>
               <span className="text-2xl font-bold text-gray-900">Oshocks</span>
@@ -269,12 +269,12 @@ const RegisterPage = () => {
               {/* Step 1 */}
               <div className="flex items-center">
                 <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                  currentStep >= 1 ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'
+                  currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
                 } font-semibold`}>
                   {currentStep > 1 ? <CheckCircle2 className="w-6 h-6" /> : '1'}
                 </div>
                 <span className={`ml-2 text-sm font-medium ${
-                  currentStep >= 1 ? 'text-green-600' : 'text-gray-500'
+                  currentStep >= 1 ? 'text-gray-900' : 'text-gray-500'
                 }`}>
                   Personal Info
                 </span>
@@ -282,18 +282,18 @@ const RegisterPage = () => {
               
               {/* Divider */}
               <div className={`w-16 h-1 ${
-                currentStep > 1 ? 'bg-green-500' : 'bg-gray-200'
+                currentStep > 1 ? 'bg-blue-600' : 'bg-gray-200'
               }`} />
               
               {/* Step 2 */}
               <div className="flex items-center">
                 <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                  currentStep >= 2 ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'
+                  currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
                 } font-semibold`}>
                   2
                 </div>
                 <span className={`ml-2 text-sm font-medium ${
-                  currentStep >= 2 ? 'text-green-600' : 'text-gray-500'
+                  currentStep >= 2 ? 'text-gray-900' : 'text-gray-500'
                 }`}>
                   Account Details
                 </span>
@@ -327,7 +327,7 @@ const RegisterPage = () => {
                       onClick={() => setFormData(prev => ({ ...prev, userType: 'customer' }))}
                       className={`p-4 border-2 rounded-lg text-left transition-all ${
                         formData.userType === 'customer'
-                          ? 'border-green-500 bg-green-50'
+                          ? 'border-blue-600 bg-blue-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
@@ -339,7 +339,7 @@ const RegisterPage = () => {
                       onClick={() => setFormData(prev => ({ ...prev, userType: 'seller' }))}
                       className={`p-4 border-2 rounded-lg text-left transition-all ${
                         formData.userType === 'seller'
-                          ? 'border-green-500 bg-green-50'
+                          ? 'border-blue-600 bg-blue-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
@@ -367,7 +367,7 @@ const RegisterPage = () => {
                         onChange={handleChange}
                         className={`block w-full pl-10 pr-3 py-2.5 border ${
                           validationErrors.firstName ? 'border-red-300' : 'border-gray-300'
-                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors`}
+                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                         placeholder="Zablon"
                       />
                     </div>
@@ -392,7 +392,7 @@ const RegisterPage = () => {
                         onChange={handleChange}
                         className={`block w-full pl-10 pr-3 py-2.5 border ${
                           validationErrors.lastName ? 'border-red-300' : 'border-gray-300'
-                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors`}
+                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                         placeholder="Bennett"
                       />
                     </div>
@@ -419,7 +419,7 @@ const RegisterPage = () => {
                         onChange={handleChange}
                         className={`block w-full pl-10 pr-3 py-2.5 border ${
                           validationErrors.username ? 'border-red-300' : 'border-gray-300'
-                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors`}
+                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                         placeholder="coolcyclist"
                       />
                     </div>
@@ -447,7 +447,7 @@ const RegisterPage = () => {
                       onChange={handleChange}
                       className={`block w-full pl-10 pr-3 py-2.5 border ${
                         validationErrors.email ? 'border-red-300' : 'border-gray-300'
-                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors`}
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                       placeholder="you@example.com"
                     />
                   </div>
@@ -473,7 +473,7 @@ const RegisterPage = () => {
                       onChange={handleChange}
                       className={`block w-full pl-10 pr-3 py-2.5 border ${
                         validationErrors.phone ? 'border-red-300' : 'border-gray-300'
-                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors`}
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                       placeholder="+254 712 345 678"
                     />
                   </div>
@@ -487,7 +487,7 @@ const RegisterPage = () => {
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200"
+                  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
                 >
                   Continue to Account Details
                 </button>
@@ -513,7 +513,7 @@ const RegisterPage = () => {
                       onChange={handleChange}
                       className={`block w-full pl-10 pr-3 py-2.5 border ${
                         validationErrors.city ? 'border-red-300' : 'border-gray-300'
-                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors`}
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                     >
                       <option value="">Select your city</option>
                       <option value="Nairobi">Nairobi</option>
@@ -550,7 +550,7 @@ const RegisterPage = () => {
                       onChange={handleChange}
                       className={`block w-full pl-10 pr-10 py-2.5 border ${
                         validationErrors.password ? 'border-red-300' : 'border-gray-300'
-                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors`}
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                       placeholder="Create a strong password"
                     />
                     <button
@@ -609,7 +609,7 @@ const RegisterPage = () => {
                       onChange={handleChange}
                       className={`block w-full pl-10 pr-10 py-2.5 border ${
                         validationErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors`}
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                       placeholder="Confirm your password"
                     />
                     <button
@@ -638,17 +638,17 @@ const RegisterPage = () => {
                       type="checkbox"
                       checked={formData.agreeToTerms}
                       onChange={handleChange}
-                      className={`h-4 w-4 mt-0.5 text-green-600 focus:ring-green-500 border-gray-300 rounded cursor-pointer accent-green-600 ${
+                      className={`h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer ${
                         validationErrors.agreeToTerms ? 'border-red-300' : ''
                       }`}
                     />
                     <label htmlFor="agreeToTerms" className="ml-2 block text-sm text-gray-700 cursor-pointer">
                       I agree to the{' '}
-                      <Link to="/terms-of-service" className="text-green-600 hover:text-green-500 font-medium">
+                      <Link to="/terms-of-service" className="text-blue-600 hover:text-blue-500 font-medium">
                         Terms of Service
                       </Link>{' '}
                       and{' '}
-                      <Link to="/privacy-policy" className="text-green-600 hover:text-green-500 font-medium">
+                      <Link to="/privacy-policy" className="text-blue-600 hover:text-blue-500 font-medium">
                         Privacy Policy
                       </Link>
                     </label>
@@ -664,7 +664,7 @@ const RegisterPage = () => {
                       type="checkbox"
                       checked={formData.subscribeNewsletter}
                       onChange={handleChange}
-                      className="h-4 w-4 mt-0.5 text-green-600 focus:ring-green-500 border-gray-300 rounded cursor-pointer accent-green-600"
+                      className="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
                     />
                     <label htmlFor="subscribeNewsletter" className="ml-2 block text-sm text-gray-700 cursor-pointer">
                       Send me updates about new products, deals, and cycling tips
@@ -677,14 +677,14 @@ const RegisterPage = () => {
                   <button
                     type="button"
                     onClick={handlePrevStep}
-                    className="flex-1 py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors"
+                    className="flex-1 py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                   >
                     Back
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    className="flex-1 flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                   >
                     {isSubmitting ? (
                       <>
@@ -748,18 +748,18 @@ const RegisterPage = () => {
         <p className="mt-6 text-center text-sm text-gray-600">
           Already have an account?{' '}
           <Link
-              to="/login"
-              className="font-medium text-orange-600 hover:text-orange-500 transition-colors"
-            >
+            to="/login"
+            className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+          >
             Sign in instead
           </Link>
         </p>
 
         {/* Additional Info for Sellers */}
         {formData.userType === 'seller' && currentStep === 1 && (
-          <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-green-900 mb-2">Seller Benefits</h3>
-          <ul className="text-xs text-green-800 space-y-1">
+          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-blue-900 mb-2">Seller Benefits</h3>
+            <ul className="text-xs text-blue-800 space-y-1">
               <li>• Reach thousands of cycling enthusiasts across Kenya</li>
               <li>• Easy-to-use dashboard for inventory management</li>
               <li>• Integrated M-Pesa and card payment processing</li>

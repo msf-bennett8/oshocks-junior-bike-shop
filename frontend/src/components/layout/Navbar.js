@@ -386,11 +386,11 @@ const handleElevation = async () => {
           <div className="flex items-center justify-between h-16">
            {/* Logo */}
             <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg">OS</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
                   Oshocks
                 </span>
                 <span className="text-xs text-gray-600 hidden sm:block">Bike Shop</span>
@@ -401,90 +401,90 @@ const handleElevation = async () => {
             <div className="hidden lg:flex items-center gap-8 flex-1 mx-8">
               <Link 
                 to="/" 
-                className={`relative text-gray-700 hover:text-green-600 font-medium transition-colors pb-1 ${
-                  isActiveRoute('/') ? 'text-green-600' : ''
+                className={`relative text-gray-700 hover:text-blue-600 font-medium transition-colors pb-1 ${
+                  isActiveRoute('/') ? 'text-blue-600' : ''
                 }`}
               >
                 Home
                 {isActiveRoute('/') && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600"></span>
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></span>
                 )}
               </Link>
               <Link 
                 to="/services" 
-                className={`relative text-gray-700 hover:text-green-600 font-medium transition-colors pb-1 ${
-                  isActiveRoute('/services') ? 'text-green-600' : ''
+                className={`relative text-gray-700 hover:text-blue-600 font-medium transition-colors pb-1 ${
+                  isActiveRoute('/services') ? 'text-blue-600' : ''
                 }`}
               >
                 Services
                 {isActiveRoute('/services') && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600"></span>
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></span>
                 )}
               </Link>
               <Link 
                 to="/shop" 
-                className={`relative text-gray-700 hover:text-green-600 font-medium transition-colors pb-1 ${
-                  isActiveRoute('/shop') ? 'text-green-600' : ''
+                className={`relative text-gray-700 hover:text-blue-600 font-medium transition-colors pb-1 ${
+                  isActiveRoute('/shop') ? 'text-blue-600' : ''
                 }`}
               >
                 Shop
                 {isActiveRoute('/shop') && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600"></span>
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></span>
                 )}
               </Link>
               <Link 
                 to="/about" 
-                className={`relative text-gray-700 hover:text-green-600 font-medium transition-colors pb-1 ${
-                  isActiveRoute('/about') ? 'text-green-600' : ''
+                className={`relative text-gray-700 hover:text-blue-600 font-medium transition-colors pb-1 ${
+                  isActiveRoute('/about') ? 'text-blue-600' : ''
                 }`}
               >
                 About
                 {isActiveRoute('/about') && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600"></span>
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></span>
                 )}
               </Link>
               <Link 
                 to="/contact" 
-                className={`relative text-gray-700 hover:text-green-600 font-medium transition-colors pb-1 ${
-                  isActiveRoute('/contact') ? 'text-green-600' : ''
+                className={`relative text-gray-700 hover:text-blue-600 font-medium transition-colors pb-1 ${
+                  isActiveRoute('/contact') ? 'text-blue-600' : ''
                 }`}
               >
                 Contact
                 {isActiveRoute('/contact') && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600"></span>
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></span>
                 )}
               </Link>
               <Link 
                 to="/faq" 
-                className={`relative text-gray-700 hover:text-green-600 font-medium transition-colors pb-1 ${
-                  isActiveRoute('/faq') ? 'text-green-600' : ''
+                className={`relative text-gray-700 hover:text-blue-600 font-medium transition-colors pb-1 ${
+                  isActiveRoute('/faq') ? 'text-blue-600' : ''
                 }`}
               >
                 FAQ
                 {isActiveRoute('/faq') && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600"></span>
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></span>
                 )}
               </Link>
               <Link 
                 to="/blog" 
-                className={`relative text-gray-700 hover:text-green-600 font-medium transition-colors pb-1 ${
-                  isActiveRoute('/blog') ? 'text-green-600' : ''
+                className={`relative text-gray-700 hover:text-blue-600 font-medium transition-colors pb-1 ${
+                  isActiveRoute('/blog') ? 'text-blue-600' : ''
                 }`}
               >
                 Blog
                 {isActiveRoute('/blog') && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600"></span>
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></span>
                 )}
               </Link>
               <Link 
                 to="/wishlist" 
-                className={`relative text-gray-700 hover:text-green-600 font-medium transition-colors pb-1 ${
-                  isActiveRoute('/wishlist') ? 'text-green-600' : ''
+                className={`relative text-gray-700 hover:text-blue-600 font-medium transition-colors pb-1 ${
+                  isActiveRoute('/wishlist') ? 'text-blue-600' : ''
                 }`}
               >
                 Wishlist
                 {isActiveRoute('/wishlist') && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600"></span>
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"></span>
                 )}
               </Link>
               
@@ -583,7 +583,7 @@ const handleElevation = async () => {
               {!isAuthenticated && (
                 <Link
                   to="/register"
-                  className="hidden sm:flex items-center gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-medium text-sm shadow-md"
+                  className="hidden sm:flex items-center gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-medium text-sm shadow-md"
                 >
                   <Sparkles size={16} />
                   <span className="hidden sm:inline">Sign Up</span>
@@ -609,7 +609,7 @@ const handleElevation = async () => {
               >
                 <ShoppingCart size={22} className="text-gray-700" />
                 {cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 animate-bounce-in">
+                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 animate-bounce-in">
                     {cartItemCount > 99 ? '99+' : cartItemCount}
                   </span>
                 )}
@@ -631,7 +631,7 @@ const handleElevation = async () => {
       {/* Elevation Countdown Message */}
       {elevationMessage && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
-          <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+          <div className="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg">
             {elevationMessage}
           </div>
         </div>
@@ -689,7 +689,7 @@ const handleElevation = async () => {
               <button
                 onClick={handleElevation}
                 disabled={isElevating}
-                className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isElevating ? (
                   <>
@@ -724,7 +724,7 @@ const handleElevation = async () => {
             className="fixed top-16 left-0 h-[calc(100vh-4rem)] w-1/4 min-w-[300px] max-w-[400px] bg-white shadow-2xl overflow-y-auto animate-slide-in-left z-50"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-4 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Menu size={24} className="text-white" />
                 <div className="text-white">
@@ -764,12 +764,12 @@ const handleElevation = async () => {
                           className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors group"
                         >
                           <div className="flex items-center gap-3">
-                            <IconComponent size={20} className="text-gray-600 group-hover:text-green-600" />
-                            <span className="text-sm text-gray-700 group-hover:text-green-600">
+                            <IconComponent size={20} className="text-gray-600 group-hover:text-blue-600" />
+                            <span className="text-sm text-gray-700 group-hover:text-blue-600">
                               {item.name}
                             </span>
                           </div>
-                          <ChevronRight size={16} className="text-gray-400 group-hover:text-green-600" />
+                          <ChevronRight size={16} className="text-gray-400 group-hover:text-blue-600" />
                         </Link>
                       );
                     })}
@@ -794,7 +794,7 @@ const handleElevation = async () => {
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-4 flex items-center justify-between">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <User size={24} className="text-white" />
               <div className="text-white">
@@ -892,7 +892,7 @@ const handleElevation = async () => {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-t border-gray-100 mt-2 pt-4"
                 >
-                  <DollarSign size={20} className="text-orange-500" />
+                  <DollarSign size={20} className="text-green-600" />
                   <span className="text-gray-900 font-medium">💳 Payment Recorder</span>
                 </Link>
               )}
@@ -967,10 +967,10 @@ const handleElevation = async () => {
                       className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors group"
                     >
                       <div className="flex items-center gap-3">
-                        <IconComponent size={20} className="text-gray-600 group-hover:text-green-600" />
-                        <span className="text-gray-700 group-hover:text-green-600">{item.name}</span>
+                        <IconComponent size={20} className="text-gray-600 group-hover:text-blue-600" />
+                        <span className="text-gray-700 group-hover:text-blue-600">{item.name}</span>
                       </div>
-                      <ChevronRight size={18} className="text-gray-400 group-hover:text-green-600" />
+                      <ChevronRight size={18} className="text-gray-400 group-hover:text-blue-600" />
                     </Link>
                   );
                 })}
@@ -1001,7 +1001,7 @@ const handleElevation = async () => {
                 <Link
                   to="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full py-3 text-center border-2 border-green-500 text-green-600 rounded-lg font-medium hover:bg-green-50 transition-colors"
+                  className="flex items-center justify-center gap-2 w-full py-3 text-center border-2 border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors"
                 >
                   <User size={18} />
                   <span>Sign In</span>
@@ -1009,7 +1009,7 @@ const handleElevation = async () => {
                 <Link
                   to="/register"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full py-3 text-center bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-medium hover:from-orange-600 hover:to-orange-700 transition-all shadow-md"
+                  className="flex items-center justify-center gap-2 w-full py-3 text-center bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all shadow-md"
                 >
                   <Sparkles size={18} />
                   <span>Sign Up</span>

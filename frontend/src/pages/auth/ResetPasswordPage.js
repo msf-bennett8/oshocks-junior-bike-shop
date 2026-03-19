@@ -329,9 +329,9 @@ const ResetPasswordPage = () => {
   // Loading state while validating token
   if (isValidatingToken) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center py-12 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex items-center justify-center py-12 px-4">
         <div className="max-w-md w-full bg-white py-12 px-6 shadow-xl rounded-lg text-center">
-          <Loader className="w-12 h-12 text-green-600 animate-spin mx-auto mb-4" />
+          <Loader className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             Validating reset link...
           </h3>
@@ -346,12 +346,12 @@ const ResetPasswordPage = () => {
   // Invalid token state
   if (!tokenValid) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center py-12 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex items-center justify-center py-12 px-4">
         <div className="max-w-md w-full space-y-6">
           <div className="text-center">
             <Link to="/" className="inline-block">
               <div className="flex items-center justify-center space-x-2">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-xl">OS</span>
                 </div>
                 <span className="text-2xl font-bold text-gray-900">Oshocks</span>
@@ -376,13 +376,13 @@ const ResetPasswordPage = () => {
             <div className="space-y-3">
               <Link
                 to="/forgot-password"
-                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all"
+                className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
               >
                 Request New Reset Link
               </Link>
               <Link
                 to="/login"
-                className="w-full flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-colors"
+                className="w-full flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
                 Back to Login
               </Link>
@@ -396,12 +396,12 @@ const ResetPasswordPage = () => {
   // Success state
   if (successMessage) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center py-12 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex items-center justify-center py-12 px-4">
         <div className="max-w-md w-full space-y-6">
           <div className="text-center">
             <Link to="/" className="inline-block">
               <div className="flex items-center justify-center space-x-2">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-xl">OS</span>
                 </div>
                 <span className="text-2xl font-bold text-gray-900">Oshocks</span>
@@ -420,8 +420,8 @@ const ResetPasswordPage = () => {
               <p className="text-sm text-gray-600 mb-6">
                 {successMessage}
               </p>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <p className="text-sm text-green-800">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800">
                   Redirecting to login page in a few seconds...
                 </p>
               </div>
@@ -433,13 +433,13 @@ const ResetPasswordPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Logo and Header */}
         <div className="text-center">
           <Link to="/" className="inline-block">
             <div className="flex items-center justify-center space-x-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">OS</span>
               </div>
               <span className="text-2xl font-bold text-gray-900">Oshocks</span>
@@ -455,8 +455,8 @@ const ResetPasswordPage = () => {
 
         {/* User Info */}
         {email && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <p className="text-sm text-green-800">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800">
               Resetting password for: <strong>{email}</strong>
             </p>
           </div>
@@ -491,7 +491,7 @@ const ResetPasswordPage = () => {
                   onChange={handleChange}
                   className={`block w-full pl-10 pr-10 py-2.5 border ${
                     validationErrors.password ? 'border-red-300' : 'border-gray-300'
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors`}
+                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                   placeholder="Enter your new password"
                 />
                 <button
@@ -588,7 +588,7 @@ const ResetPasswordPage = () => {
                   onChange={handleChange}
                   className={`block w-full pl-10 pr-10 py-2.5 border ${
                     validationErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors`}
+                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
                   placeholder="Confirm your new password"
                 />
                 <button
@@ -631,7 +631,7 @@ const ResetPasswordPage = () => {
             <button
               type="submit"
               disabled={isSubmitting || isCheckingHistory}
-              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               {isSubmitting ? (
                 <>
@@ -653,7 +653,7 @@ const ResetPasswordPage = () => {
           Remember your password?{' '}
           <Link
             to="/login"
-            className="font-medium text-orange-600 hover:text-orange-500 transition-colors"
+            className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
           >
             Back to Login
           </Link>
