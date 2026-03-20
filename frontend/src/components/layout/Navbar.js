@@ -5,7 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import authService from '../../services/authService';
 import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowUp, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Star, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, UserCog, Users, Package2, BarChart3, FolderTree, Heart } from 'lucide-react';
-import SearchBar from '../common/SearchBar'; // ← IMPORT THE NEW SEARCHBAR
+import SearchBar from '../common/SearchBar';
+import Logo from '../common/Logo';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -385,17 +386,7 @@ const handleElevation = async () => {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
            {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">OS</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
-                  Oshocks
-                </span>
-                <span className="text-xs text-gray-600 hidden sm:block">Bike Shop</span>
-              </div>
-            </Link>
+            <Logo size="default" />
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-8 flex-1 mx-8">
@@ -583,7 +574,16 @@ const handleElevation = async () => {
               {!isAuthenticated && (
                 <Link
                   to="/register"
-                  className="hidden sm:flex items-center gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-medium text-sm shadow-md"
+                  className="hidden sm:flex items-center gap-2 px-3 sm:px-4 py-2 text-white rounded-lg transition-all font-medium text-sm shadow-md"
+                  style={{
+                    background: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = 'linear-gradient(135deg, rgb(220, 60, 0) 0%, rgb(230, 150, 0) 100%)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)';
+                  }}
                 >
                   <Sparkles size={16} />
                   <span className="hidden sm:inline">Sign Up</span>

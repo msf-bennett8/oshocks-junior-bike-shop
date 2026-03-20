@@ -26,6 +26,12 @@
   
   "icons": [
     {
+      "src": "favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    },
+    {
       "src": "oshocks-pwa.png",
       "type": "image/png",
       "sizes": "192x192",

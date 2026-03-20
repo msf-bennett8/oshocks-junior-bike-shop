@@ -101,13 +101,13 @@ const ScrollToTop = ({
                 fill="none"
                 strokeDasharray={`${2 * Math.PI * 22}`}
                 strokeDashoffset={`${2 * Math.PI * 22 * (1 - scrollProgress / 100)}`}
-                className="text-purple-600 transition-all duration-150"
+                className="text-[rgb(255,69,0)] transition-all duration-150"
                 strokeLinecap="round"
               />
             </svg>
 
             {/* Main Button - Responsive sizing */}
-            <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full shadow-lg sm:shadow-xl md:shadow-2xl flex items-center justify-center transform transition-all duration-300 group-hover:scale-110 group-hover:shadow-purple-500/50 group-active:scale-95">
+            <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gradient-to-br from-[rgb(255,69,0)] to-[rgb(255,165,0)] rounded-full shadow-lg sm:shadow-xl md:shadow-2xl flex items-center justify-center transform transition-all duration-300 group-hover:scale-110 group-hover:shadow-orange-500/50 group-active:scale-95">
               {/* Arrow Icon - Responsive sizing */}
               <svg 
                 className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-white group-hover:animate-bounce" 
@@ -125,7 +125,7 @@ const ScrollToTop = ({
             </div>
 
             {/* Pulse Effect */}
-            <div className="absolute inset-0 rounded-full bg-purple-600 opacity-0 group-hover:opacity-25 group-hover:animate-ping pointer-events-none" />
+            <div className="absolute inset-0 rounded-full bg-[rgb(255,69,0)] opacity-0 group-hover:opacity-25 group-hover:animate-ping pointer-events-none" />
           </div>
 
           {/* Tooltip - Hidden on mobile, visible on larger screens */}

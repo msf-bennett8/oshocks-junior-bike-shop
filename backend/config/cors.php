@@ -8,8 +8,8 @@ return [
     'allowed_origins' => [
         // Production frontend (Vercel)
         'https://oshocks-junior-bike-shop.vercel.app',
-        // Railway backend domain (add your actual Railway domain after deployment)
-        'https://*.up.railway.app',
+        // Railway backend domain
+        'https://oshocks-backend-production.up.railway.app',
         // Local development
         'http://localhost:3000',
         'http://localhost:5173',
@@ -18,7 +18,9 @@ return [
     ],
     
     'allowed_origins_patterns' => [
-        // Allow all Railway subdomains dynamically
+        // Allow ALL Vercel preview deployments dynamically
+        '#^https://oshocks-junior-bike-shop-.*\.vercel\.app$#',
+        // Allow all Railway subdomains
         '#^https://.*\.up\.railway\.app$#',
     ],
     
@@ -26,7 +28,7 @@ return [
     
     'exposed_headers' => ['Authorization'],
     
-    'max_age' => 0,
+    'max_age' => 86400,
     
     'supports_credentials' => true,
 ];

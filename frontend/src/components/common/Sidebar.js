@@ -89,9 +89,9 @@ const Sidebar = ({
                 <Link
                   key={cat.id}
                   to={`/shop/${cat.id}`}
-                  className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-purple-50 transition-colors group"
+                  className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-orange-50 transition-colors group"
                 >
-                  <span className="flex items-center gap-2 text-gray-700 group-hover:text-purple-600">
+                  <span className="flex items-center gap-2 text-gray-700 group-hover:text-[rgb(255,69,0)]">
                     <span className="text-lg group-hover:scale-110 transition-transform">{cat.icon}</span>
                     <span className="text-sm">{cat.name}</span>
                   </span>
@@ -122,7 +122,7 @@ const Sidebar = ({
                   placeholder="Min"
                   value={priceRange[0]}
                   onChange={(e) => setPriceRange([+e.target.value, priceRange[1]])}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[rgb(255,69,0)]"
                 />
                 <span className="text-gray-500">-</span>
                 <input
@@ -130,13 +130,13 @@ const Sidebar = ({
                   placeholder="Max"
                   value={priceRange[1]}
                   onChange={(e) => setPriceRange([priceRange[0], +e.target.value])}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-purple-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[rgb(255,69,0)]"
                 />
               </div>
               <div className="text-xs text-gray-500 text-center">
                 KSh {priceRange[0].toLocaleString()} - KSh {priceRange[1].toLocaleString()}
               </div>
-              <button className="w-full bg-purple-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors">
+              <button className="w-full bg-[rgb(255,69,0)] text-white py-2 rounded-lg text-sm font-medium hover:bg-[rgb(255,165,0)] transition-colors">
                 Apply
               </button>
             </div>
@@ -167,9 +167,9 @@ const Sidebar = ({
                       type="checkbox"
                       checked={selectedBrands.includes(brand.id)}
                       onChange={() => toggleBrand(brand.id)}
-                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      className="w-4 h-4 text-[rgb(255,69,0)] border-gray-300 rounded focus:ring-[rgb(255,69,0)]"
                     />
-                    <span className="text-sm text-gray-700 group-hover:text-purple-600">{brand.name}</span>
+                    <span className="text-sm text-gray-700 group-hover:text-[rgb(255,69,0)]">{brand.name}</span>
                   </div>
                   <span className="text-xs text-gray-400">{brand.count}</span>
                 </label>
@@ -201,10 +201,10 @@ const Sidebar = ({
                     type="checkbox"
                     checked={selectedConditions.includes(condition.id)}
                     onChange={() => toggleCondition(condition.id)}
-                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    className="w-4 h-4 text-[rgb(255,69,0)] border-gray-300 rounded focus:ring-[rgb(255,69,0)]"
                   />
                   <span className="text-lg">{condition.icon}</span>
-                  <span className="text-sm text-gray-700 group-hover:text-purple-600">{condition.name}</span>
+                  <span className="text-sm text-gray-700 group-hover:text-[rgb(255,69,0)]">{condition.name}</span>
                 </label>
               ))}
             </div>
@@ -269,7 +269,7 @@ const Sidebar = ({
     return (
       <div className="space-y-6">
         {/* User Profile */}
-        <div className="p-4 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-lg text-white">
+        <div className="p-4 bg-gradient-to-br from-[rgb(255,69,0)] to-[rgb(255,165,0)] rounded-lg text-white">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl">
               👤
@@ -304,8 +304,8 @@ const Sidebar = ({
                   to={item.path}
                   className={`flex items-center justify-between py-2.5 px-4 rounded-lg transition-all ${
                     isActive(item.path)
-                      ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
-                      : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600'
+                      ? 'bg-gradient-to-r from-[rgb(255,69,0)] to-[rgb(255,165,0)] text-white shadow-lg'
+                      : 'text-gray-700 hover:bg-orange-50 hover:text-[rgb(255,69,0)]'
                   }`}
                 >
                   <span className="flex items-center gap-3">
@@ -315,7 +315,7 @@ const Sidebar = ({
                   {item.badge && (
                     <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                       isActive(item.path)
-                        ? 'bg-white text-purple-600'
+                        ? 'bg-white text-[rgb(255,69,0)]'
                         : 'bg-red-500 text-white'
                     }`}>
                       {item.badge}
@@ -368,8 +368,8 @@ const Sidebar = ({
             to={item.path}
             className={`block p-4 rounded-lg transition-all ${
               isActive(item.path)
-                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
-                : 'bg-white hover:bg-purple-50 border border-gray-200'
+              ? 'bg-gradient-to-r from-[rgb(255,69,0)] to-[rgb(255,165,0)] text-white shadow-lg'
+              : 'bg-white hover:bg-orange-50 border border-gray-200'
             }`}
           >
             <div className="flex items-center justify-between mb-1">
@@ -380,7 +380,7 @@ const Sidebar = ({
               {item.badge && (
                 <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
                   isActive(item.path)
-                    ? 'bg-white text-purple-600'
+                    ? 'bg-white text-[rgb(255,69,0)]'
                     : 'bg-red-500 text-white'
                 }`}>
                   {item.badge}
@@ -417,7 +417,7 @@ const Sidebar = ({
         {/* Sidebar Panel */}
         <div className="absolute left-0 top-0 bottom-0 w-80 bg-white shadow-2xl overflow-y-auto">
           {/* Header */}
-          <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 p-4 flex items-center justify-between text-white">
+          <div className="sticky top-0 bg-gradient-to-r from-[rgb(255,69,0)] to-[rgb(255,165,0)] p-4 flex items-center justify-between text-white">
             <div className="flex items-center gap-3">
               <span className="text-3xl">🚴‍♂️</span>
               <div>

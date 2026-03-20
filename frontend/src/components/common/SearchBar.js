@@ -221,12 +221,12 @@ const performSearch = useCallback(async (searchQuery) => {
         onClick={() => handleResultClick(item)}
         className={`w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 flex items-start gap-2 sm:gap-3 transition-all ${
           isSelected 
-            ? 'bg-blue-50 border-l-4 border-blue-600 shadow-sm' 
-            : 'hover:bg-gray-50 active:bg-gray-100'
+          ? 'bg-orange-50 border-l-4 border-[rgb(255,69,0)] shadow-sm' 
+          : 'hover:bg-gray-50 active:bg-gray-100'
         }`}
       >
         <div className="flex-shrink-0 mt-0.5 sm:mt-1">
-          <Icon size={16} className={`sm:w-[18px] sm:h-[18px] ${isSelected ? 'text-blue-600' : 'text-gray-400'}`} />
+          <Icon size={16} className={`sm:w-[18px] sm:h-[18px] ${isSelected ? 'text-[rgb(255,69,0)]' : 'text-gray-400'}`} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="font-medium text-sm sm:text-base text-gray-900 truncate">
@@ -286,7 +286,7 @@ const performSearch = useCallback(async (searchQuery) => {
         {/* Search Header */}
         <div className="border-b border-gray-200 p-3 sm:p-4">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="flex-1 flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 rounded-lg border-2 border-gray-300 focus-within:border-blue-500 focus-within:bg-white transition-all">
+            <div className="flex-1 flex items-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 rounded-lg border-2 border-gray-300 focus-within:border-[rgb(255,69,0)] focus-within:bg-white transition-all">
               <input
                 ref={inputRef}
                 type="text"
@@ -311,7 +311,7 @@ const performSearch = useCallback(async (searchQuery) => {
                     performSearch(query);
                   }
                 }}
-                className="flex items-center gap-1.5 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg transition-all font-medium text-sm sm:text-base shadow-md hover:shadow-lg flex-shrink-0"
+                className="flex items-center gap-1.5 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 bg-[rgb(255,69,0)] hover:bg-[rgb(255,165,0)] active:bg-[rgb(255,69,0)] text-white rounded-lg transition-all font-medium text-sm sm:text-base shadow-md hover:shadow-lg flex-shrink-0"
                 aria-label="Search"
               >
                 <Search size={18} className="md:hidden" />
@@ -340,7 +340,7 @@ const performSearch = useCallback(async (searchQuery) => {
                   onClick={() => setActiveFilter(filter.id)}
                   className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                     activeFilter === filter.id
-                      ? 'bg-blue-600 text-white shadow-md scale-105'
+                      ? 'bg-[rgb(255,69,0)] text-white shadow-md scale-105'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200 active:scale-95'
                   }`}
                 >
@@ -368,7 +368,7 @@ const performSearch = useCallback(async (searchQuery) => {
             })()}
           {searchLoading && (
             <div className="p-8 text-center">
-              <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <div className="inline-block w-8 h-8 border-4 border-[rgb(255,69,0)] border-t-transparent rounded-full animate-spin"></div>
               <p className="text-gray-600 mt-3">Searching...</p>
             </div>
           )}
@@ -397,7 +397,7 @@ const performSearch = useCallback(async (searchQuery) => {
                     </h3>
                     <button
                       onClick={clearRecentSearches}
-                      className="text-[10px] sm:text-xs text-blue-600 hover:text-blue-700 font-medium active:scale-95 transition-transform"
+                      className="text-[10px] sm:text-xs text-[rgb(255,69,0)] hover:text-[rgb(255,165,0)] font-medium active:scale-95 transition-transform"
                     >
                       Clear all
                     </button>
@@ -409,8 +409,8 @@ const performSearch = useCallback(async (searchQuery) => {
                         onClick={() => handleRecentClick(search)}
                         className="w-full text-left px-2.5 sm:px-3 py-2 hover:bg-gray-50 active:bg-gray-100 rounded-lg transition-all flex items-center gap-2 sm:gap-3 group"
                       >
-                        <Clock size={12} className="sm:w-[14px] sm:h-[14px] text-gray-400 group-hover:text-blue-600 flex-shrink-0" />
-                        <span className="text-sm sm:text-base text-gray-700 group-hover:text-blue-600 truncate">
+                        <Clock size={12} className="sm:w-[14px] sm:h-[14px] text-gray-400 group-hover:text-[rgb(255,69,0)] flex-shrink-0" />
+                        <span className="text-sm sm:text-base text-gray-700 group-hover:text-[rgb(255,69,0)] truncate">
                           {search}
                         </span>
                       </button>

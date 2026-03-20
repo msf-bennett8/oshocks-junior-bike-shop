@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   MessageCircle, X, Mail, Phone, Clock, ChevronRight, 
   Headphones, ExternalLink
@@ -39,8 +40,11 @@ const FloatingSupportWidget = ({ excludePaths = [] }) => {
   };
 
   const navigateToFullSupport = () => {
-    window.location.href = '/contact-support';
+    navigate('/contact-support');
+    toggleWidget();
   };
+
+  const navigate = useNavigate();
 
   if (!shouldShow) return null;
 
@@ -50,7 +54,7 @@ const FloatingSupportWidget = ({ excludePaths = [] }) => {
       {isVisible && (
         <button
           onClick={toggleWidget}
-          className={`fixed right-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center z-50 ${
+          className={`fixed right-0 bg-gradient-to-r from-[rgb(255,69,0)] to-[rgb(255,165,0)] text-white shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center z-50 ${
             isOpen ? 'w-0 opacity-0' : 'w-10 h-14 sm:w-12 sm:h-16 md:w-14 md:h-20'
           } top-1/3 sm:top-1/2 transform -translate-y-1/2 rounded-l-full`}
           aria-label="Open support panel"
@@ -162,27 +166,27 @@ const FloatingSupportWidget = ({ excludePaths = [] }) => {
               <div>
                 <h4 className="font-semibold text-gray-900 mb-2 sm:mb-3 text-xs sm:text-sm">Quick Links</h4>
                 <div className="space-y-1.5 sm:space-y-2">
-                  <a
-                    href="/orders"
-                    className="flex items-center justify-between p-2.5 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                  <button
+                    onClick={() => { navigate('/orders'); toggleWidget(); }}
+                    className="w-full flex items-center justify-between p-2.5 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors active:scale-[0.98] text-left"
                   >
                     <span className="text-xs sm:text-sm text-gray-900">Track Order</span>
                     <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
-                  </a>
-                  <a
-                    href="/refund-policy"
-                    className="flex items-center justify-between p-2.5 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                  </button>
+                  <button
+                    onClick={() => { navigate('/refund-policy'); toggleWidget(); }}
+                    className="w-full flex items-center justify-between p-2.5 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors active:scale-[0.98] text-left"
                   >
                     <span className="text-xs sm:text-sm text-gray-900">Returns</span>
                     <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
-                  </a>
-                  <a
-                    href="/faq"
-                    className="flex items-center justify-between p-2.5 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                  </button>
+                  <button
+                    onClick={() => { navigate('/faq'); toggleWidget(); }}
+                    className="w-full flex items-center justify-between p-2.5 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors active:scale-[0.98] text-left"
                   >
                     <span className="text-xs sm:text-sm text-gray-900">FAQs</span>
                     <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
-                  </a>
+                  </button>
                 </div>
               </div>
 

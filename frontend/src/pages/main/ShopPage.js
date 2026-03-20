@@ -140,7 +140,7 @@ const ShopPage = () => {
           <p className="text-gray-600 mb-4">{getErrorMessage(error)}</p>
           <p className="text-sm text-gray-500 mb-4">
             Please check your backend connection at:<br />
-            <code className="bg-gray-100 px-2 py-1 rounded">https://oshocks-junior-bike-shop-backend.onrender.com/api/v1</code>
+            <code className="bg-gray-100 px-2 py-1 rounded">{process.env.REACT_APP_API_URL || 'Not configured'}</code>
           </p>
           <button 
             onClick={() => {

@@ -17,6 +17,7 @@ import {
   Clock,
   Award
 } from 'lucide-react';
+import Logo from '../common/Logo';
 
 const Footer = () => {
   const { user } = useAuth();
@@ -104,17 +105,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10 border-b border-gray-800">
           {/* Brand Info */}
           <div className="lg:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center shadow-md">
-                <span className="text-white font-bold text-xl">OS</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-orange-400 bg-clip-text text-transparent">
-                  Oshocks
-                </span>
-                <span className="text-sm text-gray-400">A Premier Cycling Marketplace</span>
-              </div>
-            </Link>
+            <Logo size="large" />
             <p className="text-sm text-gray-400 mb-6 leading-relaxed">
               Quality bicycles, accessories, bike repairs and spare parts for all your cycling needs. Fast delivery around Nairobi. Your trusted partner for everything cycling.
             </p>
@@ -122,15 +113,15 @@ const Footer = () => {
             {/* Contact Info */}
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-sm">
-                <Phone size={18} className="text-blue-400" />
+                <Phone size={18} className="text-[rgb(255,140,0)]" />
                 <span>+254 798 558 285</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <Mail size={18} className="text-blue-400" />
+                <Mail size={18} className="text-[rgb(255,140,0)]" />
                 <span>oshocksjuniorbikeshop@gmail.com</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <MapPin size={18} className="text-blue-400" />
+                <MapPin size={18} className="text-[rgb(255,140,0)]" />
                 <span>Nairobi, Kenya</span>
               </div>
             </div>
@@ -148,9 +139,9 @@ const Footer = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email address"
-              className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-500"
+              className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(255,140,0)] focus:border-transparent text-white placeholder-gray-500"
             />
-              <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-medium whitespace-nowrap">
+              <button className="px-6 py-3 bg-gradient-to-r from-[rgb(255,69,0)] to-[rgb(255,165,0)] text-white rounded-lg hover:opacity-90 transition-all font-medium whitespace-nowrap">
                 Subscribe Now
               </button>
             </div>
@@ -158,19 +149,19 @@ const Footer = () => {
             {/* Trust Badges */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
               <div className="flex items-center gap-2 text-xs">
-                <Truck size={20} className="text-green-400" />
+                <Truck size={20} className="text-[rgb(255,140,0)]" />
                 <span>Free Shipping Over 1,000 KES</span>
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <ShieldCheck size={20} className="text-blue-400" />
+                <ShieldCheck size={20} className="text-[rgb(255,140,0)]" />
                 <span>Secure Payments</span>
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <Clock size={20} className="text-purple-400" />
-                <span>24/7 Support</span>
+                
+                <span>24/7 <Clock size={20} className="text-[rgb(255,140,0)]" />Support</span>
               </div>
               <div className="flex items-center gap-2 text-xs">
-                <Award size={20} className="text-yellow-400" />
+                <Award size={20} className="text-[rgb(255,140,0)]" />
                 <span>Quality Guaranteed</span>
               </div>
             </div>
@@ -187,7 +178,7 @@ const Footer = () => {
                 <li key={index}>
                   <Link 
                     to={item.link}
-                    className="text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 block"
+                    className="text-sm text-gray-400 hover:text-[rgb(255,165,0)] transition-colors duration-200 block"
                   >
                     {item.name}
                   </Link>
@@ -204,7 +195,7 @@ const Footer = () => {
                 <li key={index}>
                   <Link 
                     to={item.link}
-                    className="text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 block"
+                    className="text-sm text-gray-400 hover:text-[rgb(255,165,0)] transition-colors duration-200 block"
                   >
                     {item.name}
                   </Link>
@@ -221,7 +212,7 @@ const Footer = () => {
                 <li key={index}>
                   <Link 
                     to={item.link}
-                    className="text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 block"
+                    className="text-sm text-gray-400 hover:text-[rgb(255,165,0)] transition-colors duration-200 block"
                   >
                     {item.name}
                   </Link>
@@ -238,7 +229,7 @@ const Footer = () => {
                 <li key={index}>
                   <Link 
                     to={item.link}
-                    className="text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 block"
+                    className="text-sm text-gray-400 hover:text-[rgb(255,165,0)] transition-colors duration-200 block"
                   >
                     {item.name}
                   </Link>
@@ -255,7 +246,7 @@ const Footer = () => {
                 <li key={index}>
                   <Link 
                     to={item.link}
-                    className="text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 block"
+                    className="text-sm text-gray-400 hover:text-[rgb(255,165,0)] transition-colors duration-200 block"
                   >
                     {item.name}
                   </Link>
@@ -272,7 +263,7 @@ const Footer = () => {
                 <li key={index}>
                   <Link 
                     to={item.link}
-                    className="text-sm text-gray-400 hover:text-blue-400 transition-colors duration-200 block"
+                    className="text-sm text-gray-400 hover:text-[rgb(255,165,0)] transition-colors duration-200 block"
                   >
                     {item.name}
                   </Link>

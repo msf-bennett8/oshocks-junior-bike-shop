@@ -81,7 +81,7 @@ const AddProduct = ({
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('https://oshocks-junior-bike-shop-backend.onrender.com/api/v1/categories');
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/categories`);
       const data = await response.json();
       setCategories(data.data || data);
     } catch (err) {

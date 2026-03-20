@@ -118,7 +118,7 @@ const HomePage = () => {
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Connection Error</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <p className="text-sm text-gray-500 mb-4">
-            Backend server: <code className="bg-gray-100 px-2 py-1 rounded text-xs">oshocks-junior-bike-shop-backend.onrender.com</code>
+            Backend server: <code className="bg-gray-100 px-2 py-1 rounded text-xs">{process.env.REACT_APP_API_URL || 'Not configured'}</code>
           </p>
           <button
             onClick={fetchProducts}
@@ -623,12 +623,12 @@ const HomePage = () => {
 
                 {products.length > 0 && (
                   <div className="text-center mt-10 md:mt-12">
-                    <Link
-                      to="/shop"
-                      className="inline-block px-8 py-4 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition shadow-lg hover:shadow-xl text-lg flex items-center justify-center gap-2 mx-auto"
-                    >
-                      Explore All {products.length}+ Products <ArrowRight className="w-5 h-5" />
-                    </Link>
+                  <Link
+                  to="/shop"
+                    className="inline-block px-8 py-4 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 transition shadow-lg hover:shadow-xl text-lg flex items-center justify-center gap-2 mx-auto"
+                  >
+                    Explore All {products.length}+ Products <ArrowRight className="w-5 h-5" />
+                  </Link>
                   </div>
                 )}
               </>
@@ -738,24 +738,24 @@ const HomePage = () => {
         </section>
 
         {/* Call to Action */}
-        <section className="py-16 md:py-24 bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 text-white relative overflow-hidden">
-          <div className="absolute inset-0 bg-black opacity-10"></div>
+        <section className="py-16 md:py-24 bg-[rgb(255,165,0)] text-gray-800 relative overflow-hidden">
+          <div className="absolute inset-0 bg-black opacity-0"></div>
           <div className="container mx-auto px-4 text-center relative z-10">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6">Ready to Start Your Cycling Journey?</h2>
-            <p className="text-lg md:text-xl lg:text-2xl mb-8 md:mb-10 max-w-3xl mx-auto leading-relaxed opacity-95">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-gray-800">Ready to Start Your Cycling Journey?</h2>
+            <p className="text-lg md:text-xl lg:text-2xl mb-8 md:mb-10 max-w-3xl mx-auto leading-relaxed text-gray-700">
               Join other satisfied customers who trust Oshocks for quality bikes, 
               professional repairs, and exceptional service. Your perfect ride awaits!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
                 to="/shop"
-                className="w-full sm:w-auto inline-block px-10 py-4 bg-white text-green-600 font-bold rounded-lg hover:bg-gray-100 transition shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 duration-200 text-lg flex items-center justify-center gap-2"
+                className="w-full sm:w-auto inline-block px-10 py-4 bg-white text-orange-600 font-bold rounded-lg hover:bg-gray-100 transition shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 duration-200 text-lg flex items-center justify-center gap-2 group"
               >
-                Browse Products <ArrowRight className="w-5 h-5" />
+                Browse Products <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
                 to="/seller/register"
-                className="w-full sm:w-auto inline-block px-10 py-4 bg-orange-500 border-2 border-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 hover:border-orange-600 transition shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 duration-200 text-lg flex items-center justify-center gap-2"
+                className="w-full sm:w-auto inline-block px-10 py-4 bg-transparent border-2 border-white text-white font-bold rounded-lg hover:bg-white hover:text-orange-600 transition shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 duration-200 text-lg flex items-center justify-center gap-2"
               >
                 <UserPlus className="w-5 h-5" /> Become a Seller
               </Link>
