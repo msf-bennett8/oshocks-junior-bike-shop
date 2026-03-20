@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import { useWishlist } from '../../context/WishlistContext';
 import authService from '../../services/authService';
 import { Search, User, ShoppingCart, Menu, X, ChevronRight, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowRight, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, Users, Package2, BarChart3, FolderTree, Heart } from 'lucide-react';
 import SearchBar from '../common/SearchBar';
@@ -25,6 +26,7 @@ const Navbar = () => {
 
   const { isAuthenticated, user, logout } = useAuth();
   const { cartItems } = useCart();
+  const { wishlistCount } = useWishlist();
   const navigate = useNavigate();
   const sidebarRef = useRef(null);
 
@@ -360,8 +362,13 @@ const Navbar = () => {
               </button>
 
               {/* Wishlist - All screens */}
-              <Link to="/wishlist" className="p-2 sm:p-2.5 rounded-full hover:bg-orange-50 transition-colors relative group">
-                <Heart className="w-5 h-5 text-gray-700 group-hover:text-orange-500 transition-colors" />
+              <Link to="/wishlist" className="relative p-2 sm:p-2.5 rounded-full hover:bg-orange-50 transition-colors group">
+                <Heart className={`w-5 h-5 transition-colors ${wishlistCount > 0 ? 'text-red-500 fill-red-500' : 'text-gray-700 group-hover:text-orange-500'}`} />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full flex items-center justify-center font-bold animate-bounce-in">
+                    {wishlistCount > 99 ? '99+' : wishlistCount}
+                  </span>
+                )}
               </Link>
 
               {/* Cart */}
@@ -661,8 +668,13 @@ const Navbar = () => {
               {/* Mobile Wishlist */}
               <Link to="/wishlist" onClick={() => setIsSidebarOpen(false)} className="flex items-center justify-between px-4 py-3 hover:bg-orange-50 transition-colors group">
                 <div className="flex items-center gap-3">
-                  <Heart className="w-5 h-5 text-gray-500 group-hover:text-orange-500" />
+                  <Heart className={`w-5 h-5 ${wishlistCount > 0 ? 'text-red-500 fill-red-500' : 'text-gray-500 group-hover:text-orange-500'}`} />
                   <span className="text-gray-700 group-hover:text-orange-600 font-medium">Wishlist</span>
+                  {wishlistCount > 0 && (
+                    <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                      {wishlistCount > 99 ? '99+' : wishlistCount}
+                    </span>
+                  )}
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500" />
               </Link>

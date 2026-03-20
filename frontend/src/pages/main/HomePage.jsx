@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   ShoppingCart, 
   Package, 
@@ -17,17 +17,20 @@ import {
   Heart,
   Star,
   Sparkles,
-  ArrowUpRight
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { productAPI } from '../../services/api';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
+import ActionModal from '../../components/common/ActionModal';
 
 const HomePage = () => {
-  const { toggleWishlist, isInWishlist } = useWishlist();
-  const { addToCart, loading: cartLoading } = useCart();
+  const { toggleWishlist, isInWishlist, addToWishlistWithGuest, mergeGuestWishlist } = useWishlist();
+  const { addToCart, toggleCart, loading: cartLoading, isInCart } = useCart();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,10 +39,82 @@ const HomePage = () => {
   const [addingToCart, setAddingToCart] = useState(null); 
   const [loadedImages, setLoadedImages] = useState(new Set());
   const [checkingOut, setCheckingOut] = useState(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [featuredLoading, setFeaturedLoading] = useState(true);
+  
+  // Modal state
+  const [modal, setModal] = useState({
+    isOpen: false,
+    type: 'wishlist',
+    action: 'add',
+    productName: '',
+    section: 'hero'
+  });
+
+  const showModal = (type, action, productName, section = 'hero') => {
+    setModal({ isOpen: true, type, action, productName, section });
+  };
+
+  const closeModal = () => {
+    setModal(prev => ({ ...prev, isOpen: false }));
+  };
 
   const handleImageLoad = (productId) => {
     setLoadedImages(prev => new Set([...prev, productId]));
   };
+
+  // Carousel configuration - responsive items per slide
+  const [itemsPerSlide, setItemsPerSlide] = useState(6);
+  
+  // Update items per slide based on screen size
+  useEffect(() => {
+    const updateItemsPerSlide = () => {
+      const width = window.innerWidth;
+      if (width < 768) {
+        setItemsPerSlide(1); // Small screens - 1 card
+      } else if (width < 1024) {
+        setItemsPerSlide(4); // Medium screens - 2x2 grid = 4 cards
+      } else {
+        setItemsPerSlide(6); // Large screens - 3x2 grid = 6 cards
+      }
+    };
+    
+    updateItemsPerSlide();
+    window.addEventListener('resize', updateItemsPerSlide);
+    return () => window.removeEventListener('resize', updateItemsPerSlide);
+  }, []);
+  
+  const totalSlides = Math.ceil(products.length / itemsPerSlide);
+
+  // Get visible products for current slide
+  const getVisibleProducts = () => {
+    const startIndex = currentSlide * itemsPerSlide;
+    return products.slice(startIndex, startIndex + itemsPerSlide);
+  };
+
+  // Carousel navigation functions
+  const nextSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev + 1) % totalSlides);
+  }, [totalSlides]);
+
+  const prevSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+  }, [totalSlides]);
+
+  const goToSlide = (index) => {
+    setCurrentSlide(index);
+  };
+
+  // Auto-advance carousel every 3 seconds
+  useEffect(() => {
+    if (products.length === 0 || totalSlides <= 1) return;
+    
+    const interval = setInterval(() => {
+      nextSlide();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [products.length, totalSlides, nextSlide, itemsPerSlide]);
 
   useEffect(() => {
     fetchProducts();
@@ -89,23 +164,54 @@ const HomePage = () => {
   };
 
   // Handle wishlist toggle
-  const handleWishlistToggle = async (e, product) => {
+  const handleWishlistToggle = async (e, product, section = 'hero') => {
     e.preventDefault();
     e.stopPropagation();
     
     setTogglingWishlist(product.id);
     
     try {
+      const wasInWishlist = isInWishlist(product.id, null);
+      
+      // Use toggleWishlist which now handles guests internally
       const result = await toggleWishlist(product, null);
       
-      if (!result.success) {
-        alert('❌ ' + result.error);
+      if (result.success) {
+        showModal('wishlist', wasInWishlist ? 'remove' : 'add', product.name, section);
+      } else {
+        showModal('cart', 'error', result.error, section);
       }
     } catch (error) {
       console.error('Error toggling wishlist:', error);
-      alert('❌ Failed to update wishlist');
+      showModal('cart', 'error', 'Failed to update wishlist', section);
     } finally {
       setTogglingWishlist(null);
+    }
+  };
+
+  // Handle cart toggle (add/remove)
+  const handleAddToCart = async (e, product, section = 'hero') => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setAddingToCart(product.id);
+    
+    try {
+      const variant = product?.variants?.[0] || product?.colors?.[0] || null;
+      const wasInCart = isInCart(product.id, variant);
+      const result = await toggleCart(product, variant);
+      
+      if (result.success) {
+        // Show appropriate modal based on action
+        showModal('cart', wasInCart ? 'remove' : 'add', product.name, section);
+      } else {
+        showModal('cart', 'error', result.error, section);
+      }
+    } catch (error) {
+      console.error('Error toggling cart:', error);
+      showModal('cart', 'error', 'Failed to update cart', section);
+    } finally {
+      setAddingToCart(null);
     }
   };
 
@@ -145,7 +251,7 @@ const HomePage = () => {
       </Helmet>
 
       <div className="min-h-screen bg-gray-50">
-        {/* Modern Hero Section */}
+        {/* Modern Hero Section with Featured Products Grid Carousel */}
         <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-gray-900">
           {/* Animated Background */}
           <div className="absolute inset-0">
@@ -167,10 +273,10 @@ const HomePage = () => {
             }}
           />
 
-          <div className="container mx-auto px-4 relative z-10">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              {/* Left Content */}
-              <div className="space-y-8">
+          <div className="container mx-auto px-4 relative z-10 py-12 lg:py-0">
+            <div className="grid lg:grid-cols-12 gap-8 items-center">
+              {/* Left Content - Reduced width (5/12 instead of 6/12) */}
+              <div className="lg:col-span-5 space-y-8">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
                   <Sparkles className="w-4 h-4 text-orange-400" />
                   <span className="text-sm font-medium text-white/90">Kenya's Premier Cycling Marketplace</span>
@@ -219,44 +325,188 @@ const HomePage = () => {
                     <div className="text-sm text-gray-400">Expert Mechanics</div>
                   </div>
                 </div>
+
+                {/* Mobile Products Grid - Shows below buttons on small screens */}
+                <div className="lg:hidden mt-8">
+                <MobileProductsGrid 
+                  products={products}
+                  loading={loading}
+                  currentSlide={currentSlide}
+                  toggleCart={toggleCart}
+                  cartLoading={cartLoading}
+                  toggleWishlist={toggleWishlist}
+                  togglingWishlist={togglingWishlist}
+                  isInWishlist={isInWishlist}
+                  isInCart={isInCart}
+                  nextSlide={nextSlide}
+                  prevSlide={prevSlide}
+                  showModal={showModal}
+                />
+                </div>
               </div>
 
-              {/* Right - Featured Product Card */}
-              <div className="hidden lg:block relative">
-                <div className="relative aspect-square max-w-md mx-auto">
-                  <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-3xl blur-2xl" />
-                  <div className="relative bg-gray-800/50 backdrop-blur-xl rounded-3xl p-6 border border-white/10 shadow-2xl">
-                    <img 
-                      src="https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=800&q=80" 
-                      alt="Featured Bike" 
-                      className="w-full h-64 object-contain mb-4 drop-shadow-2xl"
-                    />
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <span className="px-3 py-1 bg-orange-500/20 text-orange-400 text-xs font-bold rounded-full">NEW ARRIVAL</span>
-                        <div className="flex items-center gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+              {/* Right - Desktop Products Grid Carousel (3x2) - Increased width (7/12 instead of 6/12) */}
+              <div className="hidden lg:block lg:col-span-7 relative">
+                <div className="relative">
+                  {/* Navigation Arrow - Left - Aligned to center of top row */}
+                  <button
+                    onClick={prevSlide}
+                    className="absolute -left-12 top-[25%] -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-orange-500 text-white rounded-full flex items-center justify-center transition-all hover:scale-110 z-20 backdrop-blur-sm border border-white/20"
+                    aria-label="Previous products"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+
+                  {/* Products Grid Container */}
+                  <div className="relative bg-gray-800/30 backdrop-blur-xl rounded-3xl p-6 border border-white/10 shadow-2xl overflow-hidden">
+                    
+                    {/* Loading State */}
+                    {loading ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 h-[500px]">
+                        {[...Array(6)].map((_, i) => (
+                          <div key={i} className="bg-gray-700/50 rounded-xl animate-pulse" />
+                        ))}
+                      </div>
+                    ) : products.length > 0 ? (
+                      <>
+                        {/* Responsive Products Grid - 1/2/3 columns */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {getVisibleProducts().map((product, index) => (
+                            <div 
+                              key={`${product.id}-${currentSlide}-${index}`}
+                              className="bg-gray-800/60 rounded-xl p-4 border border-white/5 hover:border-orange-500/30 transition-all hover:transform hover:-translate-y-1 group relative"
+                            >
+                              <Link to={`/product/${product.id}`} className="block">
+                                {/* Product Image */}
+                                <div className="relative h-32 mb-3 flex items-center justify-center bg-gray-700/30 rounded-lg overflow-hidden">
+                                  {product.images?.[0]?.image_url || product.image_url ? (
+                                    <img 
+                                      src={product.images?.[0]?.image_url || product.image_url}
+                                      alt={product.name}
+                                      className="w-full h-full object-contain p-2 transition-transform group-hover:scale-105"
+                                    />
+                                  ) : (
+                                    <Package className="w-12 h-12 text-gray-500" />
+                                  )}
+                                  
+                                  {/* Badges */}
+                                  <div className="absolute top-2 left-2 flex flex-col gap-1">
+                                    {product.is_featured && (
+                                      <span className="px-2 py-0.5 bg-orange-500/80 text-white text-[10px] font-bold rounded">FEATURED</span>
+                                    )}
+                                    {product.compare_price && Number(product.compare_price) > Number(product.price) && (
+                                      <span className="px-2 py-0.5 bg-red-500/80 text-white text-[10px] font-bold rounded">
+                                        {Math.round((1 - Number(product.price) / Number(product.compare_price)) * 100)}% OFF
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Action Icons - Outside Image (Mobile Style) */}
+                                  <div className="absolute -bottom-3 -right-3 flex flex-col gap-1 bg-gray-800/90 backdrop-blur-sm rounded-lg p-1.5 border border-white/10 shadow-lg z-20">
+                                    {/* Wishlist Icon */}
+                                    <button
+                                      onClick={(e) => handleWishlistToggle(e, product, 'hero')}
+                                      disabled={togglingWishlist === product.id}
+                                      className="p-1.5 rounded-md transition-all hover:scale-110 hover:bg-white/10 disabled:opacity-50"
+                                    >
+                                      <Heart 
+                                        className={`w-4 h-4 ${isInWishlist(product.id, null) ? 'text-orange-500 fill-orange-500' : 'text-orange-400'}`} 
+                                        strokeWidth={2}
+                                      />
+                                    </button>
+
+                                    {/* Cart Icon */}
+                                    <button
+                                      onClick={(e) => handleAddToCart(e, product, 'hero')}
+                                      disabled={!product.quantity || cartLoading}
+                                      className="p-1.5 rounded-md transition-all hover:scale-110 hover:bg-white/10 disabled:opacity-50"
+                                    >
+                                      <ShoppingCart 
+                                        className={`w-4 h-4 ${isInCart(product.id, product?.variants?.[0] || product?.colors?.[0]) ? 'text-orange-500 fill-orange-500' : !product.quantity ? 'text-gray-500' : 'text-orange-400'}`} 
+                                      />
+                                    </button>
+
+                                    {/* Checkout Arrow */}
+                                    <button
+                                      onClick={async (e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        const variant = product?.variants?.[0] || product?.colors?.[0] || null;
+                                        const result = await toggleCart(product, variant);
+                                        if (result.success) {
+                                          window.location.href = '/checkout';
+                                        } else {
+                                          showModal('cart', 'error', result.error, 'hero');
+                                        }
+                                      }}
+                                      disabled={!product.quantity}
+                                      className="p-1.5 rounded-md transition-all hover:scale-110 hover:bg-white/10 disabled:opacity-50"
+                                      title="Buy Now"
+                                    >
+                                      <ArrowRight 
+                                        className={`w-4 h-4 ${!product.quantity ? 'text-gray-500' : 'text-orange-400'}`} 
+                                      />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Product Info */}
+                                <h4 className="font-semibold text-white text-sm mb-1 line-clamp-1 group-hover:text-orange-400 transition-colors">
+                                  {product.name}
+                                </h4>
+                                
+                                <p className="text-gray-400 text-xs mb-2">
+                                  {product.brand && `${product.brand} • `}
+                                  {product.category?.name || 'Bike'}
+                                </p>
+                                
+                                <div className="flex items-center justify-between">
+                                  <span className="text-lg font-bold text-orange-400">
+                                    KSh {Number(product.price).toLocaleString()}
+                                  </span>
+                                  {product.compare_price && (
+                                    <span className="text-xs text-gray-500 line-through">
+                                      KSh {Number(product.compare_price).toLocaleString()}
+                                    </span>
+                                  )}
+                                </div>
+                              </Link>
+                            </div>
                           ))}
                         </div>
+
+                        {/* Slide Counter */}
+                        <div className="absolute top-4 right-4 bg-black/50 px-3 py-1 rounded-full text-xs text-white/80">
+                          {currentSlide + 1} / {totalSlides || 1}
+                        </div>
+                      </>
+                    ) : (
+                      /* Empty State */
+                      <div className="flex flex-col items-center justify-center h-[500px] text-center">
+                        <Package className="w-16 h-16 text-gray-500 mb-4" />
+                        <p className="text-gray-400 text-lg">No products available</p>
+                        <Link to="/shop" className="mt-4 text-orange-400 hover:text-orange-300 font-semibold">
+                          Browse Shop →
+                        </Link>
                       </div>
-                      <h3 className="text-2xl font-bold text-white">Trek Domane AL 2</h3>
-                      <p className="text-gray-400">Road Bike • Carbon Fork • Shimano Groupset</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-3xl font-bold text-orange-400">KSh 45,000</span>
-                        <button className="p-3 bg-orange-500 rounded-full hover:bg-orange-600 transition-colors">
-                          <ArrowUpRight className="w-6 h-6 text-white" />
-                        </button>
-                      </div>
-                    </div>
+                    )}
                   </div>
+
+                  {/* Navigation Arrow - Right - Aligned to center of top row */}
+                  <button
+                    onClick={nextSlide}
+                    className="absolute -right-12 top-[25%] -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-orange-500 text-white rounded-full flex items-center justify-center transition-all hover:scale-110 z-20 backdrop-blur-sm border border-white/20"
+                    aria-label="Next products"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Scroll Indicator */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce hidden lg:block">
             <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2">
               <div className="w-1 h-2 bg-white/60 rounded-full" />
             </div>
@@ -470,13 +720,13 @@ const HomePage = () => {
           </div>
         </section>
 
-        {/* Featured Products Section */}
+        {/* New Arrivals Section */}
         <section className="py-12 md:py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
               <div>
-                <h2 className="text-3xl md:text-4xl font-bold mb-2 text-gray-800">Featured Products</h2>
-                <p className="text-gray-600">Discover our handpicked selection of quality bikes and accessories</p>
+                <h2 className="text-3xl md:text-4xl font-bold mb-2 text-gray-800">New Arrivals</h2>
+                <p className="text-gray-600">Fresh inventory just added to our collection</p>
               </div>
               <Link
                 to="/shop"
@@ -586,34 +836,11 @@ const HomePage = () => {
                           <div className="absolute bottom-3 right-3 flex items-center gap-2 z-10">
                             {/* Add to Cart Button */}
                               <button
-                                onClick={async (e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  
-                                  setAddingToCart(product.id);
-                                  
-                                  try {
-                                    // Get first variant if available
-                                    const variant = product.variants?.[0] || product.colors?.[0] || null;
-                                    
-                                    const result = await addToCart(product, 1, variant);
-                                    
-                                    if (result.success) {
-                                      alert('✅ Added to cart!');
-                                    } else {
-                                      alert('❌ ' + result.error);
-                                    }
-                                  } catch (error) {
-                                    console.error('Error adding to cart:', error);
-                                    alert('❌ Failed to add to cart');
-                                  } finally {
-                                    setAddingToCart(null);
-                                  }
-                                }}
+                                onClick={(e) => handleAddToCart(e, product, 'newArrivals')}
                                 disabled={!product.quantity || product.quantity === 0 || addingToCart === product.id}
                                 className={`p-2.5 rounded-full transition-all duration-200 shadow-lg ${
                                   product.quantity > 0 && addingToCart !== product.id
-                                    ? 'bg-white text-gray-700 hover:bg-blue-500 hover:text-white hover:scale-110'
+                                    ? 'bg-white text-gray-700 hover:bg-orange-500 hover:text-white hover:scale-110'
                                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                 }`}
                                 title={product.quantity > 0 ? 'Add to cart' : 'Out of stock'}
@@ -621,30 +848,20 @@ const HomePage = () => {
                                 {addingToCart === product.id ? (
                                   <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
                                 ) : (
-                                  <svg 
-                                    className="w-5 h-5" 
-                                    fill="none" 
-                                    stroke="currentColor" 
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path 
-                                      strokeLinecap="round" 
-                                      strokeLinejoin="round" 
-                                      strokeWidth={2} 
-                                      d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" 
-                                    />
-                                  </svg>
+                                  <ShoppingCart 
+                                    className={`w-5 h-5 ${isInCart(product.id, product?.variants?.[0] || product?.colors?.[0]) ? 'text-orange-600 fill-orange-100' : ''}`}
+                                  />
                                 )}
                               </button>
 
                             {/* Wishlist Button */}
                             <button
-                              onClick={(e) => handleWishlistToggle(e, product)}
+                              onClick={(e) => handleWishlistToggle(e, product, 'newArrivals')}
                               disabled={togglingWishlist === product.id}
                               className={`p-2.5 rounded-full transition-all duration-200 shadow-lg ${
                                 isInWishlist(product.id, null)
-                                  ? 'bg-red-500 text-white hover:bg-red-600'
-                                  : 'bg-white text-green-500 hover:bg-green-500 hover:text-white'
+                                  ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600'
+                                  : 'bg-white text-gray-600 hover:bg-gray-100 hover:text-red-500'
                               } ${togglingWishlist === product.id ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'}`}
                               title={isInWishlist(product.id, null) ? 'Remove from wishlist' : 'Add to wishlist'}
                             >
@@ -652,8 +869,7 @@ const HomePage = () => {
                                 <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
                               ) : (
                                 <Heart
-                                  className="w-5 h-5"
-                                  fill={isInWishlist(product.id, null) ? 'currentColor' : 'none'}
+                                  className={`w-5 h-5 ${isInWishlist(product.id, null) ? 'fill-current' : ''}`}
                                   strokeWidth={2}
                                 />
                               )}
@@ -719,22 +935,22 @@ const HomePage = () => {
                                     
                                     try {
                                       const variant = product.variants?.[0] || product.colors?.[0] || null;
-                                      const result = await addToCart(product, 1, variant);
+                                      const result = await toggleCart(product, variant);
                                       
                                       if (result.success) {
                                         window.location.href = '/checkout';
                                       } else {
-                                        alert('❌ ' + result.error);
+                                        showModal('cart', 'error', result.error, 'newArrivals');
                                         setCheckingOut(null);
                                       }
                                     } catch (error) {
                                       console.error('Error:', error);
-                                      alert('❌ Failed to proceed to checkout');
+                                      showModal('cart', 'error', 'Failed to proceed to checkout', 'newArrivals');
                                       setCheckingOut(null);
                                     }
                                   }}
                                   disabled={checkingOut === product.id}
-                                  className={`text-xs bg-orange-500 text-white px-2 sm:px-3 py-1 rounded font-semibold hover:bg-orange-600 transition-colors whitespace-nowrap flex items-center gap-1 ${
+                                  className={`text-xs bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 sm:px-3 py-1 rounded font-semibold hover:from-orange-600 hover:to-red-600 transition-colors whitespace-nowrap flex items-center gap-1 ${
                                     checkingOut === product.id ? 'opacity-75 cursor-not-allowed' : ''
                                   }`}
                                 >
@@ -762,7 +978,7 @@ const HomePage = () => {
                   to="/shop"
                     className="inline-block px-8 py-4 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 transition shadow-lg hover:shadow-xl text-lg flex items-center justify-center gap-2 mx-auto"
                   >
-                    Explore All {products.length}+ Products <ArrowRight className="w-5 h-5" />
+                    View All New Arrivals <ArrowRight className="w-5 h-5" />
                   </Link>
                   </div>
                 )}
@@ -872,6 +1088,16 @@ const HomePage = () => {
           </div>
         </section>
 
+        {/* Action Modal */}
+        <ActionModal 
+          isOpen={modal.isOpen}
+          onClose={closeModal}
+          type={modal.type}
+          action={modal.action}
+          productName={modal.productName}
+          section={modal.section}
+        />
+
         {/* Call to Action */}
         <section className="py-16 md:py-24 bg-gray-50 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-red-500/5" />
@@ -903,6 +1129,205 @@ const HomePage = () => {
         </section>
       </div>
     </>
+  );
+};
+
+// Mobile Products Carousel Component (1 product at a time, full width, icon buttons only)
+const MobileProductsGrid = ({ 
+  products, 
+  loading, 
+  currentSlide, 
+  toggleCart, 
+  cartLoading, 
+  toggleWishlist, 
+  togglingWishlist, 
+  isInWishlist,
+  isInCart,
+  nextSlide,
+  prevSlide,
+  showModal
+}) => {
+  const totalSlides = products.length;
+  const product = products[currentSlide];
+
+  if (loading) {
+    return (
+      <div className="bg-gray-800/50 rounded-2xl p-4 animate-pulse">
+        <div className="h-64 bg-gray-700 rounded-xl mb-4" />
+        <div className="h-6 bg-gray-700 rounded w-3/4 mb-2" />
+        <div className="h-4 bg-gray-700 rounded w-1/2" />
+      </div>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Package className="w-12 h-12 text-gray-500 mx-auto mb-2" />
+        <p className="text-gray-400 text-sm">No products available</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+      {/* Header with Navigation */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-white font-semibold">Featured Products</h3>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={prevSlide}
+            className="w-10 h-10 bg-white/10 hover:bg-orange-500 text-white rounded-full flex items-center justify-center transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <span className="text-white/60 text-sm min-w-[3rem] text-center font-medium">
+            {currentSlide + 1} / {totalSlides}
+          </span>
+          <button
+            onClick={nextSlide}
+            className="w-10 h-10 bg-white/10 hover:bg-orange-500 text-white rounded-full flex items-center justify-center transition-colors"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Single Product Card - Full Width, Fills Section */}
+      <div className="relative">
+        <Link to={`/product/${product.id}`} className="block">
+          {/* Product Image - Larger to fill space */}
+          <div className="relative h-64 mb-4 flex items-center justify-center bg-gray-700/30 rounded-xl overflow-hidden">
+            {product.images?.[0]?.image_url || product.image_url ? (
+              <img 
+                src={product.images?.[0]?.image_url || product.image_url}
+                alt={product.name}
+                className="w-full h-full object-contain p-2"
+              />
+            ) : (
+              <Package className="w-24 h-24 text-gray-500" />
+            )}
+            
+            {/* Badges - Top Left */}
+            <div className="absolute top-3 left-3 flex flex-col gap-1">
+              {product.is_featured && (
+                <span className="px-2 py-1 bg-orange-500 text-white text-xs font-bold rounded shadow-lg">FEATURED</span>
+              )}
+              {product.compare_price && Number(product.compare_price) > Number(product.price) && (
+                <span className="px-2 py-1 bg-red-500 text-white text-xs font-bold rounded shadow-lg">
+                  {Math.round((1 - Number(product.price) / Number(product.compare_price)) * 100)}% OFF
+                </span>
+              )}
+            </div>
+
+            {/* Action Icons - Outside Image with Background Container */}
+            <div className="absolute -bottom-4 -right-4 flex flex-col gap-1 bg-gray-800/90 backdrop-blur-sm rounded-xl p-2 border border-white/10 shadow-xl z-20">
+              {/* Wishlist Icon */}
+              <button
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const wasInWishlist = isInWishlist(product.id, null);
+                  const result = await toggleWishlist(product, null);
+                  if (!result.success) {
+                    alert('❌ ' + result.error);
+                  }
+                }}
+                disabled={togglingWishlist === product.id}
+                className="p-2 rounded-lg transition-all hover:scale-110 hover:bg-white/10 active:scale-95 disabled:opacity-50"
+              >
+                <Heart 
+                  className={`w-6 h-6 ${isInWishlist(product.id, null) ? 'text-orange-500 fill-orange-500' : 'text-orange-400'}`} 
+                  strokeWidth={2}
+                />
+              </button>
+
+              {/* Cart Icon */}
+              <button
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const variant = product?.variants?.[0] || product?.colors?.[0] || null;
+                  const result = await toggleCart(product, variant);
+                  if (result.success) {
+                    // Success - icon will show filled on re-render
+                  } else {
+                    alert('❌ ' + result.error);
+                  }
+                }}
+                disabled={!product.quantity || cartLoading}
+                className="p-2 rounded-lg transition-all hover:scale-110 hover:bg-white/10 active:scale-95 disabled:opacity-50"
+              >
+                <ShoppingCart 
+                  className={`w-6 h-6 ${isInCart(product.id, product?.variants?.[0] || product?.colors?.[0]) ? 'text-orange-500 fill-orange-500' : !product.quantity ? 'text-gray-500' : 'text-orange-400'}`} 
+                />
+              </button>
+
+              {/* Checkout Arrow */}
+              <button
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const variant = product?.variants?.[0] || product?.colors?.[0] || null;
+                  const result = await toggleCart(product, variant);
+                  if (result.success) {
+                    window.location.href = '/checkout';
+                  } else {
+                    alert('❌ ' + result.error);
+                  }
+                }}
+                disabled={!product.quantity}
+                className="p-2 rounded-lg transition-all hover:scale-110 hover:bg-white/10 active:scale-95 disabled:opacity-50"
+                title="Buy Now"
+              >
+                <ArrowRight 
+                  className={`w-6 h-6 ${!product.quantity ? 'text-gray-500' : 'text-orange-400'}`} 
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Product Info - Compact but clear */}
+          <div className="space-y-1">
+            <h4 className="text-white font-bold text-xl line-clamp-1">
+              {product.name}
+            </h4>
+            
+            <p className="text-gray-400 text-sm">
+              {product.brand && `${product.brand} • `}
+              {product.category?.name || 'Bike'}
+              {product.condition && ` • ${product.condition}`}
+            </p>
+            
+            <div className="flex items-center justify-between pt-3">
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold text-orange-400">
+                  KSh {Number(product.price).toLocaleString()}
+                </span>
+                {product.compare_price && (
+                  <span className="text-base text-gray-500 line-through">
+                    KSh {Number(product.compare_price).toLocaleString()}
+                  </span>
+                )}
+              </div>
+              
+              {/* Stock Status */}
+              {product.quantity > 0 ? (
+                <span className="text-sm text-green-400 font-medium flex items-center bg-green-400/10 px-2 py-1 rounded-full">
+                  <span className="w-2 h-2 bg-green-400 rounded-full mr-1.5"></span>
+                  In Stock
+                </span>
+              ) : (
+                <span className="text-sm text-red-400 font-medium flex items-center bg-red-400/10 px-2 py-1 rounded-full">
+                  <span className="w-2 h-2 bg-red-400 rounded-full mr-1.5"></span>
+                  Out of Stock
+                </span>
+              )}
+            </div>
+          </div>
+        </Link>
+      </div>
+    </div>
   );
 };
 

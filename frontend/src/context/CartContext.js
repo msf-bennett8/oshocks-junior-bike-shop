@@ -18,10 +18,25 @@ export const CartProvider = ({ children }) => {
   // Load cart from localStorage or API on mount
   useEffect(() => {
     if (isAuthenticated) {
-      loadCartFromAPI();
+      loadCartFromAPI().then(() => {
+        // After loading, merge any guest cart items
+        mergeGuestCart();
+      });
     } else {
       loadCartFromLocalStorage();
     }
+  }, [isAuthenticated]);
+
+  // Listen for login events
+  useEffect(() => {
+    const handleLogin = () => {
+      if (isAuthenticated) {
+        mergeGuestCart();
+      }
+    };
+
+    window.addEventListener('userLoggedIn', handleLogin);
+    return () => window.removeEventListener('userLoggedIn', handleLogin);
   }, [isAuthenticated]);
 
   // Sync cart to localStorage whenever it changes
@@ -466,12 +481,41 @@ const updateQuantity = async (itemId, newQuantity) => {
     }
   };
 
+  // Toggle cart - add if not in cart, remove if in cart
+  const toggleCart = async (product, variant = null) => {
+    const inCart = isInCart(product.id, variant);
+    
+    if (inCart) {
+      // Remove from cart
+      const cartItem = cartItems.find(
+        item => item.product_id === product.id && 
+        JSON.stringify(item.variant) === JSON.stringify(variant)
+      );
+      
+      if (cartItem) {
+        const result = await removeFromCart(cartItem.id);
+        if (result.success) {
+          return { success: true, action: 'remove', message: 'Item removed from cart' };
+        }
+        return result;
+      }
+    } else {
+      // Add to cart
+      const result = await addToCart(product, 1, variant);
+      if (result.success) {
+        return { success: true, action: 'add', message: 'Item added to cart' };
+      }
+      return result;
+    }
+  };
+
   const value = {
     cartItems,
     loading,
     error,
     addToCart,
     removeFromCart,
+    toggleCart,
     updateQuantity,
     clearCart,
     getCartTotals,

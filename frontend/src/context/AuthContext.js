@@ -84,6 +84,14 @@ const login = async (credentials) => {
     setUser(data.user);
     setIsAuthenticated(true);
 
+    // Trigger merge events for cart and wishlist
+    window.dispatchEvent(new StorageEvent('storage', { key: 'authToken' }));
+    
+    // Small delay to allow contexts to pick up the new auth state
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('userLoggedIn'));
+    }, 100);
+
     return { success: true, user: data.user };
   } catch (err) {
     const errorMessage = err.response?.data?.message || 'Login failed';
