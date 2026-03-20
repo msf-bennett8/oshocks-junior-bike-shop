@@ -205,7 +205,8 @@ const SafeHelmet = ({
       
       {/* Viewport & Mobile Optimization */}
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-      <meta name="theme-color" content="#1a73e8" />
+      <meta name="theme-color" content="#ff4500" media="(prefers-color-scheme: light)" />
+      <meta name="theme-color" content="#ff4500" media="(prefers-color-scheme: dark)" />
       
       {/* Language Alternatives */}
       <link rel="alternate" hrefLang="en" href={safeUrl} />
@@ -245,7 +246,7 @@ const SafeHelmet = ({
 
       {/* ===== MOBILE APP META ===== */}
       <meta name="apple-mobile-web-app-capable" content="yes" />
-      <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+      <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       <meta name="apple-mobile-web-app-title" content={safeSiteName} />
       <meta name="format-detection" content="telephone=yes" />
       

@@ -11,8 +11,8 @@
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "portrait-primary",
   
-  "theme_color": "#ff4500",
-  "background_color": "#ff8c00",
+  "theme_color": "rgb(255, 69, 0)",
+  "background_color": "rgb(255, 69, 0)",
   
   "categories": [
     "shopping",
