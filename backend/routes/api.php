@@ -48,6 +48,8 @@ Route::prefix('v1')->group(function () {
     // Public product browsing
     Route::get('/products/search', [ProductController::class, 'search']);
     Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products/sections', [ProductController::class, 'getSections']);
+    Route::get('/products/brands', [ProductController::class, 'getBrands']);
     Route::get('/products/{id}', [ProductController::class, 'show']);
     Route::get('/products/slug/{slug}', [ProductController::class, 'showBySlug']);
     Route::get('/products/{id}/variants', [ProductVariantController::class, 'getByProduct']);

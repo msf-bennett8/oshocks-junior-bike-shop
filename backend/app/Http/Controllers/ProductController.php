@@ -52,6 +52,27 @@ class ProductController extends Controller
             $query->where('condition', $request->condition);
         }
 
+        // Filter by stock status
+        if ($request->has('stock_status')) {
+            switch ($request->stock_status) {
+                case 'in_stock':
+                    $query->where('quantity', '>', 0);
+                    break;
+                case 'out_of_stock':
+                    $query->where('quantity', '=', 0);
+                    break;
+                case 'low_stock':
+                    $query->where('quantity', '>', 0)
+                          ->where('quantity', '<=', \DB::raw('COALESCE(low_stock_threshold, 5)'));
+                    break;
+            }
+        }
+
+        // Filter by minimum rating
+        if ($request->has('min_rating')) {
+            $query->where('rating', '>=', $request->min_rating);
+        }
+
         // Only active products
         $query->where('is_active', true);
 
@@ -364,5 +385,84 @@ class ProductController extends Controller
         ];
 
         return response()->json($analytics);
+    }
+
+    /**
+     * Get product sections for homepage/shop page
+     */
+    public function getSections(Request $request)
+    {
+        $sections = [];
+        $perSection = $request->get('per_section', 6);
+
+        // Featured Products
+        $sections['featured'] = Product::with(['category', 'seller', 'images', 'variants.images'])
+            ->active()
+            ->featured()
+            ->take($perSection)
+            ->get();
+
+        // New Arrivals
+        $sections['new_arrivals'] = Product::with(['category', 'seller', 'images', 'variants.images'])
+            ->active()
+            ->newArrival()
+            ->latest()
+            ->take($perSection)
+            ->get();
+
+        // Best Sellers
+        $sections['best_sellers'] = Product::with(['category', 'seller', 'images', 'variants.images'])
+            ->active()
+            ->bestSellers()
+            ->take($perSection)
+            ->get();
+
+        // Deals/Discounts
+        $sections['deals'] = Product::with(['category', 'seller', 'images', 'variants.images'])
+            ->active()
+            ->onSale()
+            ->orderByRaw('(compare_price - price) / compare_price DESC')
+            ->take($perSection)
+            ->get();
+
+        // Categories with products
+        $categories = \App\Models\Category::with(['products' => function($query) {
+            $query->active()->with(['seller', 'images', 'variants.images'])->take($perSection);
+        }])->whereHas('products', function($q) {
+            $q->active();
+        })->take(4)->get();
+
+        $sections['by_category'] = $categories->map(function($category) {
+            return [
+                'id' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
+                'products' => $category->products
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $sections
+        ]);
+    }
+
+    /**
+     * Get unique brands for filter dropdown
+     */
+    public function getBrands()
+    {
+        $brands = Product::where('is_active', true)
+            ->whereNotNull('brand')
+            ->where('brand', '!=', '')
+            ->distinct()
+            ->pluck('brand')
+            ->sort()
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $brands
+        ]);
     }
 }

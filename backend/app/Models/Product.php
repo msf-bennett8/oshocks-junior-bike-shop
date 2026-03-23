@@ -167,6 +167,35 @@ class Product extends Model
     }
 
     /**
+     * Scope: New arrivals (last 30 days or marked as new)
+     */
+    public function scopeNewArrival($query)
+    {
+        return $query->where(function($q) {
+            $q->where('is_new_arrival', true)
+              ->orWhere('created_at', '>=', now()->subDays(30));
+        });
+    }
+
+    /**
+     * Scope: Best sellers
+     */
+    public function scopeBestSellers($query)
+    {
+        return $query->orderBy('sales', 'desc');
+    }
+
+    /**
+     * Scope: Has discount/compare price
+     */
+    public function scopeOnSale($query)
+    {
+        return $query->whereNotNull('compare_price')
+                     ->where('compare_price', '>', 0)
+                     ->whereRaw('compare_price > price');
+    }
+
+    /**
      * Scope: Filter by type (bike or accessory)
      */
     public function scopeOfType($query, $type)

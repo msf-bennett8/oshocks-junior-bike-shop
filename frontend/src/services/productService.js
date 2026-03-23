@@ -4,7 +4,40 @@ const productService = {
   // Get all products with filters
   getAllProducts: async (params = {}) => {
     try {
-      const response = await api.get('/products', { params });
+      // Map frontend sort values to backend params
+      const backendParams = { ...params };
+      
+      // Handle sort mapping
+      if (params.sort) {
+        const sortMapping = {
+          'latest': { sort_by: 'created_at', sort_order: 'desc' },
+          'price_low': { sort_by: 'price', sort_order: 'asc' },
+          'price_high': { sort_by: 'price', sort_order: 'desc' },
+          'popular': { sort_by: 'sales', sort_order: 'desc' }
+        };
+        
+        const mappedSort = sortMapping[params.sort];
+        if (mappedSort) {
+          backendParams.sort_by = mappedSort.sort_by;
+          backendParams.sort_order = mappedSort.sort_order;
+          delete backendParams.sort; // Remove frontend sort key
+        }
+      }
+      
+      // Map category to category_id for backend
+      if (params.category) {
+        backendParams.category_id = params.category;
+        delete backendParams.category;
+      }
+      
+      // Remove empty params
+      Object.keys(backendParams).forEach(key => {
+        if (backendParams[key] === '' || backendParams[key] === null || backendParams[key] === undefined) {
+          delete backendParams[key];
+        }
+      });
+      
+      const response = await api.get('/products', { params: backendParams });
       return response.data;
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -73,6 +106,19 @@ const productService = {
       return response.data;
     } catch (error) {
       console.error('Error fetching categories:', error);
+      throw error;
+    }
+  },
+
+  // Get product sections (featured, new arrivals, etc.)
+  getProductSections: async (perSection = 6) => {
+    try {
+      const response = await api.get('/products/sections', {
+        params: { per_section: perSection }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching product sections:', error);
       throw error;
     }
   },
