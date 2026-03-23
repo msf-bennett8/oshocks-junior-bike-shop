@@ -363,6 +363,11 @@ const handleSubmit = async () => {
     submitFormData.append('quantity', parseInt(formData.quantity));
     submitFormData.append('condition', formData.condition);
     
+    // ✅ Compare price for discount display (basePrice is the "original" price)
+    if (formData.basePrice && parseFloat(formData.basePrice) > parseFloat(formData.discountPrice || formData.basePrice)) {
+      submitFormData.append('compare_price', parseFloat(formData.basePrice));
+    }
+    
     // ✅ Optional fields (only send if they have values)
     if (formData.brand && formData.brand.trim()) {
       submitFormData.append('brand_id', formData.brand.trim());

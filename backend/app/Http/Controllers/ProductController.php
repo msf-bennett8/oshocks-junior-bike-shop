@@ -13,7 +13,7 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Product::with(['category', 'seller', 'images', 'variants']);
+        $query = Product::with(['category', 'seller', 'images', 'variants.images']);
 
         // Filter by type (bike or accessory)
         if ($request->has('type')) {

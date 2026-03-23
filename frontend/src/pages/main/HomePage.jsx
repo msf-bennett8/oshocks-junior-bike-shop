@@ -19,7 +19,10 @@ import {
   Sparkles,
   ArrowUpRight,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Calendar,
+  Mountain,
+  Timer
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -273,10 +276,10 @@ const HomePage = () => {
             }}
           />
 
-          <div className="container mx-auto px-4 relative z-10 py-12 lg:py-0">
+          <div className="container mx-auto px-4 relative z-10 py-12 lg:pt-8 lg:pb-0">
             <div className="grid lg:grid-cols-12 gap-8 items-center">
-              {/* Left Content - Reduced width (5/12 instead of 6/12) */}
-              <div className="lg:col-span-5 space-y-8">
+              {/* Left Content */}
+              <div className="lg:col-span-5 space-y-6">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
                   <Sparkles className="w-4 h-4 text-orange-400" />
                   <span className="text-sm font-medium text-white/90">Kenya's Premier Cycling Marketplace</span>
@@ -298,20 +301,33 @@ const HomePage = () => {
                     to="/shop"
                     className="group px-8 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full font-bold text-lg hover:shadow-2xl hover:shadow-orange-500/40 hover:-translate-y-1 transition-all flex items-center gap-2"
                   >
-                    Explore Collection
+                    Shop Bikes
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                   <Link
                     to="/book-service"
-                    className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-full font-bold text-lg border border-white/20 hover:bg-white/20 transition-all flex items-center gap-2"
+                    className="px-8 py-4 bg-white text-gray-900 rounded-full font-bold text-lg hover:bg-gray-100 transition-all flex items-center gap-2 shadow-lg"
                   >
-                    <Wrench className="w-5 h-5" />
+                    <Wrench className="w-5 h-5 text-orange-600" />
                     Book Service
                   </Link>
                 </div>
 
+                {/* Trust Badges */}
+                <div className="flex flex-wrap gap-4 pt-2">
+                  <span className="flex items-center gap-1.5 text-sm text-white/90 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                    <Truck className="w-4 h-4 text-orange-400" /> Free Delivery Nairobi
+                  </span>
+                  <span className="flex items-center gap-1.5 text-sm text-white/90 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                    <Zap className="w-4 h-4 text-orange-400" /> Same-Day Service
+                  </span>
+                  <span className="flex items-center gap-1.5 text-sm text-white/90 bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                    <BadgeCheck className="w-4 h-4 text-orange-400" /> 50+ Expert Mechanics
+                  </span>
+                </div>
+
                 {/* Stats */}
-                <div className="flex gap-8 pt-8 border-t border-white/10">
+                <div className="flex gap-8 pt-6 border-t border-white/10">
                   <div>
                     <div className="text-3xl font-bold text-white">2,500+</div>
                     <div className="text-sm text-gray-400">Bikes Sold</div>
@@ -389,17 +405,27 @@ const HomePage = () => {
                                     <Package className="w-12 h-12 text-gray-500" />
                                   )}
                                   
-                                  {/* Badges */}
-                                  <div className="absolute top-2 left-2 flex flex-col gap-1">
+                                                                    {/* Badges */}
+                                  <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
                                     {product.is_featured && (
                                       <span className="px-2 py-0.5 bg-orange-500/80 text-white text-[10px] font-bold rounded">FEATURED</span>
                                     )}
-                                    {product.compare_price && Number(product.compare_price) > Number(product.price) && (
-                                      <span className="px-2 py-0.5 bg-red-500/80 text-white text-[10px] font-bold rounded">
-                                        {Math.round((1 - Number(product.price) / Number(product.compare_price)) * 100)}% OFF
-                                      </span>
-                                    )}
                                   </div>
+                                  
+                                  {/* Discount Badge - Top Right */}
+                                  {product.compare_price && Number(product.compare_price) > Number(product.price) && (
+                                    <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 items-end">
+                                      <span className="px-2 py-0.5 bg-red-500/90 text-white text-[10px] font-bold rounded shadow-md animate-pulse flex items-center gap-0.5">
+                                        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                        </svg>
+                                        -{Math.round((1 - Number(product.price) / Number(product.compare_price)) * 100)}%
+                                      </span>
+                                      <span className="px-1.5 py-0.5 bg-orange-500/80 text-white text-[9px] font-semibold rounded">
+                                        Save KSh {(Number(product.compare_price) - Number(product.price)).toLocaleString()}
+                                      </span>
+                                    </div>
+                                  )}
 
                                   {/* Action Icons - Outside Image (Mobile Style) */}
                                   <div className="absolute -bottom-3 -right-3 flex flex-col gap-1 bg-gray-800/90 backdrop-blur-sm rounded-lg p-1.5 border border-white/10 shadow-lg z-20">
@@ -558,169 +584,41 @@ const HomePage = () => {
           .animate-marquee {
             animation: marquee 25s linear infinite;
           }
+          /* Hide scrollbar for variant thumbnails */
+          .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
         `}</style>
 
-        {/* Key Features */}
-        <section className="py-12 md:py-16 bg-white">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-              <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-md hover:shadow-lg transition">
-                <div className="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center text-white mb-4">
-                  <Truck className="w-8 h-8" />
+        {/* Promotions Banner - MOVED UP before New Arrivals */}
+        <section className="py-6 bg-gradient-to-r from-red-600 via-orange-500 to-red-600 text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="bg-white text-red-600 px-4 py-2 rounded-lg font-bold text-sm animate-pulse">
+                  SPRING SPECIAL
                 </div>
-                <h3 className="text-xl font-bold mb-2 text-gray-800">Fast Delivery</h3>
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  Fast and reliable delivery in Nairobi Metropolitan. Track your order in real-time from our stores to your doorstep.
-                </p>
-              </div>
-              <div className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-md hover:shadow-lg transition">
-                <div className="w-16 h-16 bg-orange-500 rounded-xl flex items-center justify-center text-white mb-4">
-                  <CreditCard className="w-8 h-8" />
+                <div>
+                  <h3 className="font-bold text-lg">20% Off All Helmets + Free Fitting</h3>
+                  <p className="text-white/90 text-sm">Book any service and get gear discounts automatically applied.</p>
                 </div>
-                <h3 className="text-xl font-bold mb-2 text-gray-800">Flexible Payments</h3>
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  Pay conveniently with M-Pesa, Airtel Money, bank cards, or cash on delivery. Secure transactions guaranteed.
-                </p>
               </div>
-              <div className="p-6 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl shadow-md hover:shadow-lg transition">
-                <div className="w-16 h-16 bg-emerald-500 rounded-xl flex items-center justify-center text-white mb-4">
-                  <Wrench className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-bold mb-2 text-gray-800">Professional Repairs</h3>
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  Expert bike mechanics available for repairs, maintenance, and custom builds. Book appointments online easily.
-                </p>
-              </div>
-              <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-md hover:shadow-lg transition">
-                <div className="w-16 h-16 bg-purple-500 rounded-xl flex items-center justify-center text-white mb-4">
-                  <Store className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-bold mb-2 text-gray-800">Multi-Vendor Platform</h3>
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  Access products from multiple verified sellers. More choices, competitive prices, quality assured.
-                </p>
-              </div>
+              <Link 
+                to="/shop?category=helmets" 
+                className="px-6 py-3 bg-white text-red-600 rounded-lg font-bold hover:bg-gray-100 transition shadow-lg whitespace-nowrap"
+              >
+                Shop Helmets →
+              </Link>
             </div>
           </div>
         </section>
 
-        {/* Services Showcase */}
-        <section className="py-12 md:py-16 bg-gradient-to-r from-gray-50 to-gray-100">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl md:text-4xl font-bold mb-3 text-gray-800">Our Services</h2>
-              <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                More than just a marketplace - we're your complete cycling solution
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition group">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center text-green-600 group-hover:scale-110 transition-transform">
-                    <ShoppingCart className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2 text-gray-800">Buy & Sell</h3>
-                    <p className="text-gray-600 text-sm mb-3">
-                      Browse bikes, parts, and accessories. Ask for delivery and it will be delivered to your doorstep.
-                    </p>
-                    <Link to="/shop" className="text-green-600 font-semibold text-sm hover:underline flex items-center gap-1">
-                      Start Shopping <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition group">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
-                    <Wrench className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2 text-gray-800">Repair Services</h3>
-                    <p className="text-gray-600 text-sm mb-3">
-                      Professional bike repairs and maintenance by experienced mechanics. Quick turnaround, quality guaranteed.
-                    </p>
-                    <Link to="/book-service" className="text-blue-600 font-semibold text-sm hover:underline flex items-center gap-1">
-                      Book Now <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition group">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform">
-                    <Package className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2 text-gray-800">Custom Orders</h3>
-                    <p className="text-gray-600 text-sm mb-3">
-                      Can't find what you need? Request custom bike builds or special parts. We'll source it for you.
-                    </p>
-                    <Link to="/contact" className="text-orange-600 font-semibold text-sm hover:underline flex items-center gap-1">
-                      Inquire <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition group">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
-                    <UserPlus className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2 text-gray-800">Become a Seller</h3>
-                    <p className="text-gray-600 text-sm mb-3">
-                      Join our marketplace and reach other cycling enthusiasts. Easy setup, powerful tools.
-                    </p>
-                    <Link to="/seller/register" className="text-purple-600 font-semibold text-sm hover:underline flex items-center gap-1">
-                      Register <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition group">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
-                    <BadgeCheck className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2 text-gray-800">Trade-In Program</h3>
-                    <p className="text-gray-600 text-sm mb-3">
-                      Upgrade your bike with our trade-in program. Get fair value for your old bike towards a new purchase.
-                    </p>
-                    <Link to="/trade-in" className="text-indigo-600 font-semibold text-sm hover:underline flex items-center gap-1">
-                      Learn More <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition group">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-pink-100 rounded-lg flex items-center justify-center text-pink-600 group-hover:scale-110 transition-transform">
-                    <Headphones className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold mb-2 text-gray-800">Expert Support</h3>
-                    <p className="text-gray-600 text-sm mb-3">
-                      Get cycling advice, product recommendations, and technical support from our team.
-                    </p>
-                    <Link to="/contact" className="text-pink-600 font-semibold text-sm hover:underline flex items-center gap-1">
-                      Contact Us <ArrowRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* New Arrivals Section */}
+        {/* New Arrivals Section - MOVED UP */}
         <section className="py-12 md:py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
@@ -784,7 +682,136 @@ const HomePage = () => {
                       className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 relative"
                     >
                       <Link to={`/product/${product.id}`}>
-                        <div className="relative pb-[75%] bg-gray-100">
+                        <div className="relative pb-[75%] bg-gray-100 flex">
+                          {/* Variant Thumbnails Column - Top Left */}
+                          {product.variants && product.variants.length > 0 && (
+                            <div className="absolute top-2 left-2 z-20 flex flex-col gap-1.5 max-h-[70%] overflow-y-auto overflow-x-hidden scrollbar-hide">
+                              {product.variants.slice(0, 4).map((variant, idx) => {
+                                // Get variant image - prioritize thumbnail, fallback to full image
+                                const variantImage = variant.images?.[0]?.thumbnail_url || 
+                                                   variant.images?.[0]?.image_url;
+                                
+                                return (
+                                  <button
+                                    key={variant.id}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      
+                                      // Find the main product image container
+                                      const card = e.currentTarget.closest('.relative');
+                                      const mainImg = card?.querySelector('img[data-main-image="true"]');
+                                      
+                                      if (mainImg && variantImage) {
+                                        // Add fade out effect
+                                        mainImg.style.opacity = '0.6';
+                                        mainImg.style.transform = 'scale(0.95)';
+                                        
+                                        setTimeout(() => {
+                                          // Swap to variant image permanently
+                                          mainImg.src = variant.images?.[0]?.image_url || variantImage;
+                                          mainImg.style.opacity = '1';
+                                          mainImg.style.transform = 'scale(1)';
+                                          
+                                          // Update active state on thumbnails
+                                          const allThumbs = e.currentTarget.parentElement.querySelectorAll('button');
+                                          allThumbs.forEach(thumb => {
+                                            thumb.classList.remove('ring-2', 'ring-orange-500', 'ring-offset-1');
+                                          });
+                                          e.currentTarget.classList.add('ring-2', 'ring-orange-500', 'ring-offset-1');
+                                        }, 150);
+                                      }
+                                    }}
+                                    className="group relative w-10 h-10 rounded-lg border-2 border-white/80 shadow-md overflow-hidden hover:scale-115 hover:z-10 transition-all duration-200 hover:border-orange-400 bg-gray-100"
+                                    title={variant.name || `Variant ${idx + 1}`}
+                                  >
+                                    {/* Hover zoom wrapper */}
+                                    <div className="w-full h-full overflow-hidden">
+                                      {variantImage ? (
+                                        <img
+                                          src={variantImage}
+                                          alt={variant.name || `Variant ${idx + 1}`}
+                                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-125"
+                                          loading="lazy"
+                                          onError={(e) => {
+                                            // Fallback to color dot if image fails to load
+                                            e.target.style.display = 'none';
+                                            e.target.nextSibling.style.display = 'flex';
+                                          }}
+                                        />
+                                      ) : null}
+                                    </div>
+                                    
+                                    {/* Fallback color dot - hidden by default if image exists */}
+                                    <div 
+                                      className="absolute inset-0 items-center justify-center text-[8px] font-bold text-white uppercase"
+                                      style={{
+                                        display: variantImage ? 'none' : 'flex',
+                                        background: `linear-gradient(135deg, ${['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'][idx % 6]} 0%, ${['#b91c1c', '#1d4ed8', '#047857', '#b45309', '#6d28d9', '#be185d'][idx % 6]} 100%)`
+                                      }}
+                                    >
+                                      {variant.name?.charAt(0) || (idx + 1)}
+                                    </div>
+                                    
+                                    {/* Selected indicator ring */}
+                                    <div className="absolute inset-0 rounded-lg ring-2 ring-transparent ring-offset-1 transition-all pointer-events-none" />
+                                    
+                                    {/* Tooltip */}
+                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-30">
+                                      {variant.name || `Variant ${idx + 1}`}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                              {/* Reset/Rollback to Original Image */}
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  
+                                  const card = e.currentTarget.closest('.relative');
+                                  const mainImg = card?.querySelector('img[data-main-image="true"]');
+                                  const originalImage = product.images?.[0]?.image_url || product.image_url;
+                                  
+                                  if (mainImg && originalImage) {
+                                    // Fade out effect
+                                    mainImg.style.opacity = '0.6';
+                                    mainImg.style.transform = 'scale(0.95)';
+                                    
+                                    setTimeout(() => {
+                                      // Reset to original product image
+                                      mainImg.src = originalImage;
+                                      mainImg.style.opacity = '1';
+                                      mainImg.style.transform = 'scale(1)';
+                                      
+                                      // Remove active rings from all variants
+                                      const allThumbs = e.currentTarget.parentElement.querySelectorAll('button');
+                                      allThumbs.forEach(thumb => {
+                                        thumb.classList.remove('ring-2', 'ring-orange-500', 'ring-offset-1');
+                                      });
+                                    }, 150);
+                                  }
+                                }}
+                                className="group relative w-10 h-10 rounded-lg border-2 border-white/80 shadow-md bg-gray-800/80 backdrop-blur-sm flex items-center justify-center text-white hover:bg-orange-500 hover:border-orange-400 transition-all duration-200"
+                                title="Reset to original image"
+                              >
+                                <svg 
+                                  className="w-5 h-5 transition-transform group-hover:rotate-[-45deg]" 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round" 
+                                    strokeWidth={2} 
+                                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" 
+                                  />
+                                </svg>
+                              </button>
+                            </div>
+                          )}
+                          
                           {product.image_url || product.images?.[0]?.image_url ? (
                             <>
                               {/* Thumbnail - loads first, blurred */}
@@ -799,7 +826,8 @@ const HomePage = () => {
                               <img
                                 src={product.images?.[0]?.image_url || product.image_url}
                                 alt={product.name}
-                                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                                data-main-image="true"
+                                className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${
                                   loadedImages.has(product.id) ? 'opacity-100' : 'opacity-0'
                                 }`}
                                 onLoad={() => handleImageLoad(product.id)}
@@ -826,59 +854,55 @@ const HomePage = () => {
                             </span>
                           )}
                           
+                          {/* Discount Badge - You Save X% */}
                           {product.compare_price && Number(product.compare_price) > Number(product.price) && (
-                            <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-pulse">
-                              {Math.round((1 - Number(product.price) / Number(product.compare_price)) * 100)}% OFF
-                            </span>
+                            <div className="absolute top-3 right-3 z-10 flex flex-col gap-1 items-end">
+                              {/* -X% OFF Badge */}
+                              <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-lg animate-pulse flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                                -{Math.round((1 - Number(product.price) / Number(product.compare_price)) * 100)}% OFF
+                              </span>
+                              
+                              {/* You Save KSh X */}
+                              <span className="bg-orange-500/90 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-md backdrop-blur-sm">
+                                Save KSh {(Number(product.compare_price) - Number(product.price)).toLocaleString()}
+                              </span>
+                            </div>
                           )}
 
-                          {/* Action Buttons - Wishlist & Cart */}
-                          <div className="absolute bottom-3 right-3 flex items-center gap-2 z-10">
-                            {/* Add to Cart Button */}
-                              <button
-                                onClick={(e) => handleAddToCart(e, product, 'newArrivals')}
-                                disabled={!product.quantity || product.quantity === 0 || addingToCart === product.id}
-                                className={`p-2.5 rounded-full transition-all duration-200 shadow-lg ${
-                                  product.quantity > 0 && addingToCart !== product.id
-                                    ? 'bg-white text-gray-700 hover:bg-orange-500 hover:text-white hover:scale-110'
-                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                }`}
-                                title={product.quantity > 0 ? 'Add to cart' : 'Out of stock'}
-                              >
-                                {addingToCart === product.id ? (
-                                  <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                                ) : (
-                                  <ShoppingCart 
-                                    className={`w-5 h-5 ${isInCart(product.id, product?.variants?.[0] || product?.colors?.[0]) ? 'text-orange-600 fill-orange-100' : ''}`}
-                                  />
-                                )}
-                              </button>
+                          {/* Icons moved to details section below */}
+                        </div>
 
-                            {/* Wishlist Button */}
+                        <div className="p-4 relative">
+                          {/* Action Icons - Top Right of Details */}
+                          <div className="absolute -top-3 -right-3 flex flex-col gap-1 bg-gray-100 rounded-lg p-1.5 border border-gray-200 shadow-md z-20">
+                            {/* Wishlist Icon */}
                             <button
                               onClick={(e) => handleWishlistToggle(e, product, 'newArrivals')}
                               disabled={togglingWishlist === product.id}
-                              className={`p-2.5 rounded-full transition-all duration-200 shadow-lg ${
-                                isInWishlist(product.id, null)
-                                  ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600'
-                                  : 'bg-white text-gray-600 hover:bg-gray-100 hover:text-red-500'
-                              } ${togglingWishlist === product.id ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110'}`}
-                              title={isInWishlist(product.id, null) ? 'Remove from wishlist' : 'Add to wishlist'}
+                              className="p-1.5 rounded-md transition-all hover:scale-110 hover:bg-gray-200 disabled:opacity-50"
                             >
-                              {togglingWishlist === product.id ? (
-                                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                              ) : (
-                                <Heart
-                                  className={`w-5 h-5 ${isInWishlist(product.id, null) ? 'fill-current' : ''}`}
-                                  strokeWidth={2}
-                                />
-                              )}
+                              <Heart 
+                                className={`w-4 h-4 ${isInWishlist(product.id, null) ? 'text-orange-500 fill-orange-500' : 'text-gray-600'}`} 
+                                strokeWidth={2}
+                              />
+                            </button>
+
+                            {/* Cart Icon */}
+                            <button
+                              onClick={(e) => handleAddToCart(e, product, 'newArrivals')}
+                              disabled={!product.quantity || cartLoading}
+                              className="p-1.5 rounded-md transition-all hover:scale-110 hover:bg-gray-200 disabled:opacity-50"
+                            >
+                              <ShoppingCart 
+                                className={`w-4 h-4 ${isInCart(product.id, product?.variants?.[0] || product?.colors?.[0]) ? 'text-orange-500 fill-orange-500' : !product.quantity ? 'text-gray-400' : 'text-gray-600'}`} 
+                              />
                             </button>
                           </div>
-                        </div>
 
-                        <div className="p-4">
-                          <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2 h-12 text-sm hover:text-green-600 transition">
+                          <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2 h-12 text-sm hover:text-green-600 transition pr-8">
                             {product.name}
                           </h3>
                           
@@ -987,63 +1011,298 @@ const HomePage = () => {
           </div>
         </section>
 
-        {/* Why Choose Oshocks */}
-        <section className="py-12 md:py-16 bg-gradient-to-br from-green-50 to-emerald-50">
+        {/* Professional Services Booking Section */}
+        <section className="py-16 md:py-20 relative overflow-hidden bg-gray-900 text-white">
+          {/* Animated Background - Same as Hero */}
+          <div className="absolute inset-0">
+            <div 
+              className="absolute inset-0 opacity-40"
+              style={{
+                background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+              }}
+            />
+            <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+          </div>
+
+          {/* Floating Gradient Orb */}
+          <div 
+            className="absolute top-20 right-20 w-64 h-64 rounded-full blur-3xl opacity-30 animate-pulse"
+            style={{ 
+              background: 'linear-gradient(135deg, rgb(255, 69, 0), rgb(255, 165, 0))',
+            }}
+          />
+          
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="text-center mb-12">
+              <span className="inline-block px-4 py-1 bg-orange-500/20 text-orange-400 rounded-full text-sm font-semibold mb-4">
+                PROFESSIONAL BIKE CARE
+              </span>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Book Expert Service Online</h2>
+              <p className="text-blue-100 text-lg max-w-2xl mx-auto">
+                Drop off your bike. We handle the rest. Real-time booking with instant confirmation.
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+              {/* Quick Repairs */}
+              <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/10 hover:border-orange-500/50 transition-all hover:-translate-y-2 group">
+                <div className="w-16 h-16 bg-orange-500/20 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <Wrench className="w-8 h-8 text-orange-400" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3">Quick Repairs</h3>
+                <p className="text-blue-100 mb-4 leading-relaxed">
+                  Flat tires, brake adjustments, chain fixes. In-and-out service while you wait.
+                </p>
+                <ul className="text-sm text-blue-200 mb-6 space-y-2">
+                  <li className="flex items-center gap-2"><Zap className="w-4 h-4 text-orange-400" /> 2-4 hour turnaround</li>
+                  <li className="flex items-center gap-2"><Shield className="w-4 h-4 text-orange-400" /> 30-day warranty</li>
+                </ul>
+                <div className="text-3xl font-bold text-orange-400 mb-6">From KSh 500</div>
+                <Link 
+                  to="/book-service?type=repair" 
+                  className="block w-full py-4 bg-orange-500 hover:bg-orange-600 text-white text-center rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+                >
+                  Book Repair <ArrowRight className="w-5 h-5" />
+                </Link>
+              </div>
+
+              {/* Full Tune-Up - Featured */}
+              <div className="bg-gradient-to-b from-orange-500 to-red-600 p-8 rounded-2xl shadow-2xl transform md:-translate-y-4 relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-white text-orange-600 text-xs font-bold px-4 py-1 rounded-bl-lg">
+                  MOST POPULAR
+                </div>
+                <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+                  <Sparkles className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3">Full Tune-Up</h3>
+                <p className="text-orange-100 mb-4 leading-relaxed">
+                  Complete overhaul. Deep clean, adjustment, lubrication. Like new performance.
+                </p>
+                <ul className="text-sm text-orange-100 mb-6 space-y-2">
+                  <li className="flex items-center gap-2"><Zap className="w-4 h-4" /> 24-hour turnaround</li>
+                  <li className="flex items-center gap-2"><Shield className="w-4 h-4" /> 90-day warranty</li>
+                  <li className="flex items-center gap-2"><BadgeCheck className="w-4 h-4" /> Free pick-up & delivery</li>
+                </ul>
+                <div className="text-3xl font-bold text-white mb-6">KSh 2,500</div>
+                <Link 
+                  to="/book-service?type=tuneup" 
+                  className="block w-full py-4 bg-white text-orange-600 hover:bg-gray-100 text-center rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+                >
+                  Book Tune-Up <ArrowRight className="w-5 h-5" />
+                </Link>
+              </div>
+
+              {/* Custom Build */}
+              <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl border border-white/10 hover:border-orange-500/50 transition-all hover:-translate-y-2 group">
+                <div className="w-16 h-16 bg-purple-500/20 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <Package className="w-8 h-8 text-purple-400" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3">Custom Build</h3>
+                <p className="text-blue-100 mb-4 leading-relaxed">
+                  Dream bike assembly. Parts sourcing, professional fitting, full testing.
+                </p>
+                <ul className="text-sm text-blue-200 mb-6 space-y-2">
+                  <li className="flex items-center gap-2"><Zap className="w-4 h-4 text-purple-400" /> Free consultation</li>
+                  <li className="flex items-center gap-2"><Shield className="w-4 h-4 text-purple-400" /> 1-year build warranty</li>
+                </ul>
+                <div className="text-3xl font-bold text-purple-400 mb-6">Quote Based</div>
+                <Link 
+                  to="/book-service?type=custom" 
+                  className="block w-full py-4 bg-white/10 hover:bg-white/20 border border-white/30 text-white text-center rounded-xl font-bold transition-colors flex items-center justify-center gap-2"
+                >
+                  Start Consult <ArrowRight className="w-5 h-5" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Trust Bar */}
+            <div className="mt-12 flex flex-wrap justify-center gap-6 text-blue-200 text-sm">
+              <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-orange-400" /> Same-day slots available</span>
+              <span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-orange-400" /> Real-time booking</span>
+              <span className="flex items-center gap-2"><BadgeCheck className="w-4 h-4 text-orange-400" /> Certified mechanics</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Why Choose Oshocks - Merged with Why Shop With Us */}
+        <section className="py-12 md:py-16 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
           <div className="container mx-auto px-4">
             <div className="text-center mb-10">
               <h2 className="text-3xl md:text-4xl font-bold mb-3 text-gray-800">Why Choose Oshocks?</h2>
               <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                Your trusted partner for all things cycling
+                Everything you need for a seamless cycling experience
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-              <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center text-green-600 mx-auto mb-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+              {/* Card 1 - Fast Delivery */}
+              <div className="group p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-md hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 animate-slideInLeft" style={{ animationDelay: '0ms' }}>
+                <div className="w-16 h-16 bg-blue-500 rounded-xl flex items-center justify-center text-white mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                  <Truck className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-gray-800">Fast Delivery</h3>
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  Fast and reliable delivery in Nairobi Metropolitan. Track your order in real-time from our stores to your doorstep.
+                </p>
+              </div>
+              
+              {/* Card 2 - Flexible Payments */}
+              <div className="group p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl shadow-md hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 animate-slideInRight" style={{ animationDelay: '100ms' }}>
+                <div className="w-16 h-16 bg-orange-500 rounded-xl flex items-center justify-center text-white mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                  <CreditCard className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-gray-800">Flexible Payments</h3>
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  Pay conveniently with M-Pesa, Airtel Money, bank cards, or cash on delivery. Secure transactions guaranteed.
+                </p>
+              </div>
+              
+              {/* Card 3 - Professional Repairs */}
+              <div className="group p-6 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl shadow-md hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 animate-slideInLeft" style={{ animationDelay: '200ms' }}>
+                <div className="w-16 h-16 bg-emerald-500 rounded-xl flex items-center justify-center text-white mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                  <Wrench className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-gray-800">Professional Repairs</h3>
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  Expert bike mechanics available for repairs, maintenance, and custom builds. Book appointments online easily.
+                </p>
+              </div>
+              
+              {/* Card 4 - Quality Verified */}
+              <div className="group p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-md hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 animate-slideInRight" style={{ animationDelay: '300ms' }}>
+                <div className="w-16 h-16 bg-green-500 rounded-xl flex items-center justify-center text-white mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                   <BadgeCheck className="w-8 h-8" />
                 </div>
-                <h3 className="text-lg font-bold mb-2">Quality Verified</h3>
-                <p className="text-gray-600 text-sm">All our products are tested and undergo strict verification for authenticity and quality standards.</p>
+                <h3 className="text-xl font-bold mb-2 text-gray-800">Quality Verified</h3>
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  All our products are tested and undergo strict verification for authenticity and quality standards.
+                </p>
               </div>
               
-              <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="w-16 h-16 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 mx-auto mb-3">
-                  <Wallet className="w-8 h-8" />
+              {/* Card 5 - Multi-Vendor */}
+              <div className="group p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-md hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 animate-slideInLeft" style={{ animationDelay: '400ms' }}>
+                <div className="w-16 h-16 bg-purple-500 rounded-xl flex items-center justify-center text-white mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                  <Store className="w-8 h-8" />
                 </div>
-                <h3 className="text-lg font-bold mb-2">Best Prices</h3>
-                <p className="text-gray-600 text-sm">Competitive pricing from multiple sellers ensures you get the best deals on cycling products.</p>
+                <h3 className="text-xl font-bold mb-2 text-gray-800">Multi-Vendor Platform</h3>
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  Access products from multiple verified sellers. More choices, competitive prices, quality assured.
+                </p>
               </div>
               
-              <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="w-16 h-16 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 mx-auto mb-3">
-                  <Shield className="w-8 h-8" />
-                </div>
-                <h3 className="text-lg font-bold mb-2">Secure Shopping</h3>
-                <p className="text-gray-600 text-sm">Your transactions are protected with encrypted payments and buyer protection policies.</p>
-              </div>
-              
-              <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="w-16 h-16 bg-yellow-100 rounded-xl flex items-center justify-center text-yellow-600 mx-auto mb-3">
-                  <Zap className="w-8 h-8" />
-                </div>
-                <h3 className="text-lg font-bold mb-2">Fast Processing</h3>
-                <p className="text-gray-600 text-sm">Your orders are processed within 24 hours and shipped quickly to your preferred location.</p>
-              </div>
-              
-              <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="w-16 h-16 bg-rose-100 rounded-xl flex items-center justify-center text-rose-600 mx-auto mb-3">
-                  <ThumbsUp className="w-8 h-8" />
-                </div>
-                <h3 className="text-lg font-bold mb-2">Satisfaction Guarantee</h3>
-                <p className="text-gray-600 text-sm">Not happy with your purchase? Easy returns and refunds within 7 days of delivery.</p>
-              </div>
-              
-              <div className="bg-white p-6 rounded-xl shadow-md text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mx-auto mb-3">
+              {/* Card 6 - 24/7 Support */}
+              <div className="group p-6 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-md hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 animate-slideInRight" style={{ animationDelay: '500ms' }}>
+                <div className="w-16 h-16 bg-indigo-500 rounded-xl flex items-center justify-center text-white mb-4 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                   <Headphones className="w-8 h-8" />
                 </div>
-                <h3 className="text-lg font-bold mb-2">24/7 Support</h3>
-                <p className="text-gray-600 text-sm">Our customer support team is always available to help with your inquiries and concerns.</p>
+                <h3 className="text-xl font-bold mb-2 text-gray-800">24/7 Support</h3>
+                <p className="text-gray-700 text-sm leading-relaxed">
+                  Our customer support team is always available to help with your inquiries and concerns.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Animation Styles */}
+        <style>{`
+          @keyframes slideInLeft {
+            from {
+              opacity: 0;
+              transform: translateX(-100px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
+          @keyframes slideInRight {
+            from {
+              opacity: 0;
+              transform: translateX(100px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
+          .animate-slideInLeft {
+            animation: slideInLeft 0.6s ease-out forwards;
+            opacity: 0;
+          }
+          .animate-slideInRight {
+            animation: slideInRight 0.6s ease-out forwards;
+            opacity: 0;
+          }
+        `}</style>
+
+        {/* Testimonials Section */}
+        <section className="py-16 md:py-20 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">What Riders Say</h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">Join thousands of satisfied cyclists across Kenya</p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+              <div className="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition relative">
+                <div className="flex text-yellow-400 text-lg mb-4">★★★★★</div>
+                <p className="text-gray-600 mb-6 leading-relaxed">"Got my mountain bike serviced here. They replaced the brakes and tuned the gears in 3 hours. Professional team and fair pricing!"</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold text-lg">JK</div>
+                  <div>
+                    <div className="font-bold text-gray-800">John Kamau</div>
+                    <div className="text-sm text-gray-500">Trek Mountain Bike • Nairobi</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition relative border-2 border-orange-200">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  VERIFIED BUYER
+                </div>
+                <div className="flex text-yellow-400 text-lg mb-4">★★★★★</div>
+                <p className="text-gray-600 mb-6 leading-relaxed">"Best bike shop in Nairobi. I bought a city commuter and the free delivery was a bonus. The mechanic even gave me maintenance tips!"</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">SM</div>
+                  <div>
+                    <div className="font-bold text-gray-800">Sarah Mwangi</div>
+                    <div className="text-sm text-gray-500">City Commuter • Kiambu</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition relative">
+                <div className="flex text-yellow-400 text-lg mb-4">★★★★★</div>
+                <p className="text-gray-600 mb-6 leading-relaxed">"They built my custom road bike from parts I sourced. Excellent communication throughout and the final setup was perfect. Highly recommend!"</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold text-lg">MO</div>
+                  <div>
+                    <div className="font-bold text-gray-800">Mike Ochieng</div>
+                    <div className="text-sm text-gray-500">Custom Build • Mombasa</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats Row */}
+            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+              <div className="p-4">
+                <div className="text-3xl font-bold text-orange-600">4.9/5</div>
+                <div className="text-gray-600 text-sm">Average Rating</div>
+              </div>
+              <div className="p-4">
+                <div className="text-3xl font-bold text-orange-600">2,500+</div>
+                <div className="text-gray-600 text-sm">Bikes Serviced</div>
+              </div>
+              <div className="p-4">
+                <div className="text-3xl font-bold text-orange-600">15,000+</div>
+                <div className="text-gray-600 text-sm">Happy Customers</div>
+              </div>
+              <div className="p-4">
+                <div className="text-3xl font-bold text-orange-600">98%</div>
+                <div className="text-gray-600 text-sm">Would Recommend</div>
               </div>
             </div>
           </div>
@@ -1103,27 +1362,38 @@ const HomePage = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-red-500/5" />
           
           <div className="container mx-auto px-4 text-center relative z-10">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-gray-800">Ready to Start Your Cycling Journey?</h2>
-            <p className="text-lg md:text-xl lg:text-2xl mb-8 md:mb-10 max-w-3xl mx-auto leading-relaxed text-gray-700">
-              Join other satisfied customers who trust Oshocks for quality bikes, 
-              professional repairs, and exceptional service. Your perfect ride awaits!
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-100 text-orange-600 text-sm font-semibold mb-6">
+              <Zap className="w-4 h-4" /> Same-day slots available this week
+            </div>
+            
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-gray-800">Need a Tune-Up? Book Today.</h2>
+            <p className="text-lg md:text-xl lg:text-2xl mb-4 md:mb-6 max-w-3xl mx-auto leading-relaxed text-gray-700">
+              Don't let a squeaky chain or flat tire ruin your weekend ride.
             </p>
+            <p className="text-gray-600 mb-8 md:mb-10 max-w-2xl mx-auto">
+              Join 15,000+ riders who trust Oshocks. 50+ certified mechanics. 24-hour turnaround. Guaranteed satisfaction.
+            </p>
+            
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              {/* Browse Products - White bg, no border, orange text, border appears on hover */}
+              <Link
+                to="/book-service"
+                className="w-full sm:w-auto inline-block px-10 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-lg hover:shadow-2xl hover:shadow-orange-500/30 hover:-translate-y-1 transition transform duration-200 text-lg flex items-center justify-center gap-2 group"
+              >
+                Book Service Now <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              
               <Link
                 to="/shop"
-                className="w-full sm:w-auto inline-block px-10 py-4 bg-white text-orange-600 border-2 border-transparent font-bold rounded-lg hover:border-orange-500 hover:shadow-xl hover:shadow-orange-500/20 transform hover:-translate-y-1 transition-all duration-200 text-lg flex items-center justify-center gap-2 group"
+                className="w-full sm:w-auto inline-block px-10 py-4 bg-white text-orange-600 border-2 border-transparent font-bold rounded-lg hover:border-orange-500 hover:shadow-xl hover:shadow-orange-500/20 transform hover:-translate-y-1 transition-all duration-200 text-lg flex items-center justify-center gap-2"
               >
                 Browse Products <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              
-              {/* Become a Seller - Orange gradient background, white text */}
-              <Link
-                to="/seller/register"
-                className="w-full sm:w-auto inline-block px-10 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-lg hover:shadow-2xl hover:shadow-orange-500/30 hover:-translate-y-1 transition transform duration-200 text-lg flex items-center justify-center gap-2"
-              >
-                <UserPlus className="w-5 h-5" /> Become a Seller
-              </Link>
+            </div>
+            
+            <div className="flex flex-wrap justify-center gap-6 mt-8 text-sm text-gray-500">
+              <span className="flex items-center gap-2"><BadgeCheck className="w-4 h-4 text-green-500" /> 30-90 Day Warranty</span>
+              <span className="flex items-center gap-2"><Truck className="w-4 h-4 text-green-500" /> Free Pick-up & Delivery</span>
+              <span className="flex items-center gap-2"><Shield className="w-4 h-4 text-green-500" /> Certified Mechanics</span>
             </div>
           </div>
         </section>
