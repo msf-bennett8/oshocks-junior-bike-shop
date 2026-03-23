@@ -10,6 +10,9 @@ mkdir -p /tmp/storage/app/public
 # Link to storage
 php artisan storage:link --force 2>/dev/null || true
 
+# Run migrations
+php artisan migrate --force --no-interaction
+
 # Cache configs
 php artisan config:cache
 php artisan route:cache
