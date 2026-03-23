@@ -426,7 +426,7 @@ class ProductController extends Controller
             ->get();
 
         // Categories with products
-        $categories = \App\Models\Category::with(['products' => function($query) {
+        $categories = \App\Models\Category::with(['products' => function($query) use ($perSection) {
             $query->active()->with(['seller', 'images', 'variants.images'])->take($perSection);
         }])->whereHas('products', function($q) {
             $q->active();
