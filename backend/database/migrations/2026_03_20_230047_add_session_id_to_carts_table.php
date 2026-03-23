@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('carts', function (Blueprint $table) {
-            $table->string('session_id')->nullable()->after('user_id');
-            $table->index('session_id');
+            if (!Schema::hasColumn('carts', 'session_id')) {
+                $table->string('session_id')->nullable()->after('user_id');
+                $table->index('session_id');
+            }
         });
     }
 
