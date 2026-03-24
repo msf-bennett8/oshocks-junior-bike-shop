@@ -73,13 +73,47 @@ class ProductController extends Controller
             $query->where('rating', '>=', $request->min_rating);
         }
 
+        // Filter by featured status
+        if ($request->boolean('is_featured')) {
+            $query->where('is_featured', true);
+        }
+
+        // Filter by new arrivals
+        if ($request->boolean('is_new_arrival')) {
+            $query->where(function($q) {
+                $q->where('is_new_arrival', true)
+                  ->orWhere('created_at', '>=', now()->subDays(30));
+            });
+        }
+
+        // Filter by on sale (has discount)
+        if ($request->boolean('on_sale')) {
+            $query->whereNotNull('compare_price')
+                  ->where('compare_price', '>', 0)
+                  ->whereRaw('compare_price > price');
+        }
+
         // Only active products
         $query->where('is_active', true);
 
         // Sorting
-        $sortBy = $request->get('sort_by', 'created_at');
-        $sortOrder = $request->get('sort_order', 'desc');
-        $query->orderBy($sortBy, $sortOrder);
+        $sort = $request->get('sort', 'latest');
+        
+        switch ($sort) {
+            case 'price_low':
+                $query->orderBy('price', 'asc');
+                break;
+            case 'price_high':
+                $query->orderBy('price', 'desc');
+                break;
+            case 'popular':
+                $query->orderBy('sales', 'desc');
+                break;
+            case 'latest':
+            default:
+                $query->orderBy('created_at', 'desc');
+                break;
+        }
 
         // Pagination
         $perPage = $request->get('per_page', 20);

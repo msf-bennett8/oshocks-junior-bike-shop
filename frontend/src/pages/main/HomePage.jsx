@@ -22,18 +22,23 @@ import {
   ChevronRight,
   Calendar,
   Mountain,
-  Timer
+  Timer,
+  TrendingUp,
+  Percent
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { productAPI } from '../../services/api';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
 import ActionModal from '../../components/common/ActionModal';
+import productService from '../../services/productService';
+import { ProductRow } from '../../components/shop';
 
 const HomePage = () => {
   const { toggleWishlist, isInWishlist, addToWishlistWithGuest, mergeGuestWishlist } = useWishlist();
   const { addToCart, toggleCart, loading: cartLoading, isInCart } = useCart();
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,7 +48,17 @@ const HomePage = () => {
   const [loadedImages, setLoadedImages] = useState(new Set());
   const [checkingOut, setCheckingOut] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [retryCount, setRetryCount] = useState(0);
   const [featuredLoading, setFeaturedLoading] = useState(true);
+  
+  // Sections state for collections
+  const [sections, setSections] = useState({
+    featured: [],
+    new_arrivals: [],
+    best_sellers: [],
+    deals: []
+  });
+  const [sectionsLoading, setSectionsLoading] = useState(true);
   
   // Modal state
   const [modal, setModal] = useState({
@@ -60,6 +75,36 @@ const HomePage = () => {
 
   const closeModal = () => {
     setModal(prev => ({ ...prev, isOpen: false }));
+  };
+
+  // Handle View All click for collections
+  const handleViewAll = (section, params = {}) => {
+    // Build query params for URL
+    const queryParams = new URLSearchParams();
+    queryParams.set('view', 'all');
+    
+    // Apply section-specific filters
+    switch(section) {
+      case 'featured':
+        queryParams.set('is_featured', 'true');
+        break;
+      case 'new_arrivals':
+        queryParams.set('is_new_arrival', 'true');
+        queryParams.set('sort', 'latest');
+        break;
+      case 'best_sellers':
+        queryParams.set('sort', 'popular');
+        break;
+      case 'deals':
+        queryParams.set('on_sale', 'true');
+        break;
+      default:
+        break;
+    }
+    
+    // Navigate to shop with query params
+    navigate(`/shop?${queryParams.toString()}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleImageLoad = (productId) => {
@@ -121,18 +166,35 @@ const HomePage = () => {
 
   useEffect(() => {
     fetchProducts();
+    loadSections();
   }, []);
 
-  const fetchProducts = async () => {
+  // Fetch product sections for collections
+  const loadSections = async () => {
+    try {
+      setSectionsLoading(true);
+      const response = await productService.getProductSections(6);
+      if (response.success) {
+        setSections(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading sections:', error);
+    } finally {
+      setSectionsLoading(false);
+    }
+  };
+
+  const fetchProducts = async (retryAttempt = 0) => {
+    setRetryCount(retryAttempt);
     try {
       setLoading(true);
       setError(null);
       setIsSlowLoad(false);
       
-      // Show "slow load" message after 5 seconds
+      // Show loader after 3 seconds on slow connections
       const slowLoadTimer = setTimeout(() => {
         setIsSlowLoad(true);
-      }, 5000);
+      }, 3000);
       
       const response = await productAPI.getProducts({ limit: 12 });
       
@@ -152,7 +214,12 @@ const HomePage = () => {
       console.error('Error fetching products:', err);
       
       if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
-        setError('Server is taking too long to respond. This might be due to server cold start on free hosting. Please try again.');
+        // Auto-retry once before showing error
+        if (retryAttempt < 1) {
+          setTimeout(() => fetchProducts(retryAttempt + 1), 2000);
+          return;
+        }
+        setError('Connection timeout. Please check your internet and try again.');
       } else if (err.response) {
         setError(`Server error: ${err.response.status} - ${err.response.data?.message || 'Unknown error'}`);
       } else if (err.request) {
@@ -246,10 +313,10 @@ const HomePage = () => {
   return (
     <>
       <Helmet>
-        <title>Oshocks Bike Shop - Kenya's Premier Cycling Marketplace</title>
+        <title>Oshocks Bike Shop - A Premier Cycling Marketplace</title>
         <meta
           name="description"
-          content="Buy bicycles, book repairs, and discover cycling products in Kenya. Multi-vendor marketplace with M-Pesa payments, fast delivery, and professional bike services."
+          content="Buy bicycles, book repairs, and discover cycling products in the country. Multi-vendor marketplace with M-Pesa payments, fast delivery, and professional bike services."
         />
       </Helmet>
 
@@ -282,7 +349,7 @@ const HomePage = () => {
               <div className="lg:col-span-5 space-y-6">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
                   <Sparkles className="w-4 h-4 text-orange-400" />
-                  <span className="text-sm font-medium text-white/90">Kenya's Premier Cycling Marketplace</span>
+                  <span className="text-sm font-medium text-white/90">A Premier Cycling Marketplace</span>
                 </div>
                 
                 <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight">
@@ -342,8 +409,92 @@ const HomePage = () => {
                   </div>
                 </div>
 
+                {/* Server Wake Up Loader */}
+                {isSlowLoad && (
+                  <div className="lg:hidden mt-8">
+                    <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 border border-orange-400 shadow-xl">
+                      <div className="flex flex-col items-center gap-4">
+                        {/* OS Logo */}
+                        <div 
+                          className="w-16 h-16 rounded-xl flex items-end justify-start p-2"
+                          style={{
+                            background: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)',
+                            boxShadow: '0 8px 30px rgba(255, 69, 0, 0.5)',
+                            animation: 'logo-pulse 2s ease-in-out infinite'
+                          }}
+                        >
+                          <span 
+                            className="text-white font-bold text-3xl leading-none"
+                            style={{ 
+                              fontFamily: "'Lobster Two', cursive",
+                              transform: 'translateX(-5%) translateY(5%)',
+                              textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)'
+                            }}
+                          >
+                            OS
+                          </span>
+                        </div>
+                        
+                        {/* Sequential Fill Spinner */}
+                        <div className="relative w-9 h-9">
+                          {[...Array(12)].map((_, i) => (
+                            <div
+                              key={i}
+                              className="absolute w-1.5 h-3 bg-transparent border border-white/85 rounded-sm"
+                              style={{
+                                top: '50%',
+                                left: '50%',
+                                transformOrigin: 'center bottom',
+                                marginTop: '-12px',
+                                marginLeft: '-3px',
+                                transform: `rotate(${i * 30}deg) translateY(-12px)`,
+                                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+                              }}
+                            >
+                              <div 
+                                className="absolute bottom-0 left-0 right-0 bg-white rounded-sm"
+                                style={{
+                                  height: '0%',
+                                  animation: `blade-fill 0.6s linear infinite`,
+                                  animationDelay: `${i * 0.05}s`
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Loading Text */}
+                        <div 
+                          className="text-white text-xl"
+                          style={{ fontFamily: "'Pacifico', cursive" }}
+                        >
+                          Loading please wait
+                        </div>
+                        
+                        <div 
+                          className="text-white/90 text-sm"
+                          style={{ fontFamily: "'Lobster Two', cursive" }}
+                        >
+                          Setting up your session...
+                        </div>
+                        
+                        {/* Progress Bar */}
+                        <div className="w-40 h-1 bg-white/20 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-white via-orange-100 to-white rounded-full"
+                            style={{
+                              animation: 'progress 2s ease-in-out infinite',
+                              boxShadow: '0 0 10px rgba(255, 255, 255, 0.5)'
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Mobile Products Grid - Shows below buttons on small screens */}
-                <div className="lg:hidden mt-8">
+                {!isSlowLoad && <div className="lg:hidden mt-8">
                 <MobileProductsGrid 
                   products={products}
                   loading={loading}
@@ -358,7 +509,7 @@ const HomePage = () => {
                   prevSlide={prevSlide}
                   showModal={showModal}
                 />
-                </div>
+                </div>}
               </div>
 
               {/* Right - Desktop Products Grid Carousel (3x2) - Increased width (7/12 instead of 6/12) */}
@@ -376,14 +527,96 @@ const HomePage = () => {
                   {/* Products Grid Container */}
                   <div className="relative bg-gray-800/30 backdrop-blur-xl rounded-3xl p-6 border border-white/10 shadow-2xl overflow-hidden">
                     
+                    {/* Server Wake Up Loader Overlay */}
+                    {isSlowLoad && (
+                      <div className="absolute inset-0 z-30 bg-gradient-to-br from-orange-500/95 to-orange-600/95 backdrop-blur-sm rounded-3xl flex items-center justify-center">
+                        <div className="flex flex-col items-center gap-5">
+                          {/* OS Logo */}
+                          <div 
+                            className="w-20 h-20 rounded-xl flex items-end justify-start p-2"
+                            style={{
+                              background: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)',
+                              boxShadow: '0 10px 30px rgba(255, 69, 0, 0.4)',
+                              animation: 'logo-pulse 2s ease-in-out infinite'
+                            }}
+                          >
+                            <span 
+                              className="text-white font-bold text-4xl leading-none"
+                              style={{ 
+                                fontFamily: "'Lobster Two', cursive",
+                                transform: 'translateX(-5%) translateY(5%)',
+                                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)'
+                              }}
+                            >
+                              OS
+                            </span>
+                          </div>
+                          
+                          {/* Sequential Fill Spinner */}
+                          <div className="relative w-9 h-9">
+                            {[...Array(12)].map((_, i) => (
+                              <div
+                                key={i}
+                                className="absolute w-1.5 h-3 bg-transparent border border-white/85 rounded-sm"
+                                style={{
+                                  top: '50%',
+                                  left: '50%',
+                                  transformOrigin: 'center bottom',
+                                  marginTop: '-12px',
+                                  marginLeft: '-3px',
+                                  transform: `rotate(${i * 30}deg) translateY(-12px)`,
+                                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+                                }}
+                              >
+                                <div 
+                                  className="absolute bottom-0 left-0 right-0 bg-white rounded-sm"
+                                  style={{
+                                    height: '0%',
+                                    animation: `blade-fill 0.6s linear infinite`,
+                                    animationDelay: `${i * 0.05}s`
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Loading Text */}
+                          <div 
+                            className="text-white text-2xl"
+                            style={{ fontFamily: "'Pacifico', cursive" }}
+                          >
+                            Loading please wait
+                          </div>
+                          
+                          <div 
+                            className="text-white/95 text-base"
+                            style={{ fontFamily: "'Lobster Two', cursive" }}
+                          >
+                            Setting up your session...
+                          </div>
+                          
+                          {/* Progress Bar */}
+                          <div className="w-48 h-1 bg-white/20 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-gradient-to-r from-white via-orange-100 to-white rounded-full"
+                              style={{
+                                animation: 'progress 2s ease-in-out infinite',
+                                boxShadow: '0 0 10px rgba(255, 255, 255, 0.5)'
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Loading State */}
-                    {loading ? (
+                    {loading && !isSlowLoad ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 h-[500px]">
                         {[...Array(6)].map((_, i) => (
                           <div key={i} className="bg-gray-700/50 rounded-xl animate-pulse" />
                         ))}
                       </div>
-                    ) : products.length > 0 ? (
+                    ) : !isSlowLoad && products.length > 0 ? (
                       <>
                         {/* Responsive Products Grid - 1/2/3 columns */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -506,7 +739,7 @@ const HomePage = () => {
                           {currentSlide + 1} / {totalSlides || 1}
                         </div>
                       </>
-                    ) : (
+                    ) : !isSlowLoad && (
                       /* Empty State */
                       <div className="flex flex-col items-center justify-center h-[500px] text-center">
                         <Package className="w-16 h-16 text-gray-500 mb-4" />
@@ -592,6 +825,44 @@ const HomePage = () => {
           .scrollbar-hide::-webkit-scrollbar {
             display: none;
           }
+          
+          /* Loader Animations from index.html */
+          @keyframes logo-pulse {
+            0%, 100% { 
+              transform: scale(1);
+              box-shadow: 0 10px 30px rgba(255, 69, 0, 0.4);
+            }
+            50% { 
+              transform: scale(1.05);
+              box-shadow: 0 15px 40px rgba(255, 69, 0, 0.6);
+            }
+          }
+          
+          @keyframes blade-fill {
+            0%, 100% { 
+              height: 0%;
+              background: white;
+            }
+            8.33% { 
+              height: 100%;
+              background: white;
+              box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.2);
+            }
+            16.66% { 
+              height: 100%;
+              background: rgba(255, 255, 255, 0.9);
+            }
+            25% {
+              height: 0%;
+              background: rgba(255, 255, 255, 0.7);
+            }
+          }
+          
+          @keyframes progress {
+            0% { width: 0%; transform: translateX(0); }
+            50% { width: 100%; transform: translateX(0); }
+            100% { width: 100%; transform: translateX(100%); }
+          }
         `}</style>
 
         {/* Promotions Banner - MOVED UP before New Arrivals */}
@@ -618,396 +889,68 @@ const HomePage = () => {
           </div>
         </section>
 
-        {/* New Arrivals Section - MOVED UP */}
+                {/* Collections Section - Featured, Deals, New Arrivals, Best Sellers */}
         <section className="py-12 md:py-16 bg-white">
           <div className="container mx-auto px-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-              <div>
-                <h2 className="text-3xl md:text-4xl font-bold mb-2 text-gray-800">New Arrivals</h2>
-                <p className="text-gray-600">Fresh inventory just added to our collection</p>
-              </div>
-              <Link
-                to="/shop"
-                className="text-green-600 hover:text-green-700 font-semibold flex items-center text-lg group"
-              >
-                View All 
-                <ArrowRight className="ml-1 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </div>
+            {/* Featured Products */}
+            <ProductRow
+              title="Featured Products"
+              products={sections.featured}
+              viewAllLink="/shop"
+              viewAllParams={{ is_featured: true }}
+              loading={sectionsLoading}
+              showModal={showModal}
+              loadedImages={loadedImages}
+              onImageLoad={handleImageLoad}
+              icon={Sparkles}
+              onViewAll={handleViewAll}
+              sectionType="featured"
+            />
 
-            {loading ? (
-              <div className="space-y-6">
-                {/* Loading message with animation */}
-                <div className="text-center py-8">
-                  <div className="inline-flex items-center justify-center space-x-3">
-                    <div className="w-3 h-3 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-3 h-3 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-3 h-3 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                  </div>
-                  <p className="text-gray-700 mt-4 font-semibold text-lg">Loading products...</p>
-                  
-                  {isSlowLoad && (
-                    <div className="mt-4 max-w-md mx-auto">
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <p className="text-blue-800 text-sm">
-                          ⏱️ <strong>Server is waking up...</strong> This may take up to 2 minutes on free hosting. 
-                          Thanks for your patience!
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+            {/* Hot Deals */}
+            <ProductRow
+              title="Hot Deals"
+              products={sections.deals}
+              viewAllLink="/shop"
+              viewAllParams={{ on_sale: true }}
+              loading={sectionsLoading}
+              showModal={showModal}
+              loadedImages={loadedImages}
+              onImageLoad={handleImageLoad}
+              icon={Percent}
+              onViewAll={handleViewAll}
+              sectionType="deals"
+            />
 
-                {/* Loading Skeleton */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                    <ProductCardSkeleton key={i} delay={i} />
-                  ))}
-                </div>
-              </div>
-            ) : products.length === 0 ? (
-              <div className="text-center py-16 md:py-20 bg-gray-50 rounded-xl shadow-inner">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Package className="w-12 h-12 text-gray-400" />
-                </div>
-                <p className="text-gray-600 text-lg md:text-xl mb-2 font-semibold">No products available yet</p>
-                <p className="text-gray-500 text-sm md:text-base">Check back soon for exciting new arrivals!</p>
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                  {products.slice(0, 12).map((product) => (
-                    <div
-                      key={product.id}
-                      className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 relative"
-                    >
-                      <Link to={`/product/${product.id}`}>
-                        <div className="relative pb-[75%] bg-gray-100 flex">
-                          {/* Variant Thumbnails Column - Top Left */}
-                          {product.variants && product.variants.length > 0 && (
-                            <div className="absolute top-2 left-2 z-20 flex flex-col gap-1.5 max-h-[70%] overflow-y-auto overflow-x-hidden scrollbar-hide">
-                              {product.variants.slice(0, 4).map((variant, idx) => {
-                                // Get variant image - prioritize thumbnail, fallback to full image
-                                const variantImage = variant.images?.[0]?.thumbnail_url || 
-                                                   variant.images?.[0]?.image_url;
-                                
-                                return (
-                                  <button
-                                    key={variant.id}
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      
-                                      // Find the main product image container
-                                      const card = e.currentTarget.closest('.relative');
-                                      const mainImg = card?.querySelector('img[data-main-image="true"]');
-                                      
-                                      if (mainImg && variantImage) {
-                                        // Add fade out effect
-                                        mainImg.style.opacity = '0.6';
-                                        mainImg.style.transform = 'scale(0.95)';
-                                        
-                                        setTimeout(() => {
-                                          // Swap to variant image permanently
-                                          mainImg.src = variant.images?.[0]?.image_url || variantImage;
-                                          mainImg.style.opacity = '1';
-                                          mainImg.style.transform = 'scale(1)';
-                                          
-                                          // Update active state on thumbnails
-                                          const allThumbs = e.currentTarget.parentElement.querySelectorAll('button');
-                                          allThumbs.forEach(thumb => {
-                                            thumb.classList.remove('ring-2', 'ring-orange-500', 'ring-offset-1');
-                                          });
-                                          e.currentTarget.classList.add('ring-2', 'ring-orange-500', 'ring-offset-1');
-                                        }, 150);
-                                      }
-                                    }}
-                                    className="group relative w-10 h-10 rounded-lg border-2 border-white/80 shadow-md overflow-hidden hover:scale-115 hover:z-10 transition-all duration-200 hover:border-orange-400 bg-gray-100"
-                                    title={variant.name || `Variant ${idx + 1}`}
-                                  >
-                                    {/* Hover zoom wrapper */}
-                                    <div className="w-full h-full overflow-hidden">
-                                      {variantImage ? (
-                                        <img
-                                          src={variantImage}
-                                          alt={variant.name || `Variant ${idx + 1}`}
-                                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-125"
-                                          loading="lazy"
-                                          onError={(e) => {
-                                            // Fallback to color dot if image fails to load
-                                            e.target.style.display = 'none';
-                                            e.target.nextSibling.style.display = 'flex';
-                                          }}
-                                        />
-                                      ) : null}
-                                    </div>
-                                    
-                                    {/* Fallback color dot - hidden by default if image exists */}
-                                    <div 
-                                      className="absolute inset-0 items-center justify-center text-[8px] font-bold text-white uppercase"
-                                      style={{
-                                        display: variantImage ? 'none' : 'flex',
-                                        background: `linear-gradient(135deg, ${['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'][idx % 6]} 0%, ${['#b91c1c', '#1d4ed8', '#047857', '#b45309', '#6d28d9', '#be185d'][idx % 6]} 100%)`
-                                      }}
-                                    >
-                                      {variant.name?.charAt(0) || (idx + 1)}
-                                    </div>
-                                    
-                                    {/* Selected indicator ring */}
-                                    <div className="absolute inset-0 rounded-lg ring-2 ring-transparent ring-offset-1 transition-all pointer-events-none" />
-                                    
-                                    {/* Tooltip */}
-                                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-30">
-                                      {variant.name || `Variant ${idx + 1}`}
-                                    </span>
-                                  </button>
-                                );
-                              })}
-                              {/* Reset/Rollback to Original Image */}
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  
-                                  const card = e.currentTarget.closest('.relative');
-                                  const mainImg = card?.querySelector('img[data-main-image="true"]');
-                                  const originalImage = product.images?.[0]?.image_url || product.image_url;
-                                  
-                                  if (mainImg && originalImage) {
-                                    // Fade out effect
-                                    mainImg.style.opacity = '0.6';
-                                    mainImg.style.transform = 'scale(0.95)';
-                                    
-                                    setTimeout(() => {
-                                      // Reset to original product image
-                                      mainImg.src = originalImage;
-                                      mainImg.style.opacity = '1';
-                                      mainImg.style.transform = 'scale(1)';
-                                      
-                                      // Remove active rings from all variants
-                                      const allThumbs = e.currentTarget.parentElement.querySelectorAll('button');
-                                      allThumbs.forEach(thumb => {
-                                        thumb.classList.remove('ring-2', 'ring-orange-500', 'ring-offset-1');
-                                      });
-                                    }, 150);
-                                  }
-                                }}
-                                className="group relative w-10 h-10 rounded-lg border-2 border-white/80 shadow-md bg-gray-800/80 backdrop-blur-sm flex items-center justify-center text-white hover:bg-orange-500 hover:border-orange-400 transition-all duration-200"
-                                title="Reset to original image"
-                              >
-                                <svg 
-                                  className="w-5 h-5 transition-transform group-hover:rotate-[-45deg]" 
-                                  fill="none" 
-                                  stroke="currentColor" 
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path 
-                                    strokeLinecap="round" 
-                                    strokeLinejoin="round" 
-                                    strokeWidth={2} 
-                                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" 
-                                  />
-                                </svg>
-                              </button>
-                            </div>
-                          )}
-                          
-                          {product.image_url || product.images?.[0]?.image_url ? (
-                            <>
-                              {/* Thumbnail - loads first, blurred */}
-                              {!loadedImages.has(product.id) && (product.images?.[0]?.thumbnail_url || product.image_url) && (
-                                <img
-                                  src={product.images?.[0]?.thumbnail_url || product.image_url}
-                                  alt={product.name}
-                                  className="absolute inset-0 w-full h-full object-cover blur-sm"
-                                />
-                              )}
-                              {/* Full resolution - loads after, crisp */}
-                              <img
-                                src={product.images?.[0]?.image_url || product.image_url}
-                                alt={product.name}
-                                data-main-image="true"
-                                className={`absolute inset-0 w-full h-full object-cover transition-all duration-300 ${
-                                  loadedImages.has(product.id) ? 'opacity-100' : 'opacity-0'
-                                }`}
-                                onLoad={() => handleImageLoad(product.id)}
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                  e.target.parentElement.innerHTML = '<div class="absolute inset-0 flex items-center justify-center bg-gray-50"><svg class="w-20 h-20 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div>';
-                                }}
-                              />
-                            </>
-                          ) : (
-                            <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
-                              <svg className="w-20 h-20 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                              </svg>
-                            </div>
-                          )}
-                          
-                          {product.is_featured && (
-                            <span className="absolute top-3 right-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
-                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                              </svg>
-                              Featured
-                            </span>
-                          )}
-                          
-                          {/* Discount Badge - You Save X% */}
-                          {product.compare_price && Number(product.compare_price) > Number(product.price) && (
-                            <div className="absolute top-3 right-3 z-10 flex flex-col gap-1 items-end">
-                              {/* -X% OFF Badge */}
-                              <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-lg animate-pulse flex items-center gap-1">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                </svg>
-                                -{Math.round((1 - Number(product.price) / Number(product.compare_price)) * 100)}% OFF
-                              </span>
-                              
-                              {/* You Save KSh X */}
-                              <span className="bg-orange-500/90 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full shadow-md backdrop-blur-sm">
-                                Save KSh {(Number(product.compare_price) - Number(product.price)).toLocaleString()}
-                              </span>
-                            </div>
-                          )}
+            {/* New Arrivals */}
+            <ProductRow
+              title="New Arrivals"
+              products={sections.new_arrivals}
+              viewAllLink="/shop"
+              viewAllParams={{ is_new_arrival: true }}
+              loading={sectionsLoading}
+              showModal={showModal}
+              loadedImages={loadedImages}
+              onImageLoad={handleImageLoad}
+              icon={Zap}
+              onViewAll={handleViewAll}
+              sectionType="new_arrivals"
+            />
 
-                          {/* Icons moved to details section below */}
-                        </div>
-
-                        <div className="p-4 relative">
-                          {/* Action Icons - Top Right of Details */}
-                          <div className="absolute -top-3 -right-3 flex flex-col gap-1 bg-gray-100 rounded-lg p-1.5 border border-gray-200 shadow-md z-20">
-                            {/* Wishlist Icon */}
-                            <button
-                              onClick={(e) => handleWishlistToggle(e, product, 'newArrivals')}
-                              disabled={togglingWishlist === product.id}
-                              className="p-1.5 rounded-md transition-all hover:scale-110 hover:bg-gray-200 disabled:opacity-50"
-                            >
-                              <Heart 
-                                className={`w-4 h-4 ${isInWishlist(product.id, null) ? 'text-orange-500 fill-orange-500' : 'text-gray-600'}`} 
-                                strokeWidth={2}
-                              />
-                            </button>
-
-                            {/* Cart Icon */}
-                            <button
-                              onClick={(e) => handleAddToCart(e, product, 'newArrivals')}
-                              disabled={!product.quantity || cartLoading}
-                              className="p-1.5 rounded-md transition-all hover:scale-110 hover:bg-gray-200 disabled:opacity-50"
-                            >
-                              <ShoppingCart 
-                                className={`w-4 h-4 ${isInCart(product.id, product?.variants?.[0] || product?.colors?.[0]) ? 'text-orange-500 fill-orange-500' : !product.quantity ? 'text-gray-400' : 'text-gray-600'}`} 
-                              />
-                            </button>
-                          </div>
-
-                          <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2 h-12 text-sm hover:text-green-600 transition pr-8">
-                            {product.name}
-                          </h3>
-                          
-                          {product.brand && (
-                            <p className="text-xs text-gray-500 mb-2">
-                              Brand: <span className="font-medium text-gray-700">{product.brand}</span>
-                            </p>
-                          )}
-                          
-                          <div className="flex justify-between items-center mt-3">
-                            <div>
-                              <span className="text-xl font-bold text-green-600">
-                                KSh {Number(product.price).toLocaleString()}
-                              </span>
-                              {product.compare_price && Number(product.compare_price) > Number(product.price) && (
-                                <span className="text-sm text-gray-400 line-through ml-2">
-                                  KSh {Number(product.compare_price).toLocaleString()}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center justify-between gap-2 mt-3">
-                            {/* Left side - Condition (if exists) */}
-                            {product.condition && (
-                              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-medium whitespace-nowrap">
-                                {product.condition}
-                              </span>
-                            )}
-                            
-                            {/* Right side - Stock Status + Checkout - Always aligned right */}
-                            <div className="flex items-center gap-2 ml-auto">
-                              {/* Stock Status - comes FIRST */}
-                              {product.quantity && product.quantity > 0 ? (
-                                <span className="text-xs text-green-600 font-semibold flex items-center whitespace-nowrap">
-                                  <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
-                                  In Stock
-                                </span>
-                              ) : (
-                                <span className="text-xs text-red-600 font-semibold flex items-center whitespace-nowrap">
-                                  <span className="w-2 h-2 bg-red-500 rounded-full mr-1"></span>
-                                  Out of Stock
-                                </span>
-                              )}
-                              
-                              {/* Checkout Chip - comes AFTER */}
-                              {product.quantity > 0 && (
-                                <button
-                                  onClick={async (e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    
-                                    setCheckingOut(product.id);
-                                    
-                                    try {
-                                      const variant = product.variants?.[0] || product.colors?.[0] || null;
-                                      const result = await toggleCart(product, variant);
-                                      
-                                      if (result.success) {
-                                        window.location.href = '/checkout';
-                                      } else {
-                                        showModal('cart', 'error', result.error, 'newArrivals');
-                                        setCheckingOut(null);
-                                      }
-                                    } catch (error) {
-                                      console.error('Error:', error);
-                                      showModal('cart', 'error', 'Failed to proceed to checkout', 'newArrivals');
-                                      setCheckingOut(null);
-                                    }
-                                  }}
-                                  disabled={checkingOut === product.id}
-                                  className={`text-xs bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 sm:px-3 py-1 rounded font-semibold hover:from-orange-600 hover:to-red-600 transition-colors whitespace-nowrap flex items-center gap-1 ${
-                                    checkingOut === product.id ? 'opacity-75 cursor-not-allowed' : ''
-                                  }`}
-                                >
-                                  {checkingOut === product.id ? (
-                                    <>
-                                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                      <span>Adding...</span>
-                                    </>
-                                  ) : (
-                                    'Checkout'
-                                  )}
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-
-                {products.length > 0 && (
-                  <div className="text-center mt-10 md:mt-12">
-                  <Link
-                  to="/shop"
-                    className="inline-block px-8 py-4 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 transition shadow-lg hover:shadow-xl text-lg flex items-center justify-center gap-2 mx-auto"
-                  >
-                    View All New Arrivals <ArrowRight className="w-5 h-5" />
-                  </Link>
-                  </div>
-                )}
-              </>
-            )}
+            {/* Best Sellers */}
+            <ProductRow
+              title="Best Sellers"
+              products={sections.best_sellers}
+              viewAllLink="/shop"
+              viewAllParams={{ sort: 'popular' }}
+              loading={sectionsLoading}
+              showModal={showModal}
+              loadedImages={loadedImages}
+              onImageLoad={handleImageLoad}
+              icon={TrendingUp}
+              onViewAll={handleViewAll}
+              sectionType="best_sellers"
+            />
           </div>
         </section>
 
@@ -1242,7 +1185,7 @@ const HomePage = () => {
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">What Riders Say</h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">Join thousands of satisfied cyclists across Kenya</p>
+              <p className="text-gray-600 max-w-2xl mx-auto">Join other satisfied cyclists across the region</p>
             </div>
             
             <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
@@ -1399,6 +1342,96 @@ const HomePage = () => {
         </section>
       </div>
     </>
+  );
+};
+
+// Server Wake Up Loader Component - Exact match to index.html loader
+const ServerWakeUpLoader = () => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-orange-500 to-orange-600">
+      <div className="flex flex-col items-center gap-6">
+        {/* OS Logo - Exact Match to index.html */}
+        <div 
+          className="w-20 h-20 rounded-xl flex items-end justify-start p-2"
+          style={{
+            background: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)',
+            boxShadow: '0 10px 30px rgba(255, 69, 0, 0.4)',
+            animation: 'logo-pulse 2s ease-in-out infinite'
+          }}
+        >
+          <span 
+            className="text-white font-bold text-4xl leading-none"
+            style={{ 
+              fontFamily: "'Lobster Two', cursive",
+              transform: 'translateX(-5%) translateY(5%)',
+              textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)'
+            }}
+          >
+            OS
+          </span>
+        </div>
+        
+        {/* Sequential Fill Spinner - 12 Outlined Blades */}
+        <div className="relative w-9 h-9">
+          {[...Array(12)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1.5 h-3 bg-transparent border border-white/85 rounded-sm"
+              style={{
+                top: '50%',
+                left: '50%',
+                transformOrigin: 'center bottom',
+                marginTop: '-12px',
+                marginLeft: '-3px',
+                transform: `rotate(${i * 30}deg) translateY(-12px)`,
+                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+              }}
+            >
+              <div 
+                className="absolute bottom-0 left-0 right-0 bg-white rounded-sm"
+                style={{
+                  height: '0%',
+                  animation: `blade-fill 0.6s linear infinite`,
+                  animationDelay: `${i * 0.05}s`
+                }}
+              />
+            </div>
+          ))}
+        </div>
+        
+        {/* Loading Text */}
+        <div 
+          className="text-white text-2xl font-normal"
+          style={{ 
+            fontFamily: "'Pacifico', cursive",
+            textShadow: '2px 2px 8px rgba(0, 0, 0, 0.2)'
+          }}
+        >
+          Loading please wait
+        </div>
+        
+        <div 
+          className="text-white/95 text-base"
+          style={{ 
+            fontFamily: "'Lobster Two', cursive",
+            textShadow: '1px 1px 4px rgba(0, 0, 0, 0.15)'
+          }}
+        >
+          Setting up your session...
+        </div>
+        
+        {/* Progress Bar */}
+        <div className="w-48 h-1 bg-white/20 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-gradient-to-r from-white via-orange-100 to-white rounded-full"
+            style={{
+              animation: 'progress 2s ease-in-out infinite',
+              boxShadow: '0 0 10px rgba(255, 255, 255, 0.5)'
+            }}
+          />
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -30,6 +30,16 @@ const productService = {
         delete backendParams.category;
       }
       
+      // Ensure boolean flags are properly formatted for backend
+      const booleanFlags = ['is_featured', 'is_new_arrival', 'on_sale'];
+      booleanFlags.forEach(flag => {
+        if (backendParams[flag] === 'true' || backendParams[flag] === true) {
+          backendParams[flag] = '1'; // Laravel expects '1' for true in $request->boolean()
+        } else if (backendParams[flag] === 'false' || backendParams[flag] === false || backendParams[flag] === '') {
+          delete backendParams[flag];
+        }
+      });
+      
       // Remove empty params
       Object.keys(backendParams).forEach(key => {
         if (backendParams[key] === '' || backendParams[key] === null || backendParams[key] === undefined) {
@@ -46,25 +56,25 @@ const productService = {
   },
 
   // Universal search across all entities
-    searchProducts: async (query, type = 'all') => {
-      console.log('🔍 ProductService.searchProducts called:', { query, type });
+  searchProducts: async (query, type = 'all') => {
+    console.log('🔍 ProductService.searchProducts called:', { query, type });
+    
+    try {
+      const response = await api.get('/search', {
+        params: { q: query, type: type }
+      });
       
-      try {
-        const response = await api.get('/search', {  // CHANGED FROM /products/search
-          params: { q: query, type: type }
-        });
-        
-        console.log('✅ Search API response:', response.data);
-        return response.data;
-      } catch (error) {
-        console.error('❌ Search products error:', {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status
-        });
-        throw error;
-      }
-    },
+      console.log('✅ Search API response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Search products error:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      throw error;
+    }
+  },
 
   // Get single product by ID
   getProductById: async (id) => {

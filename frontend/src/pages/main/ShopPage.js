@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { fetchProducts, fetchCategories } from '../../redux/slices/productSlice';
 import { Search, SlidersHorizontal, X, Filter, ChevronDown, Star, Sparkles, TrendingUp, Percent, Zap } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
@@ -11,22 +11,34 @@ import productService from '../../services/productService';
 
 const ShopPage = () => {
   const dispatch = useDispatch();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  
   const { items: products, categories, loading, error, pagination } = useSelector(
     (state) => state.products
   );
 
+  // Initialize filters from URL params
   const [filters, setFilters] = useState({
-    category: '',
-    search: '',
-    sort: 'latest',
-    page: 1,
-    min_price: '',
-    max_price: '',
-    brand: '',
-    condition: '',
-    stock_status: '',
-    min_rating: '',
+    category: searchParams.get('category') || '',
+    search: searchParams.get('search') || '',
+    sort: searchParams.get('sort') || 'latest',
+    page: parseInt(searchParams.get('page')) || 1,
+    min_price: searchParams.get('min_price') || '',
+    max_price: searchParams.get('max_price') || '',
+    brand: searchParams.get('brand') || '',
+    condition: searchParams.get('condition') || '',
+    stock_status: searchParams.get('stock_status') || '',
+    min_rating: searchParams.get('min_rating') || '',
+    is_featured: searchParams.get('is_featured') || '',
+    is_new_arrival: searchParams.get('is_new_arrival') || '',
+    on_sale: searchParams.get('on_sale') || '',
   });
+
+  // Determine view mode based on URL params
+  const [viewMode, setViewMode] = useState(
+    searchParams.get('view') || 'sections'
+  );
 
   const [brands, setBrands] = useState([]);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
@@ -61,8 +73,6 @@ const ShopPage = () => {
     by_category: []
   });
   const [sectionsLoading, setSectionsLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('sections'); // 'sections' or 'all'
-  const navigate = useNavigate();
 
   const showModal = (type, action, productName, section = 'shop') => {
     setModal({ isOpen: true, type, action, productName, section });
@@ -90,29 +100,98 @@ const ShopPage = () => {
     dispatch(fetchCategories());
   }, [dispatch]);
 
+  // Sync URL params to filters when URL changes (e.g., when clicking "View All")
+  useEffect(() => {
+    const urlFilters = {
+      category: searchParams.get('category') || '',
+      search: searchParams.get('search') || '',
+      sort: searchParams.get('sort') || 'latest',
+      page: parseInt(searchParams.get('page')) || 1,
+      min_price: searchParams.get('min_price') || '',
+      max_price: searchParams.get('max_price') || '',
+      brand: searchParams.get('brand') || '',
+      condition: searchParams.get('condition') || '',
+      stock_status: searchParams.get('stock_status') || '',
+      min_rating: searchParams.get('min_rating') || '',
+      is_featured: searchParams.get('is_featured') || '',
+      is_new_arrival: searchParams.get('is_new_arrival') || '',
+      on_sale: searchParams.get('on_sale') || '',
+    };
+    
+    setFilters(prev => ({ ...prev, ...urlFilters }));
+    
+    // Switch to 'all' view if any collection filter is present
+    const hasCollectionFilter = searchParams.get('is_featured') || 
+                                searchParams.get('is_new_arrival') || 
+                                searchParams.get('on_sale') ||
+                                searchParams.get('category');
+    
+    if (hasCollectionFilter || searchParams.get('view') === 'all') {
+      setViewMode('all');
+    } else {
+      setViewMode('sections');
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     // Always fetch products with replace: true to show only current page
     dispatch(fetchProducts({ ...filters, replace: true }));
   }, [dispatch, filters]);
 
   const handleCategoryChange = (categoryId) => {
-    setFilters(prev => ({ ...prev, category: categoryId, page: 1 }));
+    const newFilters = { ...filters, category: categoryId, page: 1 };
+    setFilters(newFilters);
     setShowCategoryModal(false);
+    
+    // Update URL params
+    const params = new URLSearchParams(searchParams);
+    if (categoryId) {
+      params.set('category', categoryId);
+    } else {
+      params.delete('category');
+    }
+    params.set('page', '1');
+    setSearchParams(params);
+    
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSearchChange = (e) => {
-    setFilters(prev => ({ ...prev, search: e.target.value, page: 1 }));
+    const value = e.target.value;
+    setFilters(prev => ({ ...prev, search: value, page: 1 }));
+    
+    // Update URL params
+    const params = new URLSearchParams(searchParams);
+    if (value) {
+      params.set('search', value);
+    } else {
+      params.delete('search');
+    }
+    params.set('page', '1');
+    setSearchParams(params);
   };
 
   const handleSortChange = (sortValue) => {
     setFilters(prev => ({ ...prev, sort: sortValue, page: 1 }));
     setShowSortModal(false);
+    
+    // Update URL params
+    const params = new URLSearchParams(searchParams);
+    params.set('sort', sortValue);
+    params.set('page', '1');
+    setSearchParams(params);
+    
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handlePageChange = (page) => {
     setFilters({ ...filters, page });
+    
+    // Update URL params
+    const params = new URLSearchParams(searchParams);
+    params.set('page', page.toString());
+    setSearchParams(params);
+    
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -150,10 +229,30 @@ const ShopPage = () => {
 
   const handlePriceChange = (type, value) => {
     setFilters(prev => ({ ...prev, [type]: value, page: 1 }));
+    
+    // Update URL params
+    const params = new URLSearchParams(searchParams);
+    if (value) {
+      params.set(type, value);
+    } else {
+      params.delete(type);
+    }
+    params.set('page', '1');
+    setSearchParams(params);
   };
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
+    
+    // Update URL params
+    const params = new URLSearchParams(searchParams);
+    if (value) {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    params.set('page', '1');
+    setSearchParams(params);
   };
 
   const clearFilters = () => {
@@ -168,8 +267,12 @@ const ShopPage = () => {
       condition: '',
       stock_status: '',
       min_rating: '',
+      is_featured: '',
+      is_new_arrival: '',
+      on_sale: '',
     });
     setShowFiltersModal(false);
+    navigate('/shop');
   };
 
   const activeFiltersCount = () => {
@@ -180,6 +283,9 @@ const ShopPage = () => {
     if (filters.condition) count++;
     if (filters.stock_status) count++;
     if (filters.min_rating) count++;
+    if (filters.is_featured) count++;
+    if (filters.is_new_arrival) count++;
+    if (filters.on_sale) count++;
     return count;
   };
 
@@ -209,32 +315,36 @@ const ShopPage = () => {
   }, [viewMode]);
 
   const handleViewAll = (section, params = {}) => {
-    // Switch to all products view with filters applied
-    setViewMode('all');
+    // Build query params for URL
+    const queryParams = new URLSearchParams();
+    queryParams.set('view', 'all');
     
     // Apply section-specific filters
     switch(section) {
       case 'featured':
-        // Could add is_featured filter if backend supports it
+        queryParams.set('is_featured', 'true');
         break;
       case 'new_arrivals':
-        setFilters(prev => ({ ...prev, sort: 'latest' }));
+        queryParams.set('is_new_arrival', 'true');
+        queryParams.set('sort', 'latest');
         break;
       case 'best_sellers':
-        setFilters(prev => ({ ...prev, sort: 'popular' }));
+        queryParams.set('sort', 'popular');
         break;
       case 'deals':
-        // Could filter by products with compare_price
+        queryParams.set('on_sale', 'true');
         break;
       case 'category':
         if (params.category_id) {
-          setFilters(prev => ({ ...prev, category: params.category_id }));
+          queryParams.set('category', params.category_id);
         }
         break;
       default:
         break;
     }
     
+    // Navigate to shop with query params
+    navigate(`/shop?${queryParams.toString()}`);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -251,7 +361,12 @@ const ShopPage = () => {
       condition: '',
       stock_status: '',
       min_rating: '',
+      is_featured: '',
+      is_new_arrival: '',
+      on_sale: '',
     });
+    // Clear URL params
+    navigate('/shop');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -358,7 +473,12 @@ const ShopPage = () => {
               Collections
             </button>
             <button
-              onClick={() => setViewMode('all')}
+              onClick={() => {
+                setViewMode('all');
+                const params = new URLSearchParams(searchParams);
+                params.set('view', 'all');
+                setSearchParams(params);
+              }}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 viewMode === 'all' 
                   ? 'bg-orange-600 text-white' 
@@ -424,12 +544,14 @@ const ShopPage = () => {
               title="Featured Products"
               products={sections.featured}
               viewAllLink="/shop"
-              viewAllParams={{ featured: true }}
+              viewAllParams={{ is_featured: true }}
               loading={sectionsLoading}
               showModal={showModal}
               loadedImages={loadedImages}
               onImageLoad={handleImageLoad}
               icon={Sparkles}
+              onViewAll={handleViewAll}
+              sectionType="featured"
             />
 
             {/* Deals & Discounts */}
@@ -443,6 +565,8 @@ const ShopPage = () => {
               loadedImages={loadedImages}
               onImageLoad={handleImageLoad}
               icon={Percent}
+              onViewAll={handleViewAll}
+              sectionType="deals"
             />
 
             {/* New Arrivals */}
@@ -456,6 +580,8 @@ const ShopPage = () => {
               loadedImages={loadedImages}
               onImageLoad={handleImageLoad}
               icon={Zap}
+              onViewAll={handleViewAll}
+              sectionType="new_arrivals"
             />
 
             {/* Best Sellers */}
@@ -469,6 +595,8 @@ const ShopPage = () => {
               loadedImages={loadedImages}
               onImageLoad={handleImageLoad}
               icon={TrendingUp}
+              onViewAll={handleViewAll}
+              sectionType="best_sellers"
             />
 
             {/* Categories */}
@@ -483,6 +611,8 @@ const ShopPage = () => {
                 showModal={showModal}
                 loadedImages={loadedImages}
                 onImageLoad={handleImageLoad}
+                onViewAll={handleViewAll}
+                sectionType="category"
               />
             ))}
           </div>
@@ -556,10 +686,7 @@ const ShopPage = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
                       <select
                         value={filters.sort}
-                        onChange={(e) => {
-                          setFilters(prev => ({ ...prev, sort: e.target.value, page: 1 }));
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
+                        onChange={(e) => handleSortChange(e.target.value)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                       >
                         <option value="latest">Latest</option>

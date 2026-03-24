@@ -3,6 +3,17 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 
+// CSS for hiding scrollbars in variant thumbnails
+const scrollbarHideStyles = `
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+`;
+
 const ProductCard = ({ product, onImageLoad, isImageLoaded, showModal, compact = false }) => {
   const { addToCart, toggleCart, loading: cartLoading, isInCart } = useCart();
   const { toggleWishlist, isInWishlist, loading: wishlistLoading } = useWishlist();
@@ -74,8 +85,8 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded, showModal, compact =
     <div className={`bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 relative ${compact ? 'min-w-[200px] w-[200px]' : ''}`}>
       <Link to={`/product/${product.id}`} className="block">
         <div className="relative pb-[75%] bg-gray-100 flex">
-          {/* Variant Thumbnails - Hidden in compact mode */}
-          {!compact && product.variants && product.variants.length > 0 && (
+          {/* Variant Thumbnails - Always show if variants exist */}
+          {product.variants && product.variants.length > 0 && (
             <div className="absolute top-2 left-2 z-20 flex flex-col gap-1.5 max-h-[70%] overflow-y-auto overflow-x-hidden scrollbar-hide">
               {product.variants.slice(0, 4).map((variant, idx) => {
                 const variantImage = variant.images?.[0]?.thumbnail_url || variant.images?.[0]?.image_url;
@@ -94,32 +105,97 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded, showModal, compact =
                           mainImg.src = variant.images?.[0]?.image_url || variantImage;
                           mainImg.style.opacity = '1';
                           mainImg.style.transform = 'scale(1)';
+                          
+                          // Update active state on thumbnails
+                          const allThumbs = e.currentTarget.parentElement.querySelectorAll('button');
+                          allThumbs.forEach(thumb => {
+                            thumb.classList.remove('ring-2', 'ring-orange-500', 'ring-offset-1');
+                          });
+                          e.currentTarget.classList.add('ring-2', 'ring-orange-500', 'ring-offset-1');
                         }, 150);
                       }
                     }}
                     className="group relative w-10 h-10 rounded-lg border-2 border-white/80 shadow-md overflow-hidden hover:scale-115 hover:z-10 transition-all duration-200 hover:border-orange-400 bg-gray-100"
                     title={variant.name || `Variant ${idx + 1}`}
                   >
-                    {variantImage ? (
-                      <img
-                        src={variantImage}
-                        alt={variant.name || `Variant ${idx + 1}`}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-125"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div 
-                        className="w-full h-full flex items-center justify-center text-[8px] font-bold text-white uppercase"
-                        style={{
-                          background: `linear-gradient(135deg, ${['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'][idx % 6]} 0%, ${['#b91c1c', '#1d4ed8', '#047857', '#b45309', '#6d28d9', '#be185d'][idx % 6]} 100%)`
-                        }}
-                      >
-                        {variant.name?.charAt(0) || (idx + 1)}
-                      </div>
-                    )}
+                    <div className="w-full h-full overflow-hidden">
+                      {variantImage ? (
+                        <img
+                          src={variantImage}
+                          alt={variant.name || `Variant ${idx + 1}`}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-125"
+                          loading="lazy"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                    </div>
+                    
+                    <div 
+                      className="absolute inset-0 items-center justify-center text-[8px] font-bold text-white uppercase"
+                      style={{
+                        display: variantImage ? 'none' : 'flex',
+                        background: `linear-gradient(135deg, ${['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'][idx % 6]} 0%, ${['#b91c1c', '#1d4ed8', '#047857', '#b45309', '#6d28d9', '#be185d'][idx % 6]} 100%)`
+                      }}
+                    >
+                      {variant.name?.charAt(0) || (idx + 1)}
+                    </div>
+                    
+                    <div className="absolute inset-0 rounded-lg ring-2 ring-transparent ring-offset-1 transition-all pointer-events-none" />
+                    
+                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-30">
+                      {variant.name || `Variant ${idx + 1}`}
+                    </span>
                   </button>
                 );
               })}
+              
+              {/* Reset/Rollback to Original Image */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  
+                  const card = e.currentTarget.closest('.relative');
+                  const mainImg = card?.querySelector('img[data-main-image="true"]');
+                  const originalImage = product.images?.[0]?.image_url || product.image_url;
+                  
+                  if (mainImg && originalImage) {
+                    mainImg.style.opacity = '0.6';
+                    mainImg.style.transform = 'scale(0.95)';
+                    
+                    setTimeout(() => {
+                      mainImg.src = originalImage;
+                      mainImg.style.opacity = '1';
+                      mainImg.style.transform = 'scale(1)';
+                      
+                      // Remove active state from all thumbnails
+                      const allThumbs = e.currentTarget.parentElement.querySelectorAll('button');
+                      allThumbs.forEach(thumb => {
+                        thumb.classList.remove('ring-2', 'ring-orange-500', 'ring-offset-1');
+                      });
+                    }, 150);
+                  }
+                }}
+                className="group relative w-10 h-10 rounded-lg border-2 border-white/80 shadow-md bg-gray-800/80 backdrop-blur-sm flex items-center justify-center text-white hover:bg-orange-500 hover:border-orange-400 transition-all duration-200"
+                title="Reset to original image"
+              >
+                <svg 
+                  className="w-5 h-5 transition-transform group-hover:rotate-[-45deg]" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" 
+                  />
+                </svg>
+              </button>
             </div>
           )}
           
@@ -180,8 +256,8 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded, showModal, compact =
         </div>
 
         <div className={`p-4 relative ${compact ? 'p-3' : ''}`}>
-          {/* Action Icons */}
-          <div className={`absolute -top-3 -right-3 flex flex-col gap-1 bg-gray-100 rounded-lg p-1.5 border border-gray-200 shadow-md z-20 ${compact ? 'hidden' : ''}`}>
+          {/* Action Icons - Always visible */}
+          <div className="absolute -top-3 -right-3 flex flex-col gap-1 bg-gray-100 rounded-lg p-1.5 border border-gray-200 shadow-md z-20">
             <button
               onClick={handleWishlistToggle}
               disabled={isTogglingWishlist}
@@ -266,13 +342,13 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded, showModal, compact =
                 </span>
               )}
               
-              {!compact && product.quantity > 0 && (
+              {product.quantity > 0 && (
                 <button
                   onClick={handleCheckout}
                   disabled={checkingOut === product.id}
-                  className={`text-xs bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 sm:px-3 py-1 rounded font-semibold hover:from-orange-600 hover:to-red-600 transition-colors whitespace-nowrap flex items-center gap-1 ${
+                  className={`bg-gradient-to-r from-orange-500 to-red-500 text-white rounded font-semibold hover:from-orange-600 hover:to-red-600 transition-colors whitespace-nowrap flex items-center gap-1 ${
                     checkingOut === product.id ? 'opacity-75 cursor-not-allowed' : ''
-                  }`}
+                  } ${compact ? 'text-[10px] px-2 py-1' : 'text-xs px-2 sm:px-3 py-1'}`}
                 >
                   {checkingOut === product.id ? (
                     <>
@@ -291,5 +367,16 @@ const ProductCard = ({ product, onImageLoad, isImageLoaded, showModal, compact =
     </div>
   );
 };
+
+// Add styles to document head
+if (typeof document !== 'undefined') {
+  const styleId = 'product-card-styles';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = scrollbarHideStyles;
+    document.head.appendChild(style);
+  }
+}
 
 export default ProductCard;

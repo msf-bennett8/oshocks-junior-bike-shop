@@ -12,7 +12,9 @@ const ProductRow = ({
   showModal,
   loadedImages,
   onImageLoad,
-  icon: Icon
+  icon: Icon,
+  onViewAll,
+  sectionType
 }) => {
   const scrollContainerRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -51,6 +53,14 @@ const ProductRow = ({
     return queryString ? `${viewAllLink}?${queryString}` : viewAllLink;
   };
 
+  const handleViewAllClick = (e) => {
+    if (onViewAll && sectionType) {
+      e.preventDefault();
+      onViewAll(sectionType, viewAllParams);
+    }
+    // Otherwise let the Link handle it normally
+  };
+
   if (!loading && products.length === 0) return null;
 
   return (
@@ -65,6 +75,7 @@ const ProductRow = ({
         {viewAllLink && (
           <Link 
             to={buildQueryString()}
+            onClick={handleViewAllClick}
             className="flex items-center gap-1 text-orange-600 hover:text-orange-700 font-medium text-sm md:text-base transition-colors group"
           >
             View All
@@ -111,7 +122,7 @@ const ProductRow = ({
             [...Array(5)].map((_, index) => (
               <div 
                 key={index}
-                className="min-w-[200px] w-[200px] md:min-w-[240px] md:w-[240px] bg-white rounded-xl shadow-md overflow-hidden"
+                className="min-w-[220px] w-[220px] md:min-w-[260px] md:w-[260px] bg-white rounded-xl shadow-md overflow-hidden"
               >
                 <div className="aspect-[4/3] bg-gray-200 animate-pulse"></div>
                 <div className="p-3 space-y-2">
@@ -126,7 +137,7 @@ const ProductRow = ({
             products.map((product) => (
               <div 
                 key={product.id} 
-                className="min-w-[200px] w-[200px] md:min-w-[240px] md:w-[240px] flex-shrink-0"
+                className="min-w-[220px] w-[220px] md:min-w-[260px] md:w-[260px] flex-shrink-0"
               >
                 <ProductCard
                   product={product}
