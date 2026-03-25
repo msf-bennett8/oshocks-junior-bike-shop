@@ -10,6 +10,14 @@ export const orderService = {
     const response = await api.get('/orders');
     return response.data;
   },
+  
+  /**
+   * Get user's last delivery location for auto-fill
+   */
+  getLastDeliveryLocation: async () => {
+    const response = await api.get('/user/last-delivery-location');
+    return response.data;
+  },
 };
 
 export default orderService;

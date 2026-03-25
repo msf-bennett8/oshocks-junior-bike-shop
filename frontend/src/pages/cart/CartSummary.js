@@ -27,7 +27,7 @@ const CartSummary = ({
   showPromoCode = true,
   showShippingEstimate = true,
   showPaymentMethods = true,
-  deliveryLocation = 'Nairobi',
+  deliveryLocation = null,
   sticky = true,
   className = ''
 }) => {
@@ -52,11 +52,14 @@ const CartSummary = ({
   const subtotal = cartItems.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Shipping calculation
+  // Shipping calculation - only calculate if location is known
   const freeShippingThreshold = 5000;
-  const baseShipping = 300;
+  const hasLocation = !!deliveryLocation;
   
-  let shippingCost = subtotal >= freeShippingThreshold ? 0 : baseShipping;
+  let shippingCost = 0;
+  if (hasLocation) {
+    shippingCost = subtotal >= freeShippingThreshold ? 0 : 300;
+  }
   
   // Apply free shipping promo
   if (appliedPromo?.type === 'shipping') {
@@ -78,8 +81,8 @@ const CartSummary = ({
   // const taxAmount = (subtotal - discount) * taxRate / (1 + taxRate);
   const taxAmount = 0;
 
-  // Total calculation
-  const total = subtotal - discount + shippingCost;
+  // Total calculation - don't add shipping if location unknown (will be calculated at checkout)
+  const total = subtotal - discount + (hasLocation ? shippingCost : 0);
 
   // Savings calculation
   const regularPriceTotal = cartItems.reduce((sum, item) => 
@@ -169,7 +172,7 @@ const paymentMethods = [
     name: 'Card', 
     icon: <div className="flex items-center gap-2">
       <img 
-        src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" 
+        src="https://upload.wikimedia.org/wikipedia/commons/d/d6/Visa_Inc._logo_%282021%E2%80%93present%29.svg" 
         alt="Visa" 
         className="h-4 w-auto object-contain"
       />
@@ -232,7 +235,9 @@ const paymentMethods = [
               <span>Shipping</span>
             </div>
             <div className="text-right">
-              {shippingCost === 0 ? (
+              {!hasLocation ? (
+                <span className="font-medium text-orange-600 text-xs sm:text-sm">TBD (based on location)</span>
+              ) : shippingCost === 0 ? (
                 <span className="text-green-600 font-semibold">FREE</span>
               ) : (
                 <span className="font-medium text-gray-600">{formatPrice(shippingCost)}</span>

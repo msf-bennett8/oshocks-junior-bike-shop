@@ -611,9 +611,9 @@ const CartPage = () => {
                   cartItems={cartItems}
                   onCheckout={handleCheckout}
                   showPromoCode={true}
-                  showShippingEstimate={true}
-                  showPaymentMethods={true}
-                  deliveryLocation="Nairobi CBD, Kenya"
+                  showShippingEstimate={false}
+                  showPaymentMethods={false}
+                  deliveryLocation={null}
                   sticky={false}
                 />
 

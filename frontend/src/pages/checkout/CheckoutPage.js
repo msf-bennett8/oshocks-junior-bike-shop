@@ -5,6 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import authService from '../../services/authService';
 import paymentService from '../../services/paymentService';
+import orderService from '../../services/orderService';
 
 const CheckoutPage = () => {
   const { cartItems, clearCart } = useCart();
@@ -12,6 +13,8 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [lastDeliveryLocation, setLastDeliveryLocation] = useState(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   
   // Form state
   const [shippingInfo, setShippingInfo] = useState({
@@ -149,31 +152,31 @@ const CheckoutPage = () => {
   // County information with descriptions
 const countyInfo = {
   'Nairobi County': {
-    icon: '🏙️',
+    // icon: '🏙️',
     description: 'Capital city with same-day delivery available',
     zones: 6,
     startingFrom: 150
   },
   'Kiambu County': {
-    icon: '🌳',
+    // icon: '🌳',
     description: 'Neighboring county with reliable delivery',
     zones: 5,
     startingFrom: 200
   },
   'Machakos County': {
-    icon: '⛰️',
+    // icon: '⛰️',
     description: 'Eastern region with 2-3 day delivery',
     zones: 2,
     startingFrom: 1000
   },
   'Kajiado County': {
-    icon: '🦁',
+    // icon: '🦁',
     description: 'Southern region with scheduled delivery',
     zones: 2,
     startingFrom: 800
   },
   'Other (Arrange own courier)': {
-    icon: '📦',
+    // icon: '📦',
     description: 'Nationwide coverage - arrange your own courier',
     zones: 1,
     startingFrom: 0
@@ -195,7 +198,8 @@ const countyInfo = {
 
   // const tax = subtotal * 0.16; // 16% VAT - Commented out (business under KSh 5M threshold)
   const tax = 0; // No VAT charged for small businesses
-  const total = subtotal + shippingCost + tax;
+  // Only add shipping to total if location is selected, otherwise total excludes shipping
+  const total = subtotal + (shippingInfo.city && shippingInfo.zone ? shippingCost : 0) + tax;
   
   // Validation functions
   const validateShipping = () => {
@@ -362,6 +366,12 @@ const countyInfo = {
           discount: 0,
           total: total
         };
+
+        console.log('📦 Order data being sent:', {
+          county: orderData.county,
+          zone: orderData.zone,
+          fullOrderData: orderData
+        });
 
         // Get auth token using authService (best practice)
         const token = authService.getToken();
@@ -573,8 +583,113 @@ const countyInfo = {
         phone: user.phone || prev.phone,
         address: user.address || prev.address
       }));
+      
+      // Load last delivery location for auto-fill
+      loadLastDeliveryLocation();
     }
   }, [user]);
+
+  // Load user's last delivery location
+  const loadLastDeliveryLocation = async () => {
+    console.log('🚀 loadLastDeliveryLocation called');
+    setIsLoadingLocation(true);
+    
+    try {
+      console.log('📡 Calling orderService.getLastDeliveryLocation()...');
+      const response = await orderService.getLastDeliveryLocation();
+      
+      console.log('📥 Full API Response:', response);
+      
+      if (response.success && response.data) {
+        console.log('✅ Success! Location data received:', response.data);
+        setLastDeliveryLocation(response.data);
+        
+        // Auto-fill shipping info if available
+        const location = response.data;
+        console.log('🔍 Processing location:', {
+          county: location.county,
+          zone: location.zone,
+          address: location.address,
+          source: location.source
+        });
+        
+        // Check if county exists in our countyZones
+        if (!countyZones[location.county]) {
+          console.error('❌ County not found in countyZones:', location.county);
+          console.log('Available counties:', Object.keys(countyZones));
+          return;
+        }
+        
+        // Set available zones for the county FIRST
+        console.log('📍 Setting available zones for:', location.county);
+        setAvailableZones(countyZones[location.county]);
+        
+        // Find the zone object to get proper zone name
+        const countyZonesList = countyZones[location.county] || [];
+        console.log('🔍 Looking for zone in:', countyZonesList.map(z => z.name));
+        
+        let matchedZone = null;
+        let specificLocation = location.zone;
+        
+        // Check if stored zone is in format "Zone Name - Location"
+        if (location.zone && location.zone.includes(' - ')) {
+          const parts = location.zone.split(' - ');
+          specificLocation = parts[1].trim();
+          matchedZone = countyZonesList.find(z => z.name === parts[0].trim());
+          console.log('✅ Parsed zone from "Zone - Location" format:', {
+            zoneName: parts[0],
+            location: specificLocation,
+            matched: matchedZone?.name
+          });
+        } else if (location.zone) {
+          // Find zone that contains this location
+          console.log('🔍 Searching for zone containing:', location.zone);
+          matchedZone = countyZonesList.find(z => 
+            z.locations.toLowerCase().includes(location.zone.toLowerCase())
+          );
+          console.log('✅ Matched zone by location search:', matchedZone?.name);
+        }
+        
+        // If no match found, use first zone as fallback
+        if (!matchedZone && countyZonesList.length > 0) {
+          console.warn('⚠️ No zone match found, using first zone as fallback');
+          matchedZone = countyZonesList[0];
+          specificLocation = location.zone || matchedZone.locations.split(',')[0].trim();
+        }
+        
+        const finalZone = matchedZone ? `${matchedZone.name} - ${specificLocation}` : location.zone;
+        console.log('📝 Final zone to set:', finalZone);
+        
+        setShippingInfo(prev => {
+          const newState = {
+            ...prev,
+            city: location.county,
+            zone: finalZone,
+            address: location.address || prev.address,
+            postalCode: location.postal_code || prev.postalCode,
+            phone: location.phone || prev.phone,
+            deliveryInstructions: location.delivery_instructions || prev.deliveryInstructions
+          };
+          console.log('🔄 Setting shippingInfo to:', newState);
+          return newState;
+        });
+        
+        console.log('✅ Auto-fill complete!');
+      } else {
+        console.log('ℹ️ No location data in response (expected for first-time users)');
+      }
+    } catch (error) {
+      console.error('❌ Error in loadLastDeliveryLocation:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+    } finally {
+      setIsLoadingLocation(false);
+      console.log('🏁 loadLastDeliveryLocation finished');
+    }
+  };
 
     // Load saved cards when user is authenticated and on payment step
     useEffect(() => {
@@ -790,6 +905,11 @@ const countyInfo = {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       County/City *
+                      {lastDeliveryLocation && (
+                        <span className="ml-2 text-xs text-green-600 font-normal">
+                          (Auto-filled from {lastDeliveryLocation.source === 'last_order' ? 'last order' : 'saved address'})
+                        </span>
+                      )}
                     </label>
                     <button
                       type="button"
@@ -1283,8 +1403,8 @@ const countyInfo = {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Shipping</span>
-                  <span className="font-medium text-gray-900">
-                    {shippingInfo.city && shippingInfo.zone ? formatCurrency(shippingCost) : 'TBD'}
+                  <span className={`font-medium ${!shippingInfo.city || !shippingInfo.zone ? 'text-orange-600 text-xs' : 'text-gray-900'}`}>
+                    {!shippingInfo.city || !shippingInfo.zone ? 'TBD (based on location)' : shippingCost === 0 ? 'FREE' : formatCurrency(shippingCost)}
                   </span>
                 </div>
                 {/* VAT display removed - business under KSh 5M annual turnover threshold

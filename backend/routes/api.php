@@ -164,6 +164,9 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
     
+    // Get user's last delivery location for checkout auto-fill
+    Route::get('/user/last-delivery-location', [OrderController::class, 'getLastDeliveryLocation']);
+    
     // Wishlist protected features (move to cart)
     Route::prefix('wishlist')->group(function () {
         Route::post('/move-to-cart/{itemId}', [WishlistController::class, 'moveToCart']);

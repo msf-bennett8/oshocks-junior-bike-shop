@@ -683,8 +683,99 @@ class OrderController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Payment recorded successfully',
+            'message' => 'Order cancelled successfully',
             'data' => $order
         ]);
+    }
+
+    /**
+     * Get user's last delivery location for auto-fill
+     * GET /api/v1/user/last-delivery-location
+     */
+    public function getLastDeliveryLocation(Request $request)
+    {
+        try {
+            \Log::info('🔍 getLastDeliveryLocation called');
+            
+            $user = auth('sanctum')->user();
+            
+            if (!$user) {
+                \Log::warning('❌ No authenticated user found');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Authentication required'
+                ], 401);
+            }
+
+            \Log::info('👤 User found', ['user_id' => $user->id]);
+
+            // Get user's most recent order with delivery info
+            $lastOrder = Order::where('user_id', $user->id)
+                ->whereNotNull('county')
+                ->whereNotNull('delivery_zone')
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            \Log::info('📦 Last order query result', [
+                'found' => $lastOrder ? 'yes' : 'no',
+                'order_id' => $lastOrder?->id
+            ]);
+
+            // If no order, check for default address
+            if (!$lastOrder) {
+                \Log::info('🔍 No order found, checking for default address');
+                
+                $defaultAddress = Address::where('user_id', $user->id)
+                    ->where('is_default', true)
+                    ->first();
+                    
+                if ($defaultAddress) {
+                    \Log::info('✅ Default address found');
+                    return response()->json([
+                        'success' => true,
+                        'data' => [
+                            'county' => $defaultAddress->county,
+                            'zone' => $defaultAddress->city,
+                            'address' => $defaultAddress->address_line1,
+                            'postal_code' => $defaultAddress->postal_code,
+                            'phone' => $defaultAddress->phone,
+                            'source' => 'default_address'
+                        ]
+                    ]);
+                }
+                
+                \Log::warning('❌ No previous delivery location found');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No previous delivery location found'
+                ], 404);
+            }
+
+            \Log::info('✅ Returning last order location');
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'county' => $lastOrder->county,
+                    'zone' => $lastOrder->delivery_zone,
+                    'address' => $lastOrder->address?->address_line1,
+                    'postal_code' => $lastOrder->postal_code,
+                    'phone' => $lastOrder->customer_phone,
+                    'delivery_instructions' => $lastOrder->delivery_instructions,
+                    'source' => 'last_order',
+                    'order_number' => $lastOrder->order_number,
+                    'order_date' => $lastOrder->created_at
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('❌ Error in getLastDeliveryLocation: ' . $e->getMessage());
+            \Log::error($e->getTraceAsString());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Server error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
