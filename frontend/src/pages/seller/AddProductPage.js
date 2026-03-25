@@ -4,6 +4,7 @@ import {
   Check, Plus, Minus, Tag, Package, DollarSign, MapPin,
   Truck, Info, Star, FileText, Zap, ImagePlus, Trash2, ChevronRight, AlertCircle 
 } from 'lucide-react';
+import ActionModal from '../../components/common/ActionModal';
 
 const AddProductPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -14,6 +15,13 @@ const AddProductPage = () => {
   const [previewColorIndex, setPreviewColorIndex] = useState(0);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [successModal, setSuccessModal] = useState({
+    isOpen: false,
+    type: 'product',
+    action: 'add',
+    productName: '',
+    section: 'hero'
+  });
 
   
 
@@ -367,6 +375,11 @@ const handleSubmit = async () => {
     if (formData.basePrice && parseFloat(formData.basePrice) > parseFloat(formData.discountPrice || formData.basePrice)) {
       submitFormData.append('compare_price', parseFloat(formData.basePrice));
     }
+        
+    // ✅ Cost price for seller's profit calculation
+    if (formData.costPrice && parseFloat(formData.costPrice) > 0) {
+      submitFormData.append('cost_price', parseFloat(formData.costPrice));
+    }
     
     // ✅ Optional fields (only send if they have values)
     if (formData.brand && formData.brand.trim()) {
@@ -409,12 +422,77 @@ const handleSubmit = async () => {
 
     
 
+    // 🔍 COMPREHENSIVE PRE-SUBMISSION DEBUG
+    console.log('=======================================');
+    console.log('🔍 FORM DATA VALIDATION CHECK');
+    console.log('=======================================');
+    
+    const validations = {
+      name: { value: formData.productName.trim(), required: true },
+      description: { value: formData.fullDescription.trim(), required: true },
+      type: { value: formData.type, required: true },
+      category_id: { value: formData.category, required: true },
+      price: { value: parseFloat(formData.discountPrice || formData.basePrice), required: true, min: 0.01 },
+      quantity: { value: parseInt(formData.quantity), required: true, min: 0 },
+      condition: { value: formData.condition, required: true },
+      year: { value: formData.year || new Date().getFullYear(), required: true }
+    };
+    
+    let hasErrors = false;
+    Object.entries(validations).forEach(([key, config]) => {
+      const isEmpty = !config.value || (typeof config.value === 'string' && config.value.trim() === '');
+      const belowMin = config.min !== undefined && config.value < config.min;
+      const isValid = !isEmpty && !belowMin;
+      
+      if (!isValid) hasErrors = true;
+      
+      console.log(
+        `${key}:`, 
+        config.value, 
+        isValid ? '✅' : '❌',
+        isEmpty ? '[EMPTY]' : '',
+        belowMin ? `[BELOW MIN: ${config.min}]` : ''
+      );
+    });
+    
+    // Color validation
+    console.log('--- COLOR VARIANTS ---');
+    formData.colors.forEach((color, idx) => {
+      const hasName = color.name.trim() !== '';
+      const hasImages = color.images.length > 0;
+      const hasNewImages = color.images.some(img => img.isNew && img.file);
+      
+      console.log(`Color ${idx + 1} (${color.name || 'unnamed'}):`);
+      console.log(`  - Has name: ${hasName ? '✅' : '❌'}`);
+      console.log(`  - Total images: ${color.images.length}`);
+      console.log(`  - New images to upload: ${hasNewImages ? '✅' : '❌'}`);
+      
+      if (!hasName || !hasImages) hasErrors = true;
+    });
+    
+    // Specifications debug
+    console.log('--- SPECIFICATIONS ---');
+    console.log('Raw specs:', formData.specifications);
+    console.log('Cleaned specs:', cleanedSpecs);
+    console.log('Key features:', filteredFeatures);
+    console.log('Sizes:', formData.sizes);
+    
+    console.log('=======================================');
+    console.log(hasErrors ? '❌ VALIDATION ERRORS DETECTED - SUBMISSION MAY FAIL' : '✅ ALL CHECKS PASSED - SUBMITTING...');
+    console.log('=======================================');
+    
     // 🔍 DEBUG: Log the exact FormData being sent
-    console.log('=== DEBUGGING FORMDATA ===');
+    console.log('=== FORMDATA ENTRIES ===');
+    const formDataEntries = [];
     for (let pair of submitFormData.entries()) {
-      console.log(pair[0], ':', pair[1]);
+      const displayValue = pair[1] instanceof File 
+        ? `File: ${pair[1].name} (${pair[1].size} bytes)`
+        : pair[1];
+      console.log(pair[0], ':', displayValue);
+      formDataEntries.push({ key: pair[0], value: displayValue });
     }
-    console.log('=== END DEBUG ===');
+    console.log('Total entries:', formDataEntries.length);
+    console.log('=== END FORMDATA DEBUG ===');
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
       const response = await fetch(`${apiUrl}/seller/products`, {
         method: 'POST',
@@ -430,22 +508,60 @@ const handleSubmit = async () => {
     const result = await response.json();
 
     if (!response.ok) {
-      console.error('Backend error:', result);
-      throw new Error(result.message || 'Failed to save product');
+      console.error('❌ BACKEND ERROR DETAILS:', result);
+      console.error('Error fields:', result.errors || result.fields || 'No detailed errors');
+      console.error('Full response:', JSON.stringify(result, null, 2));
+      
+      // Extract detailed validation errors
+      let detailedMessage = result.message || 'Validation failed';
+      if (result.errors && typeof result.errors === 'object') {
+        detailedMessage = Object.entries(result.errors)
+          .map(([field, error]) => `${field}: ${Array.isArray(error) ? error.join(', ') : error}`)
+          .join(' | ');
+      }
+      
+      throw new Error(detailedMessage);
     }
 
-    alert('Product added successfully!');
+    // Show success modal instead of alert
+    setSuccessModal({
+      isOpen: true,
+      type: 'product',
+      action: 'add',
+      productName: formData.productName,
+      section: 'hero'
+    });
     console.log('✅ Created product:', result);
     
-    // Optional: Reset form or redirect
+    // Optional: Reset form or redirect after modal closes
     // window.location.href = '/seller/products';
 
     
     
   } catch (err) {
-    setError(err.message);
-    alert(err.message);
-    console.error('❌ Error saving product:', err);
+    const errorMessage = err.message || 'Failed to save product';
+    
+    console.error('❌❌❌ SUBMISSION ERROR ❌❌❌');
+    console.error('Error message:', err.message);
+    console.error('Error stack:', err.stack);
+    console.error('Error type:', err.name);
+    console.error('Full error object:', err);
+    console.error('❌❌❌ END ERROR ❌❌❌');
+    
+    setError(errorMessage);
+    
+    // Show error in modal with full details if available
+    const displayMessage = errorMessage.length > 200 
+      ? errorMessage.substring(0, 200) + '... (see console for details)'
+      : errorMessage;
+      
+    setSuccessModal({
+      isOpen: true,
+      type: 'product',
+      action: 'error',
+      productName: displayMessage,
+      section: 'hero'
+    });
   } finally {
     setLoading(false);
   }
@@ -1602,6 +1718,22 @@ const handleSubmit = async () => {
             </div>
           </div>
         </div>
+
+        {/* Success/Error Modal */}
+        <ActionModal 
+          isOpen={successModal.isOpen}
+          onClose={() => {
+            setSuccessModal(prev => ({ ...prev, isOpen: false }));
+            // Optional: Redirect after closing on success
+            if (successModal.action === 'add') {
+              // window.location.href = '/seller/products';
+            }
+          }}
+          type={successModal.type}
+          action={successModal.action}
+          productName={successModal.productName}
+          section={successModal.section}
+        />
 
         {/* Help Tips */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-6">

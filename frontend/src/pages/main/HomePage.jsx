@@ -363,19 +363,18 @@ const HomePage = () => {
                   Discover premium bicycles, expert repairs, and a community of cycling enthusiasts. From city streets to mountain trails.
                 </p>
 
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-row gap-3">
                   <Link
                     to="/shop"
-                    className="group px-8 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full font-bold text-lg hover:shadow-2xl hover:shadow-orange-500/40 hover:-translate-y-1 transition-all flex items-center gap-2"
+                    className="group px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-[5px] font-bold text-base hover:shadow-2xl hover:shadow-orange-500/40 hover:-translate-y-1 transition-all flex items-center gap-2 whitespace-nowrap"
                   >
                     Shop Bikes
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Link>
                   <Link
                     to="/book-service"
-                    className="px-8 py-4 bg-white text-gray-900 rounded-full font-bold text-lg hover:bg-gray-100 transition-all flex items-center gap-2 shadow-lg"
+                    className="px-6 py-3 bg-white text-gray-900 rounded-[5px] font-bold text-base hover:bg-gradient-to-r hover:from-orange-500 hover:to-red-500 hover:text-white transition-all flex items-center gap-2 shadow-lg whitespace-nowrap"
                   >
-                    <Wrench className="w-5 h-5 text-orange-600" />
                     Book Service
                   </Link>
                 </div>

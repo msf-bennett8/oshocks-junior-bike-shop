@@ -73,9 +73,10 @@ const CartSummary = ({
     }
   }
 
-  // Tax calculation (16% VAT in Kenya, already included in prices)
-  const taxRate = 0.16;
-  const taxAmount = (subtotal - discount) * taxRate / (1 + taxRate);
+  // VAT Disabled - small business exemption (under KSh 5M threshold)
+  // const taxRate = 0.16;
+  // const taxAmount = (subtotal - discount) * taxRate / (1 + taxRate);
+  const taxAmount = 0;
 
   // Total calculation
   const total = subtotal - discount + shippingCost;
@@ -208,7 +209,7 @@ const paymentMethods = [
   return (
     <div className={`bg-white rounded-lg shadow-lg border border-gray-200 ${sticky ? 'lg:sticky lg:top-4' : ''} ${className}`}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 sm:p-4 rounded-t-lg">
+      <div className="bg-gradient-to-r from-orange-600 to-orange-500 text-white p-3 sm:p-4 rounded-t-lg">
         <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2">
           <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
           Order Summary
@@ -221,7 +222,7 @@ const paymentMethods = [
         <div className="space-y-2 sm:space-y-3">
           <div className="flex justify-between text-sm sm:text-base text-gray-700">
             <span>Subtotal ({itemCount} items)</span>
-            <span className="font-medium">{formatPrice(subtotal)}</span>
+            <span className="font-medium text-gray-800">{formatPrice(subtotal)}</span>
           </div>
 
           {/* Shipping */}
@@ -234,7 +235,7 @@ const paymentMethods = [
               {shippingCost === 0 ? (
                 <span className="text-green-600 font-semibold">FREE</span>
               ) : (
-                <span className="font-medium">{formatPrice(shippingCost)}</span>
+                <span className="font-medium text-gray-600">{formatPrice(shippingCost)}</span>
               )}
             </div>
           </div>
@@ -270,10 +271,12 @@ const paymentMethods = [
             </div>
           )}
 
-          {/* Tax Info */}
-          <div className="flex justify-between text-gray-500 text-xs sm:text-sm">
-            <span>VAT (16% included)</span>
-            <span>{formatPrice(taxAmount)}</span>
+          {/* Savings Info - replaces VAT */}
+          <div className="flex justify-between text-green-600 text-xs sm:text-sm font-medium">
+            <span>
+              {regularPriceTotal > 0 ? `${((regularPriceTotal - subtotal) / regularPriceTotal * 100).toFixed(0)}% saved` : '0% saved'}
+            </span>
+            <span>-{formatPrice(priceSavings)}</span>
           </div>
         </div>
 
@@ -282,7 +285,7 @@ const paymentMethods = [
           <div className="flex justify-between items-center">
             <span className="text-base sm:text-lg font-bold text-gray-900">Total</span>
             <div className="text-right">
-              <p className="text-xl sm:text-2xl font-bold text-blue-600">{formatPrice(total)}</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{formatPrice(total)}</p>
               {totalSavings > 0 && (
                 <p className="text-xs sm:text-sm text-green-600">
                   You save {formatPrice(totalSavings)}!
@@ -369,7 +372,7 @@ const paymentMethods = [
               <div className="flex-1 min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-gray-700">Delivering to</p>
                 <p className="text-xs sm:text-sm text-gray-600 truncate">{deliveryLocation}</p>
-                <button className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 mt-1">
+                <button className="text-xs sm:text-sm text-green-600 hover:text-green-700 mt-1 font-medium">
                   Change location
                 </button>
               </div>
@@ -399,8 +402,8 @@ const paymentMethods = [
                   onClick={() => setSelectedPayment(method.id)}
                   className={`w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 border-2 rounded-lg transition-all ${
                     selectedPayment === method.id
-                      ? 'border-blue-600 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-orange-600 bg-orange-50'
+                      : 'border-gray-200 hover:border-orange-300'
                   }`}
                 >
                   <div className="flex-shrink-0">{method.icon}</div>
@@ -409,7 +412,7 @@ const paymentMethods = [
                     <p className="text-xs text-gray-500 truncate">{method.description}</p>
                   </div>
                   {selectedPayment === method.id && (
-                    <Check className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 flex-shrink-0" />
                   )}
                 </button>
               ))}
@@ -420,7 +423,7 @@ const paymentMethods = [
         {/* Checkout Button */}
         <button
           onClick={onCheckout}
-          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg font-bold text-base sm:text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+          className="w-full bg-gradient-to-r from-orange-600 to-orange-500 text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg font-bold text-base sm:text-lg hover:from-orange-700 hover:to-orange-600 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
         >
           <span>Proceed to Checkout</span>
           <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />

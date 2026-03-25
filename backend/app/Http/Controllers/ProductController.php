@@ -231,6 +231,8 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'nullable|exists:brands,id',
             'price' => 'required|numeric|min:0',
+            'compare_price' => 'nullable|numeric|min:0',
+            'cost_price' => 'nullable|numeric|min:0',
             'quantity' => 'required|integer|min:0',
             'condition' => 'required|in:new,used,refurbished',
             'year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),

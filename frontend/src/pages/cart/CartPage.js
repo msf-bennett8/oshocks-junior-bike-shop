@@ -8,13 +8,13 @@ import {
   Trash2,
   Heart,
   RefreshCw,
-  TrendingUp,
   AlertCircle
 } from 'lucide-react';
 
 // Import your existing components
 import CartItem from './CartItem';
 import CartSummary from './CartSummary';
+import ActionModal from '../../components/common/ActionModal';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 
@@ -41,7 +41,23 @@ const CartPage = () => {
   const [addingRecommendedToCart, setAddingRecommendedToCart] = useState(null);
   const [togglingRecommendedWishlist, setTogglingRecommendedWishlist] = useState(null);
   const [checkingOutRecommended, setCheckingOutRecommended] = useState(null);
-  
+    
+  const [modal, setModal] = useState({
+    isOpen: false,
+    type: 'cart',
+    action: 'add',
+    productName: '',
+    section: 'recommended'
+  });
+
+  const showModal = (type, action, productName, section = 'recommended') => {
+    setModal({ isOpen: true, type, action, productName, section });
+  };
+
+  const closeModal = () => {
+    setModal(prev => ({ ...prev, isOpen: false }));
+  };
+
   // Calculate totals - with safe defaults
   const totalItems = cartItems?.reduce((sum, item) => sum + (item?.quantity || 0), 0) || 0;
   const subtotal = cartItems?.reduce((sum, item) => sum + (Number(item?.price || 0) * (item?.quantity || 0)), 0) || 0;
@@ -80,14 +96,19 @@ const CartPage = () => {
   };
 
   // Handle clear cart
-  const handleClearCart = async () => {
-    if (window.confirm('Are you sure you want to clear your cart?')) {
-      const result = await clearCart();
-      if (result.success) {
-        showNotification('Cart cleared', 'info');
-      } else {
-        showNotification(result.error, 'error');
-      }
+  const [showClearCartModal, setShowClearCartModal] = useState(false);
+
+  const handleClearCartClick = () => {
+    setShowClearCartModal(true);
+  };
+
+  const confirmClearCart = async () => {
+    setShowClearCartModal(false);
+    const result = await clearCart();
+    if (result.success) {
+      showNotification('Cart cleared', 'info');
+    } else {
+      showNotification(result.error, 'error');
     }
   };
 
@@ -101,7 +122,7 @@ const CartPage = () => {
     navigate('/shop');
   };
 
-// Fetch recommended products from API
+  // Fetch recommended products from API
   const [recommendedProducts, setRecommendedProducts] = useState([]);
   const [loadingRecommended, setLoadingRecommended] = useState(true);
 
@@ -223,13 +244,55 @@ const CartPage = () => {
           </div>
         )}
 
+        {/* Action Modal */}
+        <ActionModal 
+          isOpen={modal.isOpen}
+          onClose={closeModal}
+          type={modal.type}
+          action={modal.action}
+          productName={modal.productName}
+          section={modal.section}
+        />
+
+        {/* Clear Cart Confirmation Modal */}
+        {showClearCartModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowClearCartModal(false)} />
+            <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 transform animate-fadeIn">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Trash2 className="w-8 h-8 text-red-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Clear Cart?</h3>
+                <p className="text-gray-600 mb-6">Are you sure you want to remove all items from your cart?</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowClearCartModal(false)}
+                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmClearCart}
+                    className="flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    Yes, Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="bg-white border-b border-gray-200 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
-                  <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+                  <div className="bg-gradient-to-r from-orange-600 to-orange-500 p-2 rounded-lg">
+                    <ShoppingCart className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                  </div>
                   Shopping Cart
                 </h1>
                 <p className="text-sm sm:text-base text-gray-600 mt-1">
@@ -238,9 +301,9 @@ const CartPage = () => {
               </div>
               <button
                 onClick={handleContinueShopping}
-                className="hidden sm:flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base"
+                className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-orange-600 to-orange-500 text-white px-4 py-2 rounded-lg font-medium text-sm sm:text-base hover:from-orange-700 hover:to-orange-600 transition-all shadow-md hover:shadow-lg group"
               >
-                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1 transition-transform" />
                 Continue Shopping
               </button>
             </div>
@@ -253,16 +316,16 @@ const CartPage = () => {
             {/* Cart Items Section */}
             <div className="lg:col-span-2 space-y-4">
               {/* Cart Actions Bar */}
-              <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
-                <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+              <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4 flex flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2 sm:gap-4">
                   <label className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 cursor-pointer hover:text-gray-800">
-                    <input type="checkbox" className="rounded w-4 h-4" />
+                    <input type="checkbox" className="rounded w-3.5 h-3.5 sm:w-4 sm:h-4 border-gray-300 text-orange-600 focus:ring-orange-500" />
                     <span className="whitespace-nowrap">Select All</span>
                   </label>
                 </div>
                 <button
-                  onClick={handleClearCart}
-                  className="flex items-center gap-2 text-red-600 hover:text-red-700 text-xs sm:text-sm font-medium"
+                  onClick={handleClearCartClick}
+                  className="flex items-center gap-2 text-red-600 hover:text-red-700 text-xs sm:text-sm font-medium whitespace-nowrap"
                 >
                   <Trash2 className="w-4 h-4" />
                   Clear Cart
@@ -313,8 +376,7 @@ const CartPage = () => {
 
               {/* Recommended Products */}
               <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">
                   You Might Also Like
                 </h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -346,186 +408,189 @@ const CartPage = () => {
                                 -{Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
                               </span>
                             )}
-
-                            {/* Action Buttons - Cart & Wishlist */}
-                            <div className="absolute bottom-2 right-2 flex items-center gap-1.5 z-10">
-                              {/* Add to Cart Button */}
-                              <button
-                                onClick={async (e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  
-                                  setAddingRecommendedToCart(product.id);
-                                  
-                                  try {
-                                    // Convert recommended product to cart item format
-                                    const cartProduct = {
-                                      id: product.id,
-                                      name: product.name,
-                                      price: product.price,
-                                      image: product.image
-                                    };
-                                    
-                                    const result = await addToCart(cartProduct, 1, null);
-                                    
-                                    if (result.success) {
-                                      showNotification('✅ Added to cart!');
-                                    } else {
-                                      showNotification(result.error, 'error');
-                                    }
-                                  } catch (error) {
-                                    console.error('Error adding to cart:', error);
-                                    showNotification('❌ Failed to add to cart', 'error');
-                                  } finally {
-                                    setAddingRecommendedToCart(null);
-                                  }
-                                }}
-                                disabled={addingRecommendedToCart === product.id}
-                                className={`p-2 rounded-full transition-all duration-200 shadow-lg ${
-                                  addingRecommendedToCart === product.id
-                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                    : cartItems.some(item => item.id === product.id || item.product_id === product.id)
-                                    ? 'bg-blue-500 text-white hover:bg-blue-600 hover:scale-110'
-                                    : 'bg-white text-gray-700 hover:bg-blue-100 hover:text-blue-600 hover:scale-110'
-                                }`}
-                                title={cartItems.some(item => item.id === product.id || item.product_id === product.id) ? 'In cart' : 'Add to cart'}
-                              >
-                                {addingRecommendedToCart === product.id ? (
-                                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                                ) : (
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                  </svg>
-                                )}
-                              </button>
-
-                              {/* Wishlist Button */}
-                              <button
-                                onClick={async (e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  
-                                  setTogglingRecommendedWishlist(product.id);
-                                  
-                                  try {
-                                    const wishlistProduct = {
-                                      id: product.id,
-                                      name: product.name,
-                                      price: product.price,
-                                      image: product.image
-                                    };
-                                    
-                                    // Check BEFORE toggling
-                                    const wasInWishlist = isInWishlist(product.id, null);
-
-                                    const result = await toggleWishlist(wishlistProduct, null);
-
-                                    if (result.success) {
-                                      showNotification(
-                                        wasInWishlist 
-                                          ? '💔 Removed from wishlist'
-                                          : '❤️ Added to wishlist!'
-                                      );
-                                    } else {
-                                      showNotification(result.error, 'error');
-                                    }
-                                  } catch (error) {
-                                    console.error('Error toggling wishlist:', error);
-                                    showNotification('❌ Failed to update wishlist', 'error');
-                                  } finally {
-                                    setTogglingRecommendedWishlist(null);
-                                  }
-                                }}
-                                disabled={togglingRecommendedWishlist === product.id}
-                                className={`p-2 rounded-full transition-all duration-200 shadow-lg ${
-                                  togglingRecommendedWishlist === product.id
-                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                    : isInWishlist(product.id, null)
-                                    ? 'bg-red-500 text-white hover:bg-red-600 hover:scale-110'
-                                    : 'bg-white text-green-500 hover:bg-green-100 hover:text-green-600 hover:scale-110'
-                                } hover:scale-110`}
-                                title={isInWishlist(product.id, null) ? 'In wishlist - Click to remove' : 'Add to wishlist'}
-                              >
-                                {togglingRecommendedWishlist === product.id ? (
-                                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                                ) : (
-                                  <svg className="w-4 h-4" fill={isInWishlist(product.id, null) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                  </svg>
-                                )}
-                              </button>
-                            </div>
                           </div>
                           
                           <div className="p-2 sm:p-3">
-                            <h3 className="font-semibold text-xs sm:text-sm text-gray-900 mb-1 line-clamp-2 h-8 hover:text-blue-600 transition">
-                              {product.name}
-                            </h3>
-                            
-                            <div className="flex justify-between items-center mb-2">
-                              <div>
-                                <span className="text-sm sm:text-base font-bold text-blue-600">
-                                  {formatPrice(product.price)}
-                                </span>
-                                {product.originalPrice && (
-                                  <span className="text-xs text-gray-400 line-through ml-1">
-                                    {formatPrice(product.originalPrice)}
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-xs sm:text-sm text-gray-900 mb-1 line-clamp-2 h-8 hover:text-orange-600 transition">
+                                {product.name}
+                              </h3>
+                              
+                              <div className="flex justify-between items-center mb-2">
+                                <div>
+                                  <span className="text-sm sm:text-base font-bold text-green-600">
+                                    {formatPrice(product.price)}
                                   </span>
-                                )}
+                                  {product.originalPrice && (
+                                    <span className="text-xs text-gray-400 line-through ml-1">
+                                      {formatPrice(product.originalPrice)}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
+                              
+                              {/* Removed - now handled in the actions row below */}
                             </div>
                             
+                            {/* Stock Status and Actions Row */}
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-xs text-green-600 font-semibold flex items-center whitespace-nowrap">
                                 <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
                                 In Stock
                               </span>
                               
-                              {/* Checkout Button */}
-                              <button
-                                onClick={async (e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  
-                                  setCheckingOutRecommended(product.id);
-                                  
-                                  try {
-                                    const cartProduct = {
-                                      id: product.id,
-                                      name: product.name,
-                                      price: product.price,
-                                      image: product.image
-                                    };
+                              {/* Compact Action Icons - Same as Shop Page */}
+                              <div className="flex items-center gap-1">
+                                {/* Add to Cart Icon */}
+                                <button
+                                  onClick={async (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
                                     
-                                    const result = await addToCart(cartProduct, 1, null);
+                                    setAddingRecommendedToCart(product.id);
                                     
-                                    if (result.success) {
-                                      navigate('/checkout');
-                                    } else {
-                                      showNotification(result.error, 'error');
-                                      setCheckingOutRecommended(null);
+                                    try {
+                                      const cartProduct = {
+                                        id: product.id,
+                                        name: product.name,
+                                        price: product.price,
+                                        image: product.image
+                                      };
+                                      
+                                      const result = await addToCart(cartProduct, 1, null);
+                                      
+                                      if (result.success) {
+                                        showModal('cart', 'add', product.name, 'recommended');
+                                      } else {
+                                        showModal('cart', 'error', result.error, 'recommended');
+                                      }
+                                    } catch (error) {
+                                      console.error('Error adding to cart:', error);
+                                      showModal('cart', 'error', 'Failed to add to cart', 'recommended');
+                                    } finally {
+                                      setAddingRecommendedToCart(null);
                                     }
-                                  } catch (error) {
-                                    console.error('Error:', error);
-                                    showNotification('❌ Failed to proceed to checkout', 'error');
+                                  }}
+                                  disabled={addingRecommendedToCart === product.id}
+                                  className={`p-1.5 rounded-md transition-all duration-200 flex items-center justify-center ${
+                                    addingRecommendedToCart === product.id
+                                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                      : cartItems.some(item => item.id === product.id || item.product_id === product.id)
+                                      ? 'bg-orange-500 text-white hover:bg-orange-600'
+                                      : 'bg-gray-100 text-gray-700 hover:bg-orange-100 hover:text-orange-600'
+                                  }`}
+                                  title={cartItems.some(item => item.id === product.id || item.product_id === product.id) ? 'In cart' : 'Add to cart'}
+                                >
+                                  {addingRecommendedToCart === product.id ? (
+                                    <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                                  ) : (
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                  )}
+                                </button>
+
+                                {/* Wishlist Icon */}
+                                <button
+                                  onClick={async (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    
+                                    setTogglingRecommendedWishlist(product.id);
+                                    
+                                    try {
+                                      const wishlistProduct = {
+                                        id: product.id,
+                                        name: product.name,
+                                        price: product.price,
+                                        image: product.image
+                                      };
+                                      
+                                      const wasInWishlist = isInWishlist(product.id, null);
+                                      const result = await toggleWishlist(wishlistProduct, null);
+
+                                      if (result.success) {
+                                        showModal('wishlist', wasInWishlist ? 'remove' : 'add', product.name, 'recommended');
+                                      } else {
+                                        showModal('cart', 'error', result.error, 'recommended');
+                                      }
+                                    } catch (error) {
+                                      console.error('Error toggling wishlist:', error);
+                                      showModal('cart', 'error', 'Failed to update wishlist', 'recommended');
+                                    } finally {
+                                      setTogglingRecommendedWishlist(null);
+                                    }
+                                  }}
+                                  disabled={togglingRecommendedWishlist === product.id}
+                                  className={`p-1.5 rounded-md transition-all duration-200 flex items-center justify-center ${
+                                    togglingRecommendedWishlist === product.id
+                                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                      : isInWishlist(product.id, null)
+                                      ? 'bg-red-500 text-white hover:bg-red-600'
+                                      : 'bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-600'
+                                  }`}
+                                  title={isInWishlist(product.id, null) ? 'In wishlist - Click to remove' : 'Add to wishlist'}
+                                >
+                                  {togglingRecommendedWishlist === product.id ? (
+                                    <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                                  ) : (
+                                    <svg className="w-3.5 h-3.5" fill={isInWishlist(product.id, null) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    </svg>
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                            
+                            {/* Buy Now Button - Styled like Shop Page */}
+                            <button
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                setCheckingOutRecommended(product.id);
+                                
+                                try {
+                                  const cartProduct = {
+                                    id: product.id,
+                                    name: product.name,
+                                    price: product.price,
+                                    image: product.image
+                                  };
+                                  
+                                  const result = await addToCart(cartProduct, 1, null);
+                                  
+                                  if (result.success) {
+                                    navigate('/checkout');
+                                  } else {
+                                    showNotification(result.error, 'error');
                                     setCheckingOutRecommended(null);
                                   }
-                                }}
-                                disabled={checkingOutRecommended === product.id}
-                                className={`text-xs bg-orange-500 text-white px-2 py-1 rounded font-semibold hover:bg-orange-600 transition-colors whitespace-nowrap flex items-center gap-1 ${
-                                  checkingOutRecommended === product.id ? 'opacity-75 cursor-not-allowed' : ''
-                                }`}
-                              >
-                                {checkingOutRecommended === product.id ? (
-                                  <>
-                                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    <span>Adding...</span>
-                                  </>
-                                ) : (
-                                  'Checkout'
-                                )}
-                              </button>
-                            </div>
+                                } catch (error) {
+                                  console.error('Error:', error);
+                                  showNotification('❌ Failed to proceed to checkout', 'error');
+                                  setCheckingOutRecommended(null);
+                                }
+                              }}
+                              disabled={checkingOutRecommended === product.id}
+                              className={`w-full mt-2 text-xs bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-2 rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all whitespace-nowrap flex items-center justify-center gap-1 ${
+                                checkingOutRecommended === product.id ? 'opacity-75 cursor-not-allowed' : ''
+                              }`}
+                            >
+                              {checkingOutRecommended === product.id ? (
+                                <>
+                                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  <span>Adding...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                  </svg>
+                                  Buy Now
+                                </>
+                              )}
+                            </button>
                           </div>
                         </Link>
                       </div>
@@ -573,9 +638,9 @@ const CartPage = () => {
           {/* Mobile Continue Shopping Button */}
           <button
             onClick={handleContinueShopping}
-            className="sm:hidden fixed bottom-4 left-4 right-4 bg-white text-gray-700 py-3 px-4 rounded-lg font-semibold border-2 border-gray-300 hover:bg-gray-50 transition-colors shadow-lg flex items-center justify-center gap-2 z-40"
+            className="sm:hidden fixed bottom-4 left-4 right-4 bg-gradient-to-r from-orange-600 to-orange-500 text-white py-3 px-4 rounded-lg font-semibold hover:from-orange-700 hover:to-orange-600 transition-all shadow-lg flex items-center justify-center gap-2 z-40 group"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
             Continue Shopping
           </button>
         </div>

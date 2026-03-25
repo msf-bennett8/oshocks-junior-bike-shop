@@ -66,6 +66,20 @@ const ActionModal = ({ isOpen, onClose, type, action, productName, section = 'he
         message: productName,
         bgColor: 'bg-red-500/20'
       }
+    },
+    product: {
+      add: {
+        icon: <CheckCircle className="w-8 h-8 text-white" />,
+        title: 'Product Added Successfully',
+        message: `${productName} has been published to your store.`,
+        bgColor: 'bg-green-500/20'
+      },
+      error: {
+        icon: <XCircle className="w-8 h-8 text-red-400" />,
+        title: 'Error',
+        message: productName,
+        bgColor: 'bg-red-500/20'
+      }
     }
   };
 
@@ -92,15 +106,16 @@ const ActionModal = ({ isOpen, onClose, type, action, productName, section = 'he
           {/* Top gradient line */}
           <div className={`h-1 w-full bg-gradient-to-r ${theme.accentGradient}`} />
           
-          {/* Close button */}
+          {/* Close button - Floating pill style */}
           <button
             onClick={() => {
               setIsVisible(false);
               setTimeout(onClose, 300);
             }}
-            className="absolute top-3 right-3 p-1 rounded-full bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-colors"
+            className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-full bg-gray-700/80 hover:bg-red-500/90 text-gray-300 hover:text-white backdrop-blur-sm border border-white/10 hover:border-red-400/50 transition-all duration-200 hover:scale-110 shadow-lg hover:shadow-red-500/30 group"
+            aria-label="Close modal"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 group-hover:rotate-90 transition-transform duration-200" strokeWidth={2.5} />
           </button>
 
           {/* Content */}
