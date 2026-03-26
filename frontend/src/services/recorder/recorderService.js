@@ -1,4 +1,4 @@
-import api from '../api';
+import api from '../api';  // This is correct - goes up to services/ to find api.js
 
 export const recorderService = {
   /**
@@ -21,10 +21,8 @@ export const recorderService = {
 
   /**
    * Record payment for an order
-   * @param {string} orderNumber - The order number (e.g., "OS34618831")
-   * @param {object} paymentData - Payment details { amount_received, payment_method, notes }
    */
-    recordPayment: async (orderNumber, paymentData) => {
+  recordPayment: async (orderNumber, paymentData) => {
     // Step 1: Get order details to extract order_id
     const orderResponse = await api.get('/orders/search', {
       params: { order_number: orderNumber }
@@ -34,9 +32,9 @@ export const recorderService = {
     
     // Step 2: Transform payload for PaymentController
     const payload = {
-      order_id: order.id,                        // ← Changed from orderNumber
+      order_id: order.id,
       payment_method: paymentData.payment_method,
-      amount: paymentData.amount_received,       // ← Changed field name
+      amount: paymentData.amount_received,
       county: paymentData.county,
       zone: paymentData.zone,
       customer_phone: paymentData.customer_phone,
@@ -46,14 +44,19 @@ export const recorderService = {
     };
     
     // Step 3: Call PaymentController endpoint
-    const response = await api.post('/payments/record', payload);  // ← Changed endpoint
+    const response = await api.post('/payments/record', payload);
     return response.data;
   },
 
   /**
-   * Get order details by order number (reuses search endpoint)
+   * Get order details by order number
    */
   getOrderDetails: async (orderNumber) => {
+    // Add validation
+    if (!orderNumber || orderNumber === 'undefined') {
+      throw new Error('Order number is required');
+    }
+    
     const response = await api.get('/orders/search', {
       params: { order_number: orderNumber }
     });

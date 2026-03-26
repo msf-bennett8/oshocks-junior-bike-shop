@@ -464,11 +464,46 @@ const countyInfo = {
                       if (cardResponse.success && cardResponse.data.status === 'completed') {
                         // Payment successful immediately - no redirect needed!
                         clearCart();
+                        
+                        // Prepare full order data for success page (same as COD/M-Pesa)
+                        const successOrderData = {
+                          orderNumber: createdOrder.order_number,
+                          orderDisplay: createdOrder.order_display || createdOrder.order_number,
+                          purchaseId: createdOrder.purchase_id || null,
+                          orderDate: createdOrder.created_at,
+                          status: createdOrder.status,
+                          estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB'),
+                          customer: {
+                            name: createdOrder.customer_name,
+                            email: createdOrder.customer_email,
+                            phone: createdOrder.customer_phone
+                          },
+                          shipping: {
+                            address: orderData.delivery_address,
+                            county: orderData.county,
+                            zone: orderData.zone,
+                            postalCode: orderData.postal_code
+                          },
+                          payment: {
+                            method: 'Credit/Debit Card (Saved)',
+                            transactionId: cardResponse.data.reference || createdOrder.transaction_reference,
+                            transactionCode: createdOrder.transaction_code || null,
+                            amount: createdOrder.total,
+                            status: 'completed',
+                            shippingCost: createdOrder.shipping_fee
+                          },
+                          deliveryInstructions: createdOrder.delivery_instructions || ''
+                        };
+                        
                         navigate('/order-success', {
-                          state: { 
-                            orderNumber: createdOrder.order_number,
-                            paymentMethod: 'card_saved',
-                            reference: cardResponse.data.reference
+                          state: {
+                            orderData: successOrderData,
+                            items: createdItems.map(item => ({
+                              ...item.product,
+                              quantity: item.quantity,
+                              price: item.price
+                            })),
+                            discount: createdOrder.discount
                           }
                         });
                         return;
@@ -502,6 +537,26 @@ const countyInfo = {
                         // Save order info to localStorage for after-payment verification
                         localStorage.setItem('pendingOrderId', createdOrder.id);
                         localStorage.setItem('pendingOrderNumber', createdOrder.order_number);
+                        localStorage.setItem('pendingOrderDisplay', createdOrder.order_display || createdOrder.order_number);
+                        localStorage.setItem('pendingPurchaseId', createdOrder.purchase_id || '');
+                        localStorage.setItem('pendingOrderData', JSON.stringify({
+                          orderNumber: createdOrder.order_number,
+                          orderDisplay: createdOrder.order_display || createdOrder.order_number,
+                          customer: {
+                            name: createdOrder.customer_name,
+                            email: createdOrder.customer_email,
+                            phone: createdOrder.customer_phone
+                          },
+                          shipping: {
+                            address: orderData.delivery_address,
+                            county: orderData.county,
+                            zone: orderData.zone,
+                            postalCode: orderData.postal_code
+                          },
+                          total: createdOrder.total,
+                          shipping_fee: createdOrder.shipping_fee,
+                          delivery_instructions: createdOrder.delivery_instructions
+                        }));
                         
                         // Redirect to Paystack checkout
                         window.location.href = cardResponse.data.authorization_url;
@@ -520,6 +575,8 @@ const countyInfo = {
         // Prepare data for success page
         const successOrderData = {
           orderNumber: createdOrder.order_number,
+          orderDisplay: createdOrder.order_display || createdOrder.order_number,
+          purchaseId: createdOrder.purchase_id || null,
           orderDate: createdOrder.created_at,
           status: createdOrder.status,
           estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB'),
@@ -539,6 +596,7 @@ const countyInfo = {
                     paymentMethod === 'cod' ? 'Cash on Delivery' : 
                     'Credit/Debit Card',
             transactionId: createdOrder.transaction_reference,
+            transactionCode: createdOrder.transaction_code || null,
             amount: createdOrder.total,
             status: paymentMethod === 'mpesa' ? 'paid' : createdOrder.payment_status,
             shippingCost: createdOrder.shipping_fee

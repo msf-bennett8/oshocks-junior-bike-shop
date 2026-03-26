@@ -17,9 +17,53 @@ const OrderSuccessPage = () => {
 
   // Get order data from location state or create from cart
   useEffect(() => {
+    // Check for stored order data (from Paystack redirect)
+    const storedOrderData = localStorage.getItem('pendingOrderData');
+    const storedOrderDisplay = localStorage.getItem('pendingOrderDisplay');
+    const storedPurchaseId = localStorage.getItem('pendingPurchaseId');
+    
+    if (storedOrderData && !location.state?.orderData) {
+      // Parse stored data from Paystack redirect
+      const parsedOrder = JSON.parse(storedOrderData);
+      
+      // Build location.state equivalent
+      location.state = {
+        orderData: {
+          orderNumber: parsedOrder.orderNumber,
+          orderDisplay: storedOrderDisplay || parsedOrder.orderDisplay || parsedOrder.orderNumber,
+          purchaseId: storedPurchaseId || null,
+          orderDate: new Date().toISOString(),
+          status: 'confirmed',
+          estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB'),
+          customer: parsedOrder.customer,
+          shipping: parsedOrder.shipping,
+          payment: {
+            method: 'Credit/Debit Card',
+            transactionId: localStorage.getItem('pendingTransactionRef') || 'N/A',
+            amount: parsedOrder.total,
+            status: 'completed',
+            shippingCost: parsedOrder.shipping_fee
+          },
+          deliveryInstructions: parsedOrder.delivery_instructions || ''
+        },
+        items: cartItems || [],
+        discount: 0
+      };
+      
+      // Clear stored data
+      localStorage.removeItem('pendingOrderData');
+      localStorage.removeItem('pendingOrderDisplay');
+      localStorage.removeItem('pendingPurchaseId');
+      localStorage.removeItem('pendingOrderId');
+      localStorage.removeItem('pendingOrderNumber');
+      localStorage.removeItem('pendingTransactionRef');
+    }
+    
     // Simulate fetching order data
     const mockOrder = {
       orderNumber: `OS${Date.now().toString().slice(-8)}`,
+      orderDisplay: location.state?.orderData?.orderDisplay || null,
+      purchaseId: location.state?.orderData?.purchaseId || null,
       orderDate: new Date().toISOString(),
       status: 'confirmed',
       estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB', {
@@ -70,13 +114,32 @@ const OrderSuccessPage = () => {
     
     // If order data was passed from checkout, use it; otherwise use mock
       if (location.state?.orderData) {
+        const realOrderData = location.state.orderData;
         setOrderData({
           ...mockOrder,
-          ...location.state.orderData,
+          // Override with real data - explicit assignments take priority
+          orderNumber: realOrderData.order_number || realOrderData.orderNumber || mockOrder.orderNumber,
+          orderDisplay: realOrderData.order_display || realOrderData.orderDisplay || null,
+          purchaseId: realOrderData.purchase_id || realOrderData.purchaseId || null,
+          orderDate: realOrderData.created_at || realOrderData.orderDate || mockOrder.orderDate,
+          status: realOrderData.status || mockOrder.status,
+          customer: {
+            name: realOrderData.customer_name || realOrderData.customer?.name || mockOrder.customer.name,
+            email: realOrderData.customer_email || realOrderData.customer?.email || mockOrder.customer.email,
+            phone: realOrderData.customer_phone || realOrderData.customer?.phone || mockOrder.customer.phone,
+          },
+          shipping: {
+            address: realOrderData.delivery_address || realOrderData.shipping?.address || mockOrder.shipping.address,
+            county: realOrderData.county || realOrderData.shipping?.county || mockOrder.shipping.county,
+            zone: realOrderData.delivery_zone || realOrderData.shipping?.zone || mockOrder.shipping.zone,
+            postalCode: realOrderData.postal_code || realOrderData.shipping?.postalCode || mockOrder.shipping.postalCode,
+          },
           payment: {
-            ...location.state.orderData.payment,
-            // Use transaction ID from backend
-            transactionId: location.state.orderData.payment?.transactionId || mockOrder.payment.transactionId
+            method: realOrderData.payment_method || realOrderData.payment?.method || mockOrder.payment.method,
+            transactionId: realOrderData.transaction_reference || realOrderData.payment?.transactionId || mockOrder.payment.transactionId,
+            amount: parseFloat(realOrderData.total) || realOrderData.payment?.amount || mockOrder.payment.amount,
+            status: realOrderData.payment_status || realOrderData.payment?.status || mockOrder.payment.status,
+            shippingCost: parseFloat(realOrderData.shipping_fee) || realOrderData.payment?.shippingCost || mockOrder.payment.shippingCost,
           },
           items: (location.state.items || cartItems || []).map(item => ({
             id: item.id,
@@ -176,7 +239,9 @@ const OrderSuccessPage = () => {
   
   const handleTrackOrder = () => {
     // ✅ CORRECT WAY - Pass state data
-    navigate(`/orders/${orderData?.orderNumber}`, {
+    // Use order_display for URL if available, fallback to orderNumber
+    const orderIdentifier = orderData?.orderDisplay || orderData?.orderNumber;
+    navigate(`/orders/${orderIdentifier}`, {
       state: {
         orderData: orderData,
         items: orderData.items,
@@ -218,7 +283,7 @@ const OrderSuccessPage = () => {
           <div className="inline-flex items-center bg-orange-50 border border-orange-200 rounded-lg px-6 py-3 mb-4">
             <Package className="w-5 h-5 text-orange-600 mr-2" />
             <span className="text-orange-900 font-semibold">
-              Order #{orderData.orderNumber}
+              Order #{orderData.orderDisplay || orderData.orderNumber}
             </span>
           </div>
           

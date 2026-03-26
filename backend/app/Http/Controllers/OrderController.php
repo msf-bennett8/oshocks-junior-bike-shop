@@ -264,11 +264,38 @@ class OrderController extends Controller
     }
 
     /**
-     * Get order by order number
+     * Get user's orders
+     */
+    public function index(Request $request)
+    {
+        $user = auth('sanctum')->user();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required'
+            ], 401);
+        }
+
+        $orders = Order::with(['orderItems.product', 'seller'])
+            ->where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $orders
+        ]);
+    }
+
+    /**
+     * Get order by order number or order display
      */
     public function show($orderNumber)
     {
-        $order = Order::where('order_number', $orderNumber)
+        // Try to find by order_display first (new format), then order_number (legacy)
+        $order = Order::where('order_display', $orderNumber)
+            ->orWhere('order_number', $orderNumber)
             ->with(['orderItems.product.images', 'address'])
             ->first();
 
@@ -291,7 +318,30 @@ class OrderController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'order' => $order,
+                'order' => [
+                    'id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'order_display' => $order->order_display,
+                    'purchase_id' => $order->purchase_id,
+                    'orderDate' => $order->created_at,
+                    'status' => $order->status,
+                    'customer_name' => $order->customer_name,
+                    'customer_email' => $order->customer_email,
+                    'customer_phone' => $order->customer_phone,
+                    'delivery_address' => $order->address?->address_line1,
+                    'county' => $order->county,
+                    'delivery_zone' => $order->delivery_zone,
+                    'postal_code' => $order->postal_code,
+                    'subtotal' => $order->subtotal,
+                    'shipping_fee' => $order->shipping_fee,
+                    'tax' => $order->tax,
+                    'discount' => $order->discount,
+                    'total' => $order->total,
+                    'payment_method' => $order->payment_method,
+                    'payment_status' => $order->payment_status,
+                    'transaction_reference' => $order->transaction_reference,
+                    'estimated_delivery_date' => $order->estimated_delivery_date,
+                ],
                 'items' => $order->orderItems,
                 'discount' => $order->discount
             ]
@@ -586,7 +636,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Search order by order number
+     * Search order by order number or order display
      */
     public function searchByOrderNumber(Request $request)
     {
@@ -604,7 +654,9 @@ class OrderController extends Controller
 
         \Log::info('🔍 Searching for order:', ['order_number' => $orderNumber]);
 
-        $order = Order::where('order_number', $orderNumber)
+        // Search by order_display first (new format), then order_number (legacy)
+        $order = Order::where('order_display', $orderNumber)
+            ->orWhere('order_number', $orderNumber)
             ->with(['user', 'orderItems.product', 'address'])
             ->first();
 

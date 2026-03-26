@@ -95,6 +95,9 @@ Route::prefix('v1')->group(function () {
     // ============================================================================
     // Create order (no auth required for guest checkout)
     Route::post('/orders/create', [OrderController::class, 'store']);
+
+    // Public order tracking (no auth required)
+    Route::get('/orders/search', [OrderController::class, 'searchByOrderNumber']);
     
     // ⚠️ NOTE: Dynamic route /orders/{orderNumber} moved to END of file
     // to prevent it from catching specific routes like /orders/pending-payments
@@ -153,7 +156,6 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     
     // Payment Recorder Routes - MUST COME BEFORE GENERAL ORDER ROUTES
     Route::get('/orders/pending-payments', [OrderController::class, 'getPendingPayments']);
-    Route::get('/orders/search', [OrderController::class, 'searchByOrderNumber']);
     Route::post('/orders/{orderNumber}/record-payment', [OrderController::class, 'recordPayment']);
     
     // Orders (Protected - User's own orders)
@@ -356,15 +358,14 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 });
 
     // ============================================================================
-    // DYNAMIC PUBLIC ROUTES - MUST COME LAST
+    // DYNAMIC PUBLIC ROUTES - MUST COME LAST (Inside v1 group)
     // ============================================================================
     // These routes use dynamic parameters and MUST be defined after all specific routes
     // to prevent them from catching specific route patterns
-    Route::prefix('v1')->group(function () {
-        // Get order by order number (public for tracking)
-        // This MUST come after /orders/pending-payments and other specific routes
-        Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
-    });
+    
+    // Get order by order number or order_display (public for tracking)
+    // This MUST come after /orders/pending-payments and other specific routes
+    Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
 
     // M-Pesa callback (public - called by Safaricom)
     Route::post('/v1/payments/mpesa/callback', [PaymentController::class, 'mpesaCallback']);

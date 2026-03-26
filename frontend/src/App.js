@@ -14,8 +14,11 @@ import { WishlistProvider } from './context/WishlistContext';
 
 // Recorder Portal
 import RecorderDashboard from './pages/recorder/RecorderDashboard';
-import OrderDetailsPage from './pages/recorder/OrderDetailsPage';
+import RecorderOrderDetailsPage from './pages/recorder/OrderDetailsPage';
 import RecordPaymentPage from './pages/recorder/RecordPaymentPage';
+
+// User Order Details Page
+import UserOrderDetailsPage from './pages/user/OrderDetailsPage';
 
 //payment pages and callback
 import PaymentCallback from './pages/checkout/PaymentCallback';
@@ -603,7 +606,7 @@ function App() {
                   path="/orders/:orderId"
                   element={
                     <ProtectedRoute>
-                      <OrderDetailsPage />
+                      <UserOrderDetailsPage />
                     </ProtectedRoute>
                   }
                 />
@@ -931,7 +934,7 @@ function App() {
                       path="/recorder/order/:orderNumber"
                       element={
                         <ProtectedRoute>
-                          <OrderDetailsPage />
+                          <RecorderOrderDetailsPage />
                         </ProtectedRoute>
                       }
                     />

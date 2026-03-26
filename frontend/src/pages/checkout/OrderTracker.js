@@ -21,9 +21,15 @@ const OrderTracker = () => {
       // Transform the data to match our display format
       const transformedData = transformOrderData(passedOrder, items, discount);
       setOrderData(transformedData);
-      setOrderId(passedOrder.orderNumber);
+      // Use orderDisplay if available, fallback to orderNumber
+      setOrderId(passedOrder.orderDisplay || passedOrder.orderNumber || passedOrder.order_number || '');
+    } else if (orderNumber) {
+      // If no state but URL param exists, use it
+      setOrderId(orderNumber);
+      // Auto-fetch if we have a URL param but no state
+      handleTrackOrder();
     }
-  }, [location.state]);
+  }, [location.state, orderNumber]);
 
   // Transform order data from checkout to tracker format
   const transformOrderData = (orderInfo, items, discount = 0) => {
@@ -42,6 +48,9 @@ const OrderTracker = () => {
     // const tax = Math.round(subtotal * 0.16); // 16% VAT - Commented out (business under KSh 5M threshold)
     const tax = 0; // No VAT charged for small businesses
     const total = subtotal + shippingCost + tax - discount;
+
+    // Use orderDisplay if available, fallback to orderNumber
+    const displayOrderId = orderInfo.orderDisplay || orderInfo.orderNumber;
 
     // Build timeline based on payment method and status
     const isPending = orderInfo.payment?.status === 'pending';
@@ -97,7 +106,8 @@ const OrderTracker = () => {
       : `${orderInfo.shipping?.address || 'N/A'}, ${county}${orderInfo.shipping?.postalCode ? ', ' + orderInfo.shipping.postalCode : ''}`;
 
     return {
-      orderId: orderInfo.orderNumber,
+      orderId: displayOrderId,
+      internalOrderNumber: orderInfo.orderNumber, // Keep internal ref if needed
       status: orderInfo.status || 'confirmed',
       orderDate: orderInfo.orderDate,
       estimatedDelivery: estimatedDelivery.toISOString(),
@@ -163,19 +173,24 @@ const OrderTracker = () => {
     setError('');
     
     try {
-      if (!orderId.trim()) {
+      const searchId = orderId || orderNumber;
+      if (!searchId || !searchId.trim()) {
         setError('Please enter a valid order ID');
         setLoading(false);
         return;
       }
 
-      // TODO: Replace with actual API call
+      // API accepts both order_display (encoded) and order_number (legacy)
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
-      const response = await fetch(`${apiUrl}/orders/${orderId}`);
+      const response = await fetch(`${apiUrl}/orders/${encodeURIComponent(searchId)}`);
       
       if (response.ok) {
-        const data = await response.json();
-        const transformedData = transformOrderData(data.order, data.items, data.discount || 0);
+        const result = await response.json();
+        // Handle both response formats (direct data or nested data)
+        const orderData = result.data?.order || result.data || result;
+        const items = result.data?.items || result.items || [];
+        const discount = result.data?.discount || result.discount || 0;
+        const transformedData = transformOrderData(orderData, items, discount);
         setOrderData(transformedData);
       } else if (response.status === 404) {
         setError('Order not found. Please check your order ID and try again.');
@@ -265,7 +280,7 @@ const OrderTracker = () => {
               value={orderId}
               onChange={(e) => setOrderId(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Enter Order ID (e.g., OS12345678)"
+              placeholder="Enter Order ID (e.g., ADRWEG673V)"
               className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
             />
             <button

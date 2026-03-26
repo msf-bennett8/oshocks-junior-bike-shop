@@ -12,6 +12,14 @@ export const orderService = {
   },
   
   /**
+   * Get order by order_display (encoded) or order_number (legacy)
+   */
+  getOrderById: async (orderId) => {
+    const response = await api.get(`/orders/${orderId}`);
+    return response.data;
+  },
+  
+  /**
    * Get user's last delivery location for auto-fill
    */
   getLastDeliveryLocation: async () => {

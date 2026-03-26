@@ -15,8 +15,16 @@ const OrderDetailsPage = () => {
   }, [orderNumber]);
 
   const loadOrderDetails = async () => {
+    // Validate orderNumber exists before making API call
+    if (!orderNumber || orderNumber === 'undefined') {
+      setError('Order number is required. Please check the URL.');
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
+      console.log('🔍 Loading order details for:', orderNumber);
       const response = await recorderService.getOrderDetails(orderNumber);
       
       if (response.success) {
