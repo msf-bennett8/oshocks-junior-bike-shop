@@ -350,7 +350,7 @@ const countyInfo = {
           customer_phone: shippingInfo.phone,
           delivery_address: shippingInfo.address,
           county: shippingInfo.city,
-          zone: extractedZone,  // Send clean zone name
+          zone: shippingInfo.zone,  // Send FULL zone (e.g., "Kasarani Area (0-5km) - Kasarani (parts near Mwiki)")
           postal_code: shippingInfo.postalCode || null,
           delivery_instructions: shippingInfo.deliveryInstructions || null,
           payment_method: paymentMethod,

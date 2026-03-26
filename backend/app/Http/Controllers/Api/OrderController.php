@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Services\AuditService;
+use App\Services\OrderCodeService;
+use App\Services\LocationCodeService;
 
 class OrderController extends Controller
 {
@@ -77,8 +79,27 @@ class OrderController extends Controller
             // Get user ID
             $userId = $user->id;
 
-            // Generate order number with full format
+            // Generate legacy order number
             $orderNumber = $this->generateOrderNumber($county, $zone, $userId);
+
+            // Generate new secure order codes
+            $orderCodeService = new OrderCodeService();
+            $orderCode = $orderCodeService->generateOrderCode();
+            $orderDisplay = $orderCodeService->encodeForDisplay($orderCode);
+            
+            // Generate location code (extract area from zone)
+            $extractedZone = $request->zone;
+            if (strpos($request->zone, ' - ') !== false) {
+                $extractedZone = trim(explode(' - ', $request->zone)[1]);
+            }
+            $locationCode = LocationCodeService::generateLocationCode(
+                $request->county,
+                $request->zone,
+                $extractedZone
+            );
+            
+            // Generate routing ID (customer pay-in)
+            $routingId = $orderCodeService->generateRoutingId('customer', 'pay_in', $request->payment_method);
 
             // Create or get address
             $address = $this->createOrGetAddress($request, $user);
@@ -90,6 +111,10 @@ class OrderController extends Controller
             // Create order
             $order = Order::create([
                 'order_number' => $orderNumber,
+                'order_code' => $orderCode,
+                'order_display' => $orderDisplay,
+                'routing_id' => $routingId,
+                'location_code' => $locationCode,
                 'user_id' => $user->id,
                 'seller_id' => $primarySellerId,
                 'customer_name' => $request->customer_name,
@@ -109,6 +134,7 @@ class OrderController extends Controller
                 'payment_status' => $request->payment_method === 'cod' ? 'pending' : 'pending',
                 'payment_method' => $request->payment_method,
                 'transaction_reference' => $this->generateTransactionReference($request->payment_method, $orderNumber, $county, $zone, $userId),
+                'estimated_delivery_date' => now()->addDays(3)->toDateString(),
             ]);
 
             // Create order items and track for audit log
@@ -179,6 +205,18 @@ class OrderController extends Controller
 
             DB::commit();
 
+            // Generate purchase_id after order is created
+            $transactionCode = $orderCodeService->generateTransactionCode();
+            $purchaseId = $orderCodeService->generatePurchaseId(
+                $orderDisplay,
+                $transactionCode,
+                $routingId,
+                $locationCode
+            );
+            
+            // Update order with purchase_id
+            $order->update(['purchase_id' => $purchaseId]);
+
             // Load relationships
             $order->load(['orderItems.product', 'address']);
 
@@ -188,6 +226,8 @@ class OrderController extends Controller
                 'data' => [
                     'order' => $order,
                     'items' => $order->orderItems,
+                    'order_display' => $orderDisplay,
+                    'purchase_id' => $purchaseId,
                 ]
             ], 201);
 
