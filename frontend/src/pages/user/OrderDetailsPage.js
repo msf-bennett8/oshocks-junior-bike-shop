@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Package, Truck, CheckCircle, Clock, MapPin, Phone, Mail, Download, MessageSquare, AlertCircle, ChevronRight, Calendar, CreditCard, User, Home, Star, ArrowLeft, RefreshCw, XCircle } from 'lucide-react';
+import { Package, Truck, CheckCircle, Clock, MapPin, Phone, Mail, Download, MessageSquare, AlertCircle, ChevronRight, Calendar, CreditCard, User, Home, Star, ArrowLeft, RefreshCw, XCircle, Copy } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const OrderDetails = () => {
   const location = useLocation();
@@ -65,7 +67,7 @@ const OrderDetails = () => {
 
     // Calculate order summary
     const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
-    const shippingCost = orderInfo.payment?.shippingCost || 0;
+    const shippingCost = orderInfo.payment?.shippingCost || orderInfo.shipping_fee || 0;
     // const tax = Math.round(subtotal * 0.16); // 16% VAT - Commented out (business under KSh 5M threshold)
     const tax = 0; // No VAT charged for small businesses
     const total = subtotal + shippingCost + tax - discount;
@@ -148,6 +150,7 @@ const OrderDetails = () => {
     return {
       id: orderInfo.orderNumber,
       orderNumber: orderInfo.orderNumber,
+      purchaseId: orderInfo.purchaseId || orderInfo.purchase_id || null,
       status: orderStatus,
       placedDate: orderInfo.orderDate,
       estimatedDelivery: estimatedDelivery.toISOString(),
@@ -157,21 +160,24 @@ const OrderDetails = () => {
       shipping: shippingCost,
       tax: tax, // Set to 0 as per VAT exemption
       discount: discount,
+      totalAmount: total,
       paymentMethod: orderInfo.payment?.method || 'N/A',
       paymentStatus: isPending ? 'pending' : 'paid',
-      mpesaCode: orderInfo.payment?.transactionId || 'N/A',
+      mpesaCode: orderInfo.purchaseId || orderInfo.purchase_id
+        ? (() => { const parts = (orderInfo.purchaseId || orderInfo.purchase_id).split('-'); return parts[1]; })()
+        : orderInfo.payment?.transactionId || 'N/A',
       canCancel: !isPending && (orderStatus === 'processing' || orderStatus === 'pending'),
       canReturn: orderStatus === 'delivered',
       items: items.map(item => ({
         id: item.id || item.product_id,
-        name: item.name || 'Unknown Product',
-        image: item.image || item.thumbnail || '/api/placeholder/400/400',
-        price: Number(item.price) || 0,
+        name: item.name || item.product?.name || 'Unknown Product',
+        image: item.image || item.thumbnail || item.product?.images?.[0]?.thumbnail_url || item.product?.images?.[0]?.image_url || '/api/placeholder/400/400',
+        price: Number(item.price) || Number(item.product?.price) || 0,
         quantity: item.quantity || 1,
-        seller: 'Oshocks Junior Bike Shop',
-        sku: item.sku || `SKU-${item.id}`,
-        color: item.color || 'N/A',
-        size: item.size || 'N/A',
+        seller: item.product?.seller_name || item.seller || 'Oshocks Junior Bike Shop',
+        sku: item.sku || item.product?.sku || `SKU-${item.id || item.product_id}`,
+        color: item.color || item.product?.color || 'N/A',
+        size: item.size || item.product?.size || 'N/A',
         reviewable: orderStatus === 'delivered'
       })),
       shippingAddress: {
@@ -188,7 +194,9 @@ const OrderDetails = () => {
         postalCode: orderInfo.shipping?.postalCode || 'N/A',
         deliveryInstructions: orderInfo.deliveryInstructions || null
       },
-      trackingNumber: `OSH-TRK-${orderInfo.orderNumber.slice(-6)}`,
+      trackingNumber: orderInfo.purchaseId || orderInfo.purchase_id 
+        ? (() => { const parts = (orderInfo.purchaseId || orderInfo.purchase_id).split('-'); return parts[0] + '-' + parts[1] + '-' + parts[2] + '-' + parts[3]; })()
+        : `OSH-TRK-${orderInfo.orderNumber.slice(-6)}`,
       courierName: 'Oshocks Express',
       courierPhone: '+254 700 000 000',
       trackingHistory: trackingHistory,
@@ -200,7 +208,7 @@ const OrderDetails = () => {
 
   const getStatusConfig = (status) => {
     const configs = {
-      pending: { color: 'text-yellow-600 bg-yellow-50 border-yellow-200', label: 'Pending Payment', icon: Clock },
+      pending: { color: 'text-orange-600 bg-orange-50 border-orange-200', label: 'Pending Payment', icon: Clock },
       paid: { color: 'text-blue-600 bg-blue-50 border-blue-200', label: 'Payment Confirmed', icon: CheckCircle },
       processing: { color: 'text-purple-600 bg-purple-50 border-purple-200', label: 'Processing', icon: Package },
       shipped: { color: 'text-indigo-600 bg-indigo-50 border-indigo-200', label: 'Shipped', icon: Truck },
@@ -312,7 +320,25 @@ const OrderDetails = () => {
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Order Details</h1>
-              <p className="text-gray-600 mt-1">Order #{order.orderNumber}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-gray-600">Order #{order.purchaseId ? (() => { const parts = order.purchaseId.split('-'); return parts[0] + '-' + parts[1].substring(0, 4) + '...'; })() : order.orderNumber}</p>
+                {order.purchaseId && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(order.purchaseId);
+                      toast.success('Order ID copied!', {
+                        duration: 2000,
+                        position: 'bottom-right',
+                        icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+                      });
+                    }}
+                    className="text-orange-600 hover:text-orange-800 transition-colors focus:outline-none p-1 rounded hover:bg-orange-100"
+                    title="Copy Full Order ID"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
               <p className="text-sm text-gray-500 mt-1">Placed on {formatDate(order.placedDate)}</p>
             </div>
             
@@ -363,8 +389,25 @@ const OrderDetails = () => {
             </div>
             {order.trackingNumber && (
               <div className="text-left md:text-right bg-white bg-opacity-50 rounded-lg p-3">
-                <p className="text-xs font-medium opacity-75 uppercase">Tracking Number</p>
-                <p className="text-lg font-bold mt-1">{order.trackingNumber}</p>
+                <p className="text-xs font-medium opacity-75 uppercase">Order Number</p>
+                <div className="flex items-center justify-end gap-2 mt-1">
+                  <p className="text-lg font-bold">{order.purchaseId ? order.purchaseId.split('-')[0] : order.trackingNumber.split('-')[0]}</p>
+                  <button
+                    onClick={() => {
+                      const orderNum = order.purchaseId ? order.purchaseId.split('-')[0] : order.trackingNumber.split('-')[0];
+                      navigator.clipboard.writeText(orderNum);
+                      toast.success('Order number copied!', {
+                        duration: 2000,
+                        position: 'bottom-right',
+                        icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+                      });
+                    }}
+                    className="text-green-600 hover:text-green-800 transition-colors focus:outline-none p-1 rounded hover:bg-green-100"
+                    title="Copy Order Number"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
                 {order.courierName && (
                   <p className="text-sm mt-1 opacity-90">via {order.courierName}</p>
                 )}
@@ -440,12 +483,13 @@ const OrderDetails = () => {
               <div className="space-y-6">
                 {order.items.map((item) => (
                   <div key={item.id} className="flex gap-4 pb-6 border-b border-gray-200 last:border-0">
-                    <div className="relative flex-shrink-0">
+                    <div className="relative flex-shrink-0 w-28 h-28 bg-gray-100 rounded-lg border border-gray-200 overflow-hidden">
                       <img
-                        src={item.image}
+                        src={item.image || item.product?.images?.[0]?.image_url || item.product?.image_url || '/api/placeholder/400/400'}
                         alt={item.name}
-                        className="w-28 h-28 object-cover rounded-lg border border-gray-200"
+                        className="w-full h-full object-cover"
                         onError={(e) => { e.target.src = '/api/placeholder/400/400'; }}
+                        loading="lazy"
                       />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -504,7 +548,23 @@ const OrderDetails = () => {
                 {order.mpesaCode && order.mpesaCode !== 'N/A' && (
                   <div className="flex items-center justify-between py-3 border-b border-gray-100">
                     <span className="text-gray-700 font-medium">Transaction Code</span>
-                    <span className="font-mono font-bold text-orange-600 bg-orange-50 px-3 py-1 rounded">{order.mpesaCode}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-orange-600 bg-orange-50 px-3 py-1 rounded">{order.mpesaCode}</span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(order.mpesaCode);
+                          toast.success('Transaction code copied!', {
+                            duration: 2000,
+                            position: 'bottom-right',
+                            icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+                          });
+                        }}
+                        className="text-orange-600 hover:text-orange-800 transition-colors focus:outline-none p-1 rounded hover:bg-orange-100"
+                        title="Copy Transaction Code"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 )}
                 <div className="flex items-center justify-between py-3 border-b border-gray-100">
@@ -555,7 +615,7 @@ const OrderDetails = () => {
               <div className="space-y-3">
                 <div className="flex justify-between text-gray-700">
                   <span>Subtotal</span>
-                  <span className="font-semibold">{formatCurrency(order.subtotal)}</span>
+                  <span className="font-semibold">{formatCurrency(order.items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0))}</span>
                 </div>
                 <div className="flex justify-between text-gray-700">
                   <span>Shipping Fee</span>
@@ -576,7 +636,7 @@ const OrderDetails = () => {
                 <div className="border-t-2 border-gray-200 pt-3 mt-3">
                   <div className="flex justify-between text-xl font-bold text-gray-900">
                     <span>Total</span>
-                    <span className="text-orange-600">{formatCurrency(order.totalAmount)}</span>
+                    <span className="text-orange-600">{formatCurrency(order.items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0) + order.shipping - (order.discount || 0))}</span>
                   </div>
                 </div>
               </div>

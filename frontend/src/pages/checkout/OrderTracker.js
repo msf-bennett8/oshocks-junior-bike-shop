@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Package, Truck, CheckCircle, Clock, MapPin, Phone, Mail, Calendar, CreditCard, AlertCircle, ArrowLeft, User } from 'lucide-react';
+import { Package, Truck, CheckCircle, Clock, MapPin, Phone, Mail, Calendar, CreditCard, AlertCircle, ArrowLeft, User, Copy } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const OrderTracker = () => {
   const location = useLocation();
@@ -107,6 +108,7 @@ const OrderTracker = () => {
 
     return {
       orderId: displayOrderId,
+      purchaseId: orderInfo.purchaseId || orderInfo.purchase_id || null,
       internalOrderNumber: orderInfo.orderNumber, // Keep internal ref if needed
       status: orderInfo.status || 'confirmed',
       orderDate: orderInfo.orderDate,
@@ -305,7 +307,25 @@ const OrderTracker = () => {
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Order #{orderData.orderId}</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-bold text-gray-900">Order #{orderData.purchaseId ? (() => { const parts = orderData.purchaseId.split('-'); return parts[0] + '-' + parts[1].substring(0, 4) + '...'; })() : orderData.orderId}</h2>
+                    {orderData.purchaseId && (
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(orderData.purchaseId);
+                          toast.success('Order ID copied!', {
+                            duration: 2000,
+                            position: 'bottom-right',
+                            icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+                          });
+                        }}
+                        className="text-orange-600 hover:text-orange-800 transition-colors focus:outline-none p-1 rounded hover:bg-orange-100"
+                        title="Copy Full Order ID"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                   <p className="text-gray-600">Placed on {formatDate(orderData.orderDate)}</p>
                 </div>
                 <div className="text-right">
@@ -372,7 +392,26 @@ const OrderTracker = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <p className="text-sm text-gray-600">Tracking Number</p>
-                    <p className="font-semibold text-gray-900">{orderData.tracking.trackingNumber}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-gray-900">{orderData.purchaseId ? (() => { const parts = orderData.purchaseId.split('-'); return parts[0] + '-' + parts[1] + '-' + parts[2] + '-' + parts[3]; })() : orderData.tracking.trackingNumber}</p>
+                      {orderData.purchaseId && (
+                        <button
+                          onClick={() => {
+                            const trackingNum = (() => { const parts = orderData.purchaseId.split('-'); return parts[0] + '-' + parts[1] + '-' + parts[2] + '-' + parts[3]; })();
+                            navigator.clipboard.writeText(trackingNum);
+                            toast.success('Tracking number copied!', {
+                              duration: 2000,
+                              position: 'bottom-right',
+                              icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+                            });
+                          }}
+                          className="text-orange-600 hover:text-orange-800 transition-colors focus:outline-none p-1 rounded hover:bg-orange-100"
+                          title="Copy Tracking Number"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Carrier</p>
@@ -429,11 +468,11 @@ const OrderTracker = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium text-gray-900">{formatCurrency(orderData.payment.subtotal)}</span>
+                    <span className="font-medium text-gray-900">{formatCurrency(orderData.items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0))}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Shipping ({orderData.shipping.zone !== 'N/A' ? orderData.shipping.zone.split(' - ')[0] : 'Standard'})</span>
-                    <span className="font-medium text-gray-900">{formatCurrency(orderData.payment.shippingCost)}</span>
+                    <span className="text-gray-600">Shipping</span>
+                    <span className="font-medium text-gray-900">{formatCurrency(orderData.payment.shippingCost || 0)}</span>
                   </div>
                   {/* VAT display removed - business under KSh 5M annual turnover threshold
                   <div className="flex justify-between text-sm">
@@ -449,7 +488,13 @@ const OrderTracker = () => {
                   )}
                   <div className="flex justify-between items-center pt-3 border-t border-gray-200">
                     <span className="text-lg font-bold text-gray-900">Total Amount</span>
-                    <span className="text-2xl font-bold text-orange-600">{formatCurrency(orderData.payment.amount)}</span>
+                    <span className="text-2xl font-bold text-orange-600">
+                      {formatCurrency(
+                        orderData.items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0) + 
+                        (orderData.payment.shippingCost || 0) - 
+                        (orderData.payment.discount || 0)
+                      )}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -525,7 +570,26 @@ const OrderTracker = () => {
                     <Calendar className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-sm text-gray-600">Transaction ID</p>
-                      <p className="font-medium text-gray-900">{orderData.payment.transactionId}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-gray-900">{orderData.purchaseId ? (() => { const parts = orderData.purchaseId.split('-'); return parts[1]; })() : orderData.payment.transactionId}</p>
+                        {orderData.purchaseId && (
+                          <button
+                            onClick={() => {
+                              const transId = orderData.purchaseId.split('-')[1];
+                              navigator.clipboard.writeText(transId);
+                              toast.success('Transaction ID copied!', {
+                                duration: 2000,
+                                position: 'bottom-right',
+                                icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+                              });
+                            }}
+                            className="text-green-600 hover:text-green-800 transition-colors focus:outline-none p-1 rounded hover:bg-green-100"
+                            title="Copy Transaction ID"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-start gap-3 pt-3 border-t border-gray-200">

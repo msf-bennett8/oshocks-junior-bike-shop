@@ -8,7 +8,8 @@ import App from './App';
 import store from './redux/store';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
-import { ToastProvider } from './components/common/ToastContainer'; // ADD THIS IMPORT
+import { ToastProvider } from './components/common/ToastContainer';
+import { Toaster } from 'react-hot-toast';
 import reportWebVitals from './reportWebVitals';
 
 // ============================================================================
@@ -692,7 +693,26 @@ function initializeApp() {
               <AuthProvider>
                 <CartProvider>
                   <ToastProvider>
-                    <App />
+                    <>
+                      <App />
+                      <Toaster 
+                        position="bottom-right"
+                        toastOptions={{
+                          duration: 2000,
+                          style: {
+                            background: '#22c55e',
+                            color: '#fff',
+                          },
+                          success: {
+                            duration: 2000,
+                            iconTheme: {
+                              primary: '#fff',
+                              secondary: '#22c55e',
+                            },
+                          },
+                        }}
+                      />
+                    </>
                   </ToastProvider>
                 </CartProvider>
               </AuthProvider>

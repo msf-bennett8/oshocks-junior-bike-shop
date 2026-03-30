@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, Package, Truck, MapPin, Phone, Mail, Download, Share2, ArrowRight, Calendar, CreditCard, ShoppingBag, Home, MessageCircle } from 'lucide-react';
+import { CheckCircle, Package, Truck, MapPin, Phone, Mail, Download, Share2, ArrowRight, Calendar, CreditCard, ShoppingBag, Home, MessageCircle, Copy } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useCart } from '../../context/CartContext';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 
@@ -72,15 +73,15 @@ const OrderSuccessPage = () => {
         year: 'numeric'
       }),
       customer: {
-        name: 'John Kamau',
-        email: 'john.kamau@example.com',
-        phone: '+254712345678'
+        name: location.state?.orderData?.customer_name || location.state?.orderData?.customer?.name || 'Valued Customer',
+        email: location.state?.orderData?.customer_email || location.state?.orderData?.customer?.email || '',
+        phone: location.state?.orderData?.customer_phone || location.state?.orderData?.customer?.phone || ''
       },
       shipping: {
-        address: '123 Kimathi Street, Apartment 4B',
-        city: 'Nairobi',
-        county: 'Nairobi',
-        postalCode: '00100'
+        address: location.state?.orderData?.delivery_address || location.state?.orderData?.shipping?.address || '',
+        city: location.state?.orderData?.delivery_zone || location.state?.orderData?.shipping?.zone || location.state?.orderData?.county || 'Nairobi',
+        county: location.state?.orderData?.county || location.state?.orderData?.shipping?.county || 'Nairobi County',
+        postalCode: location.state?.orderData?.postal_code || location.state?.orderData?.shipping?.postalCode || ''
       },
       payment: {
         method: location.state?.orderData?.payment?.method || 'M-Pesa',
@@ -120,7 +121,7 @@ const OrderSuccessPage = () => {
           // Override with real data - explicit assignments take priority
           orderNumber: realOrderData.order_number || realOrderData.orderNumber || mockOrder.orderNumber,
           orderDisplay: realOrderData.order_display || realOrderData.orderDisplay || null,
-          purchaseId: realOrderData.purchase_id || realOrderData.purchaseId || null,
+          purchaseId: realOrderData.purchase_id || realOrderData.purchaseId || location.state?.orderData?.purchase_id || location.state?.orderData?.purchaseId || null,
           orderDate: realOrderData.created_at || realOrderData.orderDate || mockOrder.orderDate,
           status: realOrderData.status || mockOrder.status,
           customer: {
@@ -152,14 +153,20 @@ const OrderSuccessPage = () => {
           summary: (() => {
             const items = location.state.items || cartItems || [];
             const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
-            const shipping = location.state?.orderData?.payment?.shippingCost || 500;
+            const shipping = Number(location.state?.orderData?.shipping_fee || location.state?.orderData?.payment?.shippingCost || 500);
             
             // const tax = subtotal * 0.16; // 16% VAT - Commented out (business under KSh 5M threshold)
             const tax = 0; // No VAT charged for small businesses
-            const discount = location.state.discount || 0;
-            const total = subtotal + shipping + tax - discount;
+            const discount = Number(location.state.discount || 0);
+            const total = Number(subtotal) + Number(shipping) + Number(tax) - Number(discount);
             
-            return { subtotal, shipping, tax, discount, total };
+            return { 
+              subtotal: Number(subtotal), 
+              shipping: Number(shipping), 
+              tax: Number(tax), 
+              discount: Number(discount), 
+              total: Number(total) 
+            };
           })()
         });
     } else {
@@ -285,6 +292,21 @@ const OrderSuccessPage = () => {
             <span className="text-orange-900 font-semibold">
               Order #{orderData.orderDisplay || orderData.orderNumber}
             </span>
+            <button
+              onClick={() => {
+                const orderNum = orderData.orderDisplay || orderData.orderNumber;
+                navigator.clipboard.writeText(orderNum);
+                toast.success(`Order ${orderNum} copied!`, {
+                  duration: 2000,
+                  position: 'bottom-right',
+                  icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+                });
+              }}
+              className="ml-2 text-orange-600 hover:text-orange-800 transition-colors focus:outline-none p-1 rounded hover:bg-orange-100"
+              title="Copy Order Number"
+            >
+              <Copy className="w-4 h-4" />
+            </button>
           </div>
           
           <p className="text-gray-600">
@@ -417,9 +439,23 @@ const OrderSuccessPage = () => {
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="font-medium text-gray-900">{orderData.customer.name}</p>
                   <p className="text-gray-600 text-sm mt-1">{orderData.shipping.address}</p>
-                  <p className="text-gray-600 text-sm">
-                    {orderData.shipping.city}, {orderData.shipping.county} {orderData.shipping.postalCode}
-                  </p>
+                  {(() => {
+                    // Parse zone: "Kasarani Area (0-5km) - Kasarani (parts near Mwiki)" → zone + location
+                    const zoneFull = orderData.shipping.zone || '';
+                    const zoneParts = zoneFull.split(' - ');
+                    const zoneName = zoneParts[0] ? zoneParts[0].replace(/\s*\([^)]*\)/g, '').trim() : '';
+                    const specificLocation = zoneParts[1] ? zoneParts[1].replace(/\(parts near\s+/gi, '').replace(')', '').trim() : '';
+                    
+                    // Parse county: "Nairobi County" → "Nairobi"
+                    const countyFull = orderData.shipping.county || '';
+                    const city = countyFull.replace(' County', '').trim();
+                    
+                    return (
+                      <p className="text-gray-600 text-sm">
+                        {city}, {countyFull}, {zoneName}, {specificLocation}
+                      </p>
+                    );
+                  })()}
                   <div className="flex items-center text-sm text-gray-600 mt-2">
                     <Phone className="w-4 h-4 mr-1" />
                     {orderData.customer.phone}
@@ -579,10 +615,26 @@ const OrderSuccessPage = () => {
                       <CreditCard className="w-4 h-4 mr-2" />
                       <span>{orderData.payment.method}</span>
                     </div>
-                    <p className={`text-xs ml-6 ${
+                    <p className={`text-xs ml-6 flex items-center ${
                       orderData.payment.status === 'pending' ? 'text-yellow-700' : 'text-green-700'
                     }`}>
-                      Transaction ID: {orderData.payment.transactionId}
+                      Transaction ID: {orderData.purchaseId ? (() => { const parts = orderData.purchaseId.split('-'); return parts[0] + '-' + parts[1].substring(0, 4) + '...'; })() : (orderData.payment?.transactionId || 'N/A')}
+                      {orderData.purchaseId && (
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(orderData.purchaseId);
+                            toast.success('Transaction ID copied!', {
+                              duration: 2000,
+                              position: 'bottom-right',
+                              icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+                            });
+                          }}
+                          className="ml-2 hover:text-green-600 transition-colors focus:outline-none p-1 rounded hover:bg-green-100"
+                          title="Copy Full Transaction ID"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      )}
                     </p>
                   </div>
                 </div>

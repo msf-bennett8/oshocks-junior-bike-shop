@@ -17,6 +17,7 @@ import CartSummary from './CartSummary';
 import ActionModal from '../../components/common/ActionModal';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
+import orderService from '../../services/orderService';
 
 /**
  * CartPage Component
@@ -41,6 +42,8 @@ const CartPage = () => {
   const [addingRecommendedToCart, setAddingRecommendedToCart] = useState(null);
   const [togglingRecommendedWishlist, setTogglingRecommendedWishlist] = useState(null);
   const [checkingOutRecommended, setCheckingOutRecommended] = useState(null);
+  const [lastDeliveryLocation, setLastDeliveryLocation] = useState(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
     
   const [modal, setModal] = useState({
     isOpen: false,
@@ -154,7 +157,23 @@ const CartPage = () => {
     };
 
     fetchRecommendedProducts();
+    loadLastDeliveryLocation();
   }, []);
+
+  // Load user's last delivery location
+  const loadLastDeliveryLocation = async () => {
+    setIsLoadingLocation(true);
+    try {
+      const response = await orderService.getLastDeliveryLocation();
+      if (response.success && response.data) {
+        setLastDeliveryLocation(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading last delivery location:', error);
+    } finally {
+      setIsLoadingLocation(false);
+    }
+  };
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-KE', {
@@ -611,9 +630,9 @@ const CartPage = () => {
                   cartItems={cartItems}
                   onCheckout={handleCheckout}
                   showPromoCode={true}
-                  showShippingEstimate={false}
+                  showShippingEstimate={true}
                   showPaymentMethods={false}
-                  deliveryLocation={null}
+                  deliveryLocation={lastDeliveryLocation ? `${lastDeliveryLocation.zone}, ${lastDeliveryLocation.county}` : null}
                   sticky={false}
                 />
 
