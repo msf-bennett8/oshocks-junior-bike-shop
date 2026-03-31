@@ -1113,9 +1113,9 @@ const countyInfo = {
                           <div className="text-center">
                             <div className="flex items-center justify-center gap-3 mb-2">
                               <img 
-                                src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" 
+                                src="/assets/images/visa-logo.svg" 
                                 alt="Visa" 
-                                className="h-5 w-auto object-contain"
+                                className="h-8 w-auto object-contain"
                               />
                               <img 
                                 src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
@@ -1217,7 +1217,7 @@ const countyInfo = {
                                 <div className="flex items-center gap-3">
                                   <div className="w-12 h-8 bg-gray-100 rounded flex items-center justify-center">
                                     {card.card_brand === 'visa' && (
-                                      <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-4 w-auto" />
+                                      <img src="/assets/images/visa-logo.svg" alt="Visa" className="h-8 w-auto" />
                                     )}
                                     {card.card_brand === 'mastercard' && (
                                       <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6 w-auto" />
@@ -1519,9 +1519,9 @@ const countyInfo = {
                     className="h-8 w-auto object-contain opacity-80"
                   />
                   <img 
-                    src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" 
+                    src="/assets/images/visa-logo.svg" 
                     alt="Visa" 
-                    className="h-4 w-auto object-contain opacity-80"
+                    className="h-8 w-auto object-contain opacity-80"
                   />
                   <img 
                     src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 

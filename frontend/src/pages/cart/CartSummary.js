@@ -36,6 +36,7 @@ const CartSummary = ({
   const [promoError, setPromoError] = useState('');
   const [selectedPayment, setSelectedPayment] = useState('mpesa');
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+  const [attemptedCodes, setAttemptedCodes] = useState([]);
 
   // TODO: In production, validate promo codes via API endpoint
   // Example: POST /api/v1/cart/validate-promo with { code: promoCode, cart_total: subtotal }
@@ -106,17 +107,17 @@ const CartSummary = ({
     setIsApplyingPromo(true);
     setPromoError('');
 
-    // TODO: Replace with actual API call
-    // Example:
-    // const response = await fetch(`${API_URL}/cart/validate-promo`, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ code: promoCode, cart_total: subtotal })
-    // });
-    
-    // Simulate API call (remove this in production)
     setTimeout(() => {
-      const promo = promoCodes[promoCode.toUpperCase()];
+      const upperCode = promoCode.toUpperCase();
+      
+      // Check if code was already attempted
+      if (attemptedCodes.includes(upperCode)) {
+        setPromoError('Promo code already used out');
+        setIsApplyingPromo(false);
+        return;
+      }
+
+      const promo = promoCodes[upperCode];
       
       if (!promo) {
         setPromoError('Invalid promo code');
@@ -124,14 +125,9 @@ const CartSummary = ({
         return;
       }
 
-      if (promo.minOrder && subtotal < promo.minOrder) {
-        setPromoError(`Minimum order of ${formatPrice(promo.minOrder)} required`);
-        setIsApplyingPromo(false);
-        return;
-      }
-
-      setAppliedPromo(promo);
-      setPromoError('');
+      // Add to attempted codes (marks as "used out")
+      setAttemptedCodes([...attemptedCodes, upperCode]);
+      setPromoError('Promo code already used out');
       setIsApplyingPromo(false);
     }, 500);
   };
@@ -172,9 +168,9 @@ const paymentMethods = [
     name: 'Card', 
     icon: <div className="flex items-center gap-2">
       <img 
-        src="https://upload.wikimedia.org/wikipedia/commons/d/d6/Visa_Inc._logo_%282021%E2%80%93present%29.svg" 
+        src="/assets/images/visa-logo.svg" 
         alt="Visa" 
-        className="h-4 w-auto object-contain"
+        className="h-8 w-auto object-contain"
       />
       <img 
         src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" 
@@ -339,7 +335,7 @@ const paymentMethods = [
                   <button
                     onClick={handleApplyPromo}
                     disabled={!promoCode || isApplyingPromo}
-                    className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-lg font-medium hover:from-orange-700 hover:to-orange-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
                     {isApplyingPromo ? 'Applying...' : 'Apply'}
                   </button>
@@ -377,7 +373,10 @@ const paymentMethods = [
               <div className="flex-1 min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-gray-700">Delivering to</p>
                 <p className="text-xs sm:text-sm text-gray-600 truncate">{deliveryLocation}</p>
-                <button className="text-xs sm:text-sm text-green-600 hover:text-green-700 mt-1 font-medium">
+                <button 
+                  onClick={onCheckout}
+                  className="text-xs sm:text-sm text-green-600 hover:text-green-700 mt-1 font-medium"
+                >
                   Change location
                 </button>
               </div>

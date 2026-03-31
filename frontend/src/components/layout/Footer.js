@@ -285,9 +285,9 @@ const Footer = () => {
             />
             {/* Visa Logo */}
             <img 
-              src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" 
+              src="/assets/images/visa-logo.svg" 
               alt="Visa" 
-              className="h-6 object-contain opacity-80 hover:opacity-100 transition-opacity"
+              className="h-10 object-contain opacity-80 hover:opacity-100 transition-opacity"
             />
             {/* Mastercard Logo */}
             <img 

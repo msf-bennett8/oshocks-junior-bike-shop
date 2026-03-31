@@ -32,10 +32,16 @@ const Navbar = () => {
 
   const cartItemCount = cartItems?.length || 0;
 
-  // Close profile menu when clicking outside
+  // Close profile menu when clicking outside (desktop only - mobile uses fixed positioning)
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+      // Only close desktop menu (inside profileMenuRef), not mobile fixed menu
+      if (profileMenuRef.current && profileMenuRef.current.contains(event.target) === false) {
+        // Check if click is on mobile menu (fixed positioned) - don't close if so
+        const mobileMenu = document.querySelector('.fixed.right-4.top-16');
+        if (mobileMenu && mobileMenu.contains(event.target)) {
+          return;
+        }
         setShowProfileMenu(false);
       }
     };
@@ -383,12 +389,56 @@ const Navbar = () => {
 
               {/* Account - Mobile/Tablet */}
               {isAuthenticated ? (
-                <button
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="md:hidden p-2 sm:p-2.5 rounded-full hover:bg-orange-50 transition-colors relative"
-                >
-                  <User className="w-5 h-5 text-gray-700" />
-                </button>
+                <div className="md:hidden relative">
+                  <button
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className="p-2 sm:p-2.5 rounded-full hover:bg-orange-50 transition-colors relative"
+                  >
+                    <User className="w-5 h-5 text-gray-700" />
+                  </button>
+
+                  {/* Mobile Profile Dropdown - Fixed positioning to avoid click outside issues */}
+                  {showProfileMenu && (
+                    <div className="fixed right-4 top-16 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-[60] animate-fade-in">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); navigate('/dashboard'); setShowProfileMenu(false); }}
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors w-full text-left"
+                      >
+                        <LayoutDashboard size={18} className="text-gray-600" />
+                        <span className="text-gray-900">Dashboard</span>
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); navigate('/profile'); setShowProfileMenu(false); }}
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors w-full text-left"
+                      >
+                        <User size={18} className="text-gray-600" />
+                        <span className="text-gray-900">Profile</span>
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); navigate('/orders'); setShowProfileMenu(false); }}
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors w-full text-left"
+                      >
+                        <Package size={18} className="text-gray-600" />
+                        <span className="text-gray-900">Orders</span>
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); navigate('/settings'); setShowProfileMenu(false); }}
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors w-full text-left"
+                      >
+                        <Settings size={18} className="text-gray-600" />
+                        <span className="text-gray-900">Settings</span>
+                      </button>
+                      <hr className="my-2" />
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleLogout(); setShowProfileMenu(false); }} 
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors w-full text-left text-red-600"
+                      >
+                        <LogOut size={18} />
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <Link
                   to="/login"
