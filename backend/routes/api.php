@@ -39,7 +39,7 @@ Route::prefix('v1/auth')->group(function () {
 });
 
 // Public routes
-Route::prefix('v1')->group(function () {
+Route::middleware(['api'])->prefix('v1')->group(function () {
     
     // Public authentication routes
     Route::post('/auth/register', [AuthController::class, 'register']);

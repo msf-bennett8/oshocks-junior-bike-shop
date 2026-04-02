@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Truck, CheckCircle, Clock, MapPin, Search, Filter, Download, Eye, RefreshCw, XCircle, AlertCircle, ChevronDown, Calendar, CreditCard, ShoppingBag, Box } from 'lucide-react';
+import OrderDetailsModal from '../../components/orders/OrderDetailsModal';
 
 const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
@@ -10,140 +11,65 @@ const OrdersPage = () => {
   const [sortBy, setSortBy] = useState('date_desc');
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const ordersPerPage = 10;
 
-  // Mock data - Replace with actual API call
+  // Fetch orders from API
   useEffect(() => {
     const fetchOrders = async () => {
       setLoading(true);
-      // Simulate API call - Replace with: const response = await fetch('/api/user/orders');
-      setTimeout(() => {
-        setOrders([
-          {
-            id: 1,
-            orderNumber: 'ORD-2024-10-1234',
-            status: 'in_transit',
-            placedDate: '2024-10-10T10:30:00',
-            estimatedDelivery: '2024-10-16T18:00:00',
-            totalAmount: 45800,
-            itemCount: 3,
-            items: [
-              { name: 'Mountain Bike - Trek Marlin 7', image: 'https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=200', quantity: 1 }
-            ],
-            paymentMethod: 'M-Pesa',
-            trackingNumber: 'OSH2024101234KE'
+      try {
+        const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+        const token = localStorage.getItem('authToken');
+        
+        const response = await fetch(`${API_URL}/orders`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Origin': window.location.origin  // Explicitly set Origin for CORS
           },
-          {
-            id: 2,
-            orderNumber: 'ORD-2024-09-0987',
-            status: 'delivered',
-            placedDate: '2024-09-25T14:20:00',
-            estimatedDelivery: '2024-09-30T18:00:00',
-            deliveredDate: '2024-09-29T16:45:00',
-            totalAmount: 12500,
-            itemCount: 2,
-            items: [
-              { name: 'Bike Helmet - Bell Z20 MIPS', image: 'https://images.unsplash.com/photo-1557536713-89f8f6b47e2e?w=200', quantity: 1 },
-              { name: 'Cycling Gloves', image: 'https://images.unsplash.com/photo-1589118949245-7d38baf380d6?w=200', quantity: 1 }
-            ],
-            paymentMethod: 'M-Pesa',
-            trackingNumber: 'OSH2024090987KE',
-            canReview: true
-          },
-          {
-            id: 3,
-            orderNumber: 'ORD-2024-09-0756',
-            status: 'processing',
-            placedDate: '2024-10-13T09:15:00',
-            estimatedDelivery: '2024-10-18T18:00:00',
-            totalAmount: 8900,
-            itemCount: 1,
-            items: [
-              { name: 'Bike Lock - Kryptonite U-Lock', image: 'https://images.unsplash.com/photo-1589118949245-7d38baf380d6?w=200', quantity: 1 }
-            ],
-            paymentMethod: 'Card',
-            trackingNumber: null,
-            canCancel: true
-          },
-          {
-            id: 4,
-            orderNumber: 'ORD-2024-08-0543',
-            status: 'delivered',
-            placedDate: '2024-08-15T11:30:00',
-            estimatedDelivery: '2024-08-20T18:00:00',
-            deliveredDate: '2024-08-19T15:20:00',
-            totalAmount: 32000,
-            itemCount: 4,
-            items: [
-              { name: 'Road Bike - Specialized Allez', image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=200', quantity: 1 }
-            ],
-            paymentMethod: 'M-Pesa',
-            trackingNumber: 'OSH2024080543KE',
-            canReview: false
-          },
-          {
-            id: 5,
-            orderNumber: 'ORD-2024-08-0321',
-            status: 'cancelled',
-            placedDate: '2024-08-10T13:45:00',
-            estimatedDelivery: null,
-            totalAmount: 5600,
-            itemCount: 2,
-            items: [
-              { name: 'Water Bottle Cage', image: 'https://images.unsplash.com/photo-1523475496153-3d6cc0f0bf19?w=200', quantity: 2 }
-            ],
-            paymentMethod: 'M-Pesa',
-            trackingNumber: null,
-            cancelledDate: '2024-08-10T14:00:00',
-            refundStatus: 'completed'
-          },
-          {
-            id: 6,
-            orderNumber: 'ORD-2024-07-0198',
-            status: 'delivered',
-            placedDate: '2024-07-20T10:00:00',
-            estimatedDelivery: '2024-07-25T18:00:00',
-            deliveredDate: '2024-07-24T14:30:00',
-            totalAmount: 18700,
-            itemCount: 3,
-            items: [
-              { name: 'Bike Pump - Floor Pump Pro', image: 'https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=200', quantity: 1 }
-            ],
-            paymentMethod: 'Card',
-            trackingNumber: 'OSH2024070198KE',
-            canReview: false
-          },
-          {
-            id: 7,
-            orderNumber: 'ORD-2024-10-1567',
-            status: 'out_for_delivery',
-            placedDate: '2024-10-12T08:20:00',
-            estimatedDelivery: '2024-10-14T18:00:00',
-            totalAmount: 6800,
-            itemCount: 1,
-            items: [
-              { name: 'Bike Lights Set - Front & Rear', image: 'https://images.unsplash.com/photo-1589118949245-7d38baf380d6?w=200', quantity: 1 }
-            ],
-            paymentMethod: 'M-Pesa',
-            trackingNumber: 'OSH2024101567KE'
-          },
-          {
-            id: 8,
-            orderNumber: 'ORD-2024-09-0432',
-            status: 'shipped',
-            placedDate: '2024-10-11T15:30:00',
-            estimatedDelivery: '2024-10-15T18:00:00',
-            totalAmount: 15200,
-            itemCount: 2,
-            items: [
-              { name: 'Cycling Jersey - Team Edition', image: 'https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=200', quantity: 2 }
-            ],
-            paymentMethod: 'M-Pesa',
-            trackingNumber: 'OSH2024090432KE'
-          }
-        ]);
+          credentials: 'include'  // Required for CORS with credentials
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch orders');
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+          // Map backend data to frontend format
+          const mappedOrders = data.data.map(order => ({
+            id: order.id,
+            orderNumber: order.tracking_number || order.order_display,
+            status: order.status === 'confirmed' ? 'processing' : order.status,
+            placedDate: order.created_at,
+            estimatedDelivery: order.estimated_delivery_date,
+            deliveredDate: order.delivered_at,
+            totalAmount: order.total,
+            itemCount: order.item_count,
+            product_count: order.product_count,
+            first_product: order.first_product,
+            items: order.items || [],
+            paymentMethod: order.payment_method === 'mpesa' ? 'M-Pesa' : 
+                          order.payment_method === 'card' ? 'Card' : 'Cash on Delivery',
+            trackingNumber: order.tracking_number || order.order_display,
+            canReview: order.status === 'delivered',
+            canCancel: order.status === 'pending' || order.status === 'processing'
+          }));
+          
+          setOrders(mappedOrders);
+        } else {
+          setOrders([]);
+        }
+      } catch (err) {
+        console.error('Error fetching orders:', err);
+        setOrders([]);
+      } finally {
         setLoading(false);
-      }, 800);
+      }
     };
 
     fetchOrders();
@@ -253,8 +179,9 @@ const OrdersPage = () => {
   const currentOrders = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
   const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
 
-  const handleViewOrder = (orderId) => {
-    window.location.href = `/orders/${orderId}`;
+  const handleViewOrder = (order) => {
+    setSelectedOrder(order);
+    setIsModalOpen(true);
   };
 
   const handleTrackOrder = (trackingNumber) => {
@@ -455,7 +382,7 @@ const OrdersPage = () => {
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="text-lg font-bold text-gray-900">
-                            Order #{order.orderNumber}
+                            Order #{order.trackingNumber}
                           </h3>
                           <span className={`px-3 py-1 rounded-full text-xs font-bold border ${statusConfig.color}`}>
                             <StatusIcon className="w-3 h-3 inline mr-1" />
@@ -487,22 +414,39 @@ const OrdersPage = () => {
                   {/* Order Items Preview */}
                   <div className="p-4">
                     <div className="flex items-center gap-3 mb-4 overflow-x-auto">
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className="flex-shrink-0">
+                      {/* Show first product image */}
+                      {order.first_product?.image ? (
+                        <div className="flex-shrink-0 relative">
                           <img
-                            src={item.image}
-                            alt={item.name}
+                            src={order.first_product.image}
+                            alt={order.first_product.name}
                             className="w-16 h-16 object-cover rounded border border-gray-200"
                           />
+                          {/* Show +X counter if more products */}
+                          {(order.product_count > 1 || order.itemCount > 1) && (
+                            <div className="absolute -bottom-2 -right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                              +{order.product_count > 1 ? order.product_count - 1 : order.itemCount - 1}
+                            </div>
+                          )}
                         </div>
-                      ))}
-                      {order.itemCount > order.items.length && (
+                      ) : (
                         <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
-                          <span className="text-sm font-semibold text-gray-600">
-                            +{order.itemCount - order.items.length}
-                          </span>
+                          <Box className="w-6 h-6 text-gray-400" />
                         </div>
                       )}
+                      
+                      {/* Show additional item thumbnails (max 3 more) */}
+                      {order.items.slice(1, 4).map((item, idx) => (
+                        item.image && (
+                          <div key={idx} className="flex-shrink-0">
+                            <img
+                              src={item.image}
+                              alt={item.product_name || item.name}
+                              className="w-16 h-16 object-cover rounded border border-gray-200 opacity-75"
+                            />
+                          </div>
+                        )
+                      ))}
                     </div>
 
                     {/* Delivery Info */}
@@ -514,16 +458,26 @@ const OrdersPage = () => {
                             Delivered on {formatDate(order.deliveredDate)}
                           </p>
                         ) : order.estimatedDelivery ? (
+                          <div className="space-y-1">
+                            <p className="text-sm text-gray-700">
+                              <Clock className="w-4 h-4 inline text-blue-600 mr-2" />
+                              <span className="font-medium">Estimated delivery:</span> {formatDate(order.estimatedDelivery)}
+                            </p>
+                            <p className="text-xs text-gray-500 ml-6">
+                              Your order is being prepared and will be shipped soon
+                            </p>
+                          </div>
+                        ) : (
                           <p className="text-sm text-gray-700">
-                            <Clock className="w-4 h-4 inline text-blue-600 mr-2" />
-                            Estimated delivery: {formatDate(order.estimatedDelivery)}
+                            <Clock className="w-4 h-4 inline text-yellow-600 mr-2" />
+                            Delivery date will be updated once order is processed
                           </p>
-                        ) : null}
+                        )}
                         
                         {order.trackingNumber && (
-                          <p className="text-sm text-gray-600 mt-1">
+                          <p className="text-sm text-gray-600 mt-2 pt-2 border-t border-gray-200">
                             <Truck className="w-4 h-4 inline mr-2" />
-                            Tracking: <span className="font-mono font-semibold">{order.trackingNumber}</span>
+                            <span className="font-medium">Tracking Number:</span> <span className="font-mono font-semibold">{order.trackingNumber}</span>
                           </p>
                         )}
                       </div>
@@ -547,7 +501,7 @@ const OrdersPage = () => {
                     {/* Action Buttons */}
                     <div className="flex flex-wrap gap-2">
                       <button
-                        onClick={() => handleViewOrder(order.id)}
+                        onClick={() => handleViewOrder(order)}
                         className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
                       >
                         <Eye className="w-4 h-4 mr-2" />
@@ -658,6 +612,16 @@ const OrdersPage = () => {
             Showing {indexOfFirstOrder + 1} to {Math.min(indexOfLastOrder, filteredOrders.length)} of {filteredOrders.length} orders
           </div>
         )}
+
+        {/* Order Details Modal */}
+        <OrderDetailsModal 
+          order={selectedOrder}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedOrder(null);
+          }}
+        />
       </div>
     </div>
   );

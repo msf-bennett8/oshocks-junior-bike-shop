@@ -243,7 +243,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Get user's orders
+     * Get user's orders with product images for list view
      */
     public function index(Request $request)
     {
@@ -256,10 +256,59 @@ class OrderController extends Controller
             ], 401);
         }
 
-        $orders = Order::with(['orderItems.product', 'seller'])
+        $orders = Order::with([
+            'orderItems.product.images' => function($query) {
+                $query->ordered()->limit(1);
+            },
+            'orderItems.product:id,name,slug',
+            'orderItems.seller:id,business_name'
+        ])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function($order) {
+                return [
+                    'id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'order_display' => $order->order_display,
+                    'purchase_id' => $order->purchase_id,
+                    'status' => $order->status,
+                    'payment_status' => $order->payment_status,
+                    'payment_method' => $order->payment_method,
+                    'total' => $order->total,
+                    'subtotal' => $order->subtotal,
+                    'shipping_fee' => $order->shipping_fee,
+                    'discount' => $order->discount,
+                    'created_at' => $order->created_at,
+                    'estimated_delivery_date' => $order->estimated_delivery_date,
+                    'shipped_at' => $order->shipped_at,
+                    'delivered_at' => $order->delivered_at,
+                    'tracking_number' => $order->order_display,
+                    'carrier' => $order->carrier,
+                    'item_count' => $order->orderItems->sum('quantity'),
+                    'product_count' => $order->orderItems->count(),
+                    'first_product' => $order->orderItems->first() ? [
+                        'id' => $order->orderItems->first()->product_id,
+                        'name' => $order->orderItems->first()->product_name,
+                        'image' => $order->orderItems->first()->product?->images?->first()?->image_url ?? null,
+                        'thumbnail' => $order->orderItems->first()->product?->images?->first()?->thumbnail_url ?? null,
+                    ] : null,
+                    'items' => $order->orderItems->map(function($item) {
+                        return [
+                            'id' => $item->id,
+                            'product_id' => $item->product_id,
+                            'product_name' => $item->product_name,
+                            'variant_name' => $item->variant_name,
+                            'quantity' => $item->quantity,
+                            'price' => $item->price,
+                            'total' => $item->total,
+                            'image' => $item->product?->images?->first()?->image_url ?? null,
+                            'thumbnail' => $item->product?->images?->first()?->thumbnail_url ?? null,
+                            'seller_shop_name' => $item->seller?->business_name ?? 'Oshocks Junior',
+                        ];
+                    }),
+                ];
+            });
 
         return response()->json([
             'success' => true,
