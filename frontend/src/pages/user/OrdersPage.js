@@ -198,11 +198,88 @@ const OrdersPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{background: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)'}}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 font-medium">Loading your orders...</p>
+          {/* OS Logo */}
+          <div className="w-20 h-20 rounded-xl flex items-end justify-start p-2 mb-6 mx-auto" 
+               style={{
+                 background: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)', 
+                 boxShadow: '0 10px 30px rgba(255, 69, 0, 0.4)',
+                 animation: 'logo-pulse 2s ease-in-out infinite'
+               }}>
+            <span className="text-white text-4xl font-bold" style={{
+              fontFamily: "'Lobster Two', cursive", 
+              lineHeight: '1',
+              transform: 'translateX(-5%) translateY(5%)',
+              textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)'
+            }}>OS</span>
+          </div>
+          
+          {/* Sequential Fill Spinner */}
+          <div className="relative w-9 h-9 mx-auto mb-6">
+            {[...Array(12)].map((_, i) => (
+              <div key={i} className="absolute w-1 h-3 bg-transparent border border-white/85 rounded-sm overflow-hidden"
+                   style={{
+                     top: '50%', 
+                     left: '50%',
+                     transformOrigin: 'center bottom',
+                     marginTop: '-12px', 
+                     marginLeft: '-2.5px',
+                     transform: `rotate(${i * 30}deg) translateY(-12px)`
+                   }}>
+                <div className="absolute bottom-0 left-0 right-0 w-full bg-white rounded-sm" 
+                     style={{
+                       height: '0%',
+                       animation: `blade-fill 0.6s linear infinite`,
+                       animationDelay: `${i * 0.05}s`
+                     }}>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <p className="text-white text-2xl mb-2" style={{
+            fontFamily: "'Pacifico', cursive",
+            textShadow: '2px 2px 8px rgba(0, 0, 0, 0.2)',
+            animation: 'pulse 2s ease-in-out infinite'
+          }}>Loading Oshocks</p>
+          
+          <p className="text-white/95 text-base" style={{
+            fontFamily: "'Lobster Two', cursive",
+            textShadow: '1px 1px 4px rgba(0, 0, 0, 0.15)'
+          }}>Fetching your orders...</p>
+          
+          {/* Progress Bar */}
+          <div className="w-48 h-1 bg-white/20 rounded-full mt-5 mx-auto overflow-hidden relative">
+            <div className="h-full rounded-full" style={{
+              background: 'linear-gradient(90deg, #ffffff 0%, #ffe4b5 50%, #ffffff 100%)',
+              animation: 'progress 2s ease-in-out infinite',
+              boxShadow: '0 0 10px rgba(255, 255, 255, 0.5)'
+            }}></div>
+          </div>
         </div>
+        
+        <style>{`
+          @keyframes logo-pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 10px 30px rgba(255, 69, 0, 0.4); }
+            50% { transform: scale(1.05); box-shadow: 0 15px 40px rgba(255, 69, 0, 0.6); }
+          }
+          @keyframes blade-fill {
+            0%, 100% { height: 0%; }
+            8.33% { height: 100%; background: white; box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.2); }
+            16.66% { height: 100%; background: rgba(255, 255, 255, 0.9); }
+            25% { height: 0%; background: rgba(255, 255, 255, 0.7); }
+          }
+          @keyframes progress {
+            0% { width: 0%; transform: translateX(0); }
+            50% { width: 100%; transform: translateX(0); }
+            100% { width: 100%; transform: translateX(100%); }
+          }
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+          }
+        `}</style>
       </div>
     );
   }
@@ -509,13 +586,13 @@ const OrdersPage = () => {
                       </button>
 
                       {order.trackingNumber && order.status !== 'delivered' && order.status !== 'cancelled' && (
-                        <button
-                          onClick={() => handleTrackOrder(order.trackingNumber)}
-                          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
-                        >
-                          <MapPin className="w-4 h-4 mr-2" />
-                          Track Package
-                        </button>
+                      <button
+                        onClick={() => handleTrackOrder(order.trackingNumber)}
+                        className="flex items-center px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-400 text-white rounded-lg hover:from-orange-600 hover:to-orange-500 font-medium transition-all shadow-md"
+                      >
+                        <MapPin className="w-4 h-4 mr-2" />
+                        Track Package
+                      </button>
                       )}
 
                       {order.status === 'delivered' && (

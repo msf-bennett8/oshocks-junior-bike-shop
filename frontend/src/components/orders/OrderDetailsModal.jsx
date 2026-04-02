@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { X, Package, Truck, CheckCircle, Clock, MapPin, CreditCard, Calendar, Box, Star } from 'lucide-react';
+import { X, Package, Truck, CheckCircle, Clock, MapPin, CreditCard, Calendar, Box, Star, RefreshCw } from 'lucide-react';
 
 const OrderDetailsModal = ({ order, isOpen, onClose }) => {
   useEffect(() => {
@@ -128,7 +128,7 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                         <span className="font-medium text-gray-900">
                           {formatCurrency(item.price)} each
                         </span>
-                        <span className="font-semibold text-blue-600">
+                        <span className="font-semibold text-orange-600">
                           {formatCurrency(item.total || item.price * item.quantity)}
                         </span>
                       </div>
