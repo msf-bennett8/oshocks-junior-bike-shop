@@ -102,39 +102,45 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
                 Order Items ({order.items.length})
               </h3>
               <div className="space-y-4">
-                {order.items.map((item, index) => (
-                  <div key={index} className="flex gap-4 p-4 bg-gray-50 rounded-xl">
-                    <div className="flex-shrink-0">
-                      {item.image ? (
-                        <img 
-                          src={item.image}
-                          alt={item.product_name || item.name}
-                          className="w-20 h-20 object-cover rounded-lg"
-                        />
-                      ) : (
-                        <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
-                          <Box className="h-8 w-8 text-gray-400" />
+                {order.items && order.items.length > 0 ? (
+                  order.items.map((item, index) => (
+                    <div key={item.id || index} className="flex gap-4 p-4 bg-gray-50 rounded-xl">
+                      <div className="flex-shrink-0">
+                        {item.image ? (
+                          <img 
+                            src={item.image}
+                            alt={item.product_name || item.name}
+                            className="w-20 h-20 object-cover rounded-lg"
+                          />
+                        ) : (
+                          <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
+                            <Box className="h-8 w-8 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">{item.product_name || item.name}</h4>
+                        {item.variant_name && (
+                          <p className="text-sm text-gray-600">{item.variant_name}</p>
+                        )}
+                        <p className="text-sm text-gray-500">{item.seller_shop_name || 'Oshocks Junior'}</p>
+                        <div className="flex items-center gap-4 mt-2 text-sm">
+                          <span className="text-gray-600">Qty: {item.quantity || 1}</span>
+                          <span className="font-medium text-gray-900">
+                            {formatCurrency(item.price || 0)} each
+                          </span>
+                          <span className="font-semibold text-orange-600">
+                            {formatCurrency(item.total || (item.price || 0) * (item.quantity || 1))}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{item.product_name || item.name}</h4>
-                      {item.variant_name && (
-                        <p className="text-sm text-gray-600">{item.variant_name}</p>
-                      )}
-                      <p className="text-sm text-gray-500">{item.seller_shop_name}</p>
-                      <div className="flex items-center gap-4 mt-2 text-sm">
-                        <span className="text-gray-600">Qty: {item.quantity}</span>
-                        <span className="font-medium text-gray-900">
-                          {formatCurrency(item.price)} each
-                        </span>
-                        <span className="font-semibold text-orange-600">
-                          {formatCurrency(item.total || item.price * item.quantity)}
-                        </span>
                       </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-gray-500 bg-gray-50 rounded-xl">
+                    No items found in this order.
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -144,17 +150,29 @@ const OrderDetailsModal = ({ order, isOpen, onClose }) => {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">{formatCurrency(order.totalAmount - (order.shipping_fee || 0))}</span>
+                  <span className="font-medium">{formatCurrency(order.subtotal || (order.totalAmount - (order.shipping_fee || 0)))}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Shipping</span>
-                  <span className="font-medium">{formatCurrency(order.shipping_fee || 0)}</span>
+                  <span className="font-medium">{formatCurrency(order.shipping_fee || order.shipping || 0)}</span>
                 </div>
+                {(order.tax > 0) && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Tax</span>
+                    <span className="font-medium">{formatCurrency(order.tax)}</span>
+                  </div>
+                )}
+                {(order.discount > 0) && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Discount</span>
+                    <span className="font-medium text-green-600">-{formatCurrency(order.discount)}</span>
+                  </div>
+                )}
                 <div className="border-t pt-2 mt-2">
                   <div className="flex justify-between">
                     <span className="font-bold text-gray-900">Total</span>
                     <span className="font-bold text-lg text-gray-900">
-                      {formatCurrency(order.totalAmount)}
+                      {formatCurrency(order.totalAmount || order.total || 0)}
                     </span>
                   </div>
                 </div>

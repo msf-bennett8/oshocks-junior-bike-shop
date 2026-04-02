@@ -48,11 +48,29 @@ const OrdersPage = () => {
             placedDate: order.created_at,
             estimatedDelivery: order.estimated_delivery_date,
             deliveredDate: order.delivered_at,
-            totalAmount: order.total,
+            // Correct totals from database
+            subtotal: parseFloat(order.subtotal) || 0,
+            shipping_fee: parseFloat(order.shipping_fee) || 0,
+            tax: parseFloat(order.tax) || 0,
+            discount: parseFloat(order.discount) || 0,
+            totalAmount: parseFloat(order.total) || 0,
             itemCount: order.item_count,
             product_count: order.product_count,
             first_product: order.first_product,
-            items: order.items || [],
+            // ALL items with complete data
+            items: (order.items || []).map(item => ({
+              id: item.id,
+              product_id: item.product_id,
+              product_name: item.product_name || item.name,
+              name: item.product_name || item.name,
+              variant_name: item.variant_name,
+              quantity: parseInt(item.quantity) || 1,
+              price: parseFloat(item.price) || 0,
+              total: parseFloat(item.total) || (parseFloat(item.price) * parseInt(item.quantity)),
+              image: item.image || item.thumbnail || null,
+              thumbnail: item.thumbnail || item.image || null,
+              seller_shop_name: item.seller_shop_name || 'Oshocks Junior'
+            })),
             paymentMethod: order.payment_method === 'mpesa' ? 'M-Pesa' : 
                           order.payment_method === 'card' ? 'Card' : 'Cash on Delivery',
             trackingNumber: order.tracking_number || order.order_display,
@@ -124,7 +142,9 @@ const OrdersPage = () => {
     if (searchQuery) {
       filtered = filtered.filter(order => 
         order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.items.some(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        order.items.some(item => 
+          (item.name || item.product_name || '').toLowerCase().includes(searchQuery.toLowerCase())
+        )
       );
     }
 
@@ -499,10 +519,23 @@ const OrdersPage = () => {
                             alt={order.first_product.name}
                             className="w-16 h-16 object-cover rounded border border-gray-200"
                           />
-                          {/* Show +X counter if more products */}
-                          {(order.product_count > 1 || order.itemCount > 1) && (
+                          {/* Show +X counter if more items exist */}
+                          {order.items.length > 1 && (
                             <div className="absolute -bottom-2 -right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
-                              +{order.product_count > 1 ? order.product_count - 1 : order.itemCount - 1}
+                              +{order.items.length - 1}
+                            </div>
+                          )}
+                        </div>
+                      ) : order.items[0]?.image ? (
+                        <div className="flex-shrink-0 relative">
+                          <img
+                            src={order.items[0].image}
+                            alt={order.items[0].name}
+                            className="w-16 h-16 object-cover rounded border border-gray-200"
+                          />
+                          {order.items.length > 1 && (
+                            <div className="absolute -bottom-2 -right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                              +{order.items.length - 1}
                             </div>
                           )}
                         </div>
@@ -692,7 +725,16 @@ const OrdersPage = () => {
 
         {/* Order Details Modal */}
         <OrderDetailsModal 
-          order={selectedOrder}
+          order={selectedOrder ? {
+            ...selectedOrder,
+            // Ensure all required fields are present for the modal
+            subtotal: selectedOrder.subtotal,
+            shipping_fee: selectedOrder.shipping_fee,
+            tax: selectedOrder.tax,
+            discount: selectedOrder.discount,
+            totalAmount: selectedOrder.totalAmount,
+            items: selectedOrder.items || []
+          } : null}
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false);

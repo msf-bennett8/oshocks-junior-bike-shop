@@ -186,8 +186,12 @@ const countyInfo = {
   // Calculate totals
   const subtotal = cartItems.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
 
-  // Calculate shipping cost based on selected zone
+  // Calculate shipping cost based on selected zone (with free shipping threshold)
   const shippingCost = (() => {
+    // Free shipping for orders >= KES 5,000
+    const FREE_SHIPPING_THRESHOLD = 5000;
+    if (subtotal >= FREE_SHIPPING_THRESHOLD) return 0;
+    
     if (!shippingInfo.zone || !shippingInfo.city) return 0;
     const zones = countyZones[shippingInfo.city];
     // Extract just the zone name part (e.g., "Zone 1 (0-5km)") from the full selection
@@ -1008,13 +1012,25 @@ const countyInfo = {
                                 ? shippingInfo.zone.split(' - ')[1] 
                                 : shippingInfo.zone}
                             </span>
-                            <span className="text-orange-600 font-semibold ml-2">
-                              KSh {(() => {
-                                const zoneName = shippingInfo.zone.split(' - ')[0];
-                                const zone = availableZones.find(z => z.name === zoneName);
-                                return zone?.cost.toLocaleString() || '0';
-                              })()}
-                            </span>
+                            {(() => {
+                              const zoneName = shippingInfo.zone.split(' - ')[0];
+                              const zone = availableZones.find(z => z.name === zoneName);
+                              const zoneCost = zone?.cost || 0;
+                              const isFree = subtotal >= 5000;
+                              
+                              return (
+                                <div className="flex items-center gap-2 ml-2">
+                                  {isFree && zoneCost > 0 && (
+                                    <span className="text-gray-400 line-through text-sm">
+                                      KSh {zoneCost.toLocaleString()}
+                                    </span>
+                                  )}
+                                  <span className={`font-semibold ${isFree ? 'text-green-600' : 'text-orange-600'}`}>
+                                    {isFree ? 'FREE' : `KSh ${zoneCost.toLocaleString()}`}
+                                  </span>
+                                </div>
+                              );
+                            })()}
                           </div>
                           <span className="text-xs text-gray-500">
                             {shippingInfo.zone.split(' - ')[0]}
@@ -1736,8 +1752,19 @@ const countyInfo = {
                       <div className="p-4 border-b border-gray-200">
                         <div className="flex justify-between items-center">
                           <h4 className="font-bold text-gray-900 text-lg">{zone.name}</h4>
-                          <div className="bg-orange-100 text-orange-700 px-4 py-2 rounded-lg font-bold text-lg whitespace-nowrap">
-                            KSh {zone.cost.toLocaleString()}
+                          <div className="flex flex-col items-end">
+                            {subtotal >= 5000 && (
+                              <span className="text-gray-400 line-through text-sm mb-1">
+                                KSh {zone.cost.toLocaleString()}
+                              </span>
+                            )}
+                            <div className={`px-4 py-2 rounded-lg font-bold text-lg whitespace-nowrap ${
+                              subtotal >= 5000 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-orange-100 text-orange-700'
+                            }`}>
+                              {subtotal >= 5000 ? 'FREE' : `KSh ${zone.cost.toLocaleString()}`}
+                            </div>
                           </div>
                         </div>
                       </div>

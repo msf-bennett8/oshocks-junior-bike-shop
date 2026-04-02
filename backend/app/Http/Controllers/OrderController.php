@@ -253,6 +253,12 @@ class OrderController extends Controller
         }
 
         $orders = Order::with([
+            'orderItems' => function($query) {
+                // Load ALL order items with product images
+                $query->with(['product.images' => function($q) {
+                    $q->ordered()->limit(1);
+                }, 'product:id,name,slug', 'seller:id,business_name']);
+            },
             'orderItems.product.images' => function($query) {
                 $query->ordered()->limit(1);
             },
@@ -354,12 +360,15 @@ class OrderController extends Controller
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function($order) use ($seller) {
-                // Filter only this seller's items
+                // Filter only this seller's items - ALL items, not just first
                 $sellerItems = $order->orderItems->filter(function($item) use ($seller) {
                     return $item->seller_id == $seller->id;
                 })->values();
                 
                 $firstItem = $sellerItems->first();
+                
+                // Parse delivery zone: "Parklands Area (10-15km) - Eastleigh" -> "Parklands Area, Eastleigh"
+                $deliveryAddress = $this->parseDeliveryZone($order->delivery_zone);
                 
                 return [
                     'id' => $order->id,
@@ -368,13 +377,22 @@ class OrderController extends Controller
                     'status' => $order->status,
                     'payment_status' => $order->payment_status,
                     'payment_method' => $order->payment_method,
-                    'total' => $sellerItems->sum('total'), // Seller's portion only
-                    'order_total' => $order->total, // Full order total
+                    // Use actual database values for totals
+                    'subtotal' => (float) $order->subtotal,
+                    'shipping_fee' => (float) $order->shipping_fee,
+                    'tax' => (float) $order->tax,
+                    'discount' => (float) $order->discount,
+                    'total' => (float) $order->total, // Full order total from DB
+                    'seller_total' => $sellerItems->sum('total'), // Seller's portion only
                     'created_at' => $order->created_at,
                     'estimated_delivery_date' => $order->estimated_delivery_date,
                     'customer_name' => $order->customer_name ?? $order->user?->name ?? 'Guest',
                     'customer_email' => $order->customer_email ?? $order->user?->email ?? null,
                     'customer_phone' => $order->customer_phone ?? $order->user?->phone ?? null,
+                    'delivery_address' => $deliveryAddress,
+                    'delivery_zone' => $order->delivery_zone,
+                    'county' => $order->county,
+                    'postal_code' => $order->postal_code,
                     'item_count' => $sellerItems->sum('quantity'),
                     'product_count' => $sellerItems->count(),
                     'first_product' => $firstItem ? [
@@ -383,6 +401,7 @@ class OrderController extends Controller
                         'image' => $firstItem->product?->images?->first()?->image_url ?? null,
                         'thumbnail' => $firstItem->product?->images?->first()?->thumbnail_url ?? null,
                     ] : null,
+                    // ALL items, properly mapped
                     'items' => $sellerItems->map(function($item) {
                         return [
                             'id' => $item->id,
@@ -390,8 +409,8 @@ class OrderController extends Controller
                             'product_name' => $item->product_name,
                             'variant_name' => $item->variant_name,
                             'quantity' => $item->quantity,
-                            'price' => $item->price,
-                            'total' => $item->total,
+                            'price' => (float) $item->price,
+                            'total' => (float) $item->total,
                             'image' => $item->product?->images?->first()?->image_url ?? null,
                             'thumbnail' => $item->product?->images?->first()?->thumbnail_url ?? null,
                         ];
@@ -403,6 +422,26 @@ class OrderController extends Controller
             'success' => true,
             'data' => $orders
         ]);
+    }
+
+    /**
+     * Parse delivery zone to readable address
+     * "Parklands Area (10-15km) - Eastleigh" -> "Parklands Area, Eastleigh"
+     */
+    private function parseDeliveryZone($deliveryZone)
+    {
+        if (!$deliveryZone) return 'N/A';
+        
+        // Remove distance info in parentheses: "(10-15km)"
+        $zone = preg_replace('/\s*\([^)]*\)/', '', $deliveryZone);
+        
+        // Split by " - " and trim
+        $parts = array_map('trim', explode(' - ', $zone));
+        
+        // Remove empty parts and join with comma
+        $parts = array_filter($parts);
+        
+        return implode(', ', $parts);
     }
 
     /**

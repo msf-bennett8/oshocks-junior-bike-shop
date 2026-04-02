@@ -50,8 +50,9 @@ const SellerOrdersPage = () => {
               name: order.customer_name,
               email: order.customer_email,
               phone: order.customer_phone,
-              address: order.delivery_address || 'N/A'
+              address: order.delivery_address || 'N/A' // Now properly parsed: "Parklands Area, Eastleigh"
             },
+            // ALL items from backend, not just first one
             items: order.items.map(item => ({
               id: item.id,
               name: item.product_name,
@@ -59,13 +60,15 @@ const SellerOrdersPage = () => {
               price: item.price,
               image: item.image || item.thumbnail || 'https://via.placeholder.com/100'
             })),
-            subtotal: order.total,
-            shipping: 0, // Calculate if needed
-            tax: 0,
-            total: order.total,
+            // Correct totals from database
+            subtotal: order.subtotal || 0,
+            shipping: order.shipping_fee || 0,
+            tax: order.tax || 0,
+            discount: order.discount || 0,
+            total: order.total || 0, // Full order total from DB
             status: order.status,
             paymentMethod: order.payment_method === 'mpesa' ? 'M-Pesa' : 
-                          order.payment_method === 'card' ? 'Card' : 'Cash on Delivery',
+            order.payment_method === 'card' ? 'Card' : 'Cash on Delivery',
             paymentStatus: order.payment_status,
             date: order.created_at,
             shippingMethod: 'Standard Delivery',
