@@ -230,6 +230,9 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         Route::post('/products/{id}', [SellerProductController::class, 'update']); // For FormData with _method=PUT
         Route::delete('/products/{id}', [SellerProductController::class, 'destroy']);
         
+        // Product duplication
+        Route::post('/products/{id}/duplicate', [SellerProductController::class, 'duplicate']);
+        
         // Product variants (keep existing)
         Route::post('/products/{id}/variants', [ProductVariantController::class, 'store']);
         Route::put('/variants/{id}', [ProductVariantController::class, 'update']);

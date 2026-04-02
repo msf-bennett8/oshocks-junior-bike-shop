@@ -28,24 +28,50 @@ class ProductController extends Controller
      * Get all products for authenticated seller
      */
     public function index(Request $request)
-    {
-        try {
-            $user = Auth::user();
-            
-            // Check if user is seller or super admin
-            if (!in_array($user->role, ['seller', 'super_admin'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized access'
-                ], 403);
-            }
+        {
+            try {
+                $user = Auth::user();
+                
+                \Log::info('SELLER PRODUCTS REQUEST', [
+                    'user_id' => $user->id,
+                    'user_role' => $user->role,
+                    'user_name' => $user->name,
+                    'request_params' => $request->all()
+                ]);
+                
+                // Check if user is seller or super admin
+                if (!in_array($user->role, ['seller', 'super_admin'])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized access'
+                    ], 403);
+                }
 
-            $query = Product::with(['category', 'images', 'variants']);
+                $query = Product::with(['category', 'images', 'variants']);
 
-            // If seller, only show their products
-            if ($user->role === 'seller') {
-                $query->where('seller_id', $user->id);
-            }
+                // If seller, only show their products
+                if ($user->role === 'seller') {
+                    // ✅ FIX: Look up seller_id from SellerProfile table using user_id
+                    $sellerProfile = \App\Models\SellerProfile::where('user_id', $user->id)->first();
+                    
+                    if (!$sellerProfile) {
+                        \Log::warning('SELLER PRODUCTS: No seller profile found for user', [
+                            'user_id' => $user->id
+                        ]);
+                        return response()->json([
+                            'success' => true,
+                            'data' => [],
+                            'pagination' => [
+                                'total' => 0,
+                                'per_page' => $request->get('per_page', 15),
+                                'current_page' => 1,
+                                'last_page' => 1,
+                            ]
+                        ]);
+                    }
+                    
+                    $query->where('seller_id', $sellerProfile->id);  // ✅ Use seller_id from sellers table
+                }
 
             // Search
             if ($request->has('search') && $request->search) {
@@ -75,6 +101,14 @@ class ProductController extends Controller
             // Pagination
             $perPage = $request->get('per_page', 15);
             $products = $query->paginate($perPage);
+
+            \Log::info('SELLER PRODUCTS RESPONSE', [
+                'user_id' => $user->id,
+                'products_count' => count($products->items()),
+                'total' => $products->total(),
+                'sql' => $query->toSql(),
+                'bindings' => $query->getBindings()
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -179,7 +213,7 @@ class ProductController extends Controller
                 'type' => $request->type,
                 'category_id' => $request->category_id,
                 'brand' => $request->brand,
-                'seller_id' => $user->role === 'seller' ? $user->sellerProfile->id : null,
+                'seller_id' => \App\Models\SellerProfile::where('user_id', $user->id)->first()?->id,
                 'price' => $request->price,
                 'compare_price' => $request->compare_price,
                 'cost_price' => $request->cost_price,
@@ -304,11 +338,14 @@ class ProductController extends Controller
             $product = Product::with(['category', 'images', 'variants'])->findOrFail($id);
 
             // Check ownership for sellers
-            if ($user->role === 'seller' && $product->seller_id !== $user->id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized access'
-                ], 403);
+            if ($user->role === 'seller') {
+                $sellerProfile = \App\Models\SellerProfile::where('user_id', $user->id)->first();
+                if (!$sellerProfile || $product->seller_id !== $sellerProfile->id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized access'
+                    ], 403);
+                }
             }
 
             return response()->json([
@@ -335,11 +372,14 @@ class ProductController extends Controller
             $product = Product::findOrFail($id);
 
             // Check ownership
-            if ($user->role === 'seller' && $product->seller_id !== $user->id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized access'
-                ], 403);
+            if ($user->role === 'seller') {
+                $sellerProfile = \App\Models\SellerProfile::where('user_id', $user->id)->first();
+                if (!$sellerProfile || $product->seller_id !== $sellerProfile->id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized access'
+                    ], 403);
+                }
             }
 
             // Capture old values before update
@@ -469,11 +509,14 @@ class ProductController extends Controller
             $product = Product::with('images')->findOrFail($id);
 
             // Check ownership
-            if ($user->role === 'seller' && $product->seller_id !== $user->id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized access'
-                ], 403);
+            if ($user->role === 'seller') {
+                $sellerProfile = \App\Models\SellerProfile::where('user_id', $user->id)->first();
+                if (!$sellerProfile || $product->seller_id !== $sellerProfile->id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized access'
+                    ], 403);
+                }
             }
 
             // Log product deletion BEFORE deleting
@@ -519,6 +562,103 @@ class ProductController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete product'
+            ], 500);
+        }
+    }
+
+    /**
+     * Duplicate a product
+     */
+    public function duplicate($id)
+    {
+        try {
+            $user = Auth::user();
+            $originalProduct = Product::with(['images', 'variants'])->findOrFail($id);
+
+            // Check ownership
+            if ($user->role === 'seller') {
+                $sellerProfile = \App\Models\SellerProfile::where('user_id', $user->id)->first();
+                if (!$sellerProfile || $originalProduct->seller_id !== $sellerProfile->id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Unauthorized access'
+                    ], 403);
+                }
+            }
+
+            DB::beginTransaction();
+
+            // Create new product with copied data
+            $newProduct = $originalProduct->replicate();
+            $newProduct->name = $originalProduct->name . ' (Copy)';
+            $newProduct->slug = Str::slug($newProduct->name) . '-' . Str::random(6);
+            $newProduct->sku = 'SKU-' . strtoupper(Str::random(8));
+            $newProduct->views_count = 0;
+            $newProduct->sales = 0;
+            $newProduct->rating = 0;
+            $newProduct->is_active = false; // Hidden by default
+            $newProduct->save();
+
+            // Copy variants
+            foreach ($originalProduct->variants as $variant) {
+                $newVariant = $variant->replicate();
+                $newVariant->product_id = $newProduct->id;
+                $newVariant->sku = $newProduct->slug . '-' . Str::slug($variant->name);
+                $newVariant->save();
+
+                // Copy images for this variant
+                foreach ($variant->images as $image) {
+                    $newImage = $image->replicate();
+                    $newImage->product_id = $newProduct->id;
+                    $newImage->variant_id = $newVariant->id;
+                    // Note: We're referencing the same Cloudinary image, not duplicating it
+                    $newImage->is_primary = false;
+                    $newImage->save();
+                }
+            }
+
+            // Copy images without variants
+            foreach ($originalProduct->images()->whereNull('variant_id')->get() as $image) {
+                $newImage = $image->replicate();
+                $newImage->product_id = $newProduct->id;
+                $newImage->is_primary = false;
+                $newImage->save();
+            }
+
+            // Log duplication
+            AuditService::log([
+                'event_type' => 'product_duplicated',
+                'event_category' => 'product',
+                'action' => 'created',
+                'model_type' => 'Product',
+                'model_id' => $newProduct->id,
+                'description' => "Product duplicated: {$originalProduct->name} → {$newProduct->name} by {$user->name}",
+                'new_values' => [
+                    'original_id' => $originalProduct->id,
+                    'name' => $newProduct->name,
+                    'price' => $newProduct->price,
+                ],
+                'severity' => 'low',
+            ]);
+
+            DB::commit();
+
+            $newProduct->load(['category', 'images', 'variants']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product duplicated successfully',
+                'data' => $newProduct
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Failed to duplicate product: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to duplicate product',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
