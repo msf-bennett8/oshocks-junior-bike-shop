@@ -76,6 +76,26 @@ const sellerDashboardService = {
       throw error;
     }
   },
+
+  /**
+   * Get seller orders with customer and product details
+   */
+  getOrders: async (params = {}) => {
+    try {
+      console.log('📦 Fetching seller orders:', params);
+      const response = await api.get('/seller/orders', {
+        params: {
+          page: params.page || 1,
+          per_page: params.per_page || 20,
+          ...params
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error fetching seller orders:', error);
+      throw error;
+    }
+  },
 };
 
 export default sellerDashboardService;

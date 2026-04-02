@@ -6,6 +6,7 @@ import {
   DollarSign, CreditCard, Smartphone, User, MoreVertical,
   ArrowUpDown, FileText, MessageSquare, Box, ShoppingBag
 } from 'lucide-react';
+import sellerDashboardService from '../../services/sellerDashboardService';
 
 const SellerOrdersPage = () => {
   const [orders, setOrders] = useState([]);
@@ -23,204 +24,7 @@ const SellerOrdersPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const ordersPerPage = 10;
 
-  // Mock orders data
-  const mockOrders = [
-    {
-      id: 'ORD-2025-001',
-      orderNumber: '#001',
-      customer: {
-        name: 'John Kamau',
-        email: 'john.kamau@email.com',
-        phone: '+254 712 345 678',
-        address: '123 Kenyatta Avenue, Nairobi'
-      },
-      items: [
-        { id: 1, name: 'Mountain King Pro 29"', quantity: 1, price: 125000, image: 'https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=100' },
-        { id: 2, name: 'Bike Helmet - Safety Pro', quantity: 1, price: 4500, image: 'https://images.unsplash.com/photo-1557687790-adf1e62c2f8c?w=100' }
-      ],
-      subtotal: 129500,
-      shipping: 1500,
-      tax: 0,
-      total: 131000,
-      status: 'completed',
-      paymentMethod: 'M-Pesa',
-      paymentStatus: 'paid',
-      date: '2025-01-10T10:30:00',
-      shippingMethod: 'Standard Delivery',
-      trackingNumber: 'TRK-12345-KE',
-      notes: 'Please deliver before 5 PM'
-    },
-    {
-      id: 'ORD-2025-002',
-      orderNumber: '#002',
-      customer: {
-        name: 'Mary Wanjiru',
-        email: 'mary.w@email.com',
-        phone: '+254 722 456 789',
-        address: '456 Moi Avenue, Mombasa'
-      },
-      items: [
-        { id: 3, name: 'City Cruiser Elite', quantity: 1, price: 45000, image: 'https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=100' }
-      ],
-      subtotal: 45000,
-      shipping: 2000,
-      tax: 0,
-      total: 47000,
-      status: 'processing',
-      paymentMethod: 'Card',
-      paymentStatus: 'paid',
-      date: '2025-01-10T14:20:00',
-      shippingMethod: 'Express Delivery',
-      trackingNumber: null,
-      notes: null
-    },
-    {
-      id: 'ORD-2025-003',
-      orderNumber: '#003',
-      customer: {
-        name: 'Peter Omondi',
-        email: 'peter.o@email.com',
-        phone: '+254 733 567 890',
-        address: '789 Uhuru Highway, Kisumu'
-      },
-      items: [
-        { id: 4, name: 'Road Racer X1', quantity: 1, price: 185000, image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=100' },
-        { id: 5, name: 'Cycling Jersey Pro', quantity: 2, price: 3500, image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=100' }
-      ],
-      subtotal: 192000,
-      shipping: 2500,
-      tax: 0,
-      total: 194500,
-      status: 'shipped',
-      paymentMethod: 'M-Pesa',
-      paymentStatus: 'paid',
-      date: '2025-01-09T09:15:00',
-      shippingMethod: 'Express Delivery',
-      trackingNumber: 'TRK-67890-KE',
-      notes: null
-    },
-    {
-      id: 'ORD-2025-004',
-      orderNumber: '#004',
-      customer: {
-        name: 'Grace Akinyi',
-        email: 'grace.a@email.com',
-        phone: '+254 744 678 901',
-        address: '321 Jogoo Road, Nairobi'
-      },
-      items: [
-        { id: 6, name: 'Electric Commuter Pro', quantity: 1, price: 295000, image: 'https://images.unsplash.com/photo-1591993715414-b2f1e8ff4fc6?w=100' }
-      ],
-      subtotal: 295000,
-      shipping: 0,
-      tax: 0,
-      total: 295000,
-      status: 'completed',
-      paymentMethod: 'Card',
-      paymentStatus: 'paid',
-      date: '2025-01-09T16:45:00',
-      shippingMethod: 'Store Pickup',
-      trackingNumber: null,
-      notes: 'Customer will pick up at store'
-    },
-    {
-      id: 'ORD-2025-005',
-      orderNumber: '#005',
-      customer: {
-        name: 'David Kipchoge',
-        email: 'david.k@email.com',
-        phone: '+254 755 789 012',
-        address: '654 Ngong Road, Nairobi'
-      },
-      items: [
-        { id: 7, name: 'Kids BMX Champion', quantity: 2, price: 28000, image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=100' }
-      ],
-      subtotal: 56000,
-      shipping: 1000,
-      tax: 0,
-      total: 57000,
-      status: 'pending',
-      paymentMethod: 'M-Pesa',
-      paymentStatus: 'pending',
-      date: '2025-01-08T11:30:00',
-      shippingMethod: 'Standard Delivery',
-      trackingNumber: null,
-      notes: null
-    },
-    {
-      id: 'ORD-2025-006',
-      orderNumber: '#006',
-      customer: {
-        name: 'Sarah Muthoni',
-        email: 'sarah.m@email.com',
-        phone: '+254 766 890 123',
-        address: '987 Waiyaki Way, Nairobi'
-      },
-      items: [
-        { id: 8, name: 'Hybrid Pathfinder', quantity: 1, price: 95000, image: 'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=100' },
-        { id: 9, name: 'Water Bottle Holder', quantity: 2, price: 800, image: 'https://images.unsplash.com/photo-1523362628745-0c100150b5d8?w=100' }
-      ],
-      subtotal: 96600,
-      shipping: 1500,
-      tax: 0,
-      total: 98100,
-      status: 'cancelled',
-      paymentMethod: 'Card',
-      paymentStatus: 'refunded',
-      date: '2025-01-08T08:20:00',
-      shippingMethod: 'Standard Delivery',
-      trackingNumber: null,
-      notes: 'Customer requested cancellation'
-    },
-    {
-      id: 'ORD-2025-007',
-      orderNumber: '#007',
-      customer: {
-        name: 'James Otieno',
-        email: 'james.o@email.com',
-        phone: '+254 777 901 234',
-        address: '147 Thika Road, Ruiru'
-      },
-      items: [
-        { id: 10, name: 'Fat Tire Explorer', quantity: 1, price: 155000, image: 'https://images.unsplash.com/photo-1475666675596-cca2035b3d79?w=100' }
-      ],
-      subtotal: 155000,
-      shipping: 2000,
-      tax: 0,
-      total: 157000,
-      status: 'processing',
-      paymentMethod: 'M-Pesa',
-      paymentStatus: 'paid',
-      date: '2025-01-07T13:10:00',
-      shippingMethod: 'Express Delivery',
-      trackingNumber: null,
-      notes: null
-    },
-    {
-      id: 'ORD-2025-008',
-      orderNumber: '#008',
-      customer: {
-        name: 'Lucy Nyambura',
-        email: 'lucy.n@email.com',
-        phone: '+254 788 012 345',
-        address: '258 Limuru Road, Kikuyu'
-      },
-      items: [
-        { id: 11, name: 'Folding Compact 20"', quantity: 1, price: 65000, image: 'https://images.unsplash.com/photo-1511994714008-b6fa96f075e7?w=100' }
-      ],
-      subtotal: 65000,
-      shipping: 1500,
-      tax: 0,
-      total: 66500,
-      status: 'shipped',
-      paymentMethod: 'Card',
-      paymentStatus: 'paid',
-      date: '2025-01-07T10:00:00',
-      shippingMethod: 'Standard Delivery',
-      trackingNumber: 'TRK-11223-KE',
-      notes: null
-    }
-  ];
+  // Data imported by sellerDashboardService
 
   const statusOptions = [
     { value: 'all', label: 'All Status', count: 0 },
@@ -231,12 +35,59 @@ const SellerOrdersPage = () => {
     { value: 'cancelled', label: 'Cancelled', count: 0 }
   ];
 
+  // Fetch orders from API
   useEffect(() => {
-    setTimeout(() => {
-      setOrders(mockOrders);
-      setFilteredOrders(mockOrders);
-      setLoading(false);
-    }, 1000);
+    const fetchOrders = async () => {
+      setLoading(true);
+      try {
+        const response = await sellerDashboardService.getOrders();
+        if (response.success) {
+          // Map backend data to frontend format
+          const mappedOrders = response.data.map((order, index) => ({
+            id: order.order_display || order.order_number,
+            orderNumber: `#${index + 1}`, // Sequential number, not DB ID
+            customer: {
+              name: order.customer_name,
+              email: order.customer_email,
+              phone: order.customer_phone,
+              address: order.delivery_address || 'N/A'
+            },
+            items: order.items.map(item => ({
+              id: item.id,
+              name: item.product_name,
+              quantity: item.quantity,
+              price: item.price,
+              image: item.image || item.thumbnail || 'https://via.placeholder.com/100'
+            })),
+            subtotal: order.total,
+            shipping: 0, // Calculate if needed
+            tax: 0,
+            total: order.total,
+            status: order.status,
+            paymentMethod: order.payment_method === 'mpesa' ? 'M-Pesa' : 
+                          order.payment_method === 'card' ? 'Card' : 'Cash on Delivery',
+            paymentStatus: order.payment_status,
+            date: order.created_at,
+            shippingMethod: 'Standard Delivery',
+            trackingNumber: order.order_display,
+            notes: null
+          }));
+          setOrders(mappedOrders);
+          setFilteredOrders(mappedOrders);
+        } else {
+          setOrders([]);
+          setFilteredOrders([]);
+        }
+      } catch (err) {
+        console.error('Error fetching orders:', err);
+        setOrders([]);
+        setFilteredOrders([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
   }, []);
 
   useEffect(() => {
@@ -593,18 +444,25 @@ const SellerOrdersPage = () => {
                         </div>
                       </td>
                       <td className="py-4 px-4">
-                        <div className="flex -space-x-2">
-                          {order.items.slice(0, 3).map((item, idx) => (
-                            <img
-                              key={idx}
-                              src={item.image}
-                              alt={item.name}
-                              className="w-10 h-10 rounded-lg border-2 border-white object-cover"
-                            />
-                          ))}
-                          {order.items.length > 3 && (
-                            <div className="w-10 h-10 rounded-lg border-2 border-white bg-gray-200 flex items-center justify-center text-xs font-semibold text-gray-600">
-                              +{order.items.length - 3}
+                        <div className="flex items-center gap-3">
+                          {/* Show first product image */}
+                          {order.items[0]?.image ? (
+                            <div className="flex-shrink-0 relative">
+                              <img
+                                src={order.items[0].image}
+                                alt={order.items[0].name}
+                                className="w-16 h-16 object-cover rounded border border-gray-200"
+                              />
+                              {/* Show +X counter if more products */}
+                              {order.items.length > 1 && (
+                                <div className="absolute -bottom-2 -right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-sm">
+                                  +{order.items.length - 1}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
+                              <Box className="w-6 h-6 text-gray-400" />
                             </div>
                           )}
                         </div>

@@ -317,6 +317,99 @@ class OrderController extends Controller
     }
 
     /**
+     * Get seller's orders - orders containing seller's products
+     * GET /api/v1/seller/orders
+     */
+    public function sellerOrders(Request $request)
+    {
+        $user = auth('sanctum')->user();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required'
+            ], 401);
+        }
+
+        // Get seller profile
+        $seller = \App\Models\SellerProfile::where('user_id', $user->id)->first();
+        
+        if (!$seller) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Seller profile not found'
+            ], 404);
+        }
+
+        // Get orders that contain this seller's items
+        $orders = Order::whereHas('orderItems', function($query) use ($seller) {
+                $query->where('seller_id', $seller->id);
+            })
+            ->with([
+                'orderItems' => function($query) use ($seller) {
+                    $query->where('seller_id', $seller->id)
+                        ->with(['product.images' => function($q) {
+                            $q->ordered()->limit(1);
+                        }]);
+                },
+                'orderItems.product:id,name,slug',
+                'user:id,name,email,phone'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($order) use ($seller) {
+                // Filter only this seller's items
+                $sellerItems = $order->orderItems->filter(function($item) use ($seller) {
+                    return $item->seller_id == $seller->id;
+                })->values();
+                
+                $firstItem = $sellerItems->first();
+                
+                return [
+                    'id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'order_display' => $order->order_display,
+                    'status' => $order->status,
+                    'payment_status' => $order->payment_status,
+                    'payment_method' => $order->payment_method,
+                    'total' => $sellerItems->sum('total'), // Seller's portion only
+                    'order_total' => $order->total, // Full order total
+                    'created_at' => $order->created_at,
+                    'estimated_delivery_date' => $order->estimated_delivery_date,
+                    'customer_name' => $order->customer_name ?? $order->user?->name ?? 'Guest',
+                    'customer_email' => $order->customer_email ?? $order->user?->email ?? null,
+                    'customer_phone' => $order->customer_phone ?? $order->user?->phone ?? null,
+                    'item_count' => $sellerItems->sum('quantity'),
+                    'product_count' => $sellerItems->count(),
+                    'first_product' => $firstItem ? [
+                        'id' => $firstItem->product_id,
+                        'name' => $firstItem->product_name,
+                        'image' => $firstItem->product?->images?->first()?->image_url ?? null,
+                        'thumbnail' => $firstItem->product?->images?->first()?->thumbnail_url ?? null,
+                    ] : null,
+                    'items' => $sellerItems->map(function($item) {
+                        return [
+                            'id' => $item->id,
+                            'product_id' => $item->product_id,
+                            'product_name' => $item->product_name,
+                            'variant_name' => $item->variant_name,
+                            'quantity' => $item->quantity,
+                            'price' => $item->price,
+                            'total' => $item->total,
+                            'image' => $item->product?->images?->first()?->image_url ?? null,
+                            'thumbnail' => $item->product?->images?->first()?->thumbnail_url ?? null,
+                        ];
+                    })->values(),
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $orders
+        ]);
+    }
+
+    /**
      * Get order by order number or order display
      */
     public function show($orderNumber)
