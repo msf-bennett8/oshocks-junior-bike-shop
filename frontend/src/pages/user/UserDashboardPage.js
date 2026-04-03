@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useWishlist } from '../../context/WishlistContext';
+import userDashboardService from '../../services/userDashboardService';
 import { 
   Package, ShoppingBag, Heart, MapPin, Bell, User, TrendingUp, Clock, CheckCircle, 
   XCircle, Truck, Star, Eye, MessageSquare, CreditCard, Gift, Award, Zap, 
   ShoppingCart, DollarSign, TrendingDown, Calendar, FileText, Download, 
   BarChart3, PieChart, ArrowUpRight, ArrowDownRight, Filter, Search, 
   RefreshCw, Settings, ChevronRight, AlertCircle, Bookmark, Target,
-  Percent, Tag, Box, Headphones, Share2, ExternalLink, Phone
+  Percent, Tag, Box, Headphones, Share2, ExternalLink, Phone, ChevronLeft
 } from 'lucide-react';
 
 const UserDashboard = () => {
@@ -14,103 +16,239 @@ const UserDashboard = () => {
   const [showOrderDetails, setShowOrderDetails] = useState(null);
   const [activeWidget, setActiveWidget] = useState('overview');
   const { user } = useAuth();
+  const { wishlistItems: wishlistData, refreshWishlist, loading: wishlistLoading } = useWishlist();
+  
+  // Loading states
+  const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(false);
+  
+  // Data states
+  const [stats, setStats] = useState({
+    totalSpent: 0,
+    totalOrders: 0,
+    activeOrders: 0,
+    wishlistItems: 0,
+    loyaltyPoints: 0,
+    savedAddresses: 0,
+    reviewsWritten: 0,
+    avgRating: 0,
+    trends: {}
+  });
+  
+  const [spendingData, setSpendingData] = useState([]);
+  const [spendingSummary, setSpendingSummary] = useState({
+    total_spent: 0,
+    avg_order: 0,
+    saved: 0
+  });
+  
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [wishlistItems, setWishlistItems] = useState([]);
+  const [rewards, setRewards] = useState({
+    points_balance: 0,
+    points_worth: 0,
+    progress_percent: 0,
+    points_to_gold: 0,
+    points_earned_this_month: 0,
+    orders_this_month: 0
+  });
+  
+  const [referralCode, setReferralCode] = useState('');
+  const [copyingCode, setCopyingCode] = useState(false);
+  
+  // Spending chart scroll state
+  const [chartOffset, setChartOffset] = useState(0);
+  const maxChartOffset = 2; // 3 batches: 0, 1, 2
 
-  const [recentOrders] = useState([
-    {
-      id: 'ORD-2024-001',
-      date: '2024-10-10',
-      status: 'delivered',
-      total: 45000,
-      items: 3,
-      image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400',
-      product: 'Mountain Bike Pro X1',
-      trackingNumber: 'TRK789012345',
-      estimatedDelivery: '2024-10-15',
-      paymentMethod: 'M-Pesa',
-      shippingAddress: 'Moi Avenue, Nairobi'
-    },
-    {
-      id: 'ORD-2024-002',
-      date: '2024-10-12',
-      status: 'in_transit',
-      total: 3500,
-      items: 2,
-      image: 'https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=400',
-      product: 'Cycling Helmet & Gloves',
-      trackingNumber: 'TRK789012346',
-      estimatedDelivery: '2024-10-16',
-      paymentMethod: 'Card',
-      shippingAddress: 'Kenyatta Avenue, Nairobi'
-    },
-    {
-      id: 'ORD-2024-003',
-      date: '2024-10-13',
-      status: 'processing',
-      total: 12000,
-      items: 1,
-      image: 'https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=400',
-      product: 'Carbon Fiber Road Bike',
-      trackingNumber: 'Pending',
-      estimatedDelivery: '2024-10-18',
-      paymentMethod: 'M-Pesa',
-      shippingAddress: 'Westlands, Nairobi'
-    },
-    {
-      id: 'ORD-2024-004',
-      date: '2024-10-08',
-      status: 'delivered',
-      total: 2800,
-      items: 1,
-      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
-      product: 'Smart Bike Lock',
-      trackingNumber: 'TRK789012344',
-      estimatedDelivery: '2024-10-13',
-      paymentMethod: 'M-Pesa',
-      shippingAddress: 'Moi Avenue, Nairobi'
-    }
-  ]);
+  // Load all dashboard data
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
 
-  const [wishlistItems] = useState([
-    {
-      id: 1,
-      name: 'Electric Mountain Bike',
-      price: 85000,
-      originalPrice: 95000,
-      image: 'https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=400',
-      inStock: true,
-      discount: 11,
-      rating: 4.5
-    },
-    {
-      id: 2,
-      name: 'Professional Cycling Shoes',
-      price: 8500,
-      originalPrice: 10000,
-      image: 'https://images.unsplash.com/photo-1605348532760-6753d2c43329?w=400',
-      inStock: true,
-      discount: 15,
-      rating: 4.8
-    },
-    {
-      id: 3,
-      name: 'Bike Repair Tool Kit',
-      price: 4200,
-      image: 'https://images.unsplash.com/photo-1589118949245-7d38baf380d6?w=400',
-      inStock: false,
-      discount: 0,
-      rating: 4.3
-    },
-    {
-      id: 4,
-      name: 'Smart Bike Lock',
-      price: 6500,
-      originalPrice: 7500,
-      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
-      inStock: true,
-      discount: 13,
-      rating: 4.6
+  // Reload when time filter changes
+  useEffect(() => {
+    loadStats();
+  }, [timeFilter]);
+
+  // Transform wishlist data from context when it changes
+  useEffect(() => {
+    if (wishlistData && wishlistData.length > 0) {
+      const transformed = wishlistData.slice(0, 4).map(item => ({
+        id: item.id,
+        name: item.name || item.product?.name,
+        price: item.price || item.product?.price,
+        originalPrice: item.originalPrice || item.product?.compare_price,
+        image: item.image || item.product?.images?.[0]?.image_url || 'https://via.placeholder.com/400x300?text=No+Image',
+        inStock: (item.stock || item.product?.quantity || 0) > 0,
+        discount: (item.originalPrice || item.product?.compare_price) ? 
+          Math.round((((item.originalPrice || item.product?.compare_price) - (item.price || item.product?.price)) / (item.originalPrice || item.product?.compare_price)) * 100) : 0,
+        rating: item.rating || item.product?.rating || 4.5,
+        product_id: item.product_id || item.product?.id,
+        slug: item.slug || item.product?.slug
+      }));
+      setWishlistItems(transformed);
+    } else {
+      setWishlistItems([]);
     }
-  ]);
+  }, [wishlistData]);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // Refresh wishlist from context first
+      await refreshWishlist();
+      
+      await Promise.all([
+        loadStats(),
+        loadSpendingAnalytics(),
+        loadOrders(),
+        loadRewards(),
+        loadReferralCode()
+      ]);
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      setStatsLoading(true);
+      const response = await userDashboardService.getDashboardStats(timeFilter === '7days' ? '7days' : timeFilter);
+      
+      if (response.success) {
+        setStats({
+          totalSpent: response.data.total_spent,
+          totalOrders: response.data.total_orders,
+          activeOrders: response.data.active_orders,
+          wishlistItems: response.data.wishlist_items,
+          loyaltyPoints: response.data.loyalty_points,
+          savedAddresses: response.data.saved_addresses,
+          reviewsWritten: response.data.reviews_written,
+          avgRating: response.data.avg_rating,
+          trends: response.data.trends || {}
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  const loadSpendingAnalytics = async () => {
+    try {
+      const response = await userDashboardService.getSpendingAnalytics(7);
+      if (response.success) {
+        setSpendingData(response.data.monthly_data);
+        setSpendingSummary(response.data.summary);
+        
+        // Determine initial chart offset based on first order date
+        const firstOrderMonth = response.data.monthly_data.find(m => m.amount > 0)?.month;
+        if (firstOrderMonth) {
+          const monthIndex = response.data.monthly_data.findIndex(m => m.month === firstOrderMonth);
+          if (monthIndex >= 4) setChartOffset(2);
+          else if (monthIndex >= 2) setChartOffset(1);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load spending analytics:', error);
+    }
+  };
+
+  const loadOrders = async () => {
+    try {
+      const response = await userDashboardService.getOrders();
+      if (response.success) {
+        // Transform orders to match component structure
+        const transformed = response.data.slice(0, 10).map(order => ({
+          id: order.order_display || order.order_number,
+          order_number: order.order_number,
+          date: order.created_at,
+          status: order.status,
+          total: order.total,
+          items: order.item_count,
+          product_count: order.product_count,
+          image: order.first_product?.image || 'https://via.placeholder.com/400x300?text=No+Image',
+          product: order.first_product?.name || 'Unknown Product',
+          additional_products: order.product_count > 1 ? `+${order.product_count - 1}` : null,
+          trackingNumber: order.tracking_number || order.order_display,
+          estimatedDelivery: order.estimated_delivery_date,
+          paymentMethod: order.payment_method === 'mpesa' ? 'M-Pesa' : 
+                       order.payment_method === 'card' ? 'Card' : 'COD',
+          shippingAddress: order.county || 'Nairobi',
+          all_items: order.items || []
+        }));
+        setRecentOrders(transformed);
+      }
+    } catch (error) {
+      console.error('Failed to load orders:', error);
+    }
+  };
+
+  const loadRewards = async () => {
+    try {
+      const response = await userDashboardService.getRewards();
+      if (response.success) {
+        setRewards(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load rewards:', error);
+    }
+  };
+
+  const loadReferralCode = async () => {
+    try {
+      const response = await userDashboardService.getReferralCode();
+      if (response.success) {
+        setReferralCode(response.data.referral_code);
+      }
+    } catch (error) {
+      console.error('Failed to load referral code:', error);
+    }
+  };
+
+  const handleCopyReferralCode = async () => {
+    try {
+      setCopyingCode(true);
+      // Regenerate code
+      const response = await userDashboardService.regenerateReferralCode();
+      if (response.success) {
+        setReferralCode(response.data.referral_code);
+        // Copy to clipboard
+        await navigator.clipboard.writeText(response.data.referral_code);
+        // Show toast notification
+        alert(`Referral code copied to clipboard: ${response.data.referral_code}`);
+      }
+    } catch (error) {
+      console.error('Failed to copy referral code:', error);
+    } finally {
+      setCopyingCode(false);
+    }
+  };
+
+  const handleChartScroll = (direction) => {
+    if (direction === 'left' && chartOffset > 0) {
+      setChartOffset(prev => prev - 1);
+    } else if (direction === 'right' && chartOffset < maxChartOffset) {
+      setChartOffset(prev => prev + 1);
+    }
+  };
+
+  // Get visible months based on offset
+  const getVisibleMonths = () => {
+    const batches = [
+      spendingData.slice(0, 7),   // Jan-Jul or first 7
+      spendingData.slice(2, 9),   // Apr-Oct (if available)
+      spendingData.slice(5, 12)    // Jun-Dec or last 7
+    ];
+    return batches[chartOffset] || spendingData.slice(0, 7);
+  };
+
+  const visibleSpendingData = getVisibleMonths();
+  const maxSpending = Math.max(...visibleSpendingData.map(d => d.amount), 1);
 
   const [achievements] = useState([
     { id: 1, name: 'First Purchase', icon: ShoppingBag, unlocked: true, description: 'Made your first order' },
@@ -127,26 +265,31 @@ const UserDashboard = () => {
     { id: 5, action: 'Points redeemed', item: '500 points for discount', time: '3 days ago', type: 'reward' }
   ]);
 
-  const stats = [
-    { label: 'Total Spent', value: '156,800', icon: DollarSign, color: 'bg-green-500', trend: '+12%', trendUp: true },
-    { label: 'Total Orders', value: '24', icon: ShoppingBag, color: 'bg-blue-500', trend: '+3', trendUp: true },
-    { label: 'Active Orders', value: '2', icon: Truck, color: 'bg-orange-500', trend: null, trendUp: null },
-    { label: 'Wishlist Items', value: wishlistItems.length, icon: Heart, color: 'bg-red-500', trend: '+2', trendUp: true },
-    { label: 'Reward Points', value: '1,250', icon: Star, color: 'bg-yellow-500', trend: '+150', trendUp: true },
-    { label: 'Saved Addresses', value: '3', icon: MapPin, color: 'bg-purple-500', trend: null, trendUp: null },
-    { label: 'Reviews Written', value: '8', icon: MessageSquare, color: 'bg-indigo-500', trend: '+2', trendUp: true },
-    { label: 'Avg. Rating Given', value: '4.5', icon: Award, color: 'bg-pink-500', trend: null, trendUp: null }
+  const statsConfig = [
+    { label: 'Total Spent', key: 'totalSpent', icon: DollarSign, color: 'bg-green-500', format: (v) => `KES ${Math.round(v).toLocaleString()}` },
+    { label: 'Total Orders', key: 'totalOrders', icon: ShoppingBag, color: 'bg-blue-500', format: (v) => v.toString() },
+    { label: 'Active Orders', key: 'activeOrders', icon: Truck, color: 'bg-orange-500', format: (v) => v.toString() },
+    { label: 'Wishlist Items', key: 'wishlistItems', icon: Heart, color: 'bg-red-500', format: (v) => v.toString() },
+    { label: 'Reward Points', key: 'loyaltyPoints', icon: Star, color: 'bg-yellow-500', format: (v) => v.toLocaleString() },
+    { label: 'Saved Addresses', key: 'savedAddresses', icon: MapPin, color: 'bg-purple-500', format: (v) => v.toString() },
+    { label: 'Reviews Written', key: 'reviewsWritten', icon: MessageSquare, color: 'bg-indigo-500', format: (v) => v.toString() },
+    { label: 'Avg. Rating Given', key: 'avgRating', icon: Award, color: 'bg-pink-500', format: (v) => v.toFixed(1) }
   ];
 
-  const spendingData = [
-    { month: 'Apr', amount: 12000 },
-    { month: 'May', amount: 18000 },
-    { month: 'Jun', amount: 15000 },
-    { month: 'Jul', amount: 25000 },
-    { month: 'Aug', amount: 22000 },
-    { month: 'Sep', amount: 28000 },
-    { month: 'Oct', amount: 36800 }
-  ];
+  const getTrend = (key) => {
+    if (!stats.trends) return null;
+    const trendMap = {
+      'totalSpent': 'total_spent',
+      'totalOrders': 'total_orders',
+      'activeOrders': 'active_orders'
+    };
+    return stats.trends[trendMap[key]];
+  };
+
+  const getTrendDirection = (trend) => {
+    if (!trend) return null;
+    return trend.startsWith('+');
+  };
 
   const getStatusInfo = (status) => {
     const statusMap = {
@@ -163,7 +306,16 @@ const UserDashboard = () => {
     return `KES ${amount.toLocaleString()}`;
   };
 
-  const maxSpending = Math.max(...spendingData.map(d => d.amount));
+  if (loading && !stats.totalOrders && !recentOrders.length) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-4 sm:py-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 font-medium">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-4 sm:py-8">
@@ -213,23 +365,33 @@ const UserDashboard = () => {
 
         {/* Enhanced Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
-          {stats.map((stat, index) => {
+          {statsConfig.map((stat, index) => {
             const Icon = stat.icon;
+            const value = stats[stat.key];
+            const trend = getTrend(stat.key);
+            const trendUp = getTrendDirection(trend);
+            
             return (
               <div key={index} className="bg-white rounded-xl shadow-sm p-4 sm:p-5 hover:shadow-md transition-shadow border border-gray-100">
                 <div className="flex items-start justify-between mb-3">
                   <div className={`${stat.color} p-2 sm:p-2.5 rounded-lg`}>
                     <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </div>
-                  {stat.trend && (
-                    <div className={`flex items-center gap-1 text-xs font-medium ${stat.trendUp ? 'text-green-600' : 'text-red-600'}`}>
-                      {stat.trendUp ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                      {stat.trend}
+                  {trend && (
+                    <div className={`flex items-center gap-1 text-xs font-medium ${trendUp ? 'text-green-600' : 'text-red-600'}`}>
+                      {trendUp ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                      {trend}
                     </div>
                   )}
                 </div>
                 <p className="text-xs sm:text-sm text-gray-600 mb-1">{stat.label}</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">
+                  {statsLoading ? (
+                    <span className="animate-pulse bg-gray-200 rounded w-16 h-8 block"></span>
+                  ) : (
+                    stat.format(value)
+                  )}
+                </p>
               </div>
             );
           })}
@@ -258,8 +420,28 @@ const UserDashboard = () => {
                 </div>
               </div>
               <div className="p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <button 
+                    onClick={() => handleChartScroll('left')}
+                    disabled={chartOffset === 0}
+                    className={`p-2 rounded-lg transition-colors ${chartOffset === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <span className="text-sm text-gray-500">
+                    {chartOffset === 0 ? 'Jan - Jul' : chartOffset === 1 ? 'Apr - Oct' : 'Jun - Dec'}
+                  </span>
+                  <button 
+                    onClick={() => handleChartScroll('right')}
+                    disabled={chartOffset === maxChartOffset}
+                    className={`p-2 rounded-lg transition-colors ${chartOffset === maxChartOffset ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+
                 <div className="flex items-end justify-between gap-2 h-48 sm:h-64">
-                  {spendingData.map((data, idx) => (
+                  {visibleSpendingData.map((data, idx) => (
                     <div key={idx} className="flex-1 flex flex-col items-center gap-2">
                       <div className="w-full bg-gray-100 rounded-t-lg overflow-hidden relative group">
                         <div 
@@ -278,15 +460,21 @@ const UserDashboard = () => {
                 <div className="mt-4 sm:mt-6 grid grid-cols-3 gap-3 sm:gap-4">
                   <div className="text-center p-3 bg-green-50 rounded-lg">
                     <p className="text-xs text-gray-600 mb-1">Total Spent</p>
-                    <p className="text-sm sm:text-base font-bold text-gray-900">KES 156.8K</p>
+                    <p className="text-sm sm:text-base font-bold text-gray-900">
+                      KES {Math.round(spendingSummary.total_spent).toLocaleString()}
+                    </p>
                   </div>
                   <div className="text-center p-3 bg-blue-50 rounded-lg">
                     <p className="text-xs text-gray-600 mb-1">Avg. Order</p>
-                    <p className="text-sm sm:text-base font-bold text-gray-900">KES 6.5K</p>
+                    <p className="text-sm sm:text-base font-bold text-gray-900">
+                      KES {Math.round(spendingSummary.avg_order).toLocaleString()}
+                    </p>
                   </div>
                   <div className="text-center p-3 bg-purple-50 rounded-lg">
                     <p className="text-xs text-gray-600 mb-1">Saved</p>
-                    <p className="text-sm sm:text-base font-bold text-gray-900">KES 12.4K</p>
+                    <p className="text-sm sm:text-base font-bold text-gray-900">
+                      KES {Math.round(spendingSummary.saved).toLocaleString()}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -338,7 +526,14 @@ const UserDashboard = () => {
                                     {statusInfo.label}
                                   </span>
                                 </div>
-                                <p className="text-sm sm:text-base text-gray-900 font-medium mb-1">{order.product}</p>
+                                <p className="text-sm sm:text-base text-gray-900 font-medium mb-1 flex items-center gap-2">
+                                  {order.product}
+                                  {order.additional_products && (
+                                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                                      {order.additional_products}
+                                    </span>
+                                  )}
+                                </p>
                                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
                                   <span className="flex items-center gap-1">
                                     <Calendar className="w-3 h-3" />
@@ -430,7 +625,13 @@ const UserDashboard = () => {
 
               <div className="p-4 sm:p-6">
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                  {wishlistItems.map(item => (
+                  {wishlistItems.length === 0 ? (
+                    <div className="col-span-full text-center py-8">
+                      <Heart className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-gray-500 text-sm">Your wishlist is empty</p>
+                      <a href="/shop" className="text-green-600 text-sm font-medium mt-2 inline-block hover:underline">Start Shopping</a>
+                    </div>
+                  ) : wishlistItems.map(item => (
                     <div key={item.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all group">
                       <div className="relative">
                         <img 
@@ -543,29 +744,33 @@ const UserDashboard = () => {
                 
                 <div className="mb-4">
                   <p className="text-sm opacity-90 mb-2">Your Points Balance</p>
-                  <p className="text-4xl sm:text-5xl font-bold mb-1">1,250</p>
-                  <p className="text-xs opacity-75">Worth KES 1,250 in discounts</p>
+                  <p className="text-4xl sm:text-5xl font-bold mb-1">{rewards.points_balance.toLocaleString()}</p>
+                  <p className="text-xs opacity-75">Worth KES {rewards.points_worth.toLocaleString()} in discounts</p>
                 </div>
                 
                 <div className="bg-white bg-opacity-20 rounded-lg p-4 mb-4 backdrop-blur-sm">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm font-medium">Progress to Gold Tier</p>
-                    <p className="text-sm font-bold">60%</p>
+                    <p className="text-sm font-bold">{rewards.progress_percent}%</p>
                   </div>
                   <div className="bg-white bg-opacity-30 rounded-full h-2 mb-2">
-                    <div className="bg-yellow-400 h-2 rounded-full transition-all duration-500" style={{width: '60%'}}></div>
+                    <div className="bg-yellow-400 h-2 rounded-full transition-all duration-500" style={{width: `${rewards.progress_percent}%`}}></div>
                   </div>
-                  <p className="text-xs opacity-90">750 more points to unlock exclusive benefits</p>
+                  <p className="text-xs opacity-90">
+                    {rewards.points_to_gold > 0 
+                      ? `${rewards.points_to_gold} more points to unlock exclusive benefits`
+                      : 'You have reached Gold Tier! 🎉'}
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 mb-4">
                   <div className="bg-white bg-opacity-10 rounded-lg p-3 backdrop-blur-sm">
                     <p className="text-xs opacity-75 mb-1">Points Earned</p>
-                    <p className="text-xl font-bold">+150</p>
+                    <p className="text-xl font-bold">+{rewards.points_earned_this_month}</p>
                   </div>
                   <div className="bg-white bg-opacity-10 rounded-lg p-3 backdrop-blur-sm">
                     <p className="text-xs opacity-75 mb-1">This Month</p>
-                    <p className="text-xl font-bold">3 Orders</p>
+                    <p className="text-xl font-bold">{rewards.orders_this_month} Orders</p>
                   </div>
                 </div>
                 
@@ -737,9 +942,13 @@ const UserDashboard = () => {
                 </p>
                 
                 <div className="bg-white bg-opacity-20 rounded-lg p-3 mb-4 flex items-center justify-between">
-                  <span className="text-sm font-mono">JOHN2024</span>
-                  <button className="text-xs bg-white text-purple-600 px-3 py-1.5 rounded font-semibold hover:bg-gray-100 transition-colors">
-                    Copy Code
+                  <span className="text-sm font-mono">{referralCode || 'Loading...'}</span>
+                  <button 
+                    onClick={handleCopyReferralCode}
+                    disabled={copyingCode || !referralCode}
+                    className="text-xs bg-white text-purple-600 px-3 py-1.5 rounded font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50"
+                  >
+                    {copyingCode ? '...' : 'Copy'}
                   </button>
                 </div>
                 

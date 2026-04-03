@@ -28,6 +28,7 @@ import PaymentCallback from './pages/checkout/PaymentCallback';
 // ============================================================================
 import { useAuth } from './context/AuthContext';
 import { useCart } from './context/CartContext';
+import NotificationsPage from './pages/main/NotificationsPage';
 
 // ============================================================================
 // EAGERLY LOADED COMPONENTS (Critical for initial render)
@@ -508,6 +509,11 @@ function App() {
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/blog/:slug" element={<BlogPostPage />} />
                 <Route path="/faq" element={<FAQPage />} />
+                <Route path="/notifications" element={
+                  <ProtectedRoute>
+                    <NotificationsPage />
+                  </ProtectedRoute>
+                } />
                 <Route path="/checkout/payment-callback" element={<PaymentCallback />} />
                 
                 {/* ============================================

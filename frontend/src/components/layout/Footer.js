@@ -94,7 +94,7 @@ const Footer = () => {
     { name: 'Saved Addresses', link: '/addresses' },
     { name: 'Payment Methods', link: '/PaymentMethod' },
     { name: 'Documentary', link: '/Documentary' },
-    { name: 'Notifications', link: '/Notifications' }
+    { name: 'Notifications', link: '/notifications' }
   ];
 
   return (

@@ -168,6 +168,11 @@ Route::prefix('v1')->middleware(['auth:sanctum', \App\Http\Middleware\CheckEffec
     
     // User Profile Routes - ADD THESE NEW ROUTES
     Route::get('/user/stats', [\App\Http\Controllers\Api\UserController::class, 'stats']);
+    Route::get('/user/dashboard-stats', [\App\Http\Controllers\Api\UserController::class, 'dashboardStats']);
+    Route::get('/user/spending-analytics', [\App\Http\Controllers\Api\UserController::class, 'spendingAnalytics']);
+    Route::get('/user/rewards', [\App\Http\Controllers\Api\UserController::class, 'rewards']);
+    Route::get('/user/referral-code', [\App\Http\Controllers\Api\UserController::class, 'getReferralCode']);
+    Route::post('/user/referral-code/regenerate', [\App\Http\Controllers\Api\UserController::class, 'regenerateReferralCode']);
     Route::get('/user/payment-methods', [\App\Http\Controllers\Api\UserController::class, 'paymentMethods']);
     Route::get('/user/login-activity', [\App\Http\Controllers\Api\UserController::class, 'loginActivity']);
     Route::get('/user/preferences', [\App\Http\Controllers\Api\UserPreferenceController::class, 'show']);

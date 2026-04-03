@@ -545,8 +545,8 @@ const Navbar = () => {
                             <div
                               key={notification.id}
                               onClick={() => {
-                                navigate('/notifications');
                                 setShowNotificationMenu(false);
+                                setTimeout(() => navigate('/notifications'), 10);
                               }}
                               className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 ${
                                 !notification.isRead ? 'bg-blue-50/50' : ''
@@ -577,13 +577,15 @@ const Navbar = () => {
 
                       {/* Footer */}
                       <div className="border-t border-gray-100 px-4 py-2">
-                        <Link
-                          to="/notifications"
-                          onClick={() => setShowNotificationMenu(false)}
-                          className="block text-center text-sm text-orange-600 hover:text-orange-700 font-medium py-1"
+                        <button
+                          onClick={() => {
+                            setShowNotificationMenu(false);
+                            setTimeout(() => navigate('/notifications'), 10);
+                          }}
+                          className="block w-full text-center text-sm text-orange-600 hover:text-orange-700 font-medium py-1"
                         >
                           View All
-                        </Link>
+                        </button>
                       </div>
                     </div>
                   )}
