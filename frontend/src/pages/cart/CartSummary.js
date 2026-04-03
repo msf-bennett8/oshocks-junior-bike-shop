@@ -14,6 +14,7 @@ import {
   AlertCircle,
   Info
 } from 'lucide-react';
+
 import { useCart } from '../../context/CartContext';
 
 /**
@@ -21,6 +22,13 @@ import { useCart } from '../../context/CartContext';
  * Comprehensive order summary with pricing, shipping, discounts, and payment methods
  * for Oshocks Junior Bike Shop e-commerce platform
  */
+
+// Helper to remove distance from zone display
+const formatCityDisplay = (city) => {
+  if (!city) return '';
+  return city.replace(/\s*\([^)]*\)/g, '');
+};
+
 const CartSummary = ({
   cartItems = [],
   onCheckout,
@@ -372,7 +380,7 @@ const paymentMethods = [
               <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-gray-700">Delivering to</p>
-                <p className="text-xs sm:text-sm text-gray-600 truncate">{deliveryLocation}</p>
+                <p className="text-xs sm:text-sm text-gray-600 truncate">{formatCityDisplay(deliveryLocation)}</p>
                 <button 
                   onClick={onCheckout}
                   className="text-xs sm:text-sm text-green-600 hover:text-green-700 mt-1 font-medium"

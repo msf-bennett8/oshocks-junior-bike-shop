@@ -1,11 +1,18 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, Truck, MapPin, Phone, Mail, User, ShoppingBag, AlertCircle, CheckCircle, Loader, Shield, Wallet } from 'lucide-react';
+
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import authService from '../../services/authService';
 import paymentService from '../../services/paymentService';
 import orderService from '../../services/orderService';
+
+// Helper to remove distance from zone display
+const formatCityDisplay = (city) => {
+  if (!city) return '';
+  return city.replace(/\s*\([^)]*\)/g, '');
+};
 
 const CheckoutPage = () => {
   const { cartItems, clearCart } = useCart();
@@ -345,7 +352,7 @@ const countyInfo = {
         // Extract specific location from zone selection
         // Format: "CBD & Westlands (15-25km) - Loresho"
         const extractedZone = shippingInfo.zone.includes(' - ')
-          ? shippingInfo.zone.split(' - ')[1].trim()  // Get "Loresho"
+          ? formatCityDisplay(shippingInfo.zone.split(' - ')[1]).trim()  // Get "Loresho"
           : shippingInfo.zone.split(' (')[0].trim();   // Fallback
 
         const orderData = {
@@ -1512,7 +1519,7 @@ const countyInfo = {
                     </span>
                   </p>
                   <p className="text-xs text-orange-600">
-                    {shippingInfo.city} ({shippingInfo.zone.split(' - ')[0]})
+                    {shippingInfo.city} ({formatCityDisplay(shippingInfo.zone.split(' - ')[0])})
                   </p>
                 </div>
               )}

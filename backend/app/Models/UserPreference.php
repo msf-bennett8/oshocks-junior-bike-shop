@@ -18,6 +18,10 @@ class UserPreference extends Model
         'price_drop_alerts',
         'newsletter',
         'two_factor_auth',
+        'profile_visibility',
+        'show_email',
+        'show_phone',
+        'data_sharing',
     ];
 
     protected $casts = [
@@ -29,6 +33,9 @@ class UserPreference extends Model
         'price_drop_alerts' => 'boolean',
         'newsletter' => 'boolean',
         'two_factor_auth' => 'boolean',
+        'show_email' => 'boolean',
+        'show_phone' => 'boolean',
+        'data_sharing' => 'boolean',
     ];
 
     public function user()

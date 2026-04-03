@@ -91,6 +91,11 @@ class User extends Authenticatable
         return $this->hasOne(PaymentRecorder::class);
     }
 
+    public function paymentMethods()
+    {
+        return $this->hasMany(PaymentMethod::class);
+    }
+
     public function recordedPayments()
     {
         return $this->hasMany(Payment::class, 'recorded_by_user_id');

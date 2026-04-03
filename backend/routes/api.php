@@ -189,6 +189,14 @@ Route::prefix('v1')->middleware(['auth:sanctum', \App\Http\Middleware\CheckEffec
     Route::delete('/addresses/{id}', [AddressController::class, 'destroy']);
     Route::put('/addresses/{id}/set-default', [AddressController::class, 'setDefault']);
     
+        
+    // Payment Methods
+    Route::get('/payment-methods', [\App\Http\Controllers\Api\PaymentMethodController::class, 'index']);
+    Route::post('/payment-methods', [\App\Http\Controllers\Api\PaymentMethodController::class, 'store']);
+    Route::put('/payment-methods/{id}', [\App\Http\Controllers\Api\PaymentMethodController::class, 'update']);
+    Route::delete('/payment-methods/{id}', [\App\Http\Controllers\Api\PaymentMethodController::class, 'destroy']);
+    Route::put('/payment-methods/{id}/set-default', [\App\Http\Controllers\Api\PaymentMethodController::class, 'setDefault']);
+    
     // Payments
     Route::post('/payments/mpesa/initiate', [PaymentController::class, 'initiateMpesa']);
     //Route::post('/payments/card/initiate', [PaymentController::class, 'initiateCard']);

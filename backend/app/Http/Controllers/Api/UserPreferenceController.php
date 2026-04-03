@@ -30,6 +30,10 @@ class UserPreferenceController extends Controller
                 'price_drop_alerts' => true,
                 'newsletter' => true,
                 'two_factor_auth' => false,
+                'profile_visibility' => 'public',
+                'show_email' => false,
+                'show_phone' => false,
+                'data_sharing' => false,
             ]
         );
 
@@ -38,7 +42,8 @@ class UserPreferenceController extends Controller
             'data' => $preferences->only([
                 'language', 'currency', 'email_notifications', 'sms_notifications',
                 'order_updates', 'promotional_emails', 'new_arrivals', 
-                'price_drop_alerts', 'newsletter', 'two_factor_auth'
+                'price_drop_alerts', 'newsletter', 'two_factor_auth',
+                'profile_visibility', 'show_email', 'show_phone', 'data_sharing'
             ])
         ]);
     }
@@ -60,6 +65,10 @@ class UserPreferenceController extends Controller
             'price_drop_alerts' => 'sometimes|boolean',
             'newsletter' => 'sometimes|boolean',
             'two_factor_auth' => 'sometimes|boolean',
+            'profile_visibility' => 'sometimes|in:public,private',
+            'show_email' => 'sometimes|boolean',
+            'show_phone' => 'sometimes|boolean',
+            'data_sharing' => 'sometimes|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -82,7 +91,8 @@ class UserPreferenceController extends Controller
             'data' => $preferences->only([
                 'language', 'currency', 'email_notifications', 'sms_notifications',
                 'order_updates', 'promotional_emails', 'new_arrivals', 
-                'price_drop_alerts', 'newsletter', 'two_factor_auth'
+                'price_drop_alerts', 'newsletter', 'two_factor_auth',
+                'profile_visibility', 'show_email', 'show_phone', 'data_sharing'
             ])
         ]);
     }
