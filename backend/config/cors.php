@@ -24,7 +24,7 @@ return [
         '#^https://.*\.up\.railway\.app$#',
     ],
     
-    'allowed_headers' => ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'X-CSRF-TOKEN'],
+    'allowed_headers' => ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'X-CSRF-TOKEN', 'X-Effective-Role'],
     
     'exposed_headers' => ['Authorization'],
     

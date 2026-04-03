@@ -184,7 +184,7 @@ const ProtectedRoute = ({ children, redirectTo = '/login' }) => {
  * Seller Route - Requires Seller Role
  */
 const SellerRoute = ({ children }) => {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading, getEffectiveRole } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -195,7 +195,8 @@ const SellerRoute = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (user?.role !== 'seller' && user?.role !== 'admin') {
+  const effectiveRole = getEffectiveRole();
+  if (effectiveRole !== 'seller' && effectiveRole !== 'admin' && effectiveRole !== 'super_admin') {
     return <Navigate to="/unauthorized" replace />;
   }
 
@@ -206,7 +207,7 @@ const SellerRoute = ({ children }) => {
  * Admin Route - Requires Admin Role
  */
 const AdminRoute = ({ children }) => {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading, getEffectiveRole } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -217,7 +218,8 @@ const AdminRoute = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (user?.role !== 'admin') {
+  const effectiveRole = getEffectiveRole();
+  if (effectiveRole !== 'admin' && effectiveRole !== 'super_admin') {
     return <Navigate to="/unauthorized" replace />;
   }
 
@@ -228,7 +230,7 @@ const AdminRoute = ({ children }) => {
  * Super Admin Route - Requires Super Admin Role
  */
 const SuperAdminRoute = ({ children }) => {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading, getEffectiveRole } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -239,7 +241,8 @@ const SuperAdminRoute = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (user?.role !== 'super_admin') {
+  const effectiveRole = getEffectiveRole();
+  if (effectiveRole !== 'super_admin') {
     return <Navigate to="/unauthorized" replace />;
   }
 

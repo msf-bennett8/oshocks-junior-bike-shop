@@ -22,7 +22,7 @@ const api = axios.create({
   },
 });
 
-// Request interceptor - Add auth token
+// Request interceptor - Add auth token and effective role
 api.interceptors.request.use(
   (config) => {
     console.log('📤 Outgoing Request:', {
@@ -38,6 +38,14 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
       console.log('🔐 Auth token added to request');
     }
+    
+    // Add effective role header for role switching (super_admin only)
+    const switchedRole = localStorage.getItem('oshocks_switched_role');
+    if (switchedRole) {
+      config.headers['X-Effective-Role'] = switchedRole;
+      console.log('🎭 Effective role header added:', switchedRole);
+    }
+    
     return config;
   },
   (error) => {

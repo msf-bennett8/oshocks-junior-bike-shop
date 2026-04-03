@@ -9,6 +9,21 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Role switching state (for super_admin only)
+  const [originalRole, setOriginalRole] = useState(null);
+  const [switchedRole, setSwitchedRole] = useState(null);
+
+  // Available roles for switching
+  const AVAILABLE_ROLES = {
+    USER: 'user',
+    SELLER: 'seller',
+    ADMIN: 'admin',
+    SUPER_ADMIN: 'super_admin',
+    DELIVERY_AGENT: 'delivery_agent',
+    SHOP_ATTENDANT: 'shop_attendant',
+    PAYMENT_RECORDER: 'payment_recorder'
+  };
 
   // Initialize authentication state on mount
   useEffect(() => {
@@ -27,9 +42,18 @@ export const AuthProvider = ({ children }) => {
 
       // Verify token with backend
       const data = await authService.getCurrentUser();
-      setUser(data.user);
+      const userData = data.user;
+      
+      setUser(userData);
+      setOriginalRole(userData.role);
       setIsAuthenticated(true);
       setError(null);
+      
+      // Check for saved switched role in localStorage
+      const savedSwitchedRole = localStorage.getItem('oshocks_switched_role');
+      if (savedSwitchedRole && userData.role === 'super_admin') {
+        setSwitchedRole(savedSwitchedRole);
+      }
     } catch (err) {
       console.error('Auth check failed:', err);
       logout(); // Clear invalid token
@@ -119,6 +143,9 @@ const login = async (credentials) => {
       setUser(null);
       setIsAuthenticated(false);
       setError(null);
+      setOriginalRole(null);
+      setSwitchedRole(null);
+      localStorage.removeItem('oshocks_switched_role');
     }
   };
 
@@ -246,7 +273,68 @@ const login = async (credentials) => {
 
   // Check if user has any of the specified roles
   const hasAnyRole = (roles) => {
-    return roles.includes(user?.role);
+    const effectiveRole = switchedRole || user?.role;
+    return roles.includes(effectiveRole);
+  };
+
+  // Role switching for super_admin
+  const switchRole = (newRole) => {
+    if (originalRole !== 'super_admin') {
+      console.warn('Only super_admin can switch roles');
+      return false;
+    }
+    
+    if (!Object.values(AVAILABLE_ROLES).includes(newRole)) {
+      console.warn('Invalid role:', newRole);
+      return false;
+    }
+    
+    setSwitchedRole(newRole);
+    
+    // Update user object with switched role for UI purposes
+    setUser(prev => ({
+      ...prev,
+      role: newRole,
+      isSwitchedRole: true,
+      actualRole: originalRole
+    }));
+    
+    // Store in localStorage for persistence
+    localStorage.setItem('oshocks_switched_role', newRole);
+    return true;
+  };
+
+  const resetRole = () => {
+    setSwitchedRole(null);
+    setUser(prev => ({
+      ...prev,
+      role: originalRole,
+      isSwitchedRole: false,
+      actualRole: null
+    }));
+    localStorage.removeItem('oshocks_switched_role');
+  };
+
+  // Get effective role (switched or actual)
+  const getEffectiveRole = () => {
+    return switchedRole || user?.role;
+  };
+
+  // Get user with effective role (for components that need the switched role)
+  const getUserWithEffectiveRole = () => {
+    if (!user) return null;
+    const effectiveRole = getEffectiveRole();
+    return {
+      ...user,
+      role: effectiveRole,
+      isSwitchedRole: !!switchedRole,
+      actualRole: originalRole
+    };
+  };
+
+  // Check if current user is super_admin (even if switched)
+  const isSuperAdmin = () => {
+    return originalRole === 'super_admin';
   };
 
   // Refresh current user data (useful after role changes)
@@ -281,7 +369,16 @@ const login = async (credentials) => {
     checkAuthStatus, 
     googleLogin, 
     stravaLogin,
-    refreshUser   
+    refreshUser,
+    // Role switching
+    switchRole,
+    resetRole,
+    getEffectiveRole,
+    getUserWithEffectiveRole,
+    isSuperAdmin,
+    originalRole,
+    switchedRole,
+    availableRoles: AVAILABLE_ROLES
   };
 
   return (

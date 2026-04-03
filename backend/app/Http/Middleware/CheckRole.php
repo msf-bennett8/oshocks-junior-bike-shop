@@ -22,7 +22,11 @@ class CheckRole
             ], 401);
         }
 
-        if ($request->user()->role !== $role) {
+        // Check for effective role (role switching for super_admin)
+        $effectiveRole = $request->attributes->get('effective_role');
+        $currentRole = $effectiveRole ?? $request->user()->role;
+
+        if ($currentRole !== $role) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized. This action requires ' . $role . ' role.'

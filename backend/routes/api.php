@@ -103,8 +103,8 @@ Route::middleware(['api'])->prefix('v1')->group(function () {
     // to prevent it from catching specific routes like /orders/pending-payments
 });
 
-// Protected routes (require authentication)
-Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
+// Protected routes (require authentication + effective role checking)
+Route::prefix('v1')->middleware(['auth:sanctum', \App\Http\Middleware\CheckEffectiveRole::class])->group(function () {
     
     // Protected authentication routes
     Route::get('/auth/me', [AuthController::class, 'me']);
@@ -358,10 +358,9 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
         // User role management
         Route::put('/users/{id}/role', [AuthController::class, 'changeUserRole']);
     });
-});
 
     // ============================================================================
-    // DYNAMIC PUBLIC ROUTES - MUST COME LAST (Inside v1 group)
+    // DYNAMIC PUBLIC ROUTES - MUST COME LAST (Inside protected group but public access)
     // ============================================================================
     // These routes use dynamic parameters and MUST be defined after all specific routes
     // to prevent them from catching specific route patterns
@@ -370,14 +369,14 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // This MUST come after /orders/pending-payments and other specific routes
     Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
 
-    // M-Pesa callback (public - called by Safaricom)
-    Route::post('/v1/payments/mpesa/callback', [PaymentController::class, 'mpesaCallback']);
-    
-    // Paystack callback and webhook (public - called by Paystack)
-    Route::get('/v1/payments/card/callback', [CardPaymentController::class, 'callback']);
-    Route::post('/v1/payments/card/webhook', [CardPaymentController::class, 'webhook']);
-    
-    // Health check
-    Route::get('/health', function () {
-        return response()->json(['status' => 'ok', 'timestamp' => now()]);
-    });
+}); // End of protected routes group
+
+// Public callback routes (outside protected group)
+Route::post('/v1/payments/mpesa/callback', [PaymentController::class, 'mpesaCallback']);
+Route::get('/v1/payments/card/callback', [CardPaymentController::class, 'callback']);
+Route::post('/v1/payments/card/webhook', [CardPaymentController::class, 'webhook']);
+
+// Health check (public)
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok', 'timestamp' => now()]);
+});
