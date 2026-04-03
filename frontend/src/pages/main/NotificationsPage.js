@@ -1382,14 +1382,14 @@ const NotificationsPage = () => {
           }}
         />
         <div className="relative z-10 max-w-6xl mx-auto px-4 py-6 sm:py-8">
-          {/* Top Bar - Back arrow with text on mobile too */}
-          <div className="flex items-center justify-between mb-4 sm:mb-6">
+          {/* Top Bar - Back button and controls */}
+          <div className="flex items-center justify-between mb-6">
             <button
               onClick={() => window.history.back()}
-              className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-all"
             >
               <ArrowLeft className="w-5 h-5" />
-              <span className="text-sm sm:text-base">Back</span>
+              <span>Back</span>
             </button>
             
             <div className="flex items-center gap-2">
@@ -1411,78 +1411,72 @@ const NotificationsPage = () => {
             </div>
           </div>
 
-          {/* Title Section - Responsive: Icon + Title stacked on mobile */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 mb-4 sm:mb-6">
-            <div className="flex items-center gap-4 sm:block">
-              <div className="relative">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                  <Bell className="w-7 h-7 sm:w-8 sm:h-8" />
-                </div>
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </div>
-              
-              {/* Mobile: Title next to icon, Desktop: Title below */}
-              <div className="sm:hidden">
-                <h1 className="text-2xl font-bold">Notifications</h1>
-              </div>
-            </div>
-            
-            <div className="flex-1">
-              {/* Desktop Title */}
-              <h1 className="hidden sm:block text-3xl sm:text-4xl font-bold mb-2">Notifications</h1>
-              
-              {/* Responsive Badges: Mobile = stacked, Desktop = inline */}
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 sm:items-center">
-                {unreadCount > 0 ? (
-                  <>
-                    <span className="bg-white/20 px-3 py-1 rounded-full text-sm w-fit">
-                      {unreadCount} unread
+          {/* Title Section - Single row layout */}
+              <div className="flex items-center gap-4 mb-6">
+                {/* Icon */}
+                <div className="relative flex-shrink-0">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                    <Bell className="w-7 h-7 sm:w-8 sm:h-8" />
+                  </div>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+                      {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
-                    {urgentCount > 0 && (
-                      <span className="bg-red-500/90 px-3 py-1 rounded-full text-sm flex items-center gap-1 w-fit">
-                        <Zap className="w-3 h-3" />
-                        {urgentCount} urgent
+                  )}
+                </div>
+                
+                {/* Title and Badges - Inline */}
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">Notifications</h1>
+                  
+                  {/* Badges Row */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {unreadCount > 0 ? (
+                      <>
+                        <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
+                          {unreadCount} unread
+                        </span>
+                        {urgentCount > 0 && (
+                          <span className="bg-red-500/90 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                            <Zap className="w-3 h-3" />
+                            {urgentCount} urgent
+                          </span>
+                        )}
+                        {pinnedCount > 0 && (
+                          <span className="bg-orange-500/50 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+                            <Pin className="w-3 h-3" />
+                            {pinnedCount} pinned
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="flex items-center gap-1 text-white/80">
+                        <CheckCircle className="w-4 h-4 text-green-400" />
+                        All caught up!
                       </span>
                     )}
-                    {pinnedCount > 0 && (
-                      <span className="bg-orange-700/50 px-3 py-1 rounded-full text-sm flex items-center gap-1 w-fit">
-                        <Pin className="w-3 h-3" />
-                        {pinnedCount} pinned
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <span className="flex items-center gap-1 text-white/80">
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                    All caught up!
-                  </span>
-                )}
-                {/* Archived count badge - clickable to filter */}
-                <button
-                  onClick={() => setFilter('archived')}
-                  className="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full text-sm flex items-center gap-1 w-fit transition-colors"
-                >
-                  <Archive className="w-3 h-3" />
-                  {notifications.filter(n => n.isArchived).length} archived
-                </button>
-              </div>
-            </div>
+                    {/* Archived count badge - clickable to filter */}
+                    <button
+                      onClick={() => setFilter('archived')}
+                      className="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full text-sm flex items-center gap-1 transition-colors"
+                    >
+                      <Archive className="w-3 h-3" />
+                      {notifications.filter(n => n.isArchived).length} archived
+                    </button>
+                  </div>
+                </div>
 
-            {/* Quick Actions - Hidden on very small screens */}
-            {unreadCount > 0 && (
-              <button
-                onClick={() => markAsRead(notifications.filter(n => !n.isRead).map(n => n.id))}
-                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-all text-sm"
-              >
-                <MailOpen className="w-4 h-4" />
-                <span>Mark all read</span>
-              </button>
-            )}
-          </div>
+                {/* Quick Actions - Mark all read */}
+                {unreadCount > 0 && (
+                  <button
+                    onClick={() => markAsRead(notifications.filter(n => !n.isRead).map(n => n.id))}
+                    className="hidden lg:flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-all text-sm flex-shrink-0"
+                  >
+                    <MailOpen className="w-4 h-4" />
+                    <span>Mark all read</span>
+                  </button>
+                )}
+              </div>
 
           {/* Search & Filter Bar */}
           <div className="flex flex-col sm:flex-row gap-3">
@@ -1493,7 +1487,7 @@ const NotificationsPage = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search notifications..."
-                className="w-full pl-10 pr-10 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                className="w-full pl-10 pr-10 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
               />
               {searchQuery && (
                 <button
@@ -1506,7 +1500,7 @@ const NotificationsPage = () => {
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 px-4 py-2.5 backdrop-blur-sm rounded-xl border transition-all ${showFilters ? 'bg-white/20 border-white/40' : 'bg-white/10 border-white/20 hover:bg-white/20'}`}
+              className={`flex items-center justify-center gap-2 px-4 py-3 backdrop-blur-sm rounded-xl border transition-all ${showFilters ? 'bg-white/20 border-white/40' : 'bg-white/10 border-white/20 hover:bg-white/20'}`}
             >
               <Filter className="w-5 h-5" />
               <span>Filters</span>
