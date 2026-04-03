@@ -555,28 +555,40 @@ class OrderController extends Controller
     }
 
     /**
-     * Create or get existing address
+     * Create or get existing address - prevents duplicates
      */
     private function createOrGetAddress(Request $request, $user = null)
     {
         // Extract full name from customer_name
         $fullName = $request->customer_name;
 
-        $addressData = [
-            'user_id' => $user->id,
-            'full_name' => $fullName,
-            'phone' => $request->customer_phone,
-            'address_line1' => $request->delivery_address,
-            'address_line2' => null,
-            'city' => $request->zone, // Zone is the specific area
-            'county' => $request->county,
-            'postal_code' => $request->postal_code,
-            'country' => 'Kenya',
-            'type' => 'home',
-            'is_default' => false,
-        ];
+        // Use firstOrCreate to prevent duplicate addresses
+        $address = Address::firstOrCreate(
+            [
+                // Search criteria - must match exactly to find existing
+                'user_id' => $user->id,
+                'address_line1' => $request->delivery_address,
+                'city' => $request->zone,
+                'county' => $request->county,
+                'postal_code' => $request->postal_code ?? '',
+            ],
+            [
+                // Create with these fields if not found
+                'full_name' => $fullName,
+                'phone' => $request->customer_phone,
+                'address_line2' => null,
+                'country' => 'Kenya',
+                'type' => 'home',
+                'is_default' => false,
+            ]
+        );
 
-        return Address::create($addressData);
+        // If address already existed, update it to be default (most recent)
+        if (!$address->wasRecentlyCreated) {
+            $address->setAsDefault();
+        }
+
+        return $address;
     }
 
     /**

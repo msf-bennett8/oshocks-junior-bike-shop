@@ -166,6 +166,13 @@ Route::prefix('v1')->middleware(['auth:sanctum', \App\Http\Middleware\CheckEffec
         return $request->user();
     });
     
+    // User Profile Routes - ADD THESE NEW ROUTES
+    Route::get('/user/stats', [\App\Http\Controllers\Api\UserController::class, 'stats']);
+    Route::get('/user/payment-methods', [\App\Http\Controllers\Api\UserController::class, 'paymentMethods']);
+    Route::get('/user/login-activity', [\App\Http\Controllers\Api\UserController::class, 'loginActivity']);
+    Route::get('/user/preferences', [\App\Http\Controllers\Api\UserPreferenceController::class, 'show']);
+    Route::put('/user/preferences', [\App\Http\Controllers\Api\UserPreferenceController::class, 'update']);
+    
     // Get user's last delivery location for checkout auto-fill
     Route::get('/user/last-delivery-location', [OrderController::class, 'getLastDeliveryLocation']);
     

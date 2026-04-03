@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, Lock, CreditCard, Bell, ShoppingBag, Heart, Settings, Camera, Save, X, Edit2, Trash2, Plus, Home, Building, AlertCircle, CheckCircle, Eye, EyeOff, LogOut, Shield } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useWishlist } from '../../context/WishlistContext';
 import { useNavigate } from 'react-router-dom';
+import profileService from '../../services/profileService';
+import addressService from '../../services/addressService';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, updateProfile, changePassword, logout } = useAuth();
+  const { wishlistCount, refreshWishlist } = useWishlist();
   
   const [activeTab, setActiveTab] = useState('personal');
   const [loading, setLoading] = useState(true);
@@ -31,54 +35,11 @@ const ProfilePage = () => {
   memberSince: user?.created_at || ''
 });
 
-  const [addresses, setAddresses] = useState([
-    {
-      id: 1,
-      type: 'home',
-      isDefault: true,
-      fullName: 'John Kamau',
-      phone: '+254 712 345 678',
-      street: 'Ngong Road, ABC Place',
-      building: 'Building C, 3rd Floor, Apt C304',
-      city: 'Nairobi',
-      county: 'Nairobi County',
-      postalCode: '00100',
-      deliveryInstructions: 'Call before delivery. Gate code: 1234'
-    },
-    {
-      id: 2,
-      type: 'work',
-      isDefault: false,
-      fullName: 'John Kamau',
-      phone: '+254 712 345 678',
-      street: 'Moi Avenue',
-      building: 'Kencom House, 5th Floor',
-      city: 'Nairobi',
-      county: 'Nairobi County',
-      postalCode: '00200',
-      deliveryInstructions: 'Deliver to reception'
-    }
-  ]);
+  const [addresses, setAddresses] = useState([]);
 
-  const [paymentMethods, setPaymentMethods] = useState([
-    {
-      id: 1,
-      type: 'mpesa',
-      phoneNumber: '+254 712 345 678',
-      isDefault: true,
-      name: 'Primary M-Pesa'
-    },
-    {
-      id: 2,
-      type: 'card',
-      last4: '4242',
-      brand: 'Visa',
-      expiryMonth: '12',
-      expiryYear: '2026',
-      isDefault: false,
-      name: 'Personal Card'
-    }
-  ]);
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [editingPayment, setEditingPayment] = useState(null);
 
   const [preferences, setPreferences] = useState({
     emailNotifications: true,
@@ -92,6 +53,9 @@ const ProfilePage = () => {
     language: 'en',
     currency: 'KES'
   });
+  
+  // Login Activity State
+  const [loginActivity, setLoginActivity] = useState([]);
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -109,11 +73,11 @@ const ProfilePage = () => {
   const [showAddressForm, setShowAddressForm] = useState(false);
 
   const [stats, setStats] = useState({
-    totalOrders: 24,
-    totalSpent: 284500,
-    wishlistItems: 12,
-    reviewsWritten: 8,
-    loyaltyPoints: 2845
+    totalOrders: 0,
+    totalSpent: 0,
+    wishlistItems: 0,
+    reviewsWritten: 0,
+    loyaltyPoints: 0
   });
 
   // Redirect if not authenticated
@@ -148,9 +112,102 @@ useEffect(() => {
   return () => window.removeEventListener('scroll', handleScroll);
 }, []);
 
-// Sync user data when user changes
+// Load all user data
 useEffect(() => {
   if (user) {
+    loadUserData();
+  }
+}, [user]);
+
+const loadUserData = async () => {
+  try {
+    setLoading(true);
+    
+    // Parallel data loading
+    const [statsRes, addressesRes, paymentRes, prefsRes, activityRes] = await Promise.all([
+      profileService.getStats(),
+      addressService.getAddresses(),
+      profileService.getPaymentMethods(),
+      profileService.getPreferences(),
+      profileService.getLoginActivity()
+    ]);
+
+    // Update stats
+    if (statsRes.success) {
+      setStats({
+        totalOrders: statsRes.data.total_orders,
+        totalSpent: statsRes.data.total_spent,
+        wishlistItems: statsRes.data.wishlist_count,
+        reviewsWritten: statsRes.data.reviews_count,
+        loyaltyPoints: statsRes.data.loyalty_points
+      });
+    }
+
+    // Update addresses
+    if (addressesRes.success) {
+      // Remove duplicates based on ID
+      const uniqueAddresses = addressesRes.data.filter((addr, index, self) => 
+        index === self.findIndex(a => a.id === addr.id)
+      );
+      
+      setAddresses(uniqueAddresses.map(addr => ({
+        id: addr.id,
+        type: addr.type,
+        isDefault: addr.is_default,
+        fullName: addr.full_name,
+        phone: addr.phone,
+        street: addr.address_line1,
+        building: addr.address_line2 || '',
+        city: addr.city,
+        county: addr.county,
+        postalCode: addr.postal_code,
+        deliveryInstructions: addr.delivery_instructions || ''
+      })));
+    }
+
+    // Update payment methods
+    if (paymentRes.success) {
+      const methods = [
+        ...paymentRes.data.mpesa.map(m => ({ ...m, isDefault: false })),
+        ...paymentRes.data.cards.map(c => ({ ...c, isDefault: false }))
+      ];
+      setPaymentMethods(methods);
+    }
+
+    // Update preferences
+    if (prefsRes.success) {
+      setPreferences({
+        emailNotifications: prefsRes.data.email_notifications,
+        smsNotifications: prefsRes.data.sms_notifications,
+        orderUpdates: prefsRes.data.order_updates,
+        promotionalEmails: prefsRes.data.promotional_emails,
+        newArrivals: prefsRes.data.new_arrivals,
+        priceDropAlerts: prefsRes.data.price_drop_alerts,
+        newsletter: prefsRes.data.newsletter,
+        twoFactorAuth: prefsRes.data.two_factor_auth,
+        language: prefsRes.data.language,
+        currency: prefsRes.data.currency
+      });
+    }
+
+    // Update login activity
+    if (activityRes.success) {
+      setLoginActivity(activityRes.data.map(activity => ({
+        id: activity.id,
+        date: new Date(activity.occurred_at).toLocaleDateString('en-KE', { 
+          month: 'short', 
+          day: 'numeric', 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        }),
+        device: activity.user_agent,
+        location: 'Nairobi, Kenya',
+        status: activity.type === 'login_success' ? 'success' : 'info',
+        isCurrentSession: activity.is_current_session
+      })));
+    }
+
+    // Set user data from auth context
     setUserData({
       firstName: user.name?.split(' ')[0] || '',
       lastName: user.name?.split(' ').slice(1).join(' ') || '',
@@ -159,13 +216,18 @@ useEffect(() => {
       alternatePhone: '',
       dateOfBirth: '',
       gender: '',
-      profileImage: null,
+      profileImage: user.profile_image || null,
       bio: '',
       memberSince: user.created_at || ''
     });
+
+  } catch (error) {
+    console.error('Failed to load user data:', error);
+    showNotification('Failed to load profile data', 'error');
+  } finally {
     setLoading(false);
   }
-}, [user]);
+};
 
   const showNotification = (message, type = 'success') => {
     setNotification({ message, type });
@@ -251,26 +313,67 @@ useEffect(() => {
   }
 };
 
-  const handleAddressSubmit = (address) => {
-    if (editingAddress) {
-      setAddresses(addresses.map(a => a.id === editingAddress.id ? { ...address, id: editingAddress.id } : a));
-      showNotification('Address updated successfully!');
-    } else {
-      setAddresses([...addresses, { ...address, id: Date.now() }]);
-      showNotification('Address added successfully!');
+  const handleAddressSubmit = async (address) => {
+    try {
+      setSaving(true);
+      
+      const addressData = {
+        full_name: address.fullName,
+        phone: address.phone,
+        address_line1: address.street,
+        address_line2: address.building,
+        city: address.city,
+        county: address.county,
+        postal_code: address.postalCode,
+        delivery_instructions: address.deliveryInstructions,
+        country: 'Kenya',
+        type: address.type,
+        is_default: address.isDefault
+      };
+
+      if (editingAddress) {
+        const response = await addressService.updateAddress(editingAddress.id, addressData);
+        if (response.success) {
+          setAddresses(addresses.map(a => a.id === editingAddress.id ? { ...address, id: editingAddress.id } : a));
+          showNotification('Address updated successfully!');
+        }
+      } else {
+        const response = await addressService.createAddress(addressData);
+        if (response.success) {
+          setAddresses([...addresses, { ...address, id: response.data.id }]);
+          showNotification('Address added successfully!');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save address:', error);
+      showNotification('Failed to save address', 'error');
+    } finally {
+      setSaving(false);
+      setShowAddressForm(false);
+      setEditingAddress(null);
     }
-    setShowAddressForm(false);
-    setEditingAddress(null);
   };
 
-  const handleDeleteAddress = (id) => {
-    setAddresses(addresses.filter(a => a.id !== id));
-    showNotification('Address deleted successfully!');
+  const handleDeleteAddress = async (id) => {
+    try {
+      await addressService.deleteAddress(id);
+      setAddresses(addresses.filter(a => a.id !== id));
+      showNotification('Address deleted successfully!');
+    } catch (error) {
+      console.error('Failed to delete address:', error);
+      showNotification('Failed to delete address', 'error');
+    }
   };
 
-  const handleSetDefaultAddress = (id) => {
-    setAddresses(addresses.map(a => ({ ...a, isDefault: a.id === id })));
-    showNotification('Default address updated!');
+  const handleSetDefaultAddress = async (id) => {
+    try {
+      await addressService.setDefaultAddress(id);
+      setAddresses(addresses.map(a => ({ ...a, isDefault: a.id === id })));
+      showNotification('Default address updated!');
+    } catch (error) {
+      console.error('Failed to set default address:', error);
+      showNotification('Failed to update default address', 'error');
+    }
   };
 
   const handleDeletePaymentMethod = (id) => {
@@ -283,8 +386,36 @@ useEffect(() => {
     showNotification('Default payment method updated!');
   };
 
-  const handlePreferenceChange = (key) => {
-    setPreferences({ ...preferences, [key]: !preferences[key] });
+  const handlePreferenceChange = async (key) => {
+    const newPreferences = { ...preferences, [key]: !preferences[key] };
+    setPreferences(newPreferences);
+    
+    // Debounce the API call
+    clearTimeout(window.prefTimeout);
+    window.prefTimeout = setTimeout(async () => {
+      try {
+        await profileService.updatePreferences({
+          [key]: newPreferences[key]
+        });
+        showNotification('Preferences saved!');
+      } catch (error) {
+        console.error('Failed to save preferences:', error);
+        showNotification('Failed to save preferences', 'error');
+      }
+    }, 500);
+  };
+
+  const handlePreferenceSelectChange = async (key, value) => {
+    const newPreferences = { ...preferences, [key]: value };
+    setPreferences(newPreferences);
+    
+    try {
+      await profileService.updatePreferences({ [key]: value });
+      showNotification('Preferences saved!');
+    } catch (error) {
+      console.error('Failed to save preferences:', error);
+      showNotification('Failed to save preferences', 'error');
+    }
   };
 
   const handleAccountDelete = () => {
@@ -296,24 +427,16 @@ useEffect(() => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-KE', {
       style: 'currency',
-      currency: 'KES',
+      currency: preferences.currency,
       minimumFractionDigits: 0
     }).format(amount);
   };
 
-  // Show loading while user data is being fetched
-if (!user || loading) {
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-green-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600 font-medium">Loading profile...</p>
-      </div>
-    </div>
-  );
-}
+  // Navigation handlers
+  const handleOrdersClick = () => navigate('/orders');
+  const handleWishlistClick = () => navigate('/wishlist');
 
-  if (loading) {
+  if (!user || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -396,7 +519,10 @@ if (!user || loading) {
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center">
+              <div 
+                className="text-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                onClick={handleOrdersClick}
+              >
                 <div className="text-xl md:text-2xl font-bold text-gray-900">{stats.totalOrders}</div>
                 <div className="text-xs text-gray-600">Orders</div>
               </div>
@@ -404,7 +530,10 @@ if (!user || loading) {
                 <div className="text-xl md:text-2xl font-bold text-green-600">{formatCurrency(stats.totalSpent)}</div>
                 <div className="text-xs text-gray-600">Spent</div>
               </div>
-              <div className="text-center">
+              <div 
+                className="text-center cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                onClick={handleWishlistClick}
+              >
                 <div className="text-xl md:text-2xl font-bold text-gray-900">{stats.wishlistItems}</div>
                 <div className="text-xs text-gray-600">Wishlist</div>
               </div>
@@ -960,25 +1089,23 @@ if (!user || loading) {
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Login Activity</h3>
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">Current Session</p>
-                          <p className="text-xs text-gray-600">Nairobi, Kenya • Chrome on Linux</p>
-                        </div>
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded">Active</span>
-                      </div>
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">2 hours ago</p>
-                          <p className="text-xs text-gray-600">Nairobi, Kenya • Mobile Safari on iPhone</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">Yesterday</p>
-                          <p className="text-xs text-gray-600">Nairobi, Kenya • Chrome on Android</p>
-                        </div>
-                      </div>
+                      {loginActivity.length === 0 ? (
+                        <p className="text-gray-500 text-sm">No recent login activity found.</p>
+                      ) : (
+                        loginActivity.slice(0, 3).map((activity) => (
+                          <div key={activity.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {activity.isCurrentSession ? 'Current Session' : activity.date}
+                              </p>
+                              <p className="text-xs text-gray-600">Nairobi, Kenya • {activity.device}</p>
+                            </div>
+                            {activity.isCurrentSession && (
+                              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded">Active</span>
+                            )}
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1133,7 +1260,7 @@ if (!user || loading) {
                       </label>
                       <select
                         value={preferences.language}
-                        onChange={(e) => setPreferences({ ...preferences, language: e.target.value })}
+                        onChange={(e) => handlePreferenceSelectChange('language', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       >
                         <option value="en">English</option>
@@ -1147,7 +1274,7 @@ if (!user || loading) {
                       </label>
                       <select
                         value={preferences.currency}
-                        onChange={(e) => setPreferences({ ...preferences, currency: e.target.value })}
+                        onChange={(e) => handlePreferenceSelectChange('currency', e.target.value)}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       >
                         <option value="KES">KES - Kenyan Shilling</option>
@@ -1158,7 +1285,7 @@ if (!user || loading) {
                   </div>
                 </div>
 
-                <div className="mt-6">
+                  <div className="mt-6">
                   <button
                     onClick={() => showNotification('Preferences saved successfully!')}
                     className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
@@ -1166,6 +1293,10 @@ if (!user || loading) {
                     <Save className="w-5 h-5 inline mr-2" />
                     Save Preferences
                   </button>
+                </div>
+
+                <div className="mt-6">
+                  <p className="text-sm text-gray-500">Otherwise preferences are saved automatically when you make changes.</p>
                 </div>
               </div>
             )}

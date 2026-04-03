@@ -15,6 +15,7 @@ class Address extends Model
         'city',
         'county',
         'postal_code',
+        'delivery_instructions',
         'country',
         'type',
         'is_default',

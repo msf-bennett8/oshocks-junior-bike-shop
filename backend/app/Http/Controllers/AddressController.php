@@ -34,6 +34,7 @@ class AddressController extends Controller
             'city' => 'required|string|max:100',
             'county' => 'required|string|max:100',
             'postal_code' => 'nullable|string|max:10',
+            'delivery_instructions' => 'nullable|string|max:1000',
             'country' => 'required|string|max:100',
             'type' => 'required|in:home,work,other',
             'is_default' => 'boolean',
@@ -44,6 +45,21 @@ class AddressController extends Controller
                 'success' => false,
                 'errors' => $validator->errors()
             ], 422);
+        }
+
+        // Check for duplicate address (same location details)
+        $existing = $request->user()->addresses()
+            ->where('address_line1', $request->address_line1)
+            ->where('city', $request->city)
+            ->where('county', $request->county)
+            ->where('postal_code', $request->postal_code ?? '')
+            ->first();
+
+        if ($existing) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This address already exists in your saved addresses'
+            ], 409);
         }
 
         $address = $request->user()->addresses()->create($validator->validated());
@@ -74,6 +90,7 @@ class AddressController extends Controller
             'city' => 'string|max:100',
             'county' => 'string|max:100',
             'postal_code' => 'nullable|string|max:10',
+            'delivery_instructions' => 'nullable|string|max:1000',
             'country' => 'string|max:100',
             'type' => 'in:home,work,other',
             'is_default' => 'boolean',
