@@ -68,8 +68,25 @@ export const WishlistProvider = ({ children }) => {
         if (response.data) {
         // Reload wishlist to get updated data
         await loadWishlistFromAPI();
-        return { success: true, message: response.data.message };
+
+        // Log wishlist add event
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+          logFrontendAuditEvent(AUDIT_EVENTS.WISHLIST_ITEM_ADDED, {
+            category: 'wishlist',
+            severity: 'low',
+            metadata: {
+              product_id: product.id,
+              product_name: product.name,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
         }
+
+        return { success: true, message: response.data.message };
+    }
     } catch (error) {
         console.error('Error adding to wishlist:', error);
         return { 
@@ -87,6 +104,21 @@ export const WishlistProvider = ({ children }) => {
         setLoading(true);
 
         await api.delete(`/wishlist/items/${itemId}`);
+
+        // Log wishlist remove event
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+          logFrontendAuditEvent(AUDIT_EVENTS.WISHLIST_ITEM_REMOVED, {
+            category: 'wishlist',
+            severity: 'low',
+            metadata: {
+              item_id: itemId,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
 
         // Reload wishlist
         await loadWishlistFromAPI();

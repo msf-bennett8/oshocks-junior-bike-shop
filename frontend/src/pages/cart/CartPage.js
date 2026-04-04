@@ -186,6 +186,31 @@ const CartPage = () => {
   // Generate safe page title
   const pageTitle = `Shopping Cart (${totalItems}) - Oshocks Junior Bike Shop`;
 
+  // Cart abandonment tracking
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (cartItems.length > 0) {
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = require('../../utils/auditUtils');
+          logFrontendAuditEvent(AUDIT_EVENTS.CART_ABANDONED, {
+            category: 'cart',
+            severity: 'medium',
+            metadata: {
+              item_count: cartItems.length,
+              total_value: subtotal,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [cartItems, subtotal]);
+
   // Empty cart view
   if (cartItems.length === 0) {
     return (

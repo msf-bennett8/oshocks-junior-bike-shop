@@ -2,6 +2,7 @@
 // API SERVICE - Centralized API calls with Railway backend
 // ============================================================================
 
+import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 
 // Base API URL - Railway backend
@@ -38,6 +39,36 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
       console.log('🔐 Auth token added to request');
     }
+    
+    // ============================================================================
+    // AUDIT HEADERS - Added for backend audit log correlation
+    // ============================================================================
+    const correlationId = sessionStorage.getItem('x_correlation_id') || uuidv4();
+    const sessionId = sessionStorage.getItem('x_session_id') || (() => { const sid = uuidv4(); sessionStorage.setItem('x_session_id', sid); return sid; })();
+    const requestId = uuidv4();
+    
+    // Store correlation/session IDs if new
+    if (!sessionStorage.getItem('x_correlation_id')) {
+      sessionStorage.setItem('x_correlation_id', correlationId);
+    }
+    
+    config.headers['X-Correlation-ID'] = correlationId;
+    config.headers['X-Session-ID'] = sessionId;
+    config.headers['X-Request-ID'] = requestId;
+    config.headers['X-Timezone'] = Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown';
+    config.headers['X-Screen-Info'] = `${window.screen.width}x${window.screen.height}x${window.screen.colorDepth}`;
+    
+    // Device fingerprint (if available)
+    const deviceFp = sessionStorage.getItem('device_fingerprint');
+    if (deviceFp) {
+      config.headers['X-Device-Fingerprint'] = deviceFp;
+    }
+    
+    console.log('📊 Audit headers added:', {
+      correlationId: correlationId.slice(0, 8) + '...',
+      sessionId: sessionId.slice(0, 8) + '...',
+      requestId: requestId.slice(0, 8) + '...',
+    });
     
     // Add effective role header for role switching (super_admin only)
     const switchedRole = localStorage.getItem('oshocks_switched_role');

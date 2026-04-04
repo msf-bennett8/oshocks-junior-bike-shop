@@ -34,6 +34,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
             'optional' => \App\Http\Middleware\OptionalAuth::class,
+            'audit' => \App\Http\Middleware\AuditMiddleware::class,
+            'security.monitor' => \App\Http\Middleware\SecurityMonitoringMiddleware::class,
+            'api.key' => \App\Http\Middleware\ApiKeyAuth::class,
+            'api.rate' => \App\Http\Middleware\ApiRateLimiter::class,
+            'effective.role' => \App\Http\Middleware\CheckEffectiveRole::class,
         ]);
         
         // Trust Railway proxies and force HTTPS

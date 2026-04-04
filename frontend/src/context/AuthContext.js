@@ -234,6 +234,21 @@ const login = async (credentials) => {
       setUser(data.user);
       setIsAuthenticated(true);
 
+      // Log Google login success
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+        logFrontendAuditEvent(AUDIT_EVENTS.LOGIN_SUCCESS, {
+          category: 'auth',
+          severity: 'medium',
+          metadata: {
+            method: 'google_oauth',
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
+
       return { success: true, user: data.user };
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Google login failed';
@@ -255,6 +270,21 @@ const login = async (credentials) => {
       // Update state
       setUser(data.user);
       setIsAuthenticated(true);
+
+      // Log Strava login success
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+        logFrontendAuditEvent(AUDIT_EVENTS.LOGIN_SUCCESS, {
+          category: 'auth',
+          severity: 'medium',
+          metadata: {
+            method: 'strava_oauth',
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
 
       return { success: true, user: data.user };
     } catch (err) {

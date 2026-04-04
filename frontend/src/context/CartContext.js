@@ -233,6 +233,25 @@ const addToCart = async (product, quantity = 1, variant = null, selectedSize = n
       console.log('✅ ========================================');
       console.log('✅ ADD TO CART SUCCESSFUL');
       console.log('✅ ========================================');
+
+      // Log cart add event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+        logFrontendAuditEvent(AUDIT_EVENTS.CART_ITEM_ADDED, {
+          category: 'cart',
+          severity: 'low',
+          metadata: {
+            product_id: product.id,
+            product_name: product.name,
+            quantity: quantity,
+            price: product.price,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
+
       return { success: true, message: 'Item added to cart' };
     } catch (err) {
       console.error('❌ ========================================');
@@ -272,6 +291,21 @@ const removeFromCart = async (itemId) => {
         // For guest users, manage locally
         const updatedCart = cartItems.filter(item => item.id !== itemId);
         setCartItems(updatedCart);
+      }
+
+      // Log cart remove event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+        logFrontendAuditEvent(AUDIT_EVENTS.CART_ITEM_REMOVED, {
+          category: 'cart',
+          severity: 'low',
+          metadata: {
+            item_id: itemId,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail
       }
 
       return { success: true, message: 'Item removed from cart' };

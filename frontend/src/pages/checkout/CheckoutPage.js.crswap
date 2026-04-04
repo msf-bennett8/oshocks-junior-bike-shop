@@ -264,7 +264,7 @@ const countyInfo = {
     return Object.keys(newErrors).length === 0;
   };
   
-  const handleShippingSubmit = async (e) => {
+  const handleShippingSubmit = (e) => {
     e.preventDefault();
     if (validateShipping()) {
       // Log checkout step progression
@@ -448,25 +448,6 @@ const countyInfo = {
         // Order created successfully
         const createdOrder = result.data.order;
         const createdItems = result.data.items;
-
-        // Log order created event
-        try {
-          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
-          logFrontendAuditEvent(AUDIT_EVENTS.ORDER_CREATED, {
-            category: 'order',
-            severity: 'medium',
-            metadata: {
-              order_id: createdOrder.id,
-              order_number: createdOrder.order_number,
-              total: createdOrder.total,
-              payment_method: paymentMethod,
-              item_count: cartItems.length,
-              timestamp: new Date().toISOString(),
-            },
-          });
-        } catch (e) {
-          // Silently fail
-        }
 
         // Handle M-Pesa payment if selected
         if (paymentMethod === 'mpesa') {

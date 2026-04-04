@@ -1,2 +1,2 @@
-web: vendor/bin/heroku-php-apache2 public/
-release: php artisan config:clear && php artisan migrate --force
+web: sh -c 'echo "APP_KEY=$APP_KEY" > .env && php artisan config:clear 2>/dev/null; php artisan migrate --force 2>/dev/null; vendor/bin/heroku-php-apache2 public/'
+release: echo "APP_KEY=$APP_KEY" > .env && php artisan config:clear && php artisan migrate --force

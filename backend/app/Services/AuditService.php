@@ -48,7 +48,7 @@ class AuditService
                 // Action
                 'action' => $data['action'] ?? 'unknown',
                 'model_type' => $data['model_type'] ?? null,
-                'model_id' => $data['model_id'] ?? null,
+                'model_id' => self::sanitizeModelId($data['model_id'] ?? null),
                 'description' => $data['description'] ?? '',
                 
                 // Data
@@ -644,6 +644,36 @@ class AuditService
         return hash('sha256', $ip . config('app.key'));
     }
 
+    /**
+     * Sanitize model_id to ensure it fits database column
+     */
+    private static function sanitizeModelId($modelId): ?string
+    {
+        if ($modelId === null) {
+            return null;
+        }
+        
+        // Convert to string
+        $modelId = (string) $modelId;
+        
+        // If it's 'unknown' or similar placeholder, convert to null
+        if (in_array($modelId, ['unknown', 'null', ''])) {
+            return null;
+        }
+        
+        // If numeric, return as-is
+        if (is_numeric($modelId)) {
+            return $modelId;
+        }
+        
+        // If longer than 64 chars, hash it
+        if (strlen($modelId) > 64) {
+            return substr(hash('sha256', $modelId), 0, 32);
+        }
+        
+        return $modelId;
+    }
+
     // ==================== PHASE 2: ORDER LIFECYCLE EVENTS ====================
 
     /**
@@ -1130,7 +1160,7 @@ class AuditService
             'action' => 'shipped',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Order {$order->order_number} shipped via {$context['carrier'] ?? 'Unknown'}",
+            'description' => "Order {$order->order_number} shipped via " . ($context['carrier'] ?? 'Unknown'),
             'severity' => 'HIGH',
             'metadata' => [
                 'order_id' => $order->id,
@@ -4220,7 +4250,7 @@ class AuditService
             'user_id' => $user->id,
             'action' => 'accessed',
             'model_type' => $context['resource_type'],
-            'model_id' => $context['resource_id'],
+            'model_id' => is_numeric($context['resource_id']) ? $context['resource_id'] : null,
             'description' => "Resource accessed: {$context['resource_type']}/{$context['resource_id']}",
             'severity' => 'HIGH',
             'tier' => 'TIER_1_IMMUTABLE',
@@ -4380,7 +4410,7 @@ class AuditService
             'user_id' => $user->id,
             'action' => 'fingerprint_created',
             'model_type' => 'Device',
-            'model_id' => $context['fingerprint_hash'],
+            'model_id' => null, // Fingerprint hash too long, stored in metadata
             'description' => "New device fingerprint created for {$user->email}",
             'severity' => 'MEDIUM',
             'tier' => 'TIER_1_IMMUTABLE',
@@ -5614,61 +5644,7 @@ class AuditService
         ]);
     }
 
-    /**
-     * REFERRAL_CODE_GENERATED - New code created
-     */
-    public static function logReferralCodeGenerated($user, array $context = []): ?AuditLog
-    {
-        return self::log([
-            'event_type' => 'REFERRAL_CODE_GENERATED',
-            'event_category' => 'business',
-            'actor_type' => 'USER',
-            'user_id' => $user->id,
-            'action' => 'code_generated',
-            'model_type' => 'ReferralCode',
-            'model_id' => $context['referral_code'],
-            'description' => "Referral code generated: {$context['referral_code']}",
-            'severity' => 'LOW',
-            'tier' => 'TIER_3_ANALYTICS',
-            'metadata' => [
-                'referral_code' => $context['referral_code'],
-            ],
-            'payload' => [
-                'referral_code' => $context['referral_code'],
-            ],
-        ]);
-    }
 
-    /**
-     * REFERRAL_COMPLETED - Successful referral
-     */
-    public static function logReferralCompleted($user, array $context = []): ?AuditLog
-    {
-        return self::log([
-            'event_type' => 'REFERRAL_COMPLETED',
-            'event_category' => 'business',
-            'actor_type' => 'SYSTEM',
-            'user_id' => $user->id,
-            'action' => 'referral_completed',
-            'model_type' => 'ReferralUsage',
-            'model_id' => $context['order_id'],
-            'description' => "Referral completed: reward issued",
-            'severity' => 'LOW',
-            'tier' => 'TIER_3_ANALYTICS',
-            'metadata' => [
-                'referrer_user_id' => $context['referrer_user_id'],
-                'referee_user_id' => $context['referee_user_id'],
-                'referral_code' => $context['referral_code'],
-                'order_id' => $context['order_id'],
-                'reward_issued' => $context['reward_issued'],
-            ],
-            'payload' => [
-                'referral_code' => $context['referral_code'],
-                'order_id' => $context['order_id'],
-                'reward_issued' => $context['reward_issued'],
-            ],
-        ]);
-    }
 
     /**
      * WISHLIST_ITEM_ADDED - Product saved

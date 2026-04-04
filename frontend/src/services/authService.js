@@ -136,6 +136,23 @@ login: async (credentials) => {
         hasUser: !!response.data?.user
       });
 
+      // Log successful login audit event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+        logFrontendAuditEvent(AUDIT_EVENTS.LOGIN_SUCCESS, {
+          category: 'auth',
+          severity: 'medium',
+          metadata: {
+            login_identifier: requestData.login,
+            method: 'password',
+            endpoint: endpoint,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail - audit should not break auth
+      }
+
       return response.data;
     } catch (error) {
       if (error.response?.status === 404) {
@@ -188,6 +205,17 @@ login: async (credentials) => {
         }
       } catch (error) {
         console.error('⚠️ Logout API error (continuing anyway):', error.message);
+      }
+      // Log logout audit event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+        logFrontendAuditEvent(AUDIT_EVENTS.LOGOUT, {
+          category: 'auth',
+          severity: 'low',
+          metadata: { timestamp: new Date().toISOString() },
+        });
+      } catch (e) {
+        // Silently fail
       }
     }
     
@@ -413,6 +441,21 @@ googleLogin: async (code) => {
       throw new Error('No authentication token received');
     }
 
+    // Log Google login success
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+      logFrontendAuditEvent(AUDIT_EVENTS.LOGIN_SUCCESS, {
+        category: 'auth',
+        severity: 'medium',
+        metadata: {
+          method: 'google_oauth',
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      // Silently fail
+    }
+
     return authData;
   } catch (error) {
     console.error('❌ Google login failed');
@@ -486,6 +529,21 @@ stravaLogin: async (code) => {
     } else {
       console.error('❌ No token in response');
       throw new Error('No authentication token received');
+    }
+
+    // Log Strava login success
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+      logFrontendAuditEvent(AUDIT_EVENTS.LOGIN_SUCCESS, {
+        category: 'auth',
+        severity: 'medium',
+        metadata: {
+          method: 'strava_oauth',
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      // Silently fail
     }
 
     return authData;

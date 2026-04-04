@@ -84,7 +84,7 @@ class AuditContextService
     {
         if (!$ip) return null;
         
-        if (!config('audit.pii.hash_ips')) {
+        if (!config('audit.pii.hash_ips', true)) {
             return $ip;
         }
 

@@ -675,6 +675,16 @@ function sendErrorToService(errorData) {
 // ============================================================================
 
 function initializeApp() {
+  // Initialize audit session on app start
+  try {
+    const { getCorrelationId, getSessionId } = require('./utils/auditUtils');
+    getCorrelationId();
+    getSessionId();
+    console.log('📊 Audit session initialized');
+  } catch (e) {
+    // Silently fail
+  }
+
   const rootElement = document.getElementById('root');
   
   if (!rootElement) {
