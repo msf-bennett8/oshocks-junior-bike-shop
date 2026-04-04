@@ -35,7 +35,7 @@ class EventServiceProvider extends ServiceProvider
 
         // Phase 6: Cache events for audit logging
         KeyForgotten::class => [
-            CacheEventListener::class,
+            [CacheEventListener::class, 'handleKeyForgotten'],
         ],
         KeyWritten::class => [
             [CacheEventListener::class, 'handleKeyWritten'],

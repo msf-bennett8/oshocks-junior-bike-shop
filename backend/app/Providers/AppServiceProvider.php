@@ -5,7 +5,11 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Socialite\Contracts\Factory as SocialiteFactory;
 use App\Models\User;  
+use App\Models\Order;  
+use App\Models\Product;  
 use App\Observers\UserObserver;  
+use App\Observers\OrderObserver;  
+use App\Observers\ProductObserver;  
 use App\Services\CloudinaryService;  
 
 class AppServiceProvider extends ServiceProvider
@@ -28,8 +32,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register Observers
         User::observe(UserObserver::class);
-        Order::observe(\App\Observers\OrderObserver::class);
-        Product::observe(\App\Observers\ProductObserver::class);
+        Order::observe(OrderObserver::class);
+        Product::observe(ProductObserver::class);
         
         // Register Strava Socialite Provider
         $this->app->make(SocialiteFactory::class)->extend('strava', function ($app) {

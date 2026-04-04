@@ -51,7 +51,7 @@ return new class extends Migration
                 $table->foreignId('seller_id')->nullable()->constrained('seller_profiles')->after('booking_id');
             }
             if (!Schema::hasColumn('reviews', 'review_text_hash')) {
-                $table->string('review_text_hash')->nullable()->after('review_text');
+                $table->string('review_text_hash')->nullable()->after('comment');
             }
             if (!Schema::hasColumn('reviews', 'media_count')) {
                 $table->integer('media_count')->default(0)->after('review_text_hash');
