@@ -42,23 +42,11 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
-        // Log user registration
-        AuditService::log([
-            'event_type' => 'user_registered',
-            'event_category' => 'security',
-            'action' => 'created',
-            'user_id' => $user->id,
-            'user_role' => $user->role,
-            'model_type' => 'User',
-            'model_id' => $user->id,
-            'description' => "New user registered: {$user->email}",
-            'new_values' => [
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'role' => $user->role,
-            ],
-            'severity' => 'low',
+        // Log account creation with new standardized event
+        AuditService::logAccountCreated($user, [
+            'registration_method' => 'standard',
+            'ip_address' => $request->ip(),
+            'referral_code' => $request->referral_code ?? null,
         ]);
 
         return response()->json([
@@ -83,20 +71,11 @@ class AuthController extends Controller
         $user = User::where($loginField, $request->login)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            // Log failed login attempt
-            AuditService::log([
-                'event_type' => 'login_failed',
-                'event_category' => 'security',
-                'action' => 'failed',
-                'user_id' => null,
-                'user_role' => null,
-                'description' => "Failed login attempt for: {$request->login}",
-                'metadata' => [
-                    'login_field' => $loginField,
-                    'login_value' => $request->login,
-                ],
-                'severity' => 'medium',
-                'is_suspicious' => true,
+            // Log failed login attempt with new standardized event
+            AuditService::logLoginFailed($request->login, [
+                'login_field' => $loginField,
+                'failure_reason' => 'invalid_credentials',
+                'failure_count' => $this->getFailedAttempts($request->login),
             ]);
 
             throw ValidationException::withMessages([
@@ -106,18 +85,11 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
-        // Log successful login
-        AuditService::log([
-            'event_type' => 'login_success',
-            'event_category' => 'security',
-            'action' => 'accessed',
-            'user_id' => $user->id,
-            'user_role' => $user->role,
-            'description' => "User logged in successfully: {$user->email}",
-            'metadata' => [
-                'login_method' => $loginField,
-            ],
-            'severity' => 'low',
+        // Log successful login with new standardized event
+        AuditService::logLoginSuccess($user, [
+            'login_method' => $loginField,
+            'mfa_used' => false, // Update when MFA is implemented
+            'session_id' => hash('sha256', substr($token, 0, 20)),
         ]);
 
         return response()->json([
@@ -131,17 +103,19 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $user = $request->user();
+        $token = $request->bearerToken();
+        
+        // Calculate session duration if possible
+        $sessionStart = cache()->get('session_start:' . $user->id);
+        $sessionDuration = $sessionStart ? now()->diffInSeconds($sessionStart) : null;
+        
         $request->user()->currentAccessToken()->delete();
 
-        // Log logout
-        AuditService::log([
-            'event_type' => 'logout',
-            'event_category' => 'security',
-            'action' => 'accessed',
-            'user_id' => $user->id,
-            'user_role' => $user->role,
-            'description' => "User logged out: {$user->email}",
-            'severity' => 'low',
+        // Log logout with new standardized event
+        AuditService::logLogout($user, [
+            'session_id' => $token ? hash('sha256', substr($token, 0, 20)) : null,
+            'session_duration' => $sessionDuration,
+            'logout_reason' => 'explicit',
         ]);
 
         return response()->json([
@@ -172,17 +146,17 @@ class AuthController extends Controller
         $user->update($request->only(['name', 'phone', 'address']));
         $newValues = $user->only(['name', 'phone', 'address']);
 
-        // Log profile update
-        AuditService::log([
-            'event_type' => 'profile_updated',
-            'event_category' => 'user',
-            'action' => 'updated',
-            'model_type' => 'User',
-            'model_id' => $user->id,
-            'description' => "User profile updated: {$user->email}",
-            'old_values' => $oldValues,
-            'new_values' => $newValues,
-            'severity' => 'low',
+        // Determine changed fields
+        $changedFields = [];
+        foreach ($newValues as $key => $value) {
+            if ($oldValues[$key] !== $value) {
+                $changedFields[] = $key;
+            }
+        }
+
+        // Log profile update with new standardized event
+        AuditService::logProfileUpdated($user, $changedFields, $oldValues, $newValues, [
+            'updated_by' => $user->id,
         ]);
 
         return response()->json([
@@ -202,14 +176,12 @@ class AuthController extends Controller
         $user = $request->user();
 
         if (!Hash::check($request->current_password, $user->password)) {
-            // Log failed password change
-            AuditService::log([
-                'event_type' => 'password_change_failed',
-                'event_category' => 'security',
-                'action' => 'failed',
-                'description' => "Failed password change attempt: {$user->email}",
-                'severity' => 'medium',
-                'is_suspicious' => true,
+            // Log suspicious activity for failed password change
+            AuditService::logSuspiciousActivity("Failed password change attempt: {$user->email}", [
+                'user_id' => $user->id,
+                'activity_type' => 'password_change_failed',
+                'risk_score' => 60,
+                'action_taken' => 'logged',
             ]);
 
             throw ValidationException::withMessages([
@@ -221,15 +193,10 @@ class AuthController extends Controller
             'password' => Hash::make($request->new_password)
         ]);
 
-        // Log successful password change
-        AuditService::log([
-            'event_type' => 'password_changed',
-            'event_category' => 'security',
-            'action' => 'updated',
-            'model_type' => 'User',
-            'model_id' => $user->id,
-            'description' => "Password changed successfully: {$user->email}",
-            'severity' => 'medium',
+        // Log password change with new standardized event
+        AuditService::logPasswordChanged($user, [
+            'changed_by' => 'self',
+            'method' => 'direct',
         ]);
 
         return response()->json([
@@ -636,5 +603,62 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'User deleted successfully'
         ]);
+    }
+
+
+        /**
+     * Get failed login attempts for a user identifier
+     */
+    private function getFailedAttempts(string $identifier): int
+    {
+        $key = 'login_attempts:' . hash('sha256', $identifier);
+        return cache()->get($key, 0);
+    }
+
+    /**
+     * Increment failed login attempts
+     */
+    private function incrementFailedAttempts(string $identifier): void
+    {
+        $key = 'login_attempts:' . hash('sha256', $identifier);
+        $attempts = cache()->increment($key);
+        cache()->put($key, $attempts, now()->addMinutes(30));
+        
+        // Lock account after 5 failed attempts
+        if ($attempts >= 5) {
+            $this->lockAccount($identifier);
+        }
+    }
+
+    /**
+     * Lock account due to too many failed attempts
+     */
+    private function lockAccount(string $identifier): void
+    {
+        $user = User::where('email', $identifier)
+            ->orWhere('username', $identifier)
+            ->orWhere('phone', $identifier)
+            ->first();
+
+        if ($user) {
+            // Log account locked
+            AuditService::logAccountLocked($user, [
+                'reason' => 'brute_force',
+                'lock_duration' => 3600, // 1 hour
+                'unlock_at' => now()->addHour(),
+            ]);
+            
+            // TODO: Implement actual account locking logic
+            // $user->update(['locked_until' => now()->addHour()]);
+        }
+    }
+
+    /**
+     * Clear failed login attempts
+     */
+    private function clearFailedAttempts(string $identifier): void
+    {
+        $key = 'login_attempts:' . hash('sha256', $identifier);
+        cache()->forget($key);
     }
 }

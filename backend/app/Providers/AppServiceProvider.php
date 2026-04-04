@@ -21,13 +21,15 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-   /**
+    /**
      * Bootstrap any application services.
      */
     public function boot(): void
     {
-        // Register User Observer
+        // Register Observers
         User::observe(UserObserver::class);
+        Order::observe(\App\Observers\OrderObserver::class);
+        Product::observe(\App\Observers\ProductObserver::class);
         
         // Register Strava Socialite Provider
         $this->app->make(SocialiteFactory::class)->extend('strava', function ($app) {
@@ -39,6 +41,12 @@ class AppServiceProvider extends ServiceProvider
                 $config['redirect']
             );
         });
+        
+        // Initialize audit context for console commands
+        if ($this->app->runningInConsole()) {
+            \App\Services\AuditContextService::set('correlation_id', 'console-' . uniqid());
+            \App\Services\AuditContextService::set('actor_type', 'SYSTEM');
+        }
         
         // Force HTTPS in production
         if (config('app.env') === 'production') {

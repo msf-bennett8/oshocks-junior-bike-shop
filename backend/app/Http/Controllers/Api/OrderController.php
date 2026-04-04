@@ -179,28 +179,10 @@ class OrderController extends Controller
                 }
             }
 
-            // Log order creation
-            AuditService::log([
-                'event_type' => 'order_created',
-                'event_category' => 'order',
-                'action' => 'created',
-                'model_type' => 'Order',
-                'model_id' => $order->id,
-                'description' => "Order created: {$order->order_number} - KES {$order->total} by {$request->customer_name}",
-                'new_values' => [
-                    'order_number' => $order->order_number,
-                    'total' => $order->total,
-                    'payment_method' => $order->payment_method,
-                    'customer_name' => $order->customer_name,
-                    'customer_phone' => $order->customer_phone,
-                ],
-                'metadata' => [
-                    'items_count' => count($itemsData),
-                    'items' => $itemsData,
-                    'county' => $request->county,
-                    'zone' => $request->zone,
-                ],
-                'severity' => 'low',
+            // Log order placed with new standardized event
+            AuditService::logOrderPlaced($order, [
+                'cart_id' => $cart->id ?? null,
+                'items' => $itemsData,
             ]);
 
             DB::commit();
@@ -915,28 +897,24 @@ class OrderController extends Controller
             // Reload to get fresh data
             $order->refresh();
 
-            // Log payment recording in audit trail
+            // Log payment success with new standardized event
             try {
-                \App\Services\AuditService::log([
-                    'event_type' => 'payment_recorded',
-                    'event_category' => 'payment',
-                    'action' => 'created',
-                    'model_type' => 'Order',
-                    'model_id' => $order->id,
-                    'description' => "Payment recorded for order {$order->order_number} - KES {$request->amount_received} via {$request->payment_method}",
-                    'new_values' => [
-                        'order_number' => $order->order_number,
-                        'amount_received' => $request->amount_received,
-                        'payment_method' => $request->payment_method,
-                        'county' => $request->county,
-                        'zone' => $request->zone,
-                    ],
-                    'metadata' => $paymentNotesData,
-                    'severity' => 'medium',
+                $payment = $order->payment;
+                if ($payment) {
+                    AuditService::logPaymentSuccessful($payment, [
+                        'processor_response_code' => 'success',
+                        'settlement_date' => now()->addDays(1)->toDateString(),
+                    ]);
+                }
+                
+                // Also log order payment pending/processing as appropriate
+                AuditService::logOrderPaymentProcessing($order, [
+                    'payment_intent_id' => $transactionReference,
                 ]);
-                \Log::info('✅ Audit log created successfully');
+                
+                \Log::info('✅ Payment audit logs created successfully');
             } catch (\Exception $e) {
-                \Log::error('❌ Failed to create audit log: ' . $e->getMessage());
+                \Log::error('❌ Failed to create payment audit log: ' . $e->getMessage());
             }
 
             \Log::info('✅ Payment recorded successfully', [
@@ -1021,24 +999,29 @@ class OrderController extends Controller
         
         $order->save();
 
-        // Log status change
-        AuditService::log([
-            'event_type' => 'order_status_changed',
-            'event_category' => 'order',
-            'action' => 'updated',
-            'model_type' => 'Order',
-            'model_id' => $order->id,
-            'description' => "Order {$order->order_number} status changed from {$oldStatus} to {$request->status} by " . auth()->user()->name,
-            'old_values' => ['status' => $oldStatus],
-            'new_values' => ['status' => $request->status],
-            'metadata' => [
-                'order_number' => $order->order_number,
-                'customer_phone' => $order->customer_phone,
-                'total' => $order->total,
-                'notes' => $request->notes,
-            ],
-            'severity' => 'medium',
+        // Log status change with new standardized event
+        AuditService::logOrderStatusChanged($order, $oldStatus, $request->status, [
+            'changed_by' => auth()->id(),
+            'reason' => $request->notes,
+            'automatic' => false,
         ]);
+
+        // Log specific events based on new status
+        if ($request->status === 'shipped') {
+            AuditService::logOrderShipped($order, [
+                'shipment_id' => $context['shipment_id'] ?? null,
+                'tracking_number' => $order->order_display,
+                'carrier' => $order->carrier ?? 'Oshocks Delivery',
+                'estimated_delivery' => $order->estimated_delivery_date,
+            ]);
+        }
+
+        if ($request->status === 'delivered') {
+            AuditService::logOrderDelivered($order, [
+                'delivered_at' => now(),
+                'signature_confirmed' => false,
+            ]);
+        }
 
         return response()->json([
             'success' => true,
@@ -1087,29 +1070,20 @@ class OrderController extends Controller
         $order->status = 'cancelled';
         $order->save();
 
-        // Log cancellation
-        AuditService::log([
-            'event_type' => 'order_cancelled',
-            'event_category' => 'order',
-            'action' => 'updated',
-            'model_type' => 'Order',
-            'model_id' => $order->id,
-            'description' => "Order {$order->order_number} cancelled by " . auth()->user()->name . " - Reason: {$request->reason}",
-            'old_values' => [
-                'status' => $oldStatus,
-                'payment_status' => $oldPaymentStatus,
-            ],
-            'new_values' => [
-                'status' => 'cancelled',
-                'cancellation_reason' => $request->reason,
-            ],
-            'metadata' => [
-                'order_number' => $order->order_number,
-                'total' => $order->total,
-                'reason' => $request->reason,
-            ],
-            'severity' => 'high',
+        // Log cancellation with new standardized event
+        AuditService::logOrderCancelled($order, $request->reason, auth()->user(), [
+            'refund_initiated' => $order->payment_status === 'paid',
+            'inventory_released' => true,
         ]);
+
+        // Release inventory for cancelled order
+        foreach ($order->orderItems as $item) {
+            $product = $item->product;
+            if ($product) {
+                $product->increaseStock($item->quantity);
+                AuditService::logInventoryReleased($order, $product, $item->quantity, 'cancelled');
+            }
+        }
 
         return response()->json([
             'success' => true,

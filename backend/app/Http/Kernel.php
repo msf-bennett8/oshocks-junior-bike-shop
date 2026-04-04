@@ -69,5 +69,10 @@ class Kernel extends HttpKernel
         'role' => \App\Http\Middleware\CheckRole::class,
         'optional' => \App\Http\Middleware\OptionalAuth::class,
         'effective.role' => \App\Http\Middleware\CheckEffectiveRole::class,
+        'audit' => \App\Http\Middleware\AuditMiddleware::class,
+        'api.key' => \App\Http\Middleware\ApiKeyAuth::class,
+        'api.rate' => \App\Http\Middleware\ApiRateLimiter::class,
+        'security.monitor' => \App\Http\Middleware\SecurityMonitoringMiddleware::class,
+        'query.monitor' => \App\Http\Middleware\PrivilegedQueryMonitoringMiddleware::class,
     ];
 }

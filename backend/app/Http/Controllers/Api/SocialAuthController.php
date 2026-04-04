@@ -132,6 +132,17 @@ class SocialAuthController extends Controller
             ]);
             Log::info('========== GOOGLE OAUTH END ==========');
 
+            // Log OAuth login success
+            AuditService::logLoginSuccess($user, [
+                'login_method' => 'google_oauth',
+                'mfa_used' => false,
+                'session_id' => hash('sha256', substr($token, 0, 20)),
+                'device_info' => [
+                    'provider' => 'google',
+                    'is_new_account' => $user->wasRecentlyCreated ?? false,
+                ],
+            ]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Successfully authenticated with Google',
@@ -152,6 +163,12 @@ class SocialAuthController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             Log::info('========== GOOGLE OAUTH END (ERROR) ==========');
+
+            // Log OAuth failure
+            AuditService::logLoginFailed('google_oauth', [
+                'login_field' => 'oauth',
+                'failure_reason' => 'oauth_error: ' . $e->getMessage(),
+            ]);
             
             return response()->json([
                 'success' => false,
@@ -269,6 +286,17 @@ class SocialAuthController extends Controller
                 'user_id' => $user->id,
             ]);
             Log::info('========== STRAVA OAUTH END ==========');
+
+            // Log OAuth login success
+            AuditService::logLoginSuccess($user, [
+                'login_method' => 'strava_oauth',
+                'mfa_used' => false,
+                'session_id' => hash('sha256', substr($token, 0, 20)),
+                'device_info' => [
+                    'provider' => 'strava',
+                    'is_new_account' => $user->wasRecentlyCreated ?? false,
+                ],
+            ]);
 
             return response()->json([
                 'success' => true,

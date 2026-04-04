@@ -68,6 +68,11 @@ class AddressController extends Controller
             $address->setAsDefault();
         }
 
+        // Log address added
+        \App\Services\AuditService::logAddressAdded($request->user(), $address, [
+            'ip_address' => $request->ip(),
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Address created successfully',
@@ -105,6 +110,12 @@ class AddressController extends Controller
 
         $address->update($validator->validated());
 
+        // Log address update
+        $changes = $validator->validated();
+        \App\Services\AuditService::logAddressUpdated($request->user(), $address, $changes, [
+            'ip_address' => $request->ip(),
+        ]);
+
         if ($request->is_default) {
             $address->setAsDefault();
         }
@@ -122,6 +133,12 @@ class AddressController extends Controller
     public function destroy(Request $request, $id)
     {
         $address = $request->user()->addresses()->findOrFail($id);
+        
+        // Log address deletion BEFORE deleting
+        \App\Services\AuditService::logAddressDeleted($request->user(), $address, [
+            'ip_address' => $request->ip(),
+        ]);
+        
         $address->delete();
 
         return response()->json([

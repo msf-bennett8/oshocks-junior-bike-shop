@@ -5,7 +5,16 @@ namespace App\Providers;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use App\Models\WishlistItem;
+use App\Observers\WishlistObserver;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Cache\Events\KeyForgotten;
+use Illuminate\Cache\Events\KeyWritten;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobProcessing;
+use Illuminate\Queue\Events\JobFailed;
+use App\Listeners\CacheEventListener;
+use App\Listeners\QueueJobListener;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -23,6 +32,25 @@ class EventServiceProvider extends ServiceProvider
         \SocialiteProviders\Manager\SocialiteWasCalled::class => [
             'SocialiteProviders\\Strava\\StravaExtendSocialite@handle',
         ],
+
+        // Phase 6: Cache events for audit logging
+        KeyForgotten::class => [
+            CacheEventListener::class,
+        ],
+        KeyWritten::class => [
+            [CacheEventListener::class, 'handleKeyWritten'],
+        ],
+
+        // Phase 6: Queue events for job monitoring
+        JobProcessing::class => [
+            QueueJobListener::class,
+        ],
+        JobProcessed::class => [
+            [QueueJobListener::class, 'handleJobProcessed'],
+        ],
+        JobFailed::class => [
+            [QueueJobListener::class, 'handleJobFailed'],
+        ],
     ];
 
     /**
@@ -30,7 +58,7 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        WishlistItem::observe(WishlistObserver::class);
     }
 
     /**

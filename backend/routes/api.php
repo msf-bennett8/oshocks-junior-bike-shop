@@ -39,7 +39,7 @@ Route::prefix('v1/auth')->group(function () {
 });
 
 // Public routes
-Route::middleware(['api'])->prefix('v1')->group(function () {
+Route::middleware(['api', 'audit'])->prefix('v1')->group(function () {
     
     // Public authentication routes
     Route::post('/auth/register', [AuthController::class, 'register']);
@@ -53,7 +53,7 @@ Route::middleware(['api'])->prefix('v1')->group(function () {
     Route::get('/products/{id}', [ProductController::class, 'show']);
     Route::get('/products/slug/{slug}', [ProductController::class, 'showBySlug']);
     Route::get('/products/{id}/variants', [ProductVariantController::class, 'getByProduct']);
-    Route::get('/products/{id}/reviews', [ReviewController::class, 'getByProduct']);
+    Route::get('/products/{id}/reviews', [\App\Http\Controllers\Api\ReviewController::class, 'getByProduct']);
     
     // Categories
     Route::get('/categories', [CategoryController::class, 'index']);
@@ -104,7 +104,7 @@ Route::middleware(['api'])->prefix('v1')->group(function () {
 });
 
 // Protected routes (require authentication + effective role checking)
-Route::prefix('v1')->middleware(['auth:sanctum', \App\Http\Middleware\CheckEffectiveRole::class])->group(function () {
+Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \App\Http\Middleware\CheckEffectiveRole::class])->group(function () {
     
     // Protected authentication routes
     Route::get('/auth/me', [AuthController::class, 'me']);
@@ -178,6 +178,42 @@ Route::prefix('v1')->middleware(['auth:sanctum', \App\Http\Middleware\CheckEffec
     Route::get('/user/preferences', [\App\Http\Controllers\Api\UserPreferenceController::class, 'show']);
     Route::put('/user/preferences', [\App\Http\Controllers\Api\UserPreferenceController::class, 'update']);
     
+    // Phase 4: User Data & Compliance Routes
+    // Data Export (GDPR Article 15/20)
+    Route::post('/user/data-export', [\App\Http\Controllers\Api\DataExportController::class, 'requestExport']);
+    Route::get('/user/data-export/{requestId}/download', [\App\Http\Controllers\Api\DataExportController::class, 'downloadExport']);
+    
+    // Account Management
+    Route::post('/user/account/deactivate', [\App\Http\Controllers\Api\DataExportController::class, 'deactivateAccount']);
+    Route::post('/user/account/reactivate', [\App\Http\Controllers\Api\DataExportController::class, 'reactivateAccount']);
+    Route::delete('/user/account', [\App\Http\Controllers\Api\DataExportController::class, 'deleteAccount']);
+    
+    // Consent Management
+    Route::post('/user/consent', [\App\Http\Controllers\Api\ConsentController::class, 'recordConsent']);
+    Route::get('/user/consent/export', [\App\Http\Controllers\Api\ConsentController::class, 'exportConsent']);
+    
+    // Privacy Requests (GDPR Articles 15-22)
+    Route::post('/user/privacy-request', [\App\Http\Controllers\Api\ConsentController::class, 'submitPrivacyRequest']);
+
+    // Phase 7: Security Monitoring Routes
+    Route::post('/security/trust-device', [\App\Http\Controllers\Api\SecurityController::class, 'trustDevice']);
+    Route::get('/security/activity', [\App\Http\Controllers\Api\SecurityController::class, 'getActivity']);
+    Route::get('/security/sessions', [\App\Http\Controllers\Api\SecurityController::class, 'getSessions']);
+    Route::delete('/security/sessions/{tokenId}', [\App\Http\Controllers\Api\SecurityController::class, 'revokeSession']);
+    Route::post('/security/report', [\App\Http\Controllers\Api\SecurityController::class, 'reportSuspicious']);
+
+    // Phase 5: API & Integration Routes
+    // API Key Management
+    Route::get('/api-keys', [\App\Http\Controllers\Api\ApiKeyController::class, 'index']);
+    Route::post('/api-keys', [\App\Http\Controllers\Api\ApiKeyController::class, 'store']);
+    Route::post('/api-keys/{keyId}/rotate', [\App\Http\Controllers\Api\ApiKeyController::class, 'rotate']);
+    Route::delete('/api-keys/{keyId}', [\App\Http\Controllers\Api\ApiKeyController::class, 'revoke']);
+        
+    // Webhook Management
+    Route::get('/webhooks', [\App\Http\Controllers\Api\WebhookController::class, 'index']);
+    Route::post('/webhooks', [\App\Http\Controllers\Api\WebhookController::class, 'store']);
+    Route::delete('/webhooks/{subscriptionId}', [\App\Http\Controllers\Api\WebhookController::class, 'destroy']);
+    
     // Get user's last delivery location for checkout auto-fill
     Route::get('/user/last-delivery-location', [OrderController::class, 'getLastDeliveryLocation']);
     
@@ -214,10 +250,10 @@ Route::prefix('v1')->middleware(['auth:sanctum', \App\Http\Middleware\CheckEffec
     Route::get('/payments/card/saved-cards', [CardPaymentController::class, 'getSavedCards']);
     Route::post('/payments/card/charge-saved', [CardPaymentController::class, 'chargeSavedCard']);
 
-    // Reviews
-    Route::post('/reviews', [ReviewController::class, 'store']);
-    Route::put('/reviews/{id}', [ReviewController::class, 'update']);
-    Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
+    // Reviews (Protected user actions)
+    Route::post('/reviews', [\App\Http\Controllers\Api\ReviewController::class, 'store']);
+    Route::put('/reviews/{id}', [\App\Http\Controllers\Api\ReviewController::class, 'update']);
+    Route::delete('/reviews/{id}', [\App\Http\Controllers\Api\ReviewController::class, 'destroy']);
     
     // Seller reviews
     Route::post('/seller-reviews', [SellerReviewController::class, 'store']);
@@ -226,11 +262,20 @@ Route::prefix('v1')->middleware(['auth:sanctum', \App\Http\Middleware\CheckEffec
     Route::post('/coupons/validate', [CouponController::class, 'validate']);
     Route::post('/coupons/apply', [CouponUsageController::class, 'apply']);
     
-    // Notifications
-    Route::get('/notifications', [NotificationController::class, 'index']);
-    Route::put('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
-    Route::put('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
-    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
+    // Phase 8: Notifications with Audit
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
+        Route::put('/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
+        Route::put('/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
+        Route::delete('/{id}', [\App\Http\Controllers\Api\NotificationController::class, 'destroy']);
+        Route::post('/{id}/archive', [\App\Http\Controllers\Api\NotificationController::class, 'archive']);
+        Route::post('/{id}/unarchive', [\App\Http\Controllers\Api\NotificationController::class, 'unarchive']);
+        Route::post('/bulk-delete', [\App\Http\Controllers\Api\NotificationController::class, 'bulkDelete']);
+    });
+    
+    // Notification preferences
+    Route::get('/user/notification-preferences', [\App\Http\Controllers\Api\NotificationPreferenceController::class, 'show']);
+    Route::put('/user/notification-preferences', [\App\Http\Controllers\Api\NotificationPreferenceController::class, 'update']);
     
     // ============================================================================
     // SELLER ROUTES WITH CLOUDINARY SUPPORT
@@ -363,20 +408,62 @@ Route::prefix('v1')->middleware(['auth:sanctum', \App\Http\Middleware\CheckEffec
         // Activity logs
         Route::get('/activity-logs', [ActivityLogController::class, 'index']);
         Route::get('/activity-logs/{id}', [ActivityLogController::class, 'show']);
-    });
+
+        // Phase 9: Marketing Campaigns (Admin/Super Admin)
+        Route::prefix('marketing')->middleware(['role:super_admin'])->group(function () {
+            Route::get('/campaigns', [\App\Http\Controllers\Api\MarketingController::class, 'listCampaigns']);
+            Route::post('/campaigns', [\App\Http\Controllers\Api\MarketingController::class, 'createCampaign']);
+            Route::get('/campaigns/{id}', [\App\Http\Controllers\Api\MarketingController::class, 'showCampaign']);
+            Route::post('/campaigns/{id}/launch', [\App\Http\Controllers\Api\MarketingController::class, 'launchCampaign']);
+            Route::get('/campaigns/{id}/analytics', [\App\Http\Controllers\Api\MarketingController::class, 'campaignAnalytics']);
+        });
+
+        // Admin review moderation (Phase 10)
+        Route::post('/reviews/{id}/moderate', [\App\Http\Controllers\Api\ReviewController::class, 'moderate']);
+        
+    }); // End of admin group
 
     // ============================================================================
-    // SUPER ADMIN ROUTES
+    // SUPER ADMIN ROUTES (With Phase 3 Audit Logging)
     // ============================================================================
-    Route::prefix('super-admin')->group(function () {
+    Route::prefix('super-admin')->middleware(['role:super_admin'])->group(function () {
         
         // Pending seller management
         Route::get('/pending-sellers', [AuthController::class, 'getPendingSellers']);
         Route::put('/sellers/{id}/approve', [AuthController::class, 'approveSeller']);
         Route::put('/sellers/{id}/reject', [AuthController::class, 'rejectSeller']);
         
-        // User role management
-        Route::put('/users/{id}/role', [AuthController::class, 'changeUserRole']);
+        // User role management with audit
+        Route::put('/users/{id}/role', [\App\Http\Controllers\Api\SuperAdminController::class, 'changeUserRole']);
+        Route::post('/users/{id}/permissions', [\App\Http\Controllers\Api\SuperAdminController::class, 'updatePermissions']);
+        Route::get('/users', [\App\Http\Controllers\Api\SuperAdminController::class, 'listUsers']);
+        Route::post('/users/{id}/toggle-status', [\App\Http\Controllers\Api\SuperAdminController::class, 'toggleUserStatus']);
+        
+        // Impersonation for support
+        Route::post('/impersonate/{userId}', [\App\Http\Controllers\Api\SuperAdminController::class, 'startImpersonation']);
+        Route::post('/impersonate/stop', [\App\Http\Controllers\Api\SuperAdminController::class, 'stopImpersonation']);
+    });
+
+    // ============================================================================
+    // PHASE 10: BUSINESS OPERATIONS (Main Protected Group)
+    // ============================================================================
+    
+    // Service Bookings
+    Route::prefix('service-bookings')->group(function () {
+        Route::post('/', [\App\Http\Controllers\Api\ServiceBookingController::class, 'store']);
+        Route::post('/{id}/reschedule', [\App\Http\Controllers\Api\ServiceBookingController::class, 'reschedule']);
+        Route::post('/{id}/cancel', [\App\Http\Controllers\Api\ServiceBookingController::class, 'cancel']);
+        Route::post('/{id}/no-show', [\App\Http\Controllers\Api\ServiceBookingController::class, 'markNoShow']);
+    });
+    
+    // Reviews (User actions - already defined above, but helpful votes here)
+    Route::post('/reviews/{id}/helpful', [\App\Http\Controllers\Api\ReviewController::class, 'markHelpful']);
+    
+    // Referrals
+    Route::prefix('referrals')->group(function () {
+        Route::get('/code', [\App\Http\Controllers\Api\ReferralController::class, 'getCode']);
+        Route::post('/apply', [\App\Http\Controllers\Api\ReferralController::class, 'apply']);
+        Route::get('/history', [\App\Http\Controllers\Api\ReferralController::class, 'history']);
     });
 
     // ============================================================================
@@ -396,7 +483,19 @@ Route::post('/v1/payments/mpesa/callback', [PaymentController::class, 'mpesaCall
 Route::get('/v1/payments/card/callback', [CardPaymentController::class, 'callback']);
 Route::post('/v1/payments/card/webhook', [CardPaymentController::class, 'webhook']);
 
-// Health check (public)
-Route::get('/health', function () {
-    return response()->json(['status' => 'ok', 'timestamp' => now()]);
-});
+// Incoming webhooks from third parties (public but signature verified)
+Route::post('/v1/webhooks/incoming/{provider}', [\App\Http\Controllers\Api\WebhookController::class, 'handleIncoming']);
+
+// System health endpoints (Phase 6)
+Route::get('/health', [\App\Http\Controllers\Api\SystemHealthController::class, 'health']);
+Route::get('/system/metrics', [\App\Http\Controllers\Api\SystemHealthController::class, 'metrics']);
+
+// Phase 8: Notification tracking (public but signed URLs)
+Route::get('/v1/notifications/track-click/{notificationId}', [\App\Http\Controllers\Api\NotificationController::class, 'trackClick']);
+Route::get('/v1/notifications/pixel/{notificationId}', [\App\Http\Controllers\Api\NotificationController::class, 'trackingPixel']);
+
+// Phase 9: Marketing tracking (public for webhooks and pixels)
+Route::get('/v1/marketing/pixel/{campaignId}/{userId}/{messageId}', [\App\Http\Controllers\Api\MarketingController::class, 'trackingPixel']);
+Route::get('/v1/marketing/click/{campaignId}/{userId}/{messageId}', [\App\Http\Controllers\Api\MarketingController::class, 'trackClick']);
+Route::get('/v1/marketing/unsubscribe', [\App\Http\Controllers\Api\MarketingController::class, 'unsubscribe']);
+Route::post('/v1/marketing/webhooks/postmark', [\App\Http\Controllers\Api\MarketingController::class, 'postmarkWebhook']);
