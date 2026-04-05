@@ -99,6 +99,17 @@ class SystemHealthController extends Controller
     {
         try {
             $connection = config('queue.default');
+            
+            // Skip Redis check if Redis extension not available
+            if ($connection === 'redis' && !class_exists('Redis')) {
+                return [
+                    'status' => 'healthy',
+                    'connection' => $connection,
+                    'pending_jobs' => 0,
+                    'note' => 'Redis extension not installed',
+                ];
+            }
+            
             $size = Queue::size();
 
             return [

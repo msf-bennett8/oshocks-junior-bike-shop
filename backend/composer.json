@@ -7,6 +7,7 @@
     "require": {
         "php": "^8.2",
         "cloudinary-labs/cloudinary-laravel": "^3.0",
+        "doctrine/dbal": "^4.4",
         "fakerphp/faker": "^1.23",
         "flutterwavedev/flutterwave-v3": "^1.1",
         "guzzlehttp/guzzle": "^7.9.2",

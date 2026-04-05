@@ -85,7 +85,17 @@ class AuditService
                 'occurred_at' => $data['occurred_at'] ?? now(),
                 'processed_at' => now(),
             ];
-            
+
+            // Use queue for async processing if enabled
+            if (config('audit.queue.enabled') && $tier !== 'TIER_3_ANALYTICS') {
+                \App\Jobs\ProcessAuditLog::dispatch($auditData)
+                    ->onConnection(config('audit.queue.connection'))
+                    ->onQueue(config('audit.queue.queue'));
+                
+                return null; // Return null since it's queued
+            }
+
+            // Synchronous processing for TIER_3 or when queue disabled
             $log = AuditLog::create($auditData);
             
             // Update cache with latest hash for chaining

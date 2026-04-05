@@ -94,8 +94,34 @@ export const clearAuditSession = () => {
   sessionStorage.removeItem('x_session_id');
 };
 
+// Sampling rates by event category
+const SAMPLING_RATES = {
+    'frontend': 1.0,      // 100% - always log
+    'auth': 1.0,          // 100% - always log
+    'cart': 1.0,          // 100% - always log
+    'checkout': 1.0,      // 100% - always log
+    'order': 1.0,         // 100% - always log
+    'wishlist': 0.5,      // 50% - sample half
+    'product': 0.1,       // 10% - sample 10%
+    'analytics': 0.05,    // 5% - sample 5%
+};
+
+// Check if event should be sampled
+const shouldSample = (category) => {
+    const rate = SAMPLING_RATES[category] ?? 1.0;
+    return Math.random() < rate;
+};
+
 // Log frontend audit event (send to backend)
 export const logFrontendAuditEvent = async (eventType, eventData = {}) => {
+    const category = eventData.category || 'frontend';
+    
+    // Apply sampling for high-volume events
+    if (!shouldSample(category)) {
+        return; // Skip this event due to sampling
+    }
+    
+    // ... rest of existing code
   try {
     const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
     const token = localStorage.getItem('authToken');

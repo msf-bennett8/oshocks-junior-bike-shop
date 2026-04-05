@@ -90,9 +90,33 @@ return [
     |--------------------------------------------------------------------------
     */
     'queue' => [
-        'enabled' => env('AUDIT_QUEUE_ENABLED', false),
+        'enabled' => env('AUDIT_QUEUE_ENABLED', true),
         'connection' => env('AUDIT_QUEUE_CONNECTION', 'redis'),
         'queue' => env('AUDIT_QUEUE_NAME', 'audit-logs'),
+        'retry_after' => 3600, // 1 hour for audit jobs
+        'tries' => 3,
+        'backoff' => [10, 30, 60], // Exponential backoff
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cold Storage (WORM) Configuration
+    |--------------------------------------------------------------------------
+    |
+    | TIER_1_IMMUTABLE events are automatically shipped to cold storage
+    | for long-term retention. Supports AWS Glacier, Azure Archive, or
+    | any S3-compatible storage with object lock enabled.
+    |
+    */
+    'cold_storage' => [
+        'enabled' => env('AUDIT_COLD_STORAGE_ENABLED', false),
+        'disk' => env('AUDIT_COLD_STORAGE_DISK', 's3'),
+        'path_prefix' => env('AUDIT_COLD_STORAGE_PATH_PREFIX', 'audit-logs/tier1'),
+        'encryption' => [
+            'enabled' => env('AUDIT_COLD_STORAGE_ENCRYPTION_ENABLED', true),
+            'key' => env('AUDIT_COLD_STORAGE_ENCRYPTION_KEY', env('APP_KEY')),
+        ],
+        'retention_days' => 3650, // 10 years for compliance
     ],
 
     /*
@@ -103,6 +127,31 @@ return [
     'geolocation' => [
         'enabled' => env('AUDIT_GEOLOCATION_ENABLED', true),
         'service' => 'ipapi', // ipapi, ipinfo, maxmind
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | SIEM Integration
+    |--------------------------------------------------------------------------
+    */
+    'siem' => [
+        'enabled' => env('AUDIT_SIEM_ENABLED', false),
+        'endpoint' => env('AUDIT_SIEM_ENDPOINT'),
+        'api_key' => env('AUDIT_SIEM_API_KEY'),
+        'forward_tiers' => ['TIER_1_IMMUTABLE', 'TIER_2_OPERATIONAL'],
+        'forward_severities' => ['high', 'critical'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Alerting Configuration
+    |--------------------------------------------------------------------------
+    */
+    'alerts' => [
+        'enabled' => env('AUDIT_ALERTS_ENABLED', true),
+        'email_recipients' => explode(',', env('AUDIT_ALERT_EMAILS', '')),
+        'webhook_url' => env('AUDIT_ALERT_WEBHOOK'),
+        'sms_numbers' => explode(',', env('AUDIT_ALERT_SMS', '')),
     ],
 
 ];

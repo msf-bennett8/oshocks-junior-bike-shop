@@ -44,12 +44,12 @@ RUN mkdir -p /tmp/storage/framework/sessions \
     && chown -R www-data:www-data /tmp/storage bootstrap/cache \
     && chmod -R 775 /tmp/storage bootstrap/cache
 
-# Create .env file template with placeholder
+# Create .env file template with generated key
 RUN echo "APP_NAME=Oshocks" > .env && \
     echo "APP_ENV=production" >> .env && \
     echo "APP_DEBUG=false" >> .env && \
     echo "APP_URL=http://localhost" >> .env && \
-    echo "APP_KEY=" >> .env && \
+    echo "APP_KEY=base64:$(openssl rand -base64 32)" >> .env && \
     echo "LOG_CHANNEL=stderr" >> .env && \
     echo "LOG_LEVEL=debug" >> .env && \
     echo "DB_CONNECTION=mysql" >> .env && \
@@ -100,7 +100,7 @@ EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/api/health || exit 1
+CMD curl -f http://localhost:8080/api/health || exit 1
 
 # Use the startup script
 CMD ["/start.sh"]
