@@ -175,13 +175,36 @@ const ManageUsers = () => {
     }
   };
 
-  const handleStatusChange = (userId, newStatus) => {
+  const handleStatusChange = async (userId, newStatus) => {
+    const user = users.find(u => u.id === userId);
+    const oldStatus = user?.status;
+    
     setUsers(users.map(user => 
       user.id === userId ? { ...user, status: newStatus } : user
     ));
+    
+    // Log permissions updated event
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      
+      await logFrontendAuditEvent(AUDIT_EVENTS.PERMISSIONS_UPDATED, {
+        category: 'admin',
+        severity: 'medium',
+        metadata: {
+          target_user_id: userId,
+          permissions_added: newStatus === 'active' ? ['account_access'] : [],
+          permissions_removed: newStatus === 'suspended' ? ['account_access'] : [],
+          changed_by: 'admin',
+          reason: `Status changed from ${oldStatus} to ${newStatus}`,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      // Silently fail
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (modalMode === 'add') {
       const newUser = {
@@ -194,10 +217,93 @@ const ManageUsers = () => {
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`
       };
       setUsers([...users, newUser]);
+      
+      // Log user role changed for new user
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.USER_ROLE_CHANGED, {
+          category: 'admin',
+          severity: 'high',
+          metadata: {
+            target_user_id: newUser.id,
+            old_role: null,
+            new_role: formData.role,
+            changed_by: 'admin',
+            reason: 'new_user_created',
+            timestamp: new Date().toISOString(),
+          },
+        });
+        
+        // Log permissions updated
+        await logFrontendAuditEvent(AUDIT_EVENTS.PERMISSIONS_UPDATED, {
+          category: 'admin',
+          severity: 'medium',
+          metadata: {
+            target_user_id: newUser.id,
+            permissions_added: [formData.role, formData.status === 'active' ? 'account_access' : ''],
+            permissions_removed: [],
+            changed_by: 'admin',
+            reason: 'user_creation',
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
     } else {
+      const oldRole = selectedUser?.role;
+      const newRole = formData.role;
+      const oldStatus = selectedUser?.status;
+      const newStatus = formData.status;
+      
       setUsers(users.map(user => 
         user.id === selectedUser.id ? { ...user, ...formData } : user
       ));
+      
+      // Log user role changed if role was modified
+      if (oldRole !== newRole) {
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          
+          await logFrontendAuditEvent(AUDIT_EVENTS.USER_ROLE_CHANGED, {
+            category: 'admin',
+            severity: 'high',
+            metadata: {
+              target_user_id: selectedUser.id,
+              old_role: oldRole,
+              new_role: newRole,
+              changed_by: 'admin',
+              reason: 'role_change',
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
+      }
+      
+      // Log permissions updated if status changed
+      if (oldStatus !== newStatus) {
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          
+          await logFrontendAuditEvent(AUDIT_EVENTS.PERMISSIONS_UPDATED, {
+            category: 'admin',
+            severity: 'medium',
+            metadata: {
+              target_user_id: selectedUser.id,
+              permissions_added: newStatus === 'active' ? ['account_access'] : [],
+              permissions_removed: oldStatus === 'active' ? ['account_access'] : [],
+              changed_by: 'admin',
+              reason: `Status change: ${oldStatus} → ${newStatus}`,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
+      }
     }
     setShowModal(false);
   };

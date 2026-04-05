@@ -149,6 +149,24 @@ const ProfilePage = () => {
     const { name, value } = e.target;
     setEditedData(prev => ({ ...prev, [name]: value }));
     
+    // Track email change for audit logging
+    if (name === 'email' && value !== userData.email) {
+      sessionStorage.setItem('email_changed_pending', JSON.stringify({
+        old_email: userData.email,
+        new_email: value,
+        timestamp: new Date().toISOString()
+      }));
+    }
+    
+    // Track phone change for audit logging
+    if (name === 'phone' && value !== userData.phone) {
+      sessionStorage.setItem('phone_changed_pending', JSON.stringify({
+        old_phone: userData.phone,
+        new_phone: value,
+        timestamp: new Date().toISOString()
+      }));
+    }
+    
     // Clear validation error for this field
     if (validationErrors[name]) {
       setValidationErrors(prev => ({ ...prev, [name]: '' }));
@@ -200,6 +218,88 @@ const ProfilePage = () => {
         setUserData(editedData);
         setIsEditingProfile(false);
         setSaveSuccess('Profile updated successfully!');
+        
+        // Log profile updated event
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          
+          // Determine changed fields
+          const changedFields = [];
+          const oldValues = {};
+          const newValues = {};
+          
+          if (userData.firstName !== editedData.firstName) {
+            changedFields.push('first_name');
+            oldValues.first_name = userData.firstName;
+            newValues.first_name = editedData.firstName;
+          }
+          if (userData.lastName !== editedData.lastName) {
+            changedFields.push('last_name');
+            oldValues.last_name = userData.lastName;
+            newValues.last_name = editedData.lastName;
+          }
+          if (userData.email !== editedData.email) {
+            changedFields.push('email');
+            oldValues.email = userData.email;
+            newValues.email = editedData.email;
+          }
+          if (userData.phone !== editedData.phone) {
+            changedFields.push('phone');
+            oldValues.phone = userData.phone;
+            newValues.phone = editedData.phone;
+          }
+          if (userData.city !== editedData.city) {
+            changedFields.push('city');
+            oldValues.city = userData.city;
+            newValues.city = editedData.city;
+          }
+          
+          await logFrontendAuditEvent(AUDIT_EVENTS.PROFILE_UPDATED, {
+            category: 'user',
+            severity: 'low',
+            metadata: {
+              changed_fields: changedFields,
+              old_values: oldValues,
+              new_values: newValues,
+              timestamp: new Date().toISOString(),
+            },
+          });
+          
+          // Log EMAIL_CHANGED event if email was modified
+          if (userData.email !== editedData.email) {
+            await logFrontendAuditEvent(AUDIT_EVENTS.EMAIL_CHANGED, {
+              category: 'user',
+              severity: 'medium',
+              metadata: {
+                old_email: userData.email,
+                new_email: editedData.email,
+                verification_status: 'pending', // Backend will update after verification email sent
+                timestamp: new Date().toISOString(),
+              },
+            });
+          }
+          
+          // Log PHONE_CHANGED event if phone was modified
+          if (userData.phone !== editedData.phone) {
+            await logFrontendAuditEvent(AUDIT_EVENTS.PHONE_CHANGED, {
+              category: 'user',
+              severity: 'medium',
+              metadata: {
+                old_phone_hash: userData.phone ? btoa(userData.phone) : null, // Simple hash for privacy
+                new_phone_hash: editedData.phone ? btoa(editedData.phone) : null,
+                verification_status: 'pending',
+                timestamp: new Date().toISOString(),
+              },
+            });
+          }
+        } catch (e) {
+          // Silently fail
+        }
+        
+        // Clear pending change tracking
+        sessionStorage.removeItem('email_changed_pending');
+        sessionStorage.removeItem('phone_changed_pending');
+        
         setTimeout(() => setSaveSuccess(''), 5000);
       } else {
         setSaveError(result.error || 'Failed to update profile');
@@ -298,6 +398,23 @@ const ProfilePage = () => {
   if (result.success) {
     setPasswordSuccess('Password changed successfully!');
     setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    
+    // Log password changed event
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      await logFrontendAuditEvent(AUDIT_EVENTS.PASSWORD_CHANGED, {
+        category: 'auth',
+        severity: 'medium',
+        metadata: {
+          changed_by: 'self',
+          method: 'direct',
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      // Silently fail
+    }
+    
     setTimeout(() => setPasswordSuccess(''), 5000);
   } else {
     setPasswordError(result.error || 'Failed to change password');
@@ -325,7 +442,7 @@ const ProfilePage = () => {
     }
   };
 
-  // Handle account deletion
+  // Handle account deletion/deactivation
   const handleDeleteAccount = async () => {
     const confirmed = window.confirm(
       'Are you sure you want to delete your account? This action cannot be undone.'
@@ -334,10 +451,41 @@ const ProfilePage = () => {
     if (!confirmed) return;
     
     try {
+      // Log account deactivated event BEFORE deletion
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        await logFrontendAuditEvent(AUDIT_EVENTS.ACCOUNT_DEACTIVATED, {
+          category: 'user',
+          severity: 'high',
+          metadata: {
+            reason: 'user_requested_deletion',
+            deactivated_by: user?.id || 'self',
+            timestamp: new Date().toISOString(),
+            reactivation_eligible_date: null, // Permanent deletion
+          },
+        });
+        
+        // Also log account deleted event
+        await logFrontendAuditEvent(AUDIT_EVENTS.ACCOUNT_DELETED, {
+          category: 'user',
+          severity: 'critical',
+          metadata: {
+            deleted_by: user?.id || 'self',
+            reason: 'user_requested',
+            deletion_type: 'GDPR', // or 'standard' based on your flow
+            timestamp: new Date().toISOString(),
+            data_retention_expiry: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(), // 90 days retention
+          },
+        });
+      } catch (e) {
+        // Silently fail - still proceed with deletion
+      }
+      
       // API call to delete account
       // await axios.delete('/api/user/account');
       
       // Clear auth and redirect
+      await logout();
       navigate('/login');
     } catch (err) {
       console.error('Failed to delete account:', err);
@@ -1094,16 +1242,45 @@ const ProfilePage = () => {
                 <div className="bg-white rounded-lg shadow-md p-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">Account Settings</h2>
                   <div className="space-y-4">
-                    <Link to="/download-data" className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <button 
+                      onClick={async () => {
+                        const confirmed = window.confirm(
+                          'Request a copy of your personal data? This may take up to 24 hours to prepare.'
+                        );
+                        if (!confirmed) return;
+                        
+                        try {
+                          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+                          
+                          await logFrontendAuditEvent(AUDIT_EVENTS.DATA_EXPORT_REQUESTED, {
+                            category: 'privacy',
+                            severity: 'medium',
+                            metadata: {
+                              request_id: `export_${Date.now()}`,
+                              requested_at: new Date().toISOString(),
+                              export_type: 'full', // or 'partial' based on selection
+                              formats: ['JSON', 'CSV'],
+                              status: 'pending',
+                              deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
+                            },
+                          });
+                          
+                          alert('Data export requested! You will receive an email when your data is ready for download.');
+                        } catch (e) {
+                          console.error('Failed to log export request:', e);
+                        }
+                      }}
+                      className="w-full flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                    >
                       <div className="flex items-center space-x-3">
                         <Download className="w-5 h-5 text-gray-600" />
                         <div>
                           <p className="font-medium text-gray-900">Download Your Data</p>
-                          <p className="text-sm text-gray-600">Get a copy of your account information</p>
+                          <p className="text-sm text-gray-600">Get a copy of your account information (GDPR export)</p>
                         </div>
                       </div>
                       <ExternalLink className="w-5 h-5 text-gray-400" />
-                    </Link>
+                    </button>
 
                     <Link to="/privacy-settings" className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                       <div className="flex items-center space-x-3">

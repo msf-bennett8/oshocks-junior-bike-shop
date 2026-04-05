@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Shield, Clock, AlertTriangle, RefreshCw, Home, ArrowLeft, TrendingUp, Zap, CheckCircle, XCircle, Info, Lock, Activity, Timer, Coffee, HelpCircle } from 'lucide-react';
+import { useAudit } from '../../hooks/useAudit';
 
 const RateLimitExceededPage = () => {
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
@@ -19,7 +20,25 @@ const RateLimitExceededPage = () => {
     retryAfter: 300 // seconds
   };
 
+  const { logAuditEvent } = useAudit();
+
   useEffect(() => {
+    // Log rate limit triggered event
+    logAuditEvent({
+      event_type: 'VELOCITY_CHECK_TRIGGERED',
+      event_category: 'security',
+      severity: 'high',
+      metadata: {
+        check_type: 'api_rate_limit',
+        threshold: rateLimitData.maxRequests,
+        actual_value: rateLimitData.currentRequests,
+        time_window: rateLimitData.timeWindow,
+        endpoint: rateLimitData.endpoint,
+        ip_address: rateLimitData.ipAddress,
+        user_agent: navigator.userAgent
+      }
+    });
+
     // Countdown timer
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -43,7 +62,7 @@ const RateLimitExceededPage = () => {
     window.scrollTo(0, 0);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [logAuditEvent]);
 
   const handleRetry = async () => {
     if (!canRetry) return;

@@ -15,7 +15,7 @@ export const useAudit = () => {
   const logAuthEvent = useCallback((eventType, metadata = {}) => {
     logFrontendAuditEvent(eventType, {
       category: 'auth',
-      severity: ['LOGIN_FAILURE', 'UNAUTHORIZED_ACCESS'].includes(eventType) ? 'high' : 'medium',
+      severity: ['LOGIN_FAILED', 'LOGIN_FAILURE', 'UNAUTHORIZED_ACCESS', 'PASSWORD_RESET_FAILED'].includes(eventType) ? 'high' : 'medium',
       metadata,
     });
   }, []);
@@ -67,6 +67,58 @@ export const useAudit = () => {
     });
   }, []);
 
+  // Log error events (404, 500, etc.)
+  const logErrorEvent = useCallback((eventType, metadata = {}) => {
+    const severityMap = {
+      'RESOURCE_ACCESS_DENIED': 'low',      // 404, 401, 403
+      'THIRD_PARTY_INTEGRATION_ERROR': 'critical', // 500, 503
+      'CLIENT_ERROR_OCCURRED': 'medium',      // React errors
+      'PAYMENT_FAILED': 'high',
+    };
+    
+    logFrontendAuditEvent(eventType, {
+      category: eventType === 'PAYMENT_FAILED' ? 'financial' : 'system',
+      severity: severityMap[eventType] || 'medium',
+      metadata,
+    });
+  }, []);
+
+  // Log security events
+  const logSecurityEvent = useCallback((eventType, metadata = {}) => {
+    logFrontendAuditEvent(eventType, {
+      category: 'security',
+      severity: 'high',
+      metadata,
+    });
+  }, []);
+
+  // Log system events (connectivity, cache, etc.)
+  const logSystemEvent = useCallback((eventType, metadata = {}) => {
+    const severityMap = {
+      'OFFLINE_MODE_DETECTED': 'low',
+      'CONNECTIVITY_RESTORED': 'low',
+      'CACHE_INVALIDATION': 'low',
+      'SEARCH_INDEX_UPDATED': 'low',
+      'SESSION_TERMINATED': 'low',
+    };
+    
+    logFrontendAuditEvent(eventType, {
+      category: 'system',
+      severity: severityMap[eventType] || 'low',
+      metadata,
+    });
+  }, []);
+
+  // Generic audit event logger (for custom events)
+  const logAuditEvent = useCallback((eventData) => {
+    logFrontendAuditEvent(eventData.event_type || eventData.eventType, {
+      category: eventData.event_category || eventData.category || 'system',
+      severity: eventData.severity || 'low',
+      description: eventData.description,
+      metadata: eventData.metadata || {},
+    });
+  }, []);
+
   // Log page view
   const logPageView = useCallback((page, metadata = {}) => {
     logFrontendAuditEvent(AUDIT_EVENTS.PAGE_VIEW, {
@@ -97,6 +149,10 @@ export const useAudit = () => {
     logOrderEvent,
     logWishlistEvent,
     logProductEvent,
+    logErrorEvent,
+    logSecurityEvent,
+    logSystemEvent,
+    logAuditEvent,
     logPageView,
     clearSession,
     getHeaders,

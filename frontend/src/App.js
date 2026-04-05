@@ -39,6 +39,7 @@ import ScrollToTop from './components/common/ScrollToTop';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import FloatingSupportWidget from './components/navigation/FloatingSupportWidget';
+import ImpersonationBanner from './components/impersonator/ImpersonationBanner';
 // REMOVED: ToastContainer import - it's now handled by ToastProvider in index.js
 
 // ============================================================================
@@ -476,6 +477,9 @@ function App() {
             content="Shop thousands of bicycles, cycling accessories & spare parts online in Kenya. Fast delivery, M-Pesa payments, quality guaranteed."
           />
         </Helmet>
+
+        {/* Impersonation Banner */}
+        <ImpersonationBanner />
 
         {/* Offline Indicator */}
         {!isOnline && (

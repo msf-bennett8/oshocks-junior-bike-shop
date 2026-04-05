@@ -282,9 +282,61 @@ const AddressesPage = ({
             prev.map(addr => addr.id === editingId ? savedAddress : addr)
           );
           showSuccess('Address updated successfully');
+          
+          // Log address updated event
+          try {
+            const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+            const originalAddress = addresses.find(a => a.id === editingId);
+            
+            await logFrontendAuditEvent(AUDIT_EVENTS.ADDRESS_UPDATED, {
+              category: 'user',
+              severity: 'low',
+              metadata: {
+                address_id: editingId,
+                address_type: formData.label,
+                changes: {
+                  county: formData.county !== originalAddress?.county ? {
+                    old: originalAddress?.county,
+                    new: formData.county
+                  } : undefined,
+                  town: formData.town !== originalAddress?.town ? {
+                    old: originalAddress?.town,
+                    new: formData.town
+                  } : undefined,
+                  street_address: formData.streetAddress !== originalAddress?.streetAddress ? {
+                    old: originalAddress?.streetAddress,
+                    new: formData.streetAddress
+                  } : undefined,
+                },
+                timestamp: new Date().toISOString(),
+              },
+            });
+          } catch (e) {
+            // Silently fail
+          }
         } else {
           setAddresses(prev => [...prev, savedAddress]);
           showSuccess('Address added successfully');
+          
+          // Log address added event
+          try {
+            const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+            await logFrontendAuditEvent(AUDIT_EVENTS.ADDRESS_ADDED, {
+              category: 'user',
+              severity: 'low',
+              metadata: {
+                address_id: savedAddress.id,
+                address_type: formData.label, // home/work/other - maps to shipping/billing in backend
+                address_category: 'shipping', // Default to shipping for customer addresses
+                county: formData.county,
+                town: formData.town,
+                is_default: formData.isDefault,
+                timestamp: new Date().toISOString(),
+              },
+            });
+          } catch (e) {
+            // Silently fail
+          }
         }
         
         resetForm();
@@ -352,6 +404,23 @@ const AddressesPage = ({
       if (response.ok) {
         setAddresses(prev => prev.filter(addr => addr.id !== id));
         showSuccess('Address deleted successfully');
+        
+        // Log address deleted event
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          await logFrontendAuditEvent(AUDIT_EVENTS.ADDRESS_DELETED, {
+            category: 'user',
+            severity: 'low',
+            metadata: {
+              address_id: id,
+              address_type: address?.label || 'unknown',
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
+        
         await fetchAddressStats();
       } else {
         showError('Failed to delete address');

@@ -132,12 +132,36 @@ const PayoutManagementPage = () => {
 
   // Process payouts
   const handleProcessPayouts = async (e) => {
-    e.preventDefault();
-    
-    if (selectedSellers.length === 0) {
-      alert('Please select at least one seller');
-      return;
+  e.preventDefault();
+  
+  if (selectedSellers.length === 0) {
+    alert('Please select at least one seller');
+    return;
+  }
+  
+  // Log refund requested events for each seller payout
+  for (const sellerId of selectedSellers) {
+    const seller = pendingPayouts.find(p => p.seller_id === sellerId);
+    if (seller) {
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        await logFrontendAuditEvent(AUDIT_EVENTS.REFUND_REQUESTED, {
+          category: 'financial',
+          severity: 'medium',
+          metadata: {
+            seller_id: sellerId,
+            seller_name: seller.seller_name,
+            amount: seller.payout_amount,
+            reason: 'Seller payout',
+            requested_by: user?.id,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
     }
+  }
 
     if (!payoutForm.payout_reference.trim()) {
       alert('Please enter a payout reference');
@@ -158,8 +182,29 @@ const PayoutManagementPage = () => {
       });
 
       if (response.success) {
-        alert(`✅ Successfully processed ${response.data.length} payout(s)`);
-        setShowProcessModal(false);
+      // Log refund processed events
+      for (const payout of response.data) {
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          await logFrontendAuditEvent(AUDIT_EVENTS.REFUND_PROCESSED, {
+            category: 'financial',
+            severity: 'medium',
+            metadata: {
+              refund_id: payout.id,
+              seller_id: payout.seller_id,
+              amount: payout.payout_amount,
+              transaction_id: payoutForm.payout_reference,
+              processed_by: user?.id,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
+      }
+      
+      alert(`✅ Successfully processed ${response.data.length} payout(s)`);
+      setShowProcessModal(false);
         setSelectedSellers([]);
         setPayoutForm({
           payout_method: 'mpesa',

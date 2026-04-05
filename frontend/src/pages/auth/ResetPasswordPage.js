@@ -1,6 +1,7 @@
 //src/frontend/src/pages/auth/ResetPasswordPae.js
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useDeviceFingerprint } from '../../hooks/useDeviceFingerprint';
 import { Lock, Eye, EyeOff, AlertCircle, Loader, CheckCircle, X, Shield, AlertTriangle, Check } from 'lucide-react';
 
 const ResetPasswordPage = () => {
@@ -33,6 +34,9 @@ const ResetPasswordPage = () => {
     label: '',
     color: ''
   });
+  
+  // Device fingerprint for audit logging
+  const { fingerprint } = useDeviceFingerprint();
 
   // Password requirements state
   const [passwordRequirements, setPasswordRequirements] = useState({
@@ -276,6 +280,22 @@ const ResetPasswordPage = () => {
       if (response.success) {
         setSuccessMessage(response.message);
         
+        // Log password reset completed event
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          await logFrontendAuditEvent(AUDIT_EVENTS.PASSWORD_RESET_COMPLETED, {
+            category: 'auth',
+            severity: 'medium',
+            metadata: {
+              reset_method: 'token',
+              device_fingerprint: fingerprint,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
+        
         // Redirect to login after 3 seconds
         setTimeout(() => {
           navigate('/login', {
@@ -297,6 +317,22 @@ const ResetPasswordPage = () => {
         setValidationErrors({
           general: err.response?.data?.message || 'Failed to reset password. Please try again.'
         });
+        
+        // Log password reset failed event
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          await logFrontendAuditEvent(AUDIT_EVENTS.PASSWORD_RESET_FAILED, {
+            category: 'auth',
+            severity: 'high',
+            metadata: {
+              failure_reason: err.response?.data?.message || 'reset_failed',
+              device_fingerprint: fingerprint,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
       }
     } finally {
       setIsSubmitting(false);

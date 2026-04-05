@@ -1,6 +1,7 @@
 //src/frontend/src/pages/auth/ForgotPasswordPage.js
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useDeviceFingerprint } from '../../hooks/useDeviceFingerprint';
 import { Mail, AlertCircle, Loader, CheckCircle, ArrowLeft, Send, Clock, RefreshCw } from 'lucide-react';
 
 const ForgotPasswordPage = () => {
@@ -14,6 +15,9 @@ const ForgotPasswordPage = () => {
   const [emailSent, setEmailSent] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [validationError, setValidationError] = useState('');
+
+  // Device fingerprint for audit logging
+  const { fingerprint } = useDeviceFingerprint();
 
   // Countdown timer for resend cooldown
   useEffect(() => {
@@ -84,6 +88,23 @@ const ForgotPasswordPage = () => {
         
         // Store email for resend functionality
         sessionStorage.setItem('resetEmail', email);
+        
+        // Log password reset requested event
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          await logFrontendAuditEvent(AUDIT_EVENTS.PASSWORD_RESET_REQUESTED, {
+            category: 'auth',
+            severity: 'medium',
+            metadata: {
+              identifier_attempted: email,
+              delivery_method: 'email',
+              device_fingerprint: fingerprint,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
       }
       
     } catch (err) {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { XCircle, AlertTriangle, RefreshCw, CreditCard, Smartphone, Mail, Phone, ArrowLeft, ShoppingCart, Home, HelpCircle, Clock, Copy, CheckCircle } from 'lucide-react';
+import { useAudit } from '../../hooks/useAudit';
 
 const PaymentFailedPage = () => {
   const [copied, setCopied] = useState(false);
@@ -33,7 +34,27 @@ const PaymentFailedPage = () => {
     customerPhone
   } = failureData;
 
+  const { logAuditEvent } = useAudit();
+
   useEffect(() => {
+    // Log payment failed event
+    logAuditEvent({
+      event_type: 'PAYMENT_FAILED',
+      event_category: 'financial',
+      severity: 'high',
+      metadata: {
+        order_id: orderId,
+        payment_method: paymentMethod,
+        error_code: errorCode,
+        error_message: errorMessage,
+        amount: amount,
+        currency: currency,
+        transaction_id: transactionId,
+        user_agent: navigator.userAgent,
+        timestamp: new Date().toISOString()
+      }
+    });
+
     // Track payment failure event for analytics
     if (window.gtag) {
       window.gtag('event', 'payment_failed', {
@@ -46,7 +67,7 @@ const PaymentFailedPage = () => {
 
     // Scroll to top on mount
     window.scrollTo(0, 0);
-  }, [orderId, paymentMethod, errorCode, amount]);
+  }, [orderId, paymentMethod, errorCode, errorMessage, amount, currency, transactionId, logAuditEvent]);
 
   // Error code explanations
   const errorExplanations = {

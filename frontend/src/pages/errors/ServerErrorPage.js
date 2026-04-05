@@ -16,6 +16,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
+import { useAudit } from '../../hooks/useAudit';
 
 const ServerErrorPage = () => {
   const [errorCode, setErrorCode] = useState('ERR_500_' + Date.now().toString(36).toUpperCase());
@@ -24,15 +25,32 @@ const ServerErrorPage = () => {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
   const [copied, setCopied] = useState(false);
+  const { logAuditEvent } = useAudit();
 
   useEffect(() => {
+    // Log 500 server error event
+    logAuditEvent({
+      event_type: 'THIRD_PARTY_INTEGRATION_ERROR',
+      event_category: 'api',
+      severity: 'critical',
+      metadata: {
+        error_code: errorCode,
+        http_status: 500,
+        error_code: errorCode,
+        error_message: 'Server error occurred',
+        user_agent: navigator.userAgent,
+        page_url: window.location.href,
+        timestamp: new Date().toISOString()
+      }
+    });
+
     if (autoRefresh && countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
     } else if (autoRefresh && countdown === 0) {
       window.location.reload();
     }
-  }, [countdown, autoRefresh]);
+  }, [countdown, autoRefresh, logAuditEvent, errorCode]);
 
   const handleRefresh = () => {
     window.location.reload();

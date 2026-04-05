@@ -56,6 +56,27 @@ const PaymentCallback = () => {
           console.log('🎉 Payment verified successfully!');
           setStatus('success');
           
+          // Log payment successful event
+          try {
+            const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+            await logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_SUCCESSFUL, {
+              category: 'payment',
+              severity: 'medium',
+              metadata: {
+                order_id: orderId,
+                payment_intent_id: reference,
+                transaction_id: response.data?.reference || `txn_${Date.now()}`,
+                amount: response.data?.amount || null,
+                currency: 'KES',
+                payment_method_type: 'card',
+                settlement_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+                timestamp: new Date().toISOString(),
+              },
+            });
+          } catch (e) {
+            // Silently fail
+          }
+          
           // Clear cart and pending order data
           console.log('🗑️ Clearing cart and localStorage...');
           clearCart();

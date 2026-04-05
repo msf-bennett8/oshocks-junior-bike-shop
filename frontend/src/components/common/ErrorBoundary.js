@@ -1,4 +1,6 @@
 import React from 'react';
+import { useAudit } from '../../hooks/useAudit';
+import { logFrontendAuditEvent } from '../../utils/auditUtils';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -20,7 +22,7 @@ class ErrorBoundary extends React.Component {
     return { hasError: true };
   }
 
-  componentDidCatch(error, errorInfo) {
+  async componentDidCatch(error, errorInfo) {
     const now = Date.now();
     const errorCount = this.state.errorCount + 1;
     
@@ -55,8 +57,8 @@ class ErrorBoundary extends React.Component {
       errorHistory
     });
 
-    // Send error to logging service (if available)
-    this.logErrorToService(errorDetails);
+    // Send error to audit logging service
+    await this.logErrorToAuditService(errorDetails);
 
     // Check for error loop
     if (this.state.lastErrorTime && now - this.state.lastErrorTime < 1000) {
@@ -95,6 +97,8 @@ class ErrorBoundary extends React.Component {
     return 'general';
   };
 
+  /*  
+  //This replaced by the  function below
   logErrorToService = async (errorDetails) => {
     // This would integrate with your error logging service
     // Example: Sentry, LogRocket, or custom backend endpoint
@@ -109,6 +113,83 @@ class ErrorBoundary extends React.Component {
       }
     } catch (e) {
       console.error('Failed to log error to service:', e);
+    }
+  };
+  */
+
+   logErrorToService = async (errorDetails) => {
+    // Log to backend audit system
+    try {
+      await logFrontendAuditEvent('CLIENT_ERROR_OCCURRED', {
+        category: 'system',
+        severity: this.getErrorSeverity(errorDetails),
+        metadata: {
+          error_message: errorDetails.message,
+          error_type: errorDetails.errorType,
+          error_count: errorDetails.errorCount,
+          component_stack: errorDetails.componentStack,
+          user_agent: errorDetails.userAgent,
+          page_url: errorDetails.url,
+          timestamp: errorDetails.timestamp,
+        },
+      });
+    } catch (e) {
+      console.error('Failed to log error to audit service:', e);
+    }
+  };
+
+  getErrorSeverity = (errorDetails) => {
+    const category = this.getErrorCategory({ message: errorDetails.message });
+    switch (category) {
+      case 'chunk': return 'high';
+      case 'network': return 'medium';
+      case 'resize-observer': return 'low';
+      default: return 'medium';
+    }
+  };
+
+  logErrorToAuditService = async (errorDetails) => {
+    // Log to backend audit system
+    try {
+      const response = await fetch('/api/v1/audit-logs', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Correlation-ID': sessionStorage.getItem('correlation_id') || crypto.randomUUID()
+        },
+        body: JSON.stringify({
+          event_type: 'CLIENT_ERROR_OCCURRED',
+          event_category: 'system',
+          severity: this.getErrorSeverity(errorDetails),
+          actor_type: 'user',
+          metadata: {
+            error_message: errorDetails.message,
+            error_type: errorDetails.errorType,
+            error_count: errorDetails.errorCount,
+            component_stack: errorDetails.componentStack,
+            user_agent: errorDetails.userAgent,
+            page_url: errorDetails.url,
+            timestamp: errorDetails.timestamp
+          }
+        })
+      });
+      
+      if (!response.ok) {
+        console.error('Failed to send audit log:', response.statusText);
+      }
+    } catch (e) {
+      // Fallback to console if audit logging fails
+      console.error('Failed to log error to audit service:', e);
+    }
+  };
+
+  getErrorSeverity = (errorDetails) => {
+    const category = this.getErrorCategory({ message: errorDetails.message });
+    switch (category) {
+      case 'chunk': return 'high';
+      case 'network': return 'medium';
+      case 'resize-observer': return 'low';
+      default: return 'medium';
     }
   };
 

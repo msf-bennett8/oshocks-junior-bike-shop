@@ -39,6 +39,7 @@ return [
         'X-Timezone',
         'X-Session-Id',
         'X-Canvas-Fingerprint',
+        'x-device-fingerprint',
     ],
     
     'exposed_headers' => ['Authorization'],

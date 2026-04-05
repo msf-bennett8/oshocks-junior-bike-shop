@@ -92,12 +92,33 @@ const loadOrderDetails = async () => {
       const response = await recorderService.recordPayment(orderNumber, paymentData);
 
       if (response.success) {
-        // Store the payment transaction reference from response
-        setOrder(prev => ({
-          ...prev,
-          transaction_reference: response.data.transaction_reference
-        }));
-        setSuccess(true);
+      // Log payment successful event for COD
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        await logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_SUCCESSFUL, {
+          category: 'payment',
+          severity: 'medium',
+          metadata: {
+            order_id: order.id,
+            payment_intent_id: response.data.transaction_reference,
+            transaction_id: response.data.transaction_reference,
+            amount: parseFloat(order.total),
+            currency: 'KES',
+            payment_method_type: formData.payment_method,
+            settlement_date: new Date().toISOString(), // COD settles immediately
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
+      
+      // Store the payment transaction reference from response
+      setOrder(prev => ({
+        ...prev,
+        transaction_reference: response.data.transaction_reference
+      }));
+  setSuccess(true);
         // Don't auto-redirect - let user review summary
       }
     } catch (err) {

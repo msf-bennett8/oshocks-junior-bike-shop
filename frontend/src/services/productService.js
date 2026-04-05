@@ -72,6 +72,19 @@ const productService = {
         response: error.response?.data,
         status: error.response?.status
       });
+      
+      // Log search service errors
+      try {
+        const { logIntegrationError } = await import('../utils/auditUtils');
+        logIntegrationError(error, {
+          service_name: 'search_service',
+          context: 'product_search',
+          search_params: { query, type },
+        });
+      } catch (e) {
+        // Silently fail
+      }
+      
       throw error;
     }
   },

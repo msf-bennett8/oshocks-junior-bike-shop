@@ -249,8 +249,29 @@ const OrderDetails = () => {
     navigate('/contact-support');
   };
 
-  const handleCancelOrder = () => {
+  const handleCancelOrder = async () => {
     setShowCancelModal(false);
+    
+    // Log order cancelled event
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      await logFrontendAuditEvent(AUDIT_EVENTS.ORDER_CANCELLED, {
+        category: 'order',
+        severity: 'high',
+        metadata: {
+          order_id: order.id,
+          order_number: order.orderNumber,
+          reason: 'customer_requested',
+          cancelled_by: 'customer',
+          refund_initiated: true,
+          inventory_released: true,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      // Silently fail
+    }
+    
     alert('Order cancellation requested. Our team will contact you within 2 hours to process your refund.');
   };
 
@@ -268,7 +289,24 @@ const OrderDetails = () => {
     alert('Items will be added to cart. Redirecting to checkout...');
   };
 
-  const handleLeaveReview = (itemId) => {
+  const handleLeaveReview = async (itemId) => {
+    // Log review initiated event
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      const item = order.items.find(i => i.id === itemId);
+      await logFrontendAuditEvent('REVIEW_INITIATED', {
+        category: 'review',
+        severity: 'low',
+        metadata: {
+          product_id: itemId,
+          order_id: order.id,
+          product_name: item?.name || null,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      // Silently fail
+    }
     alert(`Review page for item ${itemId} will open here.`);
   };
 
@@ -709,7 +747,31 @@ const OrderDetails = () => {
                 </button>
                 {order.status === 'delivered' && (
                   <button
-                    onClick={() => alert('Return/refund request page will open')}
+                    onClick={async () => {
+                      // Log return requested event
+                      try {
+                        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+                        await logFrontendAuditEvent(AUDIT_EVENTS.ORDER_RETURN_REQUESTED, {
+                          category: 'order',
+                          severity: 'medium',
+                          metadata: {
+                            order_id: order.id,
+                            order_number: order.orderNumber,
+                            reason: 'customer_requested',
+                            requested_by: 'customer',
+                            items_requested: order.items.map(item => ({
+                              product_id: item.id,
+                              product_name: item.name,
+                              quantity: item.quantity,
+                            })),
+                            timestamp: new Date().toISOString(),
+                          },
+                        });
+                      } catch (e) {
+                        // Silently fail
+                      }
+                      alert('Return/refund request page will open');
+                    }}
                     className="w-full px-4 py-3 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 font-medium transition-colors flex items-center justify-center"
                   >
                     <RefreshCw className="w-5 h-5 mr-2" />

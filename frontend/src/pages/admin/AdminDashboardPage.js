@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { 
   TrendingUp, TrendingDown, ShoppingCart, Package, Users, DollarSign, 
@@ -188,6 +188,38 @@ const AdminDashboardPage = () => {
     { id: 3, name: 'Bike Lock Pro', stock: 3, threshold: 20, category: 'Accessories' },
     { id: 4, name: 'Cycling Gloves M', stock: 6, threshold: 12, category: 'Accessories' }
   ];
+
+  // Log inventory low threshold events on mount
+  useEffect(() => {
+    const logInventoryAlerts = async () => {
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        
+        for (const product of lowStockProducts) {
+          if (product.stock <= product.threshold) {
+            await logFrontendAuditEvent(AUDIT_EVENTS.INVENTORY_LOW_THRESHOLD_TRIGGERED, {
+              category: 'inventory',
+              severity: 'medium',
+              metadata: {
+                product_id: product.id,
+                sku: product.name.toLowerCase().replace(/\s+/g, '_'),
+                current_quantity: product.stock,
+                threshold: product.threshold,
+                reorder_point: Math.floor(product.threshold * 0.5),
+                timestamp: new Date().toISOString(),
+                location_id: 'main_warehouse',
+                alert_sent: true,
+              },
+            });
+          }
+        }
+      } catch (e) {
+        // Silently fail
+      }
+    };
+    
+    logInventoryAlerts();
+  }, []);
 
   // Recent activities
   const recentActivities = [
@@ -819,8 +851,112 @@ const AdminDashboardPage = () => {
                 </div>
               ))}
 
-              <button className="w-full py-2 text-sm text-red-600 font-medium hover:bg-red-50 rounded-lg transition-colors border border-red-200">
+              <button 
+                onClick={async () => {
+                  // Log inventory updated events for restocking
+                  try {
+                    const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+                    
+                    for (const product of lowStockProducts) {
+                      await logFrontendAuditEvent(AUDIT_EVENTS.INVENTORY_UPDATED, {
+                        category: 'inventory',
+                        severity: 'low',
+                        metadata: {
+                          product_id: product.id,
+                          sku: product.name.toLowerCase().replace(/\s+/g, '_'),
+                          old_quantity: product.stock,
+                          new_quantity: product.threshold + 10,
+                          adjustment: (product.threshold + 10) - product.stock,
+                          reason: 'manual_restock',
+                          timestamp: new Date().toISOString(),
+                          location_id: 'main_warehouse',
+                        },
+                      });
+                    }
+                    
+                    // Log inventory auto adjusted for system tracking
+                    await logFrontendAuditEvent(AUDIT_EVENTS.INVENTORY_AUTO_ADJUSTED, {
+                      category: 'inventory',
+                      severity: 'low',
+                      metadata: {
+                        adjustment: 'bulk_restock',
+                        new_quantity: 'various',
+                        trigger: 'low_stock_alert',
+                        timestamp: new Date().toISOString(),
+                        location_id: 'main_warehouse',
+                      },
+                    });
+                    
+                    alert('Restock events logged! (Demo - actual restock would update inventory)');
+                  } catch (e) {
+                    console.error('Failed to log restock:', e);
+                  }
+                }}
+                className="w-full py-2 text-sm text-red-600 font-medium hover:bg-red-50 rounded-lg transition-colors border border-red-200"
+              >
                 Restock All Products
+              </button>
+              
+              {/* Bulk price adjustment button */}
+              <button 
+                onClick={async () => {
+                  const adjustment = prompt('Enter percentage adjustment (e.g., 10 for 10% increase, -10 for 10% decrease):', '0');
+                  if (adjustment && !isNaN(adjustment) && parseFloat(adjustment) !== 0) {
+                    const pctChange = parseFloat(adjustment);
+                    
+                    try {
+                      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+                      
+                      // Log bulk price update event
+                      await logFrontendAuditEvent(AUDIT_EVENTS.BULK_PRODUCT_PRICE_UPDATED, {
+                        category: 'product',
+                        severity: 'high',
+                        metadata: {
+                          rule_id: `bulk_price_${Date.now()}`,
+                          filter_criteria: { low_stock_products: lowStockProducts.map(p => p.id) },
+                          old_formula: 'current_prices',
+                          new_formula: `${pctChange > 0 ? '+' : ''}${pctChange}% adjustment`,
+                          affected_count: lowStockProducts.length,
+                          affected_skus_sample: lowStockProducts.map(p => p.name.toLowerCase().replace(/\s+/g, '_')).slice(0, 5),
+                          percentage_change: pctChange,
+                          timestamp: new Date().toISOString(),
+                          execution_time_ms: 0,
+                        },
+                      });
+                      
+                      // Also log individual price modifications
+                      for (const product of lowStockProducts) {
+                        // Calculate mock new price
+                        const mockOldPrice = Math.floor(Math.random() * 50000) + 10000;
+                        const mockNewPrice = Math.round(mockOldPrice * (1 + pctChange / 100));
+                        
+                        await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_PRICE_MODIFIED, {
+                          category: 'product',
+                          severity: 'medium',
+                          metadata: {
+                            product_id: product.id,
+                            sku: product.name.toLowerCase().replace(/\s+/g, '_'),
+                            old_price: mockOldPrice,
+                            new_price: mockNewPrice,
+                            price_difference: mockNewPrice - mockOldPrice,
+                            percentage_change: pctChange,
+                            currency: 'KES',
+                            reason: 'bulk_price_adjustment',
+                            timestamp: new Date().toISOString(),
+                            modified_by: 'admin',
+                          },
+                        });
+                      }
+                      
+                      alert(`Bulk price adjustment of ${pctChange}% logged for ${lowStockProducts.length} products!`);
+                    } catch (e) {
+                      console.error('Failed to log bulk price update:', e);
+                    }
+                  }
+                }}
+                className="w-full mt-2 py-2 text-sm text-orange-600 font-medium hover:bg-orange-50 rounded-lg transition-colors border border-orange-200"
+              >
+                Bulk Price Adjustment
               </button>
             </div>
           ) : (

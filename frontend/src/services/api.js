@@ -4,6 +4,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
+import { logIntegrationError, logApiRetry, recordServiceSuccess, determineServiceName } from '../utils/auditUtils';
 
 // Base API URL - Railway backend
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://oshocks-backend-production.up.railway.app/api/v1';
@@ -22,6 +23,52 @@ const api = axios.create({
     'Accept': 'application/json',
   },
 });
+
+// ============================================================================
+// RETRY CONFIGURATION with audit logging
+// ============================================================================
+
+const MAX_RETRIES = 3;
+const RETRY_DELAY_BASE = 1000; // 1 second base delay
+
+/**
+ * Execute request with exponential backoff retry
+ * @param {Function} requestFn - Function that returns axios promise
+ * @param {string} endpoint - Endpoint for audit logging
+ */
+export const executeWithRetry = async (requestFn, endpoint) => {
+  let lastError;
+  
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const result = await requestFn();
+      return result;
+    } catch (error) {
+      lastError = error;
+      
+      // Don't retry on 4xx errors (client errors)
+      if (error.response?.status >= 400 && error.response?.status < 500) {
+        throw error;
+      }
+      
+      // Log retry scheduled event (WEBHOOK_RETRY_SCHEDULED equivalent)
+      if (attempt < MAX_RETRIES) {
+        const delay = RETRY_DELAY_BASE * Math.pow(2, attempt - 1);
+        logApiRetry(endpoint, attempt, MAX_RETRIES, delay);
+        
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        // Update retry count in error config for next attempt
+        if (error.config) {
+          error.config.retryAttempt = attempt;
+        }
+      }
+    }
+  }
+  
+  throw lastError;
+};
 
 // Request interceptor - Add auth token and effective role
 api.interceptors.request.use(
@@ -85,9 +132,12 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - Handle errors
+// Response interceptor - Handle errors and audit logging
 api.interceptors.response.use(
   (response) => {
+    // Track service health for recovery detection
+    recordServiceSuccess(response.config.url);
+    
     if (response.config.url.includes('/search')) {
       console.log('🔍 Search Response:', {
         url: response.config.url,
@@ -105,23 +155,32 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
-    if (error.config?.url.includes('/search')) {
+    const config = error.config || {};
+    
+    if (config.url?.includes('/search')) {
       console.error('🔍 Search Error:', {
-        url: error.config?.url,
-        params: error.config?.params,
+        url: config.url,
+        params: config.params,
         status: error.response?.status,
         data: error.response?.data
       });
     }
     
-    // Log errors
+    // Log errors with structured audit events
     if (error.response) {
       console.error('🔴 API Error Response:', {
         status: error.response.status,
         statusText: error.response.statusText,
         data: error.response.data,
-        url: error.config?.url,
+        url: config.url,
       });
+      
+      // Log THIRD_PARTY_INTEGRATION_ERROR for 5xx errors
+      if (error.response.status >= 500) {
+        logIntegrationError(error, {
+          retryAttempt: config.retryAttempt || 0,
+        });
+      }
       
       if (error.response.status === 401) {
         console.warn('🔒 Unauthorized - clearing token');
@@ -132,8 +191,13 @@ api.interceptors.response.use(
       console.error('🔴 Network Error:', {
         message: error.message,
         code: error.code,
-        baseURL: error.config?.baseURL,
-        url: error.config?.url,
+        baseURL: config.baseURL,
+        url: config.url,
+      });
+      
+      // Log network errors as integration errors
+      logIntegrationError(error, {
+        retryAttempt: config.retryAttempt || 0,
       });
     } else {
       console.error('🔴 Request Setup Error:', error.message);

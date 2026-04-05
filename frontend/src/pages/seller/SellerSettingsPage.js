@@ -73,48 +73,132 @@ export default function SellerSettingsPage() {
     setTimeout(() => setNotification(null), 4000);
   };
 
-  const handleSaveBusinessInfo = (e) => {
+  const handleSaveBusinessInfo = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     
     // Simulate API call
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsLoading(false);
       showNotification('Business information updated successfully!');
+      
+      // Log SHOP_PROFILE_UPDATED audit event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.SHOP_PROFILE_UPDATED, {
+          category: 'seller',
+          severity: 'low',
+          metadata: {
+            shop_name: businessInfo.shopName,
+            business_name: businessInfo.businessName,
+            updated_fields: ['shopName', 'businessName', 'description', 'email', 'phone', 'address'],
+            has_logo: !!shopImages.logo,
+            has_banner: !!shopImages.banner,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (err) {
+        console.error('Failed to log SHOP_PROFILE_UPDATED:', err);
+      }
     }, 1500);
   };
 
-  const handleSavePersonalInfo = (e) => {
+  const handleSavePersonalInfo = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsLoading(false);
       showNotification('Personal information updated successfully!');
+      
+      // Log PROFILE_UPDATED audit event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.PROFILE_UPDATED, {
+          category: 'user',
+          severity: 'low',
+          metadata: {
+            updated_fields: ['firstName', 'lastName', 'email', 'phone', 'idNumber'],
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (err) {
+        console.error('Failed to log PROFILE_UPDATED:', err);
+      }
     }, 1500);
   };
 
-  const handleSavePaymentSettings = (e) => {
+  const handleSavePaymentSettings = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsLoading(false);
       showNotification('Payment settings updated successfully!');
+      
+      // Log PAYMENT_SETTINGS_UPDATED audit event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_SETTINGS_UPDATED, {
+          category: 'payment',
+          severity: 'medium',
+          metadata: {
+            has_mpesa: !!paymentSettings.mpesaNumber,
+            has_bank: !!paymentSettings.bankName && !!paymentSettings.accountNumber,
+            bank_name: paymentSettings.bankName || null,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (err) {
+        console.error('Failed to log PAYMENT_SETTINGS_UPDATED:', err);
+      }
     }, 1500);
   };
 
-  const handleSaveNotifications = (e) => {
+  const handleSaveNotifications = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsLoading(false);
       showNotification('Notification preferences saved!');
+      
+      // Log NOTIFICATION_SETTINGS_CHANGED audit event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        
+        const enabledChannels = [];
+        if (notificationPrefs.emailOrders || notificationPrefs.emailMessages || notificationPrefs.emailPromotions || notificationPrefs.emailUpdates) {
+          enabledChannels.push('email');
+        }
+        if (notificationPrefs.smsOrders || notificationPrefs.smsLowStock) {
+          enabledChannels.push('sms');
+        }
+        if (notificationPrefs.pushOrders || notificationPrefs.pushMessages) {
+          enabledChannels.push('push');
+        }
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.NOTIFICATION_SETTINGS_CHANGED, {
+          category: 'notification',
+          severity: 'low',
+          metadata: {
+            enabled_channels: enabledChannels,
+            email_enabled: notificationPrefs.emailOrders || notificationPrefs.emailMessages || notificationPrefs.emailPromotions || notificationPrefs.emailUpdates,
+            sms_enabled: notificationPrefs.smsOrders || notificationPrefs.smsLowStock,
+            push_enabled: notificationPrefs.pushOrders || notificationPrefs.pushMessages,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (err) {
+        console.error('Failed to log NOTIFICATION_SETTINGS_CHANGED:', err);
+      }
     }, 1500);
   };
 
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = async (e) => {
     e.preventDefault();
     
     if (securityData.newPassword !== securityData.confirmPassword) {
@@ -129,9 +213,27 @@ export default function SellerSettingsPage() {
     
     setIsLoading(true);
     
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsLoading(false);
       showNotification('Password changed successfully!');
+      
+      // Log PASSWORD_CHANGED audit event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.PASSWORD_CHANGED, {
+          category: 'security',
+          severity: 'medium',
+          metadata: {
+            changed_by: 'self',
+            password_length: securityData.newPassword.length,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (err) {
+        console.error('Failed to log PASSWORD_CHANGED:', err);
+      }
+      
       setSecurityData({
         currentPassword: '',
         newPassword: '',
@@ -940,7 +1042,29 @@ export default function SellerSettingsPage() {
                               <input
                                 type="checkbox"
                                 checked={securityData.twoFactorEnabled}
-                                onChange={(e) => setSecurityData({...securityData, twoFactorEnabled: e.target.checked})}
+                                onChange={async (e) => {
+                                  const newValue = e.target.checked;
+                                  setSecurityData({...securityData, twoFactorEnabled: newValue});
+                                  
+                                  // Log 2FA toggle event
+                                  try {
+                                    const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+                                    
+                                    await logFrontendAuditEvent(
+                                      newValue ? AUDIT_EVENTS.TWO_FACTOR_ENABLED : AUDIT_EVENTS.TWO_FACTOR_DISABLED, 
+                                      {
+                                        category: 'security',
+                                        severity: 'high',
+                                        metadata: {
+                                          method: 'authenticator_app',
+                                          timestamp: new Date().toISOString(),
+                                        },
+                                      }
+                                    );
+                                  } catch (err) {
+                                    console.error('Failed to log 2FA change:', err);
+                                  }
+                                }}
                                 className="sr-only peer"
                               />
                               <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>

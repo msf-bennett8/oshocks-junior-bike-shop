@@ -114,7 +114,47 @@ const SuperAdminAdminUsersPage = () => {
 
 const handleRoleElevation = async (userId, rolesToAdd) => {
     try {
+      const user = users.find(u => u.id === userId);
+      const oldRoles = user?.all_roles || [user?.role];
+      
       const response = await userService.elevateUser(userId, rolesToAdd);
+      
+      // Log user role changed event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.USER_ROLE_CHANGED, {
+          category: 'admin',
+          severity: 'high',
+          metadata: {
+            target_user_id: userId,
+            old_role: oldRoles.join(','),
+            new_role: [...oldRoles, ...rolesToAdd].join(','),
+            changed_by: currentUser?.id || 'super_admin',
+            reason: `Added roles: ${rolesToAdd.join(', ')}`,
+            timestamp: new Date().toISOString(),
+          },
+        });
+        
+        // Also log permissions updated
+        const fingerprint = sessionStorage.getItem('device_fingerprint');
+        await logFrontendAuditEvent(AUDIT_EVENTS.PERMISSIONS_UPDATED, {
+          category: 'admin',
+          severity: 'medium',
+          metadata: {
+            target_user_id: userId,
+            permissions_added: rolesToAdd,
+            permissions_removed: [],
+            changed_by: currentUser?.id || 'super_admin',
+            reason: 'role_elevation',
+            timestamp: new Date().toISOString(),
+            device_fingerprint: fingerprint,
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
+      
       // Refresh user list to show updated roles
       await fetchUsers();
       alert(response.message || 'User roles updated successfully!');
@@ -127,7 +167,49 @@ const handleRoleElevation = async (userId, rolesToAdd) => {
   const handleRoleRemoval = async (userId, roleToRemove) => {
     if (window.confirm(`Remove ${roleToRemove} role from this user?`)) {
       try {
+        const user = users.find(u => u.id === userId);
+        const oldRoles = user?.all_roles || [user?.role];
+        
         const response = await userService.removeRole(userId, roleToRemove);
+        
+        // Log user role changed event
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          
+          const newRoles = oldRoles.filter(r => r !== roleToRemove);
+          
+          await logFrontendAuditEvent(AUDIT_EVENTS.USER_ROLE_CHANGED, {
+            category: 'admin',
+            severity: 'high',
+            metadata: {
+              target_user_id: userId,
+              old_role: oldRoles.join(','),
+              new_role: newRoles.join(','),
+              changed_by: currentUser?.id || 'super_admin',
+              reason: `Removed role: ${roleToRemove}`,
+              timestamp: new Date().toISOString(),
+            },
+          });
+          
+          // Also log permissions updated
+          const fingerprint = sessionStorage.getItem('device_fingerprint');
+          await logFrontendAuditEvent(AUDIT_EVENTS.PERMISSIONS_UPDATED, {
+            category: 'admin',
+            severity: 'medium',
+            metadata: {
+              target_user_id: userId,
+              permissions_added: [],
+              permissions_removed: [roleToRemove],
+              changed_by: currentUser?.id || 'super_admin',
+              reason: 'role_removal',
+              timestamp: new Date().toISOString(),
+              device_fingerprint: fingerprint,
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
+        
         await fetchUsers();
         alert(response.message || 'Role removed successfully!');
       } catch (error) {
@@ -146,13 +228,35 @@ const handleRoleElevation = async (userId, rolesToAdd) => {
       }
       try {
         await userService.approveSeller(userId);
+        
+        // Log user role changed event (seller approval)
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          
+          await logFrontendAuditEvent(AUDIT_EVENTS.USER_ROLE_CHANGED, {
+            category: 'admin',
+            severity: 'high',
+            metadata: {
+              target_user_id: userId,
+              old_role: 'pending_seller',
+              new_role: 'seller',
+              changed_by: currentUser?.id || 'super_admin',
+              reason: 'seller_approved',
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
+        
         await fetchUsers();
         alert('Seller approved successfully!');
+        setActionMenuOpen(null);
+        return;
       } catch (error) {
         alert(error.response?.data?.message || 'Failed to approve seller');
+        return;
       }
-      setActionMenuOpen(null);
-      return;
     }
 
     if (action === 'reject_seller') {

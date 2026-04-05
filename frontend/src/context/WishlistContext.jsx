@@ -69,21 +69,24 @@ export const WishlistProvider = ({ children }) => {
         // Reload wishlist to get updated data
         await loadWishlistFromAPI();
 
-        // Log wishlist add event
-        try {
-          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
-          logFrontendAuditEvent(AUDIT_EVENTS.WISHLIST_ITEM_ADDED, {
-            category: 'wishlist',
-            severity: 'low',
-            metadata: {
-              product_id: product.id,
-              product_name: product.name,
-              timestamp: new Date().toISOString(),
-            },
-          });
-        } catch (e) {
-          // Silently fail
-        }
+      // Log wishlist add event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+        await logFrontendAuditEvent(AUDIT_EVENTS.WISHLIST_ITEM_ADDED, {
+          category: 'business',
+          severity: 'low',
+          metadata: {
+            product_id: product.id,
+            product_name: product.name,
+            price: product.price,
+            sku: product.sku || null,
+            variant_id: variant?.id || null,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
 
         return { success: true, message: response.data.message };
     }
@@ -105,20 +108,24 @@ export const WishlistProvider = ({ children }) => {
 
         await api.delete(`/wishlist/items/${itemId}`);
 
-        // Log wishlist remove event
-        try {
-          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
-          logFrontendAuditEvent(AUDIT_EVENTS.WISHLIST_ITEM_REMOVED, {
-            category: 'wishlist',
-            severity: 'low',
-            metadata: {
-              item_id: itemId,
-              timestamp: new Date().toISOString(),
-            },
-          });
-        } catch (e) {
-          // Silently fail
-        }
+      // Log wishlist remove event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+        const removedItem = wishlistItems.find(i => i.id === itemId);
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.WISHLIST_ITEM_REMOVED, {
+          category: 'business',
+          severity: 'low',
+          metadata: {
+            item_id: itemId,
+            product_id: removedItem?.product_id || null,
+            product_name: removedItem?.product?.name || null,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
 
         // Reload wishlist
         await loadWishlistFromAPI();

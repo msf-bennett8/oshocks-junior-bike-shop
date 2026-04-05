@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import SearchBar from '../../components/common/SearchBar'; 
 import { fetchProducts, fetchCategories } from '../../redux/slices/productSlice';
 import { Link } from 'react-router-dom';
+import { useAudit } from '../../hooks/useAudit';
 
 const NotFoundPage = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false); // ← CHANGE: Use search overlay instead
@@ -11,11 +12,26 @@ const NotFoundPage = () => {
     const { items: products, categories, loading } = useSelector(
       (state) => state.products
     );
+  const { logAuditEvent } = useAudit();
 
   useEffect(() => {
+    // Log 404 error event
+    logAuditEvent({
+      event_type: 'RESOURCE_ACCESS_DENIED',
+      event_category: 'security',
+      severity: 'low',
+      metadata: {
+        requested_url: window.location.href,
+        http_status: 404,
+        error_message: 'Page not found',
+        user_agent: navigator.userAgent,
+        referrer: document.referrer
+      }
+    });
+    
     dispatch(fetchCategories());
     dispatch(fetchProducts({ sort: 'popular', page: 1, limit: 4 }));
-  }, [dispatch]);
+  }, [dispatch, logAuditEvent]);
 
   // Map categories from database with icons and colors
   const categoryIcons = {

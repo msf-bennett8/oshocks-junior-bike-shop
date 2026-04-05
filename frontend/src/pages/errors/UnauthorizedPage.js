@@ -22,6 +22,7 @@ import {
   HelpCircle,
   RefreshCw
 } from 'lucide-react';
+import { useAudit } from '../../hooks/useAudit';
 
 const UnauthorizedPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -31,9 +32,24 @@ const UnauthorizedPage = () => {
   const [loginAttempt, setLoginAttempt] = useState(null);
   const [redirectUrl] = useState(window.location.pathname);
   const [timeLeft, setTimeLeft] = useState(null);
+  const { logAuditEvent } = useAudit();
 
   // Simulate checking if user was recently logged out
   useEffect(() => {
+    // Log 401 unauthorized access attempt
+    logAuditEvent({
+      event_type: 'RESOURCE_ACCESS_DENIED',
+      event_category: 'security',
+      severity: 'medium',
+      metadata: {
+        http_status: 401,
+        requested_url: redirectUrl,
+        reason: 'unauthorized_access',
+        user_agent: navigator.userAgent,
+        timestamp: new Date().toISOString()
+      }
+    });
+
     const logoutTime = localStorage.getItem('lastLogout');
     if (logoutTime) {
       const timeSince = Date.now() - parseInt(logoutTime);
@@ -41,7 +57,7 @@ const UnauthorizedPage = () => {
         setTimeLeft(Math.ceil((300000 - timeSince) / 1000));
       }
     }
-  }, []);
+  }, [redirectUrl, logAuditEvent]);
 
   useEffect(() => {
     if (timeLeft > 0) {

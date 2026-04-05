@@ -1286,13 +1286,33 @@ const NotificationsPage = () => {
                 <div className="flex items-center justify-between mb-3">
                   <span className="font-medium text-gray-900 capitalize">{category}</span>
                   <button
-                    onClick={() => setNotificationSettings(prev => ({
-                      ...prev,
-                      categories: {
-                        ...prev.categories,
-                        [category]: { ...settings, enabled: !settings.enabled }
+                    onClick={async () => {
+                      const newEnabled = !settings.enabled;
+                      setNotificationSettings(prev => ({
+                        ...prev,
+                        categories: {
+                          ...prev.categories,
+                          [category]: { ...settings, enabled: newEnabled }
+                        }
+                      }));
+                      
+                      // Log notification settings changed
+                      try {
+                        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+                        await logFrontendAuditEvent(AUDIT_EVENTS.NOTIFICATION_SETTINGS_CHANGED, {
+                          category: 'notification',
+                          severity: 'low',
+                          metadata: {
+                            setting_key: `${category}_enabled`,
+                            old_value: !newEnabled,
+                            new_value: newEnabled,
+                            timestamp: new Date().toISOString(),
+                          },
+                        });
+                      } catch (e) {
+                        // Silently fail
                       }
-                    }))}
+                    }}
                     className={`relative w-10 h-5 rounded-full transition-colors ${settings.enabled ? 'bg-blue-600' : 'bg-gray-300'}`}
                   >
                     <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${settings.enabled ? 'translate-x-5' : 'translate-x-0'}`} />
@@ -1301,25 +1321,65 @@ const NotificationsPage = () => {
                 {settings.enabled && (
                   <div className="flex gap-2 text-xs">
                     <button
-                      onClick={() => setNotificationSettings(prev => ({
-                        ...prev,
-                        categories: {
-                          ...prev.categories,
-                          [category]: { ...settings, push: !settings.push }
+                      onClick={async () => {
+                        const newPush = !settings.push;
+                        setNotificationSettings(prev => ({
+                          ...prev,
+                          categories: {
+                            ...prev.categories,
+                            [category]: { ...settings, push: newPush }
+                          }
+                        }));
+                        
+                        // Log notification settings changed
+                        try {
+                          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+                          await logFrontendAuditEvent(AUDIT_EVENTS.NOTIFICATION_SETTINGS_CHANGED, {
+                            category: 'notification',
+                            severity: 'low',
+                            metadata: {
+                              setting_key: `${category}_push`,
+                              old_value: !newPush,
+                              new_value: newPush,
+                              timestamp: new Date().toISOString(),
+                            },
+                          });
+                        } catch (e) {
+                          // Silently fail
                         }
-                      }))}
+                      }}
                       className={`px-2 py-1 rounded ${settings.push ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'}`}
                     >
                       Push
                     </button>
                     <button
-                      onClick={() => setNotificationSettings(prev => ({
-                        ...prev,
-                        categories: {
-                          ...prev.categories,
-                          [category]: { ...settings, email: !settings.email }
+                      onClick={async () => {
+                        const newEmail = !settings.email;
+                        setNotificationSettings(prev => ({
+                          ...prev,
+                          categories: {
+                            ...prev.categories,
+                            [category]: { ...settings, email: newEmail }
+                          }
+                        }));
+                        
+                        // Log notification settings changed
+                        try {
+                          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+                          await logFrontendAuditEvent(AUDIT_EVENTS.NOTIFICATION_SETTINGS_CHANGED, {
+                            category: 'notification',
+                            severity: 'low',
+                            metadata: {
+                              setting_key: `${category}_email`,
+                              old_value: !newEmail,
+                              new_value: newEmail,
+                              timestamp: new Date().toISOString(),
+                            },
+                          });
+                        } catch (e) {
+                          // Silently fail
                         }
-                      }))}
+                      }}
                       className={`px-2 py-1 rounded ${settings.email ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'}`}
                     >
                       Email

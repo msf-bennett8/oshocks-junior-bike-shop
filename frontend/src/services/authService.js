@@ -146,6 +146,7 @@ login: async (credentials) => {
             login_identifier: requestData.login,
             method: 'password',
             endpoint: endpoint,
+            mfa_used: false,
             timestamp: new Date().toISOString(),
           },
         });
@@ -165,6 +166,25 @@ login: async (credentials) => {
         status: error.response?.status,
         message: error.response?.data?.message
       });
+      
+      // Log failed login audit event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+        logFrontendAuditEvent(AUDIT_EVENTS.LOGIN_FAILED, {
+          category: 'auth',
+          severity: 'high',
+          metadata: {
+            identifier_attempted: requestData.login,
+            failure_reason: error.response?.data?.message || error.message,
+            failure_count: 1,
+            endpoint: endpoint,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
+      
       throw error;
     }
   }

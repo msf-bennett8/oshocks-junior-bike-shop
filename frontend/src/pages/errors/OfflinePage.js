@@ -15,6 +15,7 @@ import {
   Download,
   Eye
 } from 'lucide-react';
+import { useAudit } from '../../hooks/useAudit';
 
 const OfflinePage = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -25,9 +26,36 @@ const OfflinePage = () => {
     wishlist: 12,
     viewedProducts: 8
   });
+  const { logAuditEvent } = useAudit();
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
+    // Log offline mode detected
+    logAuditEvent({
+      event_type: 'OFFLINE_MODE_DETECTED',
+      event_category: 'system',
+      severity: 'low',
+      metadata: {
+        network_status: 'offline',
+        cached_items_count: cachedData.cart + cachedData.wishlist + cachedData.viewedProducts,
+        user_agent: navigator.userAgent,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Log when connection is restored
+      logAuditEvent({
+        event_type: 'CONNECTIVITY_RESTORED',
+        event_category: 'system',
+        severity: 'low',
+        metadata: {
+          network_status: 'online',
+          user_agent: navigator.userAgent,
+          timestamp: new Date().toISOString()
+        }
+      });
+    };
     const handleOffline = () => setIsOnline(false);
 
     window.addEventListener('online', handleOnline);
@@ -37,7 +65,7 @@ const OfflinePage = () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [cachedData, logAuditEvent]);
 
   useEffect(() => {
     if (isOnline) {

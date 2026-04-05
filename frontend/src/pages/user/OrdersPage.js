@@ -208,8 +208,23 @@ const OrdersPage = () => {
     window.open(`https://track.oshocks.co.ke/${trackingNumber}`, '_blank');
   };
 
-  const handleReorder = (orderId) => {
+  const handleReorder = async (orderId) => {
     alert(`Items from order will be added to cart`);
+    
+    // Log reorder event
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      await logFrontendAuditEvent('ORDER_REORDERED', {
+        category: 'order',
+        severity: 'low',
+        metadata: {
+          original_order_id: orderId,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      // Silently fail
+    }
   };
 
   const handleDownloadInvoice = (orderNumber) => {
@@ -648,7 +663,23 @@ const OrdersPage = () => {
 
                       {order.canReview && (
                         <button
-                          onClick={() => window.location.href = `/orders/${order.id}/review`}
+                          onClick={async () => {
+                            // Log review initiated event
+                            try {
+                              const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+                              await logFrontendAuditEvent('REVIEW_INITIATED', {
+                                category: 'review',
+                                severity: 'low',
+                                metadata: {
+                                  order_id: order.id,
+                                  timestamp: new Date().toISOString(),
+                                },
+                              });
+                            } catch (e) {
+                              // Silently fail
+                            }
+                            window.location.href = `/orders/${order.id}/review`;
+                          }}
                           className="flex items-center px-4 py-2 bg-yellow-50 border border-yellow-300 text-yellow-700 rounded-lg hover:bg-yellow-100 font-medium transition-colors"
                         >
                           <CheckCircle className="w-4 h-4 mr-2" />

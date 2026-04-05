@@ -342,7 +342,7 @@ const AdminCategoriesPage = () => {
   };
 
   // Save category
-  const handleSaveCategory = (e) => {
+  const handleSaveCategory = async (e) => {
     e.preventDefault();
     
     if (modalMode === 'create') {
@@ -355,7 +355,31 @@ const AdminCategoriesPage = () => {
       };
       setCategories([...categories, newCategory]);
       showNotification('Category created successfully!');
+      
+      // Log category created as PRODUCT_CREATED equivalent
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_CREATED, {
+          category: 'product',
+          severity: 'low',
+          metadata: {
+            product_id: newCategory.id, // Using category ID as product_id for tracking
+            sku: `cat_${newCategory.slug}`,
+            initial_data: {
+              name: newCategory.name,
+              type: 'category',
+              parent_id: newCategory.parentId,
+              is_active: newCategory.isActive,
+            },
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
     } else {
+      const oldCategory = categories.find(c => c.id === selectedCategory.id);
       const updatedCategories = categories.map(cat => 
         cat.id === selectedCategory.id 
           ? { ...formData, updatedAt: new Date().toISOString().split('T')[0] }
@@ -363,13 +387,50 @@ const AdminCategoriesPage = () => {
       );
       setCategories(updatedCategories);
       showNotification('Category updated successfully!');
+      
+      // Log category updated as PRODUCT_UPDATED equivalent
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        
+        const changes = {};
+        const oldValues = {};
+        const newValues = {};
+        
+        if (oldCategory.name !== formData.name) {
+          changes.name = 'updated';
+          oldValues.name = oldCategory.name;
+          newValues.name = formData.name;
+        }
+        if (oldCategory.isActive !== formData.isActive) {
+          changes.is_active = 'updated';
+          oldValues.is_active = oldCategory.isActive;
+          newValues.is_active = formData.isActive;
+        }
+        
+        if (Object.keys(changes).length > 0) {
+          await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_UPDATED, {
+            category: 'product',
+            severity: 'low',
+            metadata: {
+              product_id: selectedCategory.id,
+              sku: `cat_${formData.slug}`,
+              changes: changes,
+              old_values: oldValues,
+              new_values: newValues,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        }
+      } catch (e) {
+        // Silently fail
+      }
     }
     
     closeModal();
   };
 
   // Delete category
-  const handleDeleteCategory = (categoryId) => {
+  const handleDeleteCategory = async (categoryId) => {
     const hasChildren = categories.some(cat => cat.parentId === categoryId);
     const category = categories.find(cat => cat.id === categoryId);
     
@@ -386,6 +447,25 @@ const AdminCategoriesPage = () => {
 
     setCategories(categories.filter(cat => cat.id !== categoryId));
     showNotification('Category deleted successfully!');
+    
+    // Log category deleted as PRODUCT_DELETED equivalent
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      
+      await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_DELETED, {
+        category: 'product',
+        severity: 'medium',
+        metadata: {
+          product_id: categoryId,
+          sku: `cat_${category?.slug || 'unknown'}`,
+          deletion_reason: 'admin_deleted',
+          archive_location: null,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      // Silently fail
+    }
   };
 
   // Bulk actions

@@ -5,8 +5,10 @@ import {
   Truck, Info, Star, FileText, Zap, ImagePlus, Trash2, ChevronRight, AlertCircle 
 } from 'lucide-react';
 import ActionModal from '../../components/common/ActionModal';
+import { useAuth } from '../../context/AuthContext';
 
 const AddProductPage = () => {
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [previewMode, setPreviewMode] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -532,6 +534,36 @@ const handleSubmit = async () => {
       section: 'hero'
     });
     console.log('✅ Created product:', result);
+    
+    // Log PRODUCT_CREATED audit event
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      
+      await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_CREATED, {
+        category: 'product',
+        severity: 'medium',
+        actor_type: 'seller',
+        user_id: user?.id,
+        on_behalf_of: null, // Set if admin acting on behalf of seller
+        metadata: {
+          product_id: result?.data?.id || result?.id || `prod_${Date.now()}`,
+          product_name: formData.productName,
+          sku: formData.sku,
+          category_id: formData.category,
+          base_price: parseFloat(formData.basePrice),
+          discount_price: parseFloat(formData.discountPrice) || null,
+          quantity: parseInt(formData.quantity),
+          condition: formData.condition,
+          has_images: formData.colors.some(c => c.images.length > 0),
+          color_variants_count: formData.colors.length,
+          specifications_count: Object.keys(formData.specifications).filter(k => formData.specifications[k]).length,
+          created_by: user?.id || 'self',
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      console.error('Failed to log PRODUCT_CREATED:', e);
+    }
     
     // Optional: Reset form or redirect after modal closes
     // window.location.href = '/seller/products';

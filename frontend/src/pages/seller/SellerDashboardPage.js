@@ -287,6 +287,25 @@ const SellerDashboardPage = () => {
 
   useEffect(() => {
     loadDashboardData();
+    
+    // Log seller dashboard accessed
+    const logDashboardAccess = async () => {
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        await logFrontendAuditEvent(AUDIT_EVENTS.SELLER_DASHBOARD_ACCESSED, {
+          category: 'seller',
+          severity: 'low',
+          metadata: {
+            time_range: timeRange,
+            seller_id: user?.id,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
+    };
+    logDashboardAccess();
   }, [timeRange]);
 
   const loadDashboardData = async () => {

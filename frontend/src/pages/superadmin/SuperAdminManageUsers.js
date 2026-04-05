@@ -169,19 +169,167 @@ const SuperAdminManageUsers = () => {
     setShowDetailsModal(true);
   };
 
-  const handleDeleteUser = (userId) => {
+    const handleDeleteUser = (userId) => {
     if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       setUsers(users.filter(user => user.id !== userId));
     }
   };
 
-  const handleStatusChange = (userId, newStatus) => {
+  // Handle impersonate user - logs in as the target user
+  const handleImpersonateUser = async (user) => {
+    if (window.confirm(`Start impersonating ${user.name}? You will be logged in as them and can perform actions on their behalf.`)) {
+      try {
+        // Generate impersonation token
+        const impersonationToken = `imp_${Date.now()}_${user.id}`;
+        const sessionId = localStorage.getItem('x_session_id') || `sess_${Date.now()}`;
+        
+        // Log impersonation started event
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        const fingerprint = sessionStorage.getItem('device_fingerprint');
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.ADMIN_IMPERSONATION_STARTED, {
+          category: 'admin',
+          severity: 'critical',
+          metadata: {
+            target_user_id: user.id,
+            target_user_email: user.email,
+            target_user_role: user.role,
+            impersonation_token: impersonationToken,
+            reason: 'support_investigation',
+            timestamp: new Date().toISOString(),
+            session_id: sessionId,
+            ip_address: null, // Backend will populate
+            device_fingerprint: fingerprint,
+          },
+        });
+
+        // Store impersonation data
+        sessionStorage.setItem('impersonation_data', JSON.stringify({
+          target_user_id: user.id,
+          target_user_email: user.email,
+          target_user_name: user.name,
+          target_user_role: user.role,
+          started_at: new Date().toISOString(),
+          original_admin_id: 'super_admin', // Replace with actual admin ID
+          impersonation_token: impersonationToken,
+          session_id: sessionId,
+        }));
+        
+        // Store original admin session for return
+        const originalToken = localStorage.getItem('authToken');
+        sessionStorage.setItem('original_admin_token', originalToken);
+        sessionStorage.setItem('original_admin_session', JSON.stringify({
+          id: 'super_admin',
+          role: 'super_admin',
+          name: 'Super Admin',
+        }));
+
+        // Set impersonated user as current user
+        localStorage.setItem('authToken', `impersonated_${impersonationToken}`);
+        localStorage.setItem('user', JSON.stringify({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          is_impersonating: true,
+          impersonation_token: impersonationToken,
+        }));
+
+        // Redirect to user dashboard
+        alert(`Now impersonating ${user.name}. You will be redirected to their dashboard.`);
+        window.location.href = '/dashboard';
+        
+      } catch (error) {
+        console.error('Failed to start impersonation:', error);
+        alert('Failed to start impersonation. Please try again.');
+      }
+    }
+  };
+  
+  // Handle end impersonation - returns to admin panel
+  const handleEndImpersonation = async () => {
+    const impersonationData = JSON.parse(sessionStorage.getItem('impersonation_data') || '{}');
+    
+    if (!impersonationData.target_user_id) {
+      alert('No active impersonation session found.');
+      return;
+    }
+
+    const durationSeconds = impersonationData.started_at ? 
+      Math.floor((Date.now() - new Date(impersonationData.started_at).getTime()) / 1000) : 0;
+
+    try {
+      // Log impersonation ended event
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      
+      await logFrontendAuditEvent(AUDIT_EVENTS.ADMIN_IMPERSONATION_ENDED, {
+        category: 'admin',
+        severity: 'critical',
+        metadata: {
+          target_user_id: impersonationData.target_user_id,
+          target_user_email: impersonationData.target_user_email,
+          duration_seconds: durationSeconds,
+          actions_taken_summary: sessionStorage.getItem('impersonation_actions') || 'none_logged',
+          timestamp: new Date().toISOString(),
+          session_id: impersonationData.session_id,
+        },
+      });
+    } catch (e) {
+      console.error('Failed to log impersonation end:', e);
+    }
+
+    // Restore original admin session
+    const originalToken = sessionStorage.getItem('original_admin_token');
+    const originalSession = JSON.parse(sessionStorage.getItem('original_admin_session') || '{}');
+    
+    if (originalToken) {
+      localStorage.setItem('token', originalToken);
+      localStorage.setItem('user', JSON.stringify(originalSession));
+    }
+
+    // Clear impersonation data
+    sessionStorage.removeItem('impersonation_data');
+    sessionStorage.removeItem('original_admin_token');
+    sessionStorage.removeItem('original_admin_session');
+    sessionStorage.removeItem('impersonation_actions');
+
+    // Redirect back to admin panel
+    alert('Impersonation ended. Returning to admin panel.');
+    window.location.href = '/superadmin/users';
+  };
+
+  const handleStatusChange = async (userId, newStatus) => {
+    const user = users.find(u => u.id === userId);
+    const oldStatus = user?.status;
+    
     setUsers(users.map(user => 
       user.id === userId ? { ...user, status: newStatus } : user
     ));
+    
+    // Log user status change as role/permission event
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      const fingerprint = sessionStorage.getItem('device_fingerprint');
+      
+      await logFrontendAuditEvent(AUDIT_EVENTS.PERMISSIONS_UPDATED, {
+        category: 'admin',
+        severity: 'high',
+        metadata: {
+          target_user_id: userId,
+          permissions_added: newStatus === 'active' ? ['account_access'] : [],
+          permissions_removed: newStatus === 'suspended' ? ['account_access'] : [],
+          changed_by: 'super_admin',
+          reason: `Status changed from ${oldStatus} to ${newStatus}`,
+          timestamp: new Date().toISOString(),
+          device_fingerprint: fingerprint,
+        },
+      });
+    } catch (e) {
+      // Silently fail
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (modalMode === 'add') {
       const newUser = {
@@ -194,10 +342,83 @@ const SuperAdminManageUsers = () => {
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name}`
       };
       setUsers([...users, newUser]);
+      
+      // Log user role changed for new user
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        const fingerprint = sessionStorage.getItem('device_fingerprint');
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.USER_ROLE_CHANGED, {
+          category: 'admin',
+          severity: 'high',
+          metadata: {
+            target_user_id: newUser.id,
+            old_role: null,
+            new_role: formData.role,
+            changed_by: 'super_admin',
+            reason: 'new_user_created',
+            timestamp: new Date().toISOString(),
+            device_fingerprint: fingerprint,
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
     } else {
+      const oldRole = selectedUser?.role;
+      const newRole = formData.role;
+      
       setUsers(users.map(user => 
         user.id === selectedUser.id ? { ...user, ...formData } : user
       ));
+      
+      // Log user role changed if role was modified
+      if (oldRole !== newRole) {
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          const fingerprint = sessionStorage.getItem('device_fingerprint');
+          
+          await logFrontendAuditEvent(AUDIT_EVENTS.USER_ROLE_CHANGED, {
+            category: 'admin',
+            severity: 'high',
+            metadata: {
+              target_user_id: selectedUser.id,
+              old_role: oldRole,
+              new_role: newRole,
+              changed_by: 'super_admin',
+              reason: 'role_upgrade',
+              timestamp: new Date().toISOString(),
+              device_fingerprint: fingerprint,
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
+      }
+      
+      // Log permissions updated if status changed
+      if (selectedUser?.status !== formData.status) {
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          const fingerprint = sessionStorage.getItem('device_fingerprint');
+          
+          await logFrontendAuditEvent(AUDIT_EVENTS.PERMISSIONS_UPDATED, {
+            category: 'admin',
+            severity: 'medium',
+            metadata: {
+              target_user_id: selectedUser.id,
+              permissions_added: formData.status === 'active' ? ['account_access'] : [],
+              permissions_removed: formData.status === 'suspended' ? ['account_access'] : [],
+              changed_by: 'super_admin',
+              reason: `Status changed from ${selectedUser.status} to ${formData.status}`,
+              timestamp: new Date().toISOString(),
+              device_fingerprint: fingerprint,
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
+      }
     }
     setShowModal(false);
   };
@@ -482,6 +703,13 @@ const SuperAdminManageUsers = () => {
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleImpersonateUser(user)}
+                          className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                          title="Impersonate User"
+                        >
+                          <Eye className="w-4 h-4" />
                         </button>
                       </div>
                     </td>

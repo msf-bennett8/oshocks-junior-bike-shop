@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../../context/AuthContext';
+import { useDeviceFingerprint } from '../../hooks/useDeviceFingerprint';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader, CheckCircle } from 'lucide-react';
 
 const LoginPage = () => {
@@ -24,6 +25,12 @@ const LoginPage = () => {
   const [validationErrors, setValidationErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  
+  // Device fingerprint and failure tracking
+  const { fingerprint } = useDeviceFingerprint();
+  const [failureCount, setFailureCount] = useState(() => 
+    parseInt(sessionStorage.getItem('login_failure_count') || '0')
+  );
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -105,6 +112,9 @@ const LoginPage = () => {
       });
 
       if (result.success) {
+        // Clear failure count on success
+        sessionStorage.removeItem('login_failure_count');
+        
         // Navigate to intended page or home
         const from = location.state?.from?.pathname || '/';
         navigate(from, { replace: true });
@@ -113,6 +123,43 @@ const LoginPage = () => {
         setValidationErrors({
           general: result.error || 'Login failed. Please try again.'
         });
+        
+        // Log failed login attempt
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          const newFailureCount = failureCount + 1;
+          setFailureCount(newFailureCount);
+          sessionStorage.setItem('login_failure_count', newFailureCount.toString());
+          
+          await logFrontendAuditEvent(AUDIT_EVENTS.LOGIN_FAILED, {
+            category: 'auth',
+            severity: 'high',
+            metadata: {
+              identifier_attempted: formData.login,
+              failure_reason: result.error || 'invalid_credentials',
+              failure_count: newFailureCount,
+              device_fingerprint: fingerprint,
+              timestamp: new Date().toISOString(),
+            },
+          });
+          
+          // Check for suspicious activity (3+ failures in session)
+          if (newFailureCount >= 3) {
+            await logFrontendAuditEvent(AUDIT_EVENTS.SUSPICIOUS_ACTIVITY_DETECTED, {
+              category: 'security',
+              severity: 'critical',
+              metadata: {
+                activity_type: 'multiple_failed_logins',
+                failure_count: newFailureCount,
+                identifier_attempted: formData.login,
+                device_fingerprint: fingerprint,
+                timestamp: new Date().toISOString(),
+              },
+            });
+          }
+        } catch (e) {
+          // Silently fail
+        }
       }
       
     } catch (err) {
@@ -121,6 +168,44 @@ const LoginPage = () => {
       setValidationErrors({
         general: err.response?.data?.message || 'Invalid email or password. Please try again.'
       });
+      
+      // Log failed login attempt
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        const newFailureCount = failureCount + 1;
+        setFailureCount(newFailureCount);
+        sessionStorage.setItem('login_failure_count', newFailureCount.toString());
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.LOGIN_FAILED, {
+          category: 'auth',
+          severity: 'high',
+          metadata: {
+            identifier_attempted: formData.login,
+            failure_reason: err.response?.data?.message || 'exception',
+            error_code: err.response?.status,
+            failure_count: newFailureCount,
+            device_fingerprint: fingerprint,
+            timestamp: new Date().toISOString(),
+          },
+        });
+        
+        // Check for suspicious activity (3+ failures in session)
+        if (newFailureCount >= 3) {
+          await logFrontendAuditEvent(AUDIT_EVENTS.SUSPICIOUS_ACTIVITY_DETECTED, {
+            category: 'security',
+            severity: 'critical',
+            metadata: {
+              activity_type: 'multiple_failed_logins',
+              failure_count: newFailureCount,
+              identifier_attempted: formData.login,
+              device_fingerprint: fingerprint,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        }
+      } catch (e) {
+        // Silently fail
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -138,6 +138,26 @@ const AdminUsersPage = () => {
             user.id === userId ? { ...user, role: 'seller' } : user
           ));
           alert('Seller approved successfully!');
+          
+          // Log user role changed event (seller approval)
+          try {
+            const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+            await logFrontendAuditEvent(AUDIT_EVENTS.USER_ROLE_CHANGED, {
+              category: 'admin',
+              severity: 'high',
+              metadata: {
+                target_user_id: userId,
+                old_role: 'pending_seller',
+                new_role: 'seller',
+                changed_by: currentUser?.id || 'admin',
+                reason: 'seller_approved',
+                timestamp: new Date().toISOString(),
+              },
+            });
+          } catch (e) {
+            // Silently fail
+          }
+          
           setActionMenuOpen(null);
           return;
         } catch (error) {
@@ -172,6 +192,25 @@ const AdminUsersPage = () => {
           user.id === userId ? { ...user, role: newRole } : user
         ));
         alert('Role updated successfully!');
+        
+        // Log user role changed event
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          await logFrontendAuditEvent(AUDIT_EVENTS.USER_ROLE_CHANGED, {
+            category: 'admin',
+            severity: 'high',
+            metadata: {
+              target_user_id: userId,
+              old_role: currentRole,
+              new_role: newRole,
+              changed_by: currentUser?.id || 'admin',
+              reason: action,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
       } catch (error) {
         alert(error.response?.data?.message || 'Failed to update role');
       }

@@ -19,10 +19,37 @@ const paymentService = {
   initiateMpesa: async (paymentData) => {
     try {
       console.log('📱 Initiating M-Pesa payment:', paymentData);
+      
+      // Log payment intent creation
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+      logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_INTENT_CREATED, {
+        category: 'financial',
+        severity: 'medium',
+        metadata: {
+          payment_method: 'mpesa_stk',
+          order_id: paymentData.order_id,
+          amount: paymentData.amount,
+          phone_hash: paymentData.phone_number ? 
+            btoa(paymentData.phone_number).slice(0, 20) : null,
+        },
+      });
+      
       const response = await api.post('/payments/mpesa/initiate', paymentData);
       return response.data;
     } catch (error) {
       console.error('❌ M-Pesa initiation failed:', error);
+      
+      // Log payment failure
+      try {
+        const { logIntegrationError } = await import('../utils/auditUtils');
+        logIntegrationError(error, {
+          service_name: 'mpesa_payment_gateway',
+          context: 'mpesa_initiate',
+        });
+      } catch (e) {
+        // Silently fail
+      }
+      
       throw error;
     }
   },
@@ -119,6 +146,22 @@ const paymentService = {
       console.error('📦 Response Data:', JSON.stringify(error.response?.data, null, 2));
       console.error('📝 Error Message:', error.message);
       console.error('========================================');
+      
+      // Log payment failure as integration error
+      try {
+        const { logIntegrationError } = await import('../utils/auditUtils');
+        logIntegrationError(error, {
+          service_name: 'card_payment_gateway',
+          context: 'card_initialize',
+          payment_data: {
+            order_id: paymentData.order_id,
+            amount: paymentData.amount,
+          }
+        });
+      } catch (e) {
+        // Silently fail
+      }
+      
       throw error;
     }
   },

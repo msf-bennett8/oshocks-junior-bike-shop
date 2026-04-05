@@ -8,6 +8,12 @@ import authService from '../../services/authService';
 import paymentService from '../../services/paymentService';
 import orderService from '../../services/orderService';
 
+// Helper function for cart totals
+const getCartTotals = (cartItems) => {
+  const subtotal = cartItems.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
+  return { subtotal };
+};
+
 // Helper to remove distance from zone display
 const formatCityDisplay = (city) => {
   if (!city) return '';
@@ -267,16 +273,19 @@ const countyInfo = {
   const handleShippingSubmit = async (e) => {
     e.preventDefault();
     if (validateShipping()) {
-      // Log checkout step progression
+      // Log checkout step started
       try {
         const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
-        logFrontendAuditEvent(AUDIT_EVENTS.CHECKOUT_STEP_SHIPPING, {
+        const cartTotals = getCartTotals();
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.CHECKOUT_STEP_STARTED, {
           category: 'checkout',
           severity: 'low',
           metadata: {
-            step: 1,
-            county: shippingInfo.city,
-            zone: shippingInfo.zone,
+            step_number: 1,
+            step_name: 'shipping',
+            cart_id: localStorage.getItem('cart_id') || null,
+            cart_value: cartTotals.subtotal,
             timestamp: new Date().toISOString(),
           },
         });
@@ -286,6 +295,24 @@ const countyInfo = {
 
       setStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // Log checkout step completed after transition
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.CHECKOUT_STEP_COMPLETED, {
+          category: 'checkout',
+          severity: 'low',
+          metadata: {
+            step_number: 1,
+            step_name: 'shipping',
+            time_spent_seconds: 0, // Calculate if needed
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
     }
   };
   
@@ -300,6 +327,27 @@ const countyInfo = {
         if (!response.success) {
           throw new Error(response.message || 'Failed to initiate M-Pesa payment');
         }
+
+        // Log payment retry event
+        let retryCount = 0;
+        const logRetry = async () => {
+          retryCount++;
+          try {
+            const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+            await logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_RETRIED, {
+              category: 'payment',
+              severity: 'medium',
+              metadata: {
+                order_id: orderId,
+                attempt_number: retryCount,
+                payment_method_type: 'mpesa',
+                timestamp: new Date().toISOString(),
+              },
+            });
+          } catch (e) {
+            // Silently fail
+          }
+        };
 
         // Poll for payment status
         return new Promise((resolve, reject) => {
@@ -449,23 +497,60 @@ const countyInfo = {
         const createdOrder = result.data.order;
         const createdItems = result.data.items;
 
-        // Log order created event
+        // Log order placed event (replaces ORDER_CREATED for consistency with backend)
         try {
           const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
-          logFrontendAuditEvent(AUDIT_EVENTS.ORDER_CREATED, {
+          
+          await logFrontendAuditEvent(AUDIT_EVENTS.ORDER_PLACED, {
             category: 'order',
             severity: 'medium',
             metadata: {
               order_id: createdOrder.id,
               order_number: createdOrder.order_number,
-              total: createdOrder.total,
+              cart_id: localStorage.getItem('cart_id') || null,
+              items: cartItems.map(item => ({
+                product_id: item.product_id,
+                sku: item.sku || null,
+                quantity: item.quantity,
+                unit_price: item.price,
+              })),
+              total_amount: createdOrder.total,
+              subtotal: subtotal,
+              tax: tax,
+              shipping: shippingCost,
+              discount_applied: 0,
               payment_method: paymentMethod,
-              item_count: cartItems.length,
+              payment_intent_id: createdOrder.transaction_reference || null,
+              shipping_address_id: null, // Add if available
+              billing_address_id: null, // Add if available
               timestamp: new Date().toISOString(),
             },
           });
         } catch (e) {
           // Silently fail
+        }
+        
+        // Log payment intent created for card payments
+        if (paymentMethod === 'card') {
+          try {
+            const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+            
+            await logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_INTENT_CREATED, {
+              category: 'payment',
+              severity: 'medium',
+              metadata: {
+                order_id: createdOrder.id,
+                payment_intent_id: createdOrder.transaction_reference || `pi_${Date.now()}`,
+                amount: createdOrder.total,
+                currency: 'KES',
+                payment_method_id: selectedSavedCard?.id || null,
+                settlement_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // T+2 settlement
+                timestamp: new Date().toISOString(),
+              },
+            });
+          } catch (e) {
+            // Silently fail
+          }
         }
 
         // Handle M-Pesa payment if selected
@@ -478,15 +563,60 @@ const countyInfo = {
             // Initiate M-Pesa payment
             await handleMpesaPayment(createdOrder.id, mpesaPhone, createdOrder.total);
             
+            // Log payment successful event
+            try {
+              const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+              await logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_SUCCESSFUL, {
+                category: 'payment',
+                severity: 'medium',
+                metadata: {
+                  order_id: createdOrder.id,
+                  payment_intent_id: createdOrder.transaction_reference || null,
+                  transaction_id: `txn_${Date.now()}`,
+                  amount: createdOrder.total,
+                  currency: 'KES',
+                  payment_method_type: 'mpesa',
+                  settlement_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+                  timestamp: new Date().toISOString(),
+                },
+              });
+            } catch (e) {
+              // Silently fail
+            }
+
             // Payment successful - continue to success page
-          } catch (mpesaError) {
+            } catch (mpesaError) {
             setErrors({ submit: mpesaError.message || 'M-Pesa payment failed. Please try again.' });
             setLoading(false);
+            
+            // Log payment failed event
+            try {
+              const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+              await logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_FAILED, {
+                category: 'payment',
+                severity: 'high',
+                metadata: {
+                  order_id: createdOrder?.id || null,
+                  payment_intent_id: createdOrder?.transaction_reference || null,
+                  amount: createdOrder?.total || total,
+                  failure_reason: mpesaError.message || 'mpesa_error',
+                  payment_method_type: 'mpesa',
+                  processor_error_code: mpesaError.code || 'MPESA_ERROR',
+                  retryable: true,
+                  timestamp: new Date().toISOString(),
+                },
+              });
+            } catch (e) {
+              // Silently fail
+            }
+            
             return; // Don't navigate to success page
           }
         }
 
                 // Handle Card payment if selected
+                let cardResponse = null; // Declare outside to use in wider scope
+                
                 if (paymentMethod === 'card') {
                   try {
                     setLoading(true);
@@ -500,7 +630,7 @@ const countyInfo = {
                       console.log('📋 Order ID:', createdOrder.id);
                       console.log('📋 Using saved card:', selectedSavedCard.card_brand, '****', selectedSavedCard.card_last4);
                       
-                      const cardResponse = await paymentService.chargeSavedCard({
+                      cardResponse = await paymentService.chargeSavedCard({
                         order_id: createdOrder.id,
                         email: shippingInfo.email,
                         authorization_code: selectedSavedCard.authorization_code
@@ -509,6 +639,27 @@ const countyInfo = {
                       console.log('✅ Saved card charged:', cardResponse);
                       
                       if (cardResponse.success && cardResponse.data.status === 'completed') {
+                        // Log payment successful event
+                        try {
+                          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+                          await logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_SUCCESSFUL, {
+                            category: 'payment',
+                            severity: 'medium',
+                            metadata: {
+                              order_id: createdOrder.id,
+                              payment_intent_id: createdOrder.transaction_reference || null,
+                              transaction_id: cardResponse.data.reference || `txn_${Date.now()}`,
+                              amount: createdOrder.total,
+                              currency: 'KES',
+                              payment_method_type: 'card',
+                              settlement_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+                              timestamp: new Date().toISOString(),
+                            },
+                          });
+                        } catch (e) {
+                          // Silently fail
+                        }
+
                         // Payment successful immediately - no redirect needed!
                         clearCart();
                         
@@ -568,7 +719,7 @@ const countyInfo = {
                       console.log('🚀 Calling: paymentService.initiateCard()');
                       
                       // Initiate card payment via Paystack
-                      const cardResponse = await paymentService.initiateCard({
+                      cardResponse = await paymentService.initiateCard({
                         order_id: createdOrder.id,
                         email: shippingInfo.email
                       });
@@ -615,7 +766,52 @@ const countyInfo = {
                   } catch (cardError) {
                     setErrors({ submit: cardError.message || 'Card payment failed. Please try again.' });
                     setLoading(false);
+                    
+                    // Log payment failed event
+                    try {
+                      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+                      await logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_FAILED, {
+                        category: 'payment',
+                        severity: 'high',
+                        metadata: {
+                          order_id: createdOrder?.id || null,
+                          payment_intent_id: createdOrder?.transaction_reference || null,
+                          amount: createdOrder?.total || total,
+                          failure_reason: cardError.message || 'card_error',
+                          payment_method_type: 'card',
+                          processor_error_code: cardError.code || 'CARD_ERROR',
+                          timestamp: new Date().toISOString(),
+                        },
+                      });
+                    } catch (e) {
+                      // Silently fail
+                    }
+                    
                     return; // Don't navigate to success page
+                  }
+                }
+                
+                // If payment succeeded and using a NEW card (not saved), log payment method added
+                if (paymentMethod === 'card' && !selectedSavedCard && !showAddNewCard && cardResponse?.success) {
+                  try {
+                    const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+                    
+                    await logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_METHOD_ADDED, {
+                      category: 'payment',
+                      severity: 'medium',
+                      metadata: {
+                        payment_method_id: cardResponse.data?.authorization_code || `card_${Date.now()}`,
+                        method_type: cardResponse.data?.card_brand || 'card',
+                        last_four_digits: cardResponse.data?.card_last4 || '****',
+                        expiry_month: cardResponse.data?.card_expiry_month || null,
+                        expiry_year: cardResponse.data?.card_expiry_year || null,
+                        billing_address_id: null, // Add if available
+                        timestamp: new Date().toISOString(),
+                        verified: true,
+                      },
+                    });
+                  } catch (e) {
+                    // Silently fail
                   }
                 }
 
@@ -672,6 +868,32 @@ const countyInfo = {
         setErrors({ 
           submit: error.message || 'Failed to create order. Please try again.' 
         });
+        
+        // Log order failed event
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          const cartTotals = getCartTotals();
+          
+          await logFrontendAuditEvent(AUDIT_EVENTS.ORDER_FAILED, {
+            category: 'order',
+            severity: 'high',
+            metadata: {
+              cart_id: localStorage.getItem('cart_id') || null,
+              order_attempt_id: `attempt_${Date.now()}`,
+              cart_snapshot: cartItems.map(item => ({
+                product_id: item.product_id,
+                quantity: item.quantity,
+                price: item.price,
+              })),
+              failure_reason: error.message || 'unknown_error',
+              payment_status: 'failed',
+              error_code: error.response?.status || null,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
       } finally {
         setLoading(false);
       }
@@ -803,9 +1025,41 @@ const countyInfo = {
       }
     }, [user, step]);
 
-    const loadSavedCards = async () => {
-      setLoadingSavedCards(true);
-      try {
+      const handleRemoveCard = async (cardId) => {
+        try {
+          const response = await paymentService.removeSavedCard(cardId);
+          if (response.success) {
+            // Log payment method removed event
+            try {
+              const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+              const removedCard = savedCards.find(c => c.id === cardId);
+              await logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_METHOD_REMOVED, {
+                category: 'payment',
+                severity: 'medium',
+                metadata: {
+                  payment_method_id: cardId,
+                  method_type: removedCard?.card_brand || 'card',
+                  last_four_digits: removedCard?.card_last4 || '****',
+                  removed_at: new Date().toISOString(),
+                  timestamp: new Date().toISOString(),
+                },
+              });
+            } catch (e) {
+              // Silently fail
+            }
+            
+            // Refresh saved cards
+            loadSavedCards();
+          }
+        } catch (error) {
+          console.error('Failed to remove card:', error);
+          alert('Failed to remove card. Please try again.');
+        }
+      };
+
+      const loadSavedCards = async () => {
+        setLoadingSavedCards(true);
+        try {
         const response = await paymentService.getSavedCards();
         if (response.success && response.data.length > 0) {
           setSavedCards(response.data);
@@ -1263,9 +1517,30 @@ const countyInfo = {
                               <button
                                 key={index}
                                 type="button"
-                                onClick={() => {
+                                onClick={async () => {
+                                  const oldDefault = selectedSavedCard;
                                   setSelectedSavedCard(card);
                                   setShowAddNewCard(false);
+                                  
+                                  // Log default payment method changed event
+                                  if (oldDefault?.id !== card.id) {
+                                    try {
+                                      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+                                      await logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_METHOD_DEFAULT_CHANGED, {
+                                        category: 'payment',
+                                        severity: 'low',
+                                        metadata: {
+                                          old_default_id: oldDefault?.id || null,
+                                          new_default_id: card.id,
+                                          old_last_four: oldDefault?.card_last4 || null,
+                                          new_last_four: card.card_last4,
+                                          timestamp: new Date().toISOString(),
+                                        },
+                                      });
+                                    } catch (e) {
+                                      // Silently fail
+                                    }
+                                  }
                                 }}
                                 className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition ${
                                   selectedSavedCard?.authorization_code === card.authorization_code && !showAddNewCard

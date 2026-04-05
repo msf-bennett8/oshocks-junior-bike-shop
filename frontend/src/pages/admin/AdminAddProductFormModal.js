@@ -46,10 +46,13 @@ const AdminAddProductFormModal = ({
     fetchCategories();
   }, []);
 
+  // Store original values for audit logging
+  const [originalValues, setOriginalValues] = useState(null);
+
   // Populate form if editing
   useEffect(() => {
     if (mode === 'edit' && product) {
-      setFormData({
+      const initialData = {
         name: product.name || '',
         description: product.description || '',
         type: product.type || 'bike',
@@ -75,6 +78,14 @@ const AdminAddProductFormModal = ({
         ],
         keyFeatures: product.keyFeatures || [{ id: 1, text: '' }],
         colors: product.colors || [{ name: '', images: [] }]
+      };
+      
+      setFormData(initialData);
+      // Store original values for comparison
+      setOriginalValues({
+        price: parseFloat(product.price) || 0,
+        quantity: parseInt(product.quantity) || 0,
+        name: product.name || '',
       });
     }
   }, [mode, product]);
@@ -298,6 +309,106 @@ const AdminAddProductFormModal = ({
       }
 
       const result = await response.json();
+      
+      // Log product created/updated events
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        
+        if (mode === 'create') {
+          // Log product created event
+          await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_CREATED, {
+            category: 'product',
+            severity: 'medium',
+            metadata: {
+              product_id: result.data?.id || result.id || null,
+              sku: formData.name?.toLowerCase().replace(/\s+/g, '_') || null,
+              initial_data: {
+                name: formData.name,
+                price: parseFloat(formData.price),
+                quantity: parseInt(formData.quantity),
+                category_id: formData.category_id,
+                type: formData.type,
+                condition: formData.condition,
+              },
+              timestamp: new Date().toISOString(),
+            },
+          });
+          
+          // Log inventory updated for initial stock
+          await logFrontendAuditEvent(AUDIT_EVENTS.INVENTORY_UPDATED, {
+            category: 'inventory',
+            severity: 'low',
+            metadata: {
+              product_id: result.data?.id || result.id || null,
+              sku: formData.name?.toLowerCase().replace(/\s+/g, '_') || null,
+              old_quantity: 0,
+              new_quantity: parseInt(formData.quantity),
+              adjustment: parseInt(formData.quantity),
+              reason: 'initial_stock',
+              timestamp: new Date().toISOString(),
+              location_id: 'main_warehouse',
+            },
+          });
+        } else if (mode === 'edit' && originalValues) {
+          // Log product updated event
+          await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_UPDATED, {
+            category: 'product',
+            severity: 'medium',
+            metadata: {
+              product_id: product?.id || null,
+              sku: formData.name?.toLowerCase().replace(/\s+/g, '_') || null,
+              changes: 'updated',
+              timestamp: new Date().toISOString(),
+            },
+          });
+          
+          // Log price modified event if price changed
+          const newPrice = parseFloat(formData.price) || 0;
+          const oldPrice = originalValues.price;
+          
+          if (newPrice !== oldPrice) {
+            await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_PRICE_MODIFIED, {
+              category: 'product',
+              severity: 'high',
+              metadata: {
+                product_id: product?.id || null,
+                sku: formData.name?.toLowerCase().replace(/\s+/g, '_') || null,
+                old_price: oldPrice,
+                new_price: newPrice,
+                price_difference: newPrice - oldPrice,
+                percentage_change: oldPrice > 0 ? ((newPrice - oldPrice) / oldPrice * 100).toFixed(2) : 0,
+                currency: 'KES',
+                reason: 'manual_price_update',
+                timestamp: new Date().toISOString(),
+                modified_by: 'admin',
+              },
+            });
+          }
+          
+          // Log inventory updated if quantity changed
+          const newQuantity = parseInt(formData.quantity) || 0;
+          const oldQuantity = originalValues.quantity;
+          
+          if (newQuantity !== oldQuantity) {
+            await logFrontendAuditEvent(AUDIT_EVENTS.INVENTORY_UPDATED, {
+              category: 'inventory',
+              severity: 'low',
+              metadata: {
+                product_id: product?.id || null,
+                sku: formData.name?.toLowerCase().replace(/\s+/g, '_') || null,
+                old_quantity: oldQuantity,
+                new_quantity: newQuantity,
+                adjustment: newQuantity - oldQuantity,
+                reason: 'manual_stock_update',
+                timestamp: new Date().toISOString(),
+                location_id: 'main_warehouse',
+              },
+            });
+          }
+        }
+      } catch (e) {
+        // Silently fail
+      }
       
       if (onSuccess) {
         onSuccess(result);

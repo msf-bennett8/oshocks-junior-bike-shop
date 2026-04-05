@@ -193,6 +193,26 @@ const UserDashboard = () => {
       const response = await userDashboardService.getRewards();
       if (response.success) {
         setRewards(response.data);
+        
+        // Log points earned if there are new points this month
+        if (response.data.points_earned_this_month > 0) {
+          try {
+            const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+            await logFrontendAuditEvent(AUDIT_EVENTS.POINTS_EARNED, {
+              category: 'loyalty',
+              severity: 'low',
+              metadata: {
+                user_id: user?.id,
+                points_amount: response.data.points_earned_this_month,
+                source: 'order',
+                source_id: `monthly_${new Date().toISOString().slice(0, 7)}`,
+                timestamp: new Date().toISOString(),
+              },
+            });
+          } catch (e) {
+            // Silently fail
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to load rewards:', error);
@@ -221,6 +241,23 @@ const UserDashboard = () => {
         await navigator.clipboard.writeText(response.data.referral_code);
         // Show toast notification
         alert(`Referral code copied to clipboard: ${response.data.referral_code}`);
+        
+        // Log referral code generated event
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          await logFrontendAuditEvent(AUDIT_EVENTS.REFERRAL_CODE_GENERATED, {
+            category: 'business',
+            severity: 'low',
+            metadata: {
+              user_id: user?.id,
+              referral_code: response.data.referral_code,
+              generation_method: 'regenerate',
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
       }
     } catch (error) {
       console.error('Failed to copy referral code:', error);
@@ -774,7 +811,29 @@ const UserDashboard = () => {
                   </div>
                 </div>
                 
-                <button className="w-full bg-white text-green-600 py-3 rounded-lg font-bold hover:bg-gray-100 transition-colors shadow-lg flex items-center justify-center gap-2">
+                <button 
+                  onClick={async () => {
+                    // Navigate to loyalty page or open redeem modal
+                    window.location.href = '/loyalty';
+                    
+                    // Log redeem page view (actual redemption logged on loyalty page)
+                    try {
+                      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+                      await logFrontendAuditEvent('PAGE_VIEW', {
+                        category: 'loyalty',
+                        severity: 'low',
+                        metadata: {
+                          page: 'redeem_points',
+                          points_balance: rewards.points_balance,
+                          timestamp: new Date().toISOString(),
+                        },
+                      });
+                    } catch (e) {
+                      // Silently fail
+                    }
+                  }}
+                  className="w-full bg-white text-green-600 py-3 rounded-lg font-bold hover:bg-gray-100 transition-colors shadow-lg flex items-center justify-center gap-2"
+                >
                   <Gift className="w-5 h-5" />
                   Redeem Points
                 </button>

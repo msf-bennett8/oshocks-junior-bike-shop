@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Clock, LogIn, RefreshCw, Shield, AlertTriangle, Home, ShoppingCart, User, Lock, CheckCircle, Info, ArrowRight, XCircle, Zap, Phone, Mail, HelpCircle } from 'lucide-react';
+import { Clock, LogIn, RefreshCw, Shield, AlertTriangle, Home, ShoppingCart, User, Lock, CheckCircle, XCircle, Info, ArrowRight, Zap, Phone, Mail, HelpCircle } from 'lucide-react';
+import { useAudit } from '../../hooks/useAudit';
 
 const SessionTimeoutPage = () => {
   const [countdown, setCountdown] = useState(60);
@@ -14,6 +15,8 @@ const SessionTimeoutPage = () => {
     location: 'Nairobi, Kenya'
   });
 
+  const { logAuditEvent } = useAudit();
+
   useEffect(() => {
     // Set last activity time
     const lastActivity = new Date(Date.now() - 31 * 60 * 1000); // 31 minutes ago
@@ -21,6 +24,21 @@ const SessionTimeoutPage = () => {
       ...prev,
       lastActivity: lastActivity
     }));
+
+    // Log session timeout event
+    logAuditEvent({
+      event_type: 'LOGOUT',
+      event_category: 'security',
+      severity: 'low',
+      metadata: {
+        logout_reason: 'session_timeout',
+        session_id: sessionDetails.sessionId,
+        timeout_duration: sessionDetails.timeoutDuration,
+        last_activity: lastActivity.toISOString(),
+        user_agent: navigator.userAgent,
+        ip_address: sessionDetails.ipAddress
+      }
+    });
 
     // Countdown timer
     const timer = setInterval(() => {
@@ -44,7 +62,7 @@ const SessionTimeoutPage = () => {
     }
 
     return () => clearInterval(timer);
-  }, [autoRefreshEnabled]);
+  }, [autoRefreshEnabled, logAuditEvent, sessionDetails.sessionId, sessionDetails.timeoutDuration, sessionDetails.ipAddress]);
 
   const handleAutoRedirect = () => {
     setIsRedirecting(true);

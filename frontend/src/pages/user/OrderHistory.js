@@ -307,6 +307,23 @@ const OrderHistory = () => {
 
         if (response.ok) {
           alert('Items added to cart successfully!');
+          
+          // Log reorder event
+          try {
+            const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+            await logFrontendAuditEvent('ORDER_REORDERED', {
+              category: 'order',
+              severity: 'low',
+              metadata: {
+                original_order_id: order.id,
+                original_order_number: order.orderNumber,
+                item_count: order.items.length,
+                timestamp: new Date().toISOString(),
+              },
+            });
+          } catch (e) {
+            // Silently fail
+          }
         }
       } catch (err) {
         console.error('Error reordering:', err);
@@ -377,6 +394,27 @@ const OrderHistory = () => {
         setRating(0);
         setReviewText('');
         setReviewProduct(null);
+        
+        // Log review submitted event
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          await logFrontendAuditEvent(AUDIT_EVENTS.REVIEW_SUBMITTED, {
+            category: 'review',
+            severity: 'low',
+            metadata: {
+              review_id: `review_${Date.now()}`,
+              product_id: reviewProduct.id,
+              order_id: reviewProduct.orderId,
+              rating: rating,
+              review_text_hash: btoa(reviewText).substring(0, 20),
+              media_count: 0,
+              timestamp: new Date().toISOString(),
+              verified_purchase: true,
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
       }
     } catch (err) {
       console.error('Error submitting review:', err);

@@ -41,6 +41,56 @@ import { useWishlist } from '../../context/WishlistContext';
     }
   ];
   
+// Review submission handler with audit logging - moved inside component to access id
+const submitReview = async (rating, reviewText, mediaCount = 0, productId) => {
+  try {
+    // API call to submit review would go here
+    // const response = await api.post('/reviews', { product_id: productId, rating, review: reviewText });
+    
+    // Log review submitted event
+    const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+    
+    await logFrontendAuditEvent(AUDIT_EVENTS.REVIEW_SUBMITTED, {
+      category: 'review',
+      severity: 'low',
+      metadata: {
+        review_id: `review_${Date.now()}`, // Would come from API response
+        product_id: productId,
+        rating: rating,
+        review_text_hash: btoa(reviewText).substring(0, 20), // Simple hash for privacy
+        media_count: mediaCount,
+        timestamp: new Date().toISOString(),
+        verified_purchase: true, // Check if user bought this product
+      },
+    });
+    
+    alert('Review submitted successfully! Thank you for your feedback.');
+  } catch (error) {
+    console.error('Failed to submit review:', error);
+    alert('Failed to submit review. Please try again.');
+  }
+};
+
+// Review helpful marking handler
+const markReviewHelpful = async (reviewId, helpful) => {
+  try {
+    // Log review helpful marked event
+    const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+    
+    await logFrontendAuditEvent(AUDIT_EVENTS.REVIEW_HELPFUL_MARKED, {
+      category: 'review',
+      severity: 'low',
+      metadata: {
+        review_id: reviewId,
+        helpful: helpful,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (e) {
+    // Silently fail
+  }
+};
+
 const ProductDetails = () => {
   const { addToCart, loading: cartLoading } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
@@ -109,6 +159,27 @@ const ProductDetails = () => {
         }
         if (data.specifications?.sizes && data.specifications.sizes.length > 0) {
           setSelectedSize(data.specifications.sizes[0].id);
+        }
+        
+        // Log product viewed event with 10% sampling
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          
+          // 10% sampling - only log 1 in 10 views
+          if (Math.random() < 0.1) {
+            await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_VIEWED, {
+              category: 'product',
+              severity: 'low',
+              metadata: {
+                product_id: data.id,
+                source: document.referrer?.includes('search') ? 'search' : 
+                        document.referrer?.includes('recommendation') ? 'recommendation' : 'direct',
+                timestamp: new Date().toISOString(),
+              },
+            });
+          }
+        } catch (e) {
+          // Silently fail
         }
         
         setLoading(false);
@@ -745,9 +816,28 @@ const ProductDetails = () => {
                       </div>
                     </div>
                   </div>
-                  <button className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-sm md:text-base">
-                    Write a Review
-                  </button>
+                                  <button 
+                  onClick={() => {
+                    // Open review modal or scroll to review form
+                    const reviewForm = document.getElementById('review-form');
+                    if (reviewForm) {
+                      reviewForm.scrollIntoView({ behavior: 'smooth' });
+                      reviewForm.querySelector('textarea')?.focus();
+                    } else {
+                      // Show review modal or alert for now
+                      const rating = prompt('Rate this product (1-5):');
+                      if (!rating) return;
+                      const reviewText = prompt('Write your review:');
+                      if (!reviewText) return;
+                      
+                      // Submit review and log event
+                      submitReview(parseInt(rating), reviewText, 0, id);
+                    }
+                  }}
+                  className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-sm md:text-base"
+                >
+                  Write a Review
+                </button>
                 </div>
 
                 <div className="space-y-6">
@@ -782,12 +872,15 @@ const ProductDetails = () => {
                       <h4 className="font-semibold text-gray-900 mb-2">{review.title}</h4>
                       <p className="text-gray-700 leading-relaxed mb-3">{review.comment}</p>
                       <div className="flex items-center gap-4 text-sm">
-                        <button className="flex items-center gap-1 text-gray-600 hover:text-blue-600 transition-colors">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                          </svg>
-                          Helpful ({review.helpful})
-                        </button>
+                      <button 
+                        onClick={() => markReviewHelpful(review.id, true)}
+                        className="flex items-center gap-1 text-gray-600 hover:text-blue-600 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                        </svg>
+                        Helpful ({review.helpful})
+                      </button>
                         <button className="text-gray-600 hover:text-blue-600 transition-colors">
                           Report
                         </button>

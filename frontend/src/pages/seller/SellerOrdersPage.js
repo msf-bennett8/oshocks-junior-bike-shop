@@ -7,8 +7,10 @@ import {
   ArrowUpDown, FileText, MessageSquare, Box, ShoppingBag
 } from 'lucide-react';
 import sellerDashboardService from '../../services/sellerDashboardService';
+import { useAuth } from '../../context/AuthContext';
 
 const SellerOrdersPage = () => {
+  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -223,12 +225,122 @@ const SellerOrdersPage = () => {
     }
   };
 
-  const updateOrderStatus = (orderId, newStatus) => {
+  const handleMarkAsShipped = async (order) => {
+    const trackingNumber = prompt('Enter tracking number (optional):');
+    const carrier = prompt('Enter carrier name (e.g., G4S, Fargo Courier):');
+    const serviceLevel = prompt('Enter service level (e.g., Standard, Express):');
+    
+    await updateOrderStatus(order.id, 'shipped', { 
+      tracking_number: trackingNumber || null,
+      carrier: carrier || null,
+      service_level: serviceLevel || 'standard'
+    });
+  };
+
+  const handleCancelOrder = async (order) => {
+    const reason = prompt('Enter cancellation reason:');
+    if (!reason) return;
+    
+    const refundInitiated = window.confirm('Initiate refund for this order?');
+    const inventoryReleased = true; // Always release inventory on cancel
+    
+    await updateOrderStatus(order.id, 'cancelled', {
+      cancellation_reason: reason,
+      refund_initiated: refundInitiated,
+      inventory_released: inventoryReleased
+    });
+    
+    // Log ORDER_CANCELLED event
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      
+      await logFrontendAuditEvent(AUDIT_EVENTS.ORDER_CANCELLED, {
+        category: 'order',
+        severity: 'high',
+        metadata: {
+          order_id: order.id,
+          order_number: order?.orderNumber || order.id,
+          reason: reason,
+          refund_initiated: refundInitiated,
+          inventory_released: inventoryReleased,
+          cancelled_by: user?.id || 'seller',
+          customer_id: order?.customer?.id || null,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      console.error('Failed to log ORDER_CANCELLED:', e);
+    }
+  };
+
+  const updateOrderStatus = async (orderId, newStatus, additionalMetadata = {}) => {
+    const order = orders.find(o => o.id === orderId);
+    const oldStatus = order?.status || 'unknown';
+    
     setOrders(prev => prev.map(order =>
       order.id === orderId ? { ...order, status: newStatus } : order
     ));
     if (selectedOrder?.id === orderId) {
       setSelectedOrder(prev => ({ ...prev, status: newStatus }));
+    }
+
+    // Log ORDER_STATUS_CHANGED audit event (backend expects ORDER_STATUS_CHANGED not ORDER_STATUS_MANUALLY_CHANGED)
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      
+      await logFrontendAuditEvent(AUDIT_EVENTS.ORDER_STATUS_CHANGED, {
+        category: 'order',
+        severity: 'medium',
+        metadata: {
+          order_id: orderId,
+          order_number: order?.orderNumber || orderId,
+          old_status: oldStatus,
+          new_status: newStatus,
+          changed_by: user?.id || 'seller',
+          automatic: false,
+          change_reason: 'manual_update',
+                    customer_id: order?.customer?.id || null,
+          customer_email: order?.customer?.email || null,
+          ...additionalMetadata,
+          timestamp: new Date().toISOString(),
+        },
+      });
+      
+      // Log specific events for certain status changes
+      if (newStatus === 'shipped') {
+        await logFrontendAuditEvent(AUDIT_EVENTS.ORDER_SHIPPED, {
+          category: 'order',
+          severity: 'medium',
+          metadata: {
+            order_id: orderId,
+            order_number: order?.orderNumber || orderId,
+            tracking_number: additionalMetadata.tracking_number || order?.trackingNumber || null,
+            carrier: additionalMetadata.carrier || null,
+            service_level: additionalMetadata.service_level || 'standard',
+            shipped_by: user?.id || 'seller',
+            customer_id: order?.customer?.id || null,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      }
+      
+      if (newStatus === 'delivered') {
+        await logFrontendAuditEvent(AUDIT_EVENTS.ORDER_DELIVERED, {
+          category: 'order',
+          severity: 'medium',
+          metadata: {
+            order_id: orderId,
+            order_number: order?.orderNumber || orderId,
+            delivered_at: new Date().toISOString(),
+            signature_confirmed: false, // Update if signature capture implemented
+            delivered_by: user?.id || 'seller',
+            customer_id: order?.customer?.id || null,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      }
+    } catch (e) {
+      console.error('Failed to log ORDER_STATUS_CHANGED:', e);
     }
   };
 
@@ -535,7 +647,7 @@ const SellerOrdersPage = () => {
                                 Mark as Processing
                               </button>
                               <button
-                                onClick={() => updateOrderStatus(order.id, 'shipped')}
+                                onClick={() => handleMarkAsShipped(order)}
                                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                               >
                                 <Truck className="w-4 h-4" />
@@ -549,6 +661,7 @@ const SellerOrdersPage = () => {
                                 Mark as Completed
                               </button>
                               <button
+                                onClick={() => handleCancelOrder(order)}
                                 className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                               >
                                 <XCircle className="w-4 h-4" />
@@ -820,7 +933,7 @@ const SellerOrdersPage = () => {
                 </button>
                 <button
                   onClick={() => {
-                    updateOrderStatus(selectedOrder.id, 'shipped');
+                    handleMarkAsShipped(selectedOrder);
                     setShowOrderModal(false);
                   }}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"

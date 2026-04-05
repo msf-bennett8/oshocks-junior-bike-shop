@@ -450,7 +450,10 @@ const AdminOrdersPage = () => {
   };
 
   // Update order status
-  const updateOrderStatus = (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus) => {
+    const order = orders.find(o => o.id === orderId);
+    const oldStatus = order?.status;
+    
     const updatedOrders = orders.map(order => {
       if (order.id === orderId) {
         const newHistory = [...order.statusHistory, {
@@ -470,13 +473,59 @@ const AdminOrdersPage = () => {
     
     setOrders(updatedOrders);
     showNotification(`Order ${orderId} status updated to ${newStatus}`);
+    
+    // Log order status manually changed event
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      await logFrontendAuditEvent(AUDIT_EVENTS.ORDER_STATUS_MANUALLY_CHANGED, {
+        category: 'order',
+        severity: 'medium',
+        metadata: {
+          order_id: orderId,
+          old_status: oldStatus,
+          new_status: newStatus,
+          changed_by: 'admin',
+          reason: `Manual status change by admin`,
+          customer_notified: true,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      // Silently fail
+    }
   };
 
   // Delete order
-  const deleteOrder = (orderId) => {
+  const deleteOrder = async (orderId) => {
+    const order = orders.find(o => o.id === orderId);
+    
     if (window.confirm('Are you sure you want to delete this order?')) {
       setOrders(orders.filter(order => order.id !== orderId));
       showNotification('Order deleted successfully');
+      
+      // Log inventory released event for cancelled/deleted orders
+      if (order && order.items) {
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          
+          for (const item of order.items) {
+            await logFrontendAuditEvent(AUDIT_EVENTS.INVENTORY_RELEASED, {
+              category: 'inventory',
+              severity: 'medium',
+              metadata: {
+                order_id: orderId,
+                product_id: item.id,
+                sku: item.name?.toLowerCase().replace(/\s+/g, '_') || null,
+                quantity_released: item.quantity,
+                reason: 'order_deleted',
+                timestamp: new Date().toISOString(),
+              },
+            });
+          }
+        } catch (e) {
+          // Silently fail
+        }
+      }
     }
   };
 

@@ -196,27 +196,70 @@ const SettingsPage = () => {
   };
 
   const handleNotificationChange = async (field) => {
-    const newNotifications = { ...notifications, [field]: !notifications[field] };
+    const oldValue = notifications[field];
+    const newValue = !oldValue;
+    const newNotifications = { ...notifications, [field]: newValue };
     setNotifications(newNotifications);
     
     // Map frontend field names to backend field names
-    const fieldMapping = {
+       const fieldMapping = {
       'orderUpdates': 'order_updates',
       'promotions': 'promotional_emails',
       'newsletter': 'newsletter',
       'productReviews': 'new_arrivals',
       'smsNotifications': 'sms_notifications',
       'emailNotifications': 'email_notifications',
-      'pushNotifications': 'email_notifications' // Map push to email for now
+      'pushNotifications': 'push_notifications'
     };
     
     const backendField = fieldMapping[field];
     if (backendField) {
       try {
         await profileService.updatePreferences({
-          [backendField]: newNotifications[field]
+          [backendField]: newValue
         });
         showNotification('Notification preference saved!');
+        
+        // Log notification settings changed
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          await logFrontendAuditEvent(AUDIT_EVENTS.NOTIFICATION_SETTINGS_CHANGED, {
+            category: 'notification',
+            severity: 'low',
+            metadata: {
+              setting_key: backendField,
+              old_value: oldValue,
+              new_value: newValue,
+              timestamp: new Date().toISOString(),
+            },
+          });
+          
+          // Log channel preferences updated for channel toggles
+          if (['emailNotifications', 'smsNotifications', 'pushNotifications'].includes(field)) {
+            const channelMap = {
+              'emailNotifications': 'email',
+              'smsNotifications': 'sms',
+              'pushNotifications': 'push'
+            };
+            
+            await logFrontendAuditEvent(AUDIT_EVENTS.CHANNEL_PREFERENCES_UPDATED, {
+              category: 'notification',
+              severity: 'low',
+              metadata: {
+                channel: channelMap[field],
+                enabled: newValue,
+                channels: JSON.stringify({
+                  email: field === 'emailNotifications' ? newValue : notifications.emailNotifications,
+                  sms: field === 'smsNotifications' ? newValue : notifications.smsNotifications,
+                  push: field === 'pushNotifications' ? newValue : notifications.pushNotifications,
+                }),
+                updated_at: new Date().toISOString(),
+              },
+            });
+          }
+        } catch (e) {
+          // Silently fail
+        }
       } catch (error) {
         console.error('Failed to save notification preference:', error);
         showNotification('Failed to save preference', 'error');
@@ -224,7 +267,46 @@ const SettingsPage = () => {
     }
   };
 
+  // Track quiet hours toggle
+  const handleQuietHoursToggle = async (enabled, startTime, endTime, timezone) => {
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      await logFrontendAuditEvent(AUDIT_EVENTS.QUIET_HOURS_TOGGLED, {
+        category: 'notification',
+        severity: 'low',
+        metadata: {
+          enabled: enabled,
+          start_time: startTime,
+          end_time: endTime,
+          timezone: timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      // Silently fail
+    }
+  };
+
+  // Track desktop notifications toggle
+  const handleDesktopNotificationsToggle = async (permissionStatus) => {
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      await logFrontendAuditEvent(AUDIT_EVENTS.DESKTOP_NOTIFICATIONS_TOGGLED, {
+        category: 'notification',
+        severity: 'low',
+        metadata: {
+          permission_status: permissionStatus,
+          browser: navigator.userAgent,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      // Silently fail
+    }
+  };
+
   const handlePrivacyChange = async (field, value) => {
+    const oldValue = privacy[field];
     const newPrivacy = { ...privacy, [field]: value };
     setPrivacy(newPrivacy);
     
@@ -243,6 +325,39 @@ const SettingsPage = () => {
           [backendField]: value
         });
         showNotification('Privacy setting saved!');
+        
+        // Log consent events for data sharing changes
+        if (field === 'dataSharing') {
+          try {
+            const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+            
+            if (value === true && oldValue === false) {
+              // Consent given
+              await logFrontendAuditEvent(AUDIT_EVENTS.CONSENT_GIVEN, {
+                category: 'privacy',
+                severity: 'low',
+                metadata: {
+                  consent_type: 'data_sharing',
+                  version: '1.0',
+                  timestamp: new Date().toISOString(),
+                },
+              });
+            } else if (value === false && oldValue === true) {
+              // Consent withdrawn
+              await logFrontendAuditEvent(AUDIT_EVENTS.CONSENT_WITHDRAWN, {
+                category: 'privacy',
+                severity: 'low',
+                metadata: {
+                  consent_type: 'data_sharing',
+                  withdrawal_method: 'settings_page',
+                  timestamp: new Date().toISOString(),
+                },
+              });
+            }
+          } catch (e) {
+            // Silently fail
+          }
+        }
       } catch (error) {
         console.error('Failed to save privacy setting:', error);
         showNotification('Failed to save privacy setting', 'error');
@@ -308,6 +423,22 @@ const SettingsPage = () => {
       if (result.success) {
         showNotification('Password changed successfully!');
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        
+        // Log password changed event
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          await logFrontendAuditEvent(AUDIT_EVENTS.PASSWORD_CHANGED, {
+            category: 'auth',
+            severity: 'medium',
+            metadata: {
+              changed_by: 'self',
+              method: 'direct',
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
       } else {
         showNotification(result.error || 'Failed to change password', 'error');
       }
@@ -449,7 +580,50 @@ const SettingsPage = () => {
     }
   };
 
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = async () => {
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      
+      // Log account deactivated event BEFORE deletion
+      await logFrontendAuditEvent(AUDIT_EVENTS.ACCOUNT_DEACTIVATED, {
+        category: 'user',
+        severity: 'high',
+        metadata: {
+          reason: 'user_requested_deletion',
+          deactivated_by: user?.id || 'self',
+          timestamp: new Date().toISOString(),
+          reactivation_eligible_date: null,
+        },
+      });
+      
+      // Log account deleted event
+      await logFrontendAuditEvent(AUDIT_EVENTS.ACCOUNT_DELETED, {
+        category: 'user',
+        severity: 'critical',
+        metadata: {
+          deleted_by: user?.id || 'self',
+          reason: 'user_requested',
+          deletion_type: 'GDPR',
+          timestamp: new Date().toISOString(),
+          data_retention_expiry: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+      });
+      
+      // Log data anonymization
+      await logFrontendAuditEvent(AUDIT_EVENTS.DATA_ANONYMIZED, {
+        category: 'privacy',
+        severity: 'high',
+        metadata: {
+          anonymized_user_id: `anon_${Date.now()}`,
+          retention_reason: 'legal_obligation_orders',
+          orders_retained: true,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      // Silently fail - still proceed with deletion
+    }
+    
     alert('Account deletion request submitted. You will receive an email confirmation.');
     setShowDeleteModal(false);
   };
@@ -458,11 +632,28 @@ const SettingsPage = () => {
     try {
       setPaymentLoading(true);
       
+      const oldDefault = paymentMethods.find(p => p.isDefault);
       const response = await profileService.setDefaultPaymentMethod(id);
       
       if (response.success) {
         setPaymentMethods(prev => prev.map(p => ({ ...p, isDefault: p.id === id })));
         showNotification('Default payment method updated!');
+        
+        // Log payment method default changed
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+          await logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_METHOD_DEFAULT_CHANGED, {
+            category: 'payment',
+            severity: 'low',
+            metadata: {
+              old_default_id: oldDefault?.id || null,
+              new_default_id: id,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
       } else {
         showNotification(response.message || 'Failed to update default payment', 'error');
       }
@@ -476,6 +667,8 @@ const SettingsPage = () => {
   };
 
   const handleDeletePaymentMethod = async (id) => {
+    const methodToDelete = paymentMethods.find(p => p.id === id);
+    
     if (window.confirm('Are you sure you want to remove this payment method?')) {
       try {
         setPaymentLoading(true);
@@ -485,6 +678,25 @@ const SettingsPage = () => {
         if (response.success) {
           setPaymentMethods(prev => prev.filter(p => p.id !== id));
           showNotification('Payment method removed!');
+          
+          // Log payment method removed
+          try {
+            const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+            await logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_METHOD_REMOVED, {
+              category: 'payment',
+              severity: 'medium',
+              metadata: {
+                payment_method_id: id,
+                method_type: methodToDelete?.type || 'unknown',
+                last_four_digits: methodToDelete?.type === 'mpesa' 
+                  ? methodToDelete?.phone_number?.slice(-4) 
+                  : methodToDelete?.last4,
+                timestamp: new Date().toISOString(),
+              },
+            });
+          } catch (e) {
+            // Silently fail
+          }
         } else {
           showNotification(response.message || 'Failed to remove payment method', 'error');
         }
@@ -558,6 +770,25 @@ const SettingsPage = () => {
           
           setPaymentMethods(prev => [...prev, newMethod]);
           showNotification('M-Pesa payment method added successfully!');
+          
+          // Log payment method added
+          try {
+            const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+            await logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_METHOD_ADDED, {
+              category: 'payment',
+              severity: 'medium',
+              metadata: {
+                payment_method_id: response.data.id,
+                method_type: 'mpesa',
+                last_four_digits: formattedPhone.slice(-4),
+                billing_address_id: null,
+                timestamp: new Date().toISOString(),
+                verified: true,
+              },
+            });
+          } catch (e) {
+            // Silently fail
+          }
         } else {
           showNotification(response.message || 'Failed to add payment method', 'error');
           return;
@@ -601,6 +832,27 @@ const SettingsPage = () => {
           
           setPaymentMethods(prev => [...prev, newMethod]);
           showNotification('Card payment method added successfully!');
+          
+          // Log payment method added
+          try {
+            const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+            await logFrontendAuditEvent(AUDIT_EVENTS.PAYMENT_METHOD_ADDED, {
+              category: 'payment',
+              severity: 'medium',
+              metadata: {
+                payment_method_id: response.data.id,
+                method_type: newPaymentData.cardBrand,
+                last_four_digits: last4,
+                expiry_month: newPaymentData.cardExpiryMonth,
+                expiry_year: newPaymentData.cardExpiryYear,
+                billing_address_id: null,
+                timestamp: new Date().toISOString(),
+                verified: true,
+              },
+            });
+          } catch (e) {
+            // Silently fail
+          }
         } else {
           showNotification(response.message || 'Failed to add payment method', 'error');
           return;

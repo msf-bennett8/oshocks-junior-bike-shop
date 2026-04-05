@@ -382,7 +382,83 @@ const SellerProductPage = () => {
         formData.append(`new_images[${index}]`, file);
       });
       
-      await sellerDashboardService.updateProduct(editingProduct.id, formData);
+      const response = await sellerDashboardService.updateProduct(editingProduct.id, formData);
+      
+      // Log PRODUCT_UPDATED audit event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        
+        // Determine what changed
+        const changes = [];
+        const oldValues = {};
+        const newValues = {};
+        
+        if (editingProduct.name !== editFormData.name) {
+          changes.push('name');
+          oldValues.name = editingProduct.name;
+          newValues.name = editFormData.name;
+        }
+        if (editingProduct.price !== parseFloat(editFormData.price)) {
+          changes.push('price');
+          oldValues.price = editingProduct.price;
+          newValues.price = parseFloat(editFormData.price);
+        }
+        if (editingProduct.stock !== parseInt(editFormData.quantity)) {
+          changes.push('quantity');
+          oldValues.quantity = editingProduct.stock;
+          newValues.quantity = parseInt(editFormData.quantity);
+        }
+        if (editingProduct.category_id !== parseInt(editFormData.category_id)) {
+          changes.push('category');
+          oldValues.category_id = editingProduct.category_id;
+          newValues.category_id = parseInt(editFormData.category_id);
+        }
+        if (editingProduct.condition !== editFormData.condition) {
+          changes.push('condition');
+          oldValues.condition = editingProduct.condition;
+          newValues.condition = editFormData.condition;
+        }
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_UPDATED, {
+          category: 'product',
+          severity: 'medium',
+          actor_type: 'seller',
+          user_id: user?.id,
+          on_behalf_of: null, // Set if admin acting on behalf of seller
+          metadata: {
+            product_id: editingProduct.id,
+            product_name: editingProduct.name,
+            sku: editingProduct.sku,
+            changed_fields: changes,
+            old_values: oldValues,
+            new_values: newValues,
+            images_added: newImages.length,
+            images_removed: imagesToDelete.length,
+            updated_by: user?.id || 'self',
+            timestamp: new Date().toISOString(),
+          },
+        });
+        
+        // If price changed, also log PRICE_MODIFIED
+        if (changes.includes('price')) {
+          await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_PRICE_MODIFIED, {
+            category: 'product',
+            severity: 'high',
+            metadata: {
+              product_id: editingProduct.id,
+              product_name: editingProduct.name,
+              old_price: oldValues.price,
+              new_price: newValues.price,
+              price_change_amount: newValues.price - oldValues.price,
+              price_change_percentage: ((newValues.price - oldValues.price) / oldValues.price * 100).toFixed(2),
+              reason: 'manual_update',
+              timestamp: new Date().toISOString(),
+            },
+          });
+        }
+      } catch (e) {
+        console.error('Failed to log PRODUCT_UPDATED:', e);
+      }
       
       // Refresh products
       await fetchProducts();
@@ -405,11 +481,34 @@ const SellerProductPage = () => {
   const handleToggleVisibility = async () => {
     if (!selectedProductForAction) return;
     
+    const newVisibility = !selectedProductForAction.is_active;
+    
     try {
       await sellerDashboardService.toggleProductVisibility(
         selectedProductForAction.id, 
-        !selectedProductForAction.is_active
+        newVisibility
       );
+      
+      // Log visibility change
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_VISIBILITY_CHANGED, {
+          category: 'product',
+          severity: 'low',
+          metadata: {
+            product_id: selectedProductForAction.id,
+            product_name: selectedProductForAction.name,
+            old_visibility: selectedProductForAction.is_active ? 'visible' : 'hidden',
+            new_visibility: newVisibility ? 'visible' : 'hidden',
+            changed_by: user?.id || 'self',
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        console.error('Failed to log visibility change:', e);
+      }
+      
       await fetchProducts();
       setMoreOptionsModalOpen(false);
     } catch (err) {
@@ -422,6 +521,35 @@ const SellerProductPage = () => {
     if (!selectedProductForAction) return;
     
     try {
+      // Log PRODUCT_DELETED before deletion (so we have the data)
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_DELETED, {
+          category: 'product',
+          severity: 'high',
+          actor_type: 'seller',
+          user_id: user?.id,
+          on_behalf_of: null, // Set if admin acting on behalf of seller
+          metadata: {
+            product_id: selectedProductForAction.id,
+            product_name: selectedProductForAction.name,
+            sku: selectedProductForAction.sku,
+            category: selectedProductForAction.category,
+            price: selectedProductForAction.price,
+            stock_at_deletion: selectedProductForAction.stock,
+            total_sales: selectedProductForAction.sales,
+            total_views: selectedProductForAction.views,
+            deleted_by: user?.id || 'self',
+            reason: 'seller_requested',
+            archive_location: `archived/products/${selectedProductForAction.id}_${Date.now()}`,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        console.error('Failed to log PRODUCT_DELETED:', e);
+      }
+      
       await sellerDashboardService.deleteProduct(selectedProductForAction.id);
       await fetchProducts();
       setMoreOptionsModalOpen(false);
@@ -455,7 +583,52 @@ const SellerProductPage = () => {
     }
     
     try {
+      const oldStock = selectedProductForAction.stock;
       await sellerDashboardService.updateProductStock(selectedProductForAction.id, newStock);
+      
+      // Log INVENTORY_UPDATED audit event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.INVENTORY_UPDATED, {
+          category: 'inventory',
+          severity: 'medium',
+          actor_type: 'seller',
+          user_id: user?.id,
+          on_behalf_of: null, // Set if admin acting on behalf of seller
+          metadata: {
+            product_id: selectedProductForAction.id,
+            product_name: selectedProductForAction.name,
+            sku: selectedProductForAction.sku,
+            old_quantity: oldStock,
+            new_quantity: newStock,
+            adjustment_amount: adjustment,
+            adjustment_type: adjustment > 0 ? 'increase' : 'decrease',
+            reason: 'manual_adjustment',
+            location_id: 'main_warehouse', // Update if multiple locations
+            updated_by: user?.id || 'self',
+            timestamp: new Date().toISOString(),
+          },
+        });
+        
+        // If low stock threshold reached, log LOW_STOCK_THRESHOLD
+        if (newStock <= 5 && oldStock > 5) {
+          await logFrontendAuditEvent(AUDIT_EVENTS.INVENTORY_LOW_THRESHOLD, {
+            category: 'inventory',
+            severity: 'high',
+            metadata: {
+              product_id: selectedProductForAction.id,
+              product_name: selectedProductForAction.name,
+              current_stock: newStock,
+              threshold: 5,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        }
+      } catch (e) {
+        console.error('Failed to log INVENTORY_UPDATED:', e);
+      }
+      
       await fetchProducts();
       setStockAdjustModalOpen(false);
       setMoreOptionsModalOpen(false);

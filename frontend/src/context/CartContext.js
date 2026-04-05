@@ -1,8 +1,17 @@
 //frontend/src/context/AuthContext.js
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import authService from '../services/authService';
 import axios from 'axios';
+
+// Checkout step tracking for audit logging
+const CHECKOUT_STEPS = {
+  CART_REVIEW: { step_number: 1, step_name: 'cart_review' },
+  SHIPPING_INFO: { step_number: 2, step_name: 'shipping_info' },
+  PAYMENT_METHOD: { step_number: 3, step_name: 'payment_method' },
+  ORDER_REVIEW: { step_number: 4, step_name: 'order_review' },
+  CONFIRMATION: { step_number: 5, step_name: 'confirmation' }
+};
 
 const CartContext = createContext();
 
@@ -11,6 +20,11 @@ export const CartProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { isAuthenticated } = useAuth();
+  
+  // Checkout step tracking for audit logging
+  const [currentCheckoutStep, setCurrentCheckoutStep] = useState(null);
+  const checkoutStepStartTime = useRef(null);
+  const checkoutStartTime = useRef(null);
 
   // API base URL
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
@@ -47,11 +61,35 @@ export const CartProvider = ({ children }) => {
   }, [cartItems, isAuthenticated]);
 
   // Load cart from localStorage (for guests)
-  const loadCartFromLocalStorage = () => {
+  const loadCartFromLocalStorage = async () => {
     try {
       const savedCart = localStorage.getItem('cart');
       if (savedCart) {
-        setCartItems(JSON.parse(savedCart));
+        const parsedCart = JSON.parse(savedCart);
+        setCartItems(parsedCart);
+        
+        // Log cart created event if cart has items and no previous cart
+        if (parsedCart.length > 0 && !sessionStorage.getItem('cart_created_logged')) {
+          try {
+            const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+            const cartValue = parsedCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            await logFrontendAuditEvent(AUDIT_EVENTS.CART_CREATED, {
+              category: 'cart',
+              severity: 'low',
+              metadata: {
+                cart_id: `guest_${Date.now()}`,
+                source: 'local_storage_recovery',
+                item_count: parsedCart.length,
+                cart_value: cartValue,
+                timestamp: new Date().toISOString(),
+              },
+            });
+            sessionStorage.setItem('cart_created_logged', 'true');
+          } catch (e) {
+            // Silently fail
+          }
+        }
       }
     } catch (err) {
       console.error('Failed to load cart from localStorage:', err);
@@ -385,6 +423,158 @@ const updateQuantity = async (itemId, newQuantity) => {
     }
   };
 
+  // Checkout step tracking functions
+  const startCheckoutStep = async (stepKey) => {
+    const step = CHECKOUT_STEPS[stepKey];
+    if (!step) return;
+    
+    // Log previous step completion if exists
+    if (currentCheckoutStep && checkoutStepStartTime.current) {
+      const timeSpent = Math.round((Date.now() - checkoutStepStartTime.current) / 1000);
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+        await logFrontendAuditEvent(AUDIT_EVENTS.CHECKOUT_STEP_COMPLETED, {
+          category: 'order',
+          severity: 'low',
+          metadata: {
+            step_number: currentCheckoutStep.step_number,
+            step_name: currentCheckoutStep.step_name,
+            time_spent_seconds: timeSpent,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
+    }
+    
+    // Start new step
+    setCurrentCheckoutStep(step);
+    checkoutStepStartTime.current = Date.now();
+    
+    // Log step started
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+      await logFrontendAuditEvent(AUDIT_EVENTS.CHECKOUT_STEP_STARTED, {
+        category: 'order',
+        severity: 'low',
+        metadata: {
+          step_number: step.step_number,
+          step_name: step.step_name,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      // Silently fail
+    }
+  };
+
+  const abandonCheckout = async (exitPoint) => {
+    if (!checkoutStartTime.current) return;
+    
+    const abandonmentDuration = Math.round((Date.now() - checkoutStartTime.current) / 1000);
+    const cartValue = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+      await logFrontendAuditEvent(AUDIT_EVENTS.CHECKOUT_STEP_ABANDONED, {
+        category: 'order',
+        severity: 'medium',
+        metadata: {
+          exit_point: exitPoint || currentCheckoutStep?.step_name || 'unknown',
+          abandonment_duration: abandonmentDuration,
+          cart_value: cartValue,
+          items_count: cartItems.length,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      // Silently fail
+    }
+    
+    setCurrentCheckoutStep(null);
+    checkoutStepStartTime.current = null;
+    checkoutStartTime.current = null;
+  };
+
+  const completeCheckout = async () => {
+    if (checkoutStartTime.current) {
+      const totalTime = Math.round((Date.now() - checkoutStartTime.current) / 1000);
+      
+      // Log final step completion
+      if (currentCheckoutStep && checkoutStepStartTime.current) {
+        const stepTime = Math.round((Date.now() - checkoutStepStartTime.current) / 1000);
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+          await logFrontendAuditEvent(AUDIT_EVENTS.CHECKOUT_STEP_COMPLETED, {
+            category: 'order',
+            severity: 'low',
+            metadata: {
+              step_number: currentCheckoutStep.step_number,
+              step_name: currentCheckoutStep.step_name,
+              time_spent_seconds: stepTime,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
+      }
+    }
+    
+    setCurrentCheckoutStep(null);
+    checkoutStepStartTime.current = null;
+    checkoutStartTime.current = null;
+  };
+
+  // Inventory reservation tracking
+  const reserveInventory = async (productId, sku, quantity) => {
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+      
+      // Generate reservation token
+      const reservationToken = `res_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const expiryTime = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 min expiry
+      
+      await logFrontendAuditEvent(AUDIT_EVENTS.INVENTORY_RESERVED, {
+        category: 'order',
+        severity: 'low',
+        metadata: {
+          product_id: productId,
+          sku: sku,
+          quantity_reserved: quantity,
+          reservation_token: reservationToken,
+          reservation_expiry: expiryTime,
+          timestamp: new Date().toISOString(),
+        },
+      });
+      
+      return { success: true, reservationToken, expiryTime };
+    } catch (e) {
+      return { success: false };
+    }
+  };
+
+  const releaseInventoryReservation = async (reservationToken, reason = 'checkout_completed') => {
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+      
+      await logFrontendAuditEvent(AUDIT_EVENTS.INVENTORY_RELEASED, {
+        category: 'order',
+        severity: 'low',
+        metadata: {
+          reservation_token: reservationToken,
+          reason: reason,
+          timestamp: new Date().toISOString(),
+        },
+      });
+      
+      return { success: true };
+    } catch (e) {
+      return { success: false };
+    }
+  };
+
   // Get cart totals
   const getCartTotals = () => {
     const subtotal = cartItems.reduce(
@@ -543,6 +733,45 @@ const updateQuantity = async (itemId, newQuantity) => {
     }
   };
 
+  // Track cart abandonment - fires after 30 minutes of inactivity
+  useEffect(() => {
+    let abandonmentTimer;
+    
+    const startAbandonmentTimer = () => {
+      // Start 30-minute timer for cart abandonment
+      abandonmentTimer = setTimeout(async () => {
+        if (cartItems.length > 0) {
+          const cartValue = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+          
+          try {
+            const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+            await logFrontendAuditEvent(AUDIT_EVENTS.CART_ABANDONED, {
+              category: 'cart',
+              severity: 'low',
+              metadata: {
+                cart_value: cartValue,
+                items_count: cartItems.length,
+                abandonment_duration: 1800, // 30 minutes in seconds
+                recovery_eligible: true,
+                timestamp: new Date().toISOString(),
+              },
+            });
+          } catch (e) {
+            // Silently fail
+          }
+        }
+      }, 30 * 60 * 1000); // 30 minutes
+    };
+    
+    if (cartItems.length > 0) {
+      startAbandonmentTimer();
+    }
+    
+    return () => {
+      if (abandonmentTimer) clearTimeout(abandonmentTimer);
+    };
+  }, [cartItems]);
+
   const value = {
     cartItems,
     loading,
@@ -558,7 +787,15 @@ const updateQuantity = async (itemId, newQuantity) => {
     mergeGuestCart,
     validateCart,
     applyCoupon,
-    loadCartFromAPI
+    loadCartFromAPI,
+    // Checkout tracking
+    startCheckoutStep,
+    abandonCheckout,
+    completeCheckout,
+    checkoutStartTime,
+    // Inventory reservation
+    reserveInventory,
+    releaseInventoryReservation
   };
 
   return (

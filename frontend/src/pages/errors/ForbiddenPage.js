@@ -16,10 +16,29 @@ import {
   LogOut,
   RefreshCw
 } from 'lucide-react';
+import { useAudit } from '../../hooks/useAudit';
 
 const ForbiddenPage = () => {
   const [userRole] = useState('customer'); // Could be: customer, vendor, admin
   const [requestedResource] = useState(window.location.pathname);
+  const { logAuditEvent } = useAudit();
+
+  useEffect(() => {
+    // Log 403 forbidden access attempt
+    logAuditEvent({
+      event_type: 'RESOURCE_ACCESS_DENIED',
+      event_category: 'security',
+      severity: 'medium',
+      metadata: {
+        http_status: 403,
+        requested_resource: requestedResource,
+        user_role: userRole,
+        reason: 'insufficient_permissions',
+        user_agent: navigator.userAgent,
+        timestamp: new Date().toISOString()
+      }
+    });
+  }, [requestedResource, userRole, logAuditEvent]);
 
   const rolePermissions = {
     customer: [

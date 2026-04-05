@@ -214,16 +214,35 @@ const { items: products, categories, loading, error } = useSelector(
   };
 
   // Delete product
-  const deleteProduct = (productId) => {
+  const deleteProduct = async (productId) => {
+    const product = products.find(p => p.id === productId);
+    
     if (window.confirm('Are you sure you want to delete this product?')) {
       // Dispatch delete to backend
       dispatch(deleteProductAction(productId));
       showNotification('Product deleted successfully');
+      
+      // Log product deleted event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_DELETED, {
+          category: 'product',
+          severity: 'high',
+          metadata: {
+            product_id: productId,
+            sku: product?.sku || null,
+            deletion_reason: 'admin_deleted',
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
     }
   };
 
   // Duplicate product
-  const duplicateProduct = (product) => {
+  const duplicateProduct = async (product) => {
     // Dispatch duplicate/create action to backend
     dispatch(createProductAction({
       ...product,
@@ -233,17 +252,54 @@ const { items: products, categories, loading, error } = useSelector(
       sku: `${product.sku}-COPY`,
     }));
     showNotification('Product duplicated successfully');
+    
+    // Log product created event (duplicate)
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_CREATED, {
+        category: 'product',
+        severity: 'medium',
+        metadata: {
+          source_product_id: product.id,
+          source_sku: product.sku,
+          creation_method: 'duplicate',
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      // Silently fail
+    }
   };
 
   // Toggle product status
-  const toggleProductStatus = (productId) => {
+  const toggleProductStatus = async (productId) => {
     const product = products.find(p => p.id === productId);
     if (product) {
+      const newStatus = !product.isActive;
       dispatch(updateProductAction({ 
         productId, 
-        updates: { isActive: !product.isActive }
+        updates: { isActive: newStatus }
       }));
       showNotification('Product status updated');
+      
+      // Log product updated event
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+        await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_UPDATED, {
+          category: 'product',
+          severity: 'low',
+          metadata: {
+            product_id: productId,
+            sku: product.sku,
+            changes: { is_active: newStatus },
+            old_values: { is_active: product.isActive },
+            new_values: { is_active: newStatus },
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail
+      }
     }
   };
 
@@ -260,13 +316,39 @@ const { items: products, categories, loading, error } = useSelector(
   };
 
   // Bulk activate/deactivate
-  const bulkToggleStatus = (activate) => {
+  const bulkToggleStatus = async (activate) => {
     if (selectedProducts.size === 0) return;
     
     dispatch(bulkUpdateProductsAction({ 
       productIds: Array.from(selectedProducts), 
       updates: { isActive: activate }
     }));
+    
+    // Log bulk product update event
+    try {
+      const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+      
+      const affectedProducts = products.filter(p => selectedProducts.has(p.id));
+      const affectedSkus = affectedProducts.map(p => p.sku).slice(0, 10); // Sample of affected SKUs
+      
+      await logFrontendAuditEvent(AUDIT_EVENTS.BULK_PRODUCT_PRICE_UPDATED, {
+        category: 'product',
+        severity: 'medium',
+        metadata: {
+          rule_id: `bulk_status_${Date.now()}`,
+          filter_criteria: { product_ids: Array.from(selectedProducts) },
+          old_formula: 'mixed',
+          new_formula: activate ? 'activate_all' : 'deactivate_all',
+          affected_count: selectedProducts.size,
+          affected_skus_sample: affectedSkus,
+          timestamp: new Date().toISOString(),
+          execution_time_ms: 0,
+        },
+      });
+    } catch (e) {
+      // Silently fail
+    }
+    
     setSelectedProducts(new Set());
     showNotification(`${selectedProducts.size} products ${activate ? 'activated' : 'deactivated'}`);
   };
@@ -760,6 +842,49 @@ const { items: products, categories, loading, error } = useSelector(
                             <p className="text-xs text-gray-500 line-through">{formatCurrency(product.comparePrice)}</p>
                           )}
                           <p className="text-xs text-green-600">{margin}% margin</p>
+                          {/* Quick price edit button */}
+                          <button
+                            onClick={async () => {
+                              const newPrice = prompt(`Enter new price for ${product.name}:`, product.price);
+                              if (newPrice && !isNaN(newPrice) && parseFloat(newPrice) !== product.price) {
+                                const oldPrice = product.price;
+                                const parsedNewPrice = parseFloat(newPrice);
+                                
+                                // Update via dispatch
+                                dispatch(updateProductAction({ 
+                                  productId: product.id, 
+                                  updates: { price: parsedNewPrice }
+                                }));
+                                showNotification('Price updated successfully');
+                                
+                                // Log price modified event
+                                try {
+                                  const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+                                  await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_PRICE_MODIFIED, {
+                                    category: 'product',
+                                    severity: 'high',
+                                    metadata: {
+                                      product_id: product.id,
+                                      sku: product.sku,
+                                      old_price: oldPrice,
+                                      new_price: parsedNewPrice,
+                                      price_difference: parsedNewPrice - oldPrice,
+                                      percentage_change: oldPrice > 0 ? ((parsedNewPrice - oldPrice) / oldPrice * 100).toFixed(2) : 0,
+                                      currency: 'KES',
+                                      reason: 'quick_price_edit',
+                                      timestamp: new Date().toISOString(),
+                                      modified_by: 'admin',
+                                    },
+                                  });
+                                } catch (e) {
+                                  // Silently fail
+                                }
+                              }
+                            }}
+                            className="text-xs text-blue-600 hover:text-blue-700 mt-1 underline"
+                          >
+                            Edit Price
+                          </button>
                         </td>
                         <td className="px-4 py-4 text-center">
                           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -887,7 +1012,7 @@ const { items: products, categories, loading, error } = useSelector(
   }}
   mode={modalMode === 'view' ? 'view' : modalMode}
   product={selectedProduct}
-  onSuccess={(newProduct) => {
+  onSuccess={async (newProduct) => {
   // Dispatch refresh/refetch
   dispatch(fetchProducts({ 
     category: categoryFilter !== 'all' ? categoryFilter : '',
@@ -896,6 +1021,41 @@ const { items: products, categories, loading, error } = useSelector(
     page: currentPage 
   }));
   showNotification(modalMode === 'create' ? 'Product created successfully!' : 'Product updated successfully!');
+  
+  // Log product created/updated event
+  try {
+    const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../../utils/auditUtils');
+    
+    if (modalMode === 'create') {
+      await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_CREATED, {
+        category: 'product',
+        severity: 'medium',
+        metadata: {
+          product_id: newProduct?.id || null,
+          sku: newProduct?.sku || null,
+          initial_data: {
+            name: newProduct?.name,
+            price: newProduct?.price,
+            category: newProduct?.categoryName,
+          },
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } else if (modalMode === 'edit') {
+      await logFrontendAuditEvent(AUDIT_EVENTS.PRODUCT_UPDATED, {
+        category: 'product',
+        severity: 'medium',
+        metadata: {
+          product_id: selectedProduct?.id,
+          sku: selectedProduct?.sku,
+          changes: newProduct?.changes || 'updated',
+          timestamp: new Date().toISOString(),
+        },
+      });
+    }
+  } catch (e) {
+    // Silently fail
+  }
 }}
 />
     </div>

@@ -1,6 +1,7 @@
 // frontend/src/context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../services/authService';
+import { useDeviceFingerprint } from '../hooks/useDeviceFingerprint';
 
 const AuthContext = createContext();
 
@@ -9,6 +10,9 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Device fingerprint for audit logging
+  const { fingerprint } = useDeviceFingerprint();
   
   // Role switching state (for super_admin only)
   const [originalRole, setOriginalRole] = useState(null);
@@ -131,6 +135,28 @@ const login = async (credentials) => {
     try {
       const token = authService.getToken();
       
+      // Log logout event BEFORE clearing state
+      try {
+        const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+        const sessionId = sessionStorage.getItem('x_session_id');
+        const sessionStart = sessionStorage.getItem('session_start_time');
+        const sessionDuration = sessionStart ? Math.floor((Date.now() - parseInt(sessionStart)) / 1000) : null;
+        
+        await logFrontendAuditEvent(AUDIT_EVENTS.LOGOUT, {
+          category: 'auth',
+          severity: 'low',
+          metadata: {
+            session_id: sessionId,
+            session_duration_seconds: sessionDuration,
+            logout_reason: 'explicit',
+            device_fingerprint: fingerprint,
+            timestamp: new Date().toISOString(),
+          },
+        });
+      } catch (e) {
+        // Silently fail - don't block logout
+      }
+      
       if (token) {
         // Notify backend
         await authService.logout();
@@ -146,6 +172,10 @@ const login = async (credentials) => {
       setOriginalRole(null);
       setSwitchedRole(null);
       localStorage.removeItem('oshocks_switched_role');
+      
+      // Clear audit session data
+      const { clearAuditSession } = await import('../utils/auditUtils');
+      clearAuditSession();
     }
   };
 
@@ -242,6 +272,7 @@ const login = async (credentials) => {
           severity: 'medium',
           metadata: {
             method: 'google_oauth',
+            device_fingerprint: fingerprint,
             timestamp: new Date().toISOString(),
           },
         });
@@ -279,6 +310,7 @@ const login = async (credentials) => {
           severity: 'medium',
           metadata: {
             method: 'strava_oauth',
+            device_fingerprint: fingerprint,
             timestamp: new Date().toISOString(),
           },
         });

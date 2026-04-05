@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Database, AlertTriangle, RefreshCw, Home, ArrowLeft, Server, Activity, XCircle, Clock, Info, HelpCircle, Zap, Shield, CheckCircle, Phone, Mail, FileText, TrendingDown, AlertCircle, Users, ShoppingCart, Package, CreditCard, BarChart3, Globe, Wifi, WifiOff, Download, ExternalLink, Bell, BellOff } from 'lucide-react';
+import { useAudit } from '../../hooks/useAudit';
 
 const DatabaseErrorPage = () => {
   const [retrying, setRetrying] = useState(false);
@@ -40,7 +41,25 @@ const DatabaseErrorPage = () => {
     stackTrace: 'at Connection.connect() in mysql2/lib/connection.js:85'
   };
 
+  const { logAuditEvent } = useAudit();
+
   useEffect(() => {
+    // Log database error event
+    logAuditEvent({
+      event_type: 'THIRD_PARTY_INTEGRATION_ERROR',
+      event_category: 'api',
+      severity: 'critical',
+      metadata: {
+        error_type: 'database_connection_error',
+        error_code: errorData.errorCode,
+        http_status: 503,
+        incident_id: errorData.incidentId,
+        affected_services: errorData.affectedServices,
+        user_agent: navigator.userAgent,
+        page_url: window.location.href
+      }
+    });
+
     // Simulate affected users counter
     const userCounter = setInterval(() => {
       setAffectedUsers(prev => Math.min(prev + Math.floor(Math.random() * 5), 127));
