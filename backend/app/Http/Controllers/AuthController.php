@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Cart;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -394,6 +395,15 @@ class AuthController extends Controller
 
             // Generate token
             $token = $user->createToken('auth_token')->plainTextToken;
+
+            // Log successful OAuth login with provider details
+            AuditService::logLoginSuccess($user, [
+                'login_method' => 'oauth',
+                'oauth_provider' => 'google',
+                'oauth_scopes' => $googleUser->accessTokenResponseBody['scope'] ?? 'openid email profile',
+                'auth_timestamp' => now()->toIso8601String(),
+                'session_id' => hash('sha256', substr($token, 0, 20)),
+            ]);
 
             return response()->json([
                 'success' => true,

@@ -50,6 +50,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Geolocation Services
+    |--------------------------------------------------------------------------
+    */
+    'ipapi' => [
+        'key' => env('IPAPI_KEY'), // Optional - free tier works without key (1000 req/day)
+    ],
+
+    'ipinfo' => [
+        'token' => env('IPINFO_TOKEN'), // Required
+    ],
+
+    'maxmind' => [
+        'license_key' => env('MAXMIND_LICENSE_KEY'),
+        'database_path' => env('MAXMIND_DB_PATH', storage_path('app/GeoLite2-City.mmdb')),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | M-Pesa Daraja API Configuration
     |--------------------------------------------------------------------------
     |

@@ -126,7 +126,7 @@ return [
     */
     'geolocation' => [
         'enabled' => env('AUDIT_GEOLOCATION_ENABLED', true),
-        'service' => 'ipapi', // ipapi, ipinfo, maxmind
+        'service' => env('AUDIT_GEOLOCATION_SERVICE', 'maxmind'), // maxmind, ipapi, ipinfo
     ],
 
     /*

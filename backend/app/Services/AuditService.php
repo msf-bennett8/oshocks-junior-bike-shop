@@ -33,6 +33,21 @@ class AuditService
                 $previousHash = AuditLog::getPreviousHash();
             }
             
+            // Get geolocation from context
+            $geolocation = $context['geolocation'] ?? null;
+            
+            // Build metadata with geolocation and context data
+            $metadata = array_merge($data['metadata'] ?? [], [
+                'geolocation' => $geolocation,
+                'request_id' => $context['request_id'] ?? null,
+                'correlation_id' => $context['correlation_id'] ?? null,
+                'session_id' => $context['session_id'] ?? null,
+                'ip_address' => $context['ip_address'] ?? null,
+                'user_agent' => $context['user_agent'] ?? null,
+                'referrer' => $context['referrer'] ?? null,
+                'request_duration_ms' => $context['request_duration_ms'] ?? null,
+            ]);
+
             $auditData = [
                 // Identification
                 'event_uuid' => (string) Uuid::uuid4(),
@@ -54,11 +69,11 @@ class AuditService
                 // Data
                 'old_values' => $data['old_values'] ?? null,
                 'new_values' => $data['new_values'] ?? null,
-                'metadata' => $data['metadata'] ?? null,
+                'metadata' => $metadata, // Now includes geolocation
                 'payload' => $payload,
                 
                 // Context
-                'ip_address' => $context['ip_address'] ?? self::hashIp(request()->ip()),
+                'ip_address' => $context['ip_address'] ?? self::hashIp(self::getRealClientIp(request())),
                 'user_agent' => $context['user_agent'] ?? substr(request()->userAgent() ?? '', 0, 500),
                 'device_fingerprint' => $data['device_fingerprint'] ?? null,
                 'geolocation' => $context['geolocation'] ?? null,
@@ -126,6 +141,14 @@ class AuditService
      */
     public static function logLoginSuccess($user, array $context = []): ?AuditLog
     {
+        $loginMethod = $context['login_method'] ?? 'password';
+        $oauthProvider = $context['oauth_provider'] ?? null;
+        
+        // Build description with OAuth info if present
+        $description = $oauthProvider 
+            ? "User {$user->email} logged in via {$oauthProvider} OAuth"
+            : "User {$user->email} logged in successfully";
+        
         return self::log([
             'event_type' => 'LOGIN_SUCCESS',
             'event_category' => 'security',
@@ -133,20 +156,24 @@ class AuditService
             'user_id' => $user->id,
             'user_role' => $user->role,
             'action' => 'authenticated',
-            'description' => "User {$user->email} logged in successfully",
+            'description' => $description,
             'severity' => 'CRITICAL',
             'metadata' => [
-                'login_method' => $context['login_method'] ?? 'password',
+                'login_method' => $loginMethod,
+                'oauth_provider' => $oauthProvider, // google, strava, etc.
+                'oauth_scopes' => $context['oauth_scopes'] ?? null,
                 'mfa_used' => $context['mfa_used'] ?? false,
                 'device_info' => $context['device_info'] ?? null,
                 'location' => $context['location'] ?? null,
                 'session_id' => $context['session_id'] ?? null,
+                'auth_timestamp' => $context['auth_timestamp'] ?? now()->toIso8601String(),
             ],
             'payload' => [
                 'user_id' => $user->id,
                 'email_hash' => hash('sha256', $user->email),
                 'role' => $user->role,
-                'login_method' => $context['login_method'] ?? 'password',
+                'login_method' => $loginMethod,
+                'oauth_provider' => $oauthProvider,
                 'mfa_used' => $context['mfa_used'] ?? false,
             ],
         ]);
@@ -652,6 +679,33 @@ class AuditService
         }
         
         return hash('sha256', $ip . config('app.key'));
+    }
+
+        /**
+     * Get the real client IP from forwarded headers
+     */
+    private static function getRealClientIp($request): ?string
+    {
+        $headers = ['X-Forwarded-For', 'X-Real-IP', 'CF-Connecting-IP', 'True-Client-IP'];
+        
+        foreach ($headers as $header) {
+            $value = $request->header($header);
+            if ($value) {
+                if ($header === 'X-Forwarded-For') {
+                    $ips = explode(',', $value);
+                    $clientIp = trim($ips[0]);
+                    if (filter_var($clientIp, FILTER_VALIDATE_IP)) {
+                        return $clientIp;
+                    }
+                } else {
+                    if (filter_var($value, FILTER_VALIDATE_IP)) {
+                        return $value;
+                    }
+                }
+            }
+        }
+        
+        return $request->ip();
     }
 
     /**

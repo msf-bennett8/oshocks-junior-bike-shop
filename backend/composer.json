@@ -10,6 +10,7 @@
         "doctrine/dbal": "^4.4",
         "fakerphp/faker": "^1.23",
         "flutterwavedev/flutterwave-v3": "^1.1",
+        "geoip2/geoip2": "^3.3",
         "guzzlehttp/guzzle": "^7.9.2",
         "laravel/framework": "^11.31",
         "laravel/sanctum": "^4.0",

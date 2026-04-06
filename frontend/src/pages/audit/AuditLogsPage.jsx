@@ -23,6 +23,55 @@ const AuditLogsPage = () => {
     total: 0
   });
 
+  // Minute-based grouping state
+  const [expandedMinutes, setExpandedMinutes] = useState({});
+  const [gotoPageInput, setGotoPageInput] = useState('');
+
+  // Toggle minute group expansion
+  const toggleMinuteGroup = (minuteKey) => {
+    setExpandedMinutes(prev => ({
+      ...prev,
+      [minuteKey]: !prev[minuteKey]
+    }));
+  };
+
+  // Group logs by minute
+  const groupLogsByMinute = (logs) => {
+    const groups = {};
+    logs.forEach(log => {
+      const date = new Date(log.occurred_at);
+      const minuteKey = date.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
+      if (!groups[minuteKey]) {
+        groups[minuteKey] = {
+          minute: minuteKey,
+          displayTime: date.toLocaleString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
+          logs: []
+        };
+      }
+      groups[minuteKey].logs.push(log);
+    });
+    return Object.values(groups).sort((a, b) => b.minute.localeCompare(a.minute));
+  };
+
+  // Handle go to page
+  const handleGotoPage = () => {
+    const page = parseInt(gotoPageInput, 10);
+    if (page && page >= 1 && page <= pagination.last_page) {
+      const scrollPosition = window.scrollY;
+      setPagination(prev => ({ ...prev, current_page: page }));
+      setGotoPageInput('');
+      setTimeout(() => window.scrollTo({ top: scrollPosition, behavior: 'smooth' }), 50);
+    } else {
+      alert(`Please enter a valid page number between 1 and ${pagination.last_page}`);
+    }
+  };
+
   // Filters
   const [filters, setFilters] = useState({
     event_category: '',
@@ -54,17 +103,27 @@ const AuditLogsPage = () => {
     customEnd: ''
   });
 
+  // Load on initial mount and when filters change
   useEffect(() => {
     loadAuditLogs();
     loadStats();
-  }, [filters.event_category, filters.severity, filters.is_suspicious, pagination.current_page]);
+  }, [filters.event_category, filters.severity, filters.is_suspicious]);
 
-  const loadAuditLogs = async () => {
+  // Handle pagination changes without scroll jump
+  useEffect(() => {
+    const scrollPosition = window.scrollY;
+    loadAuditLogs().then(() => {
+      // Restore scroll position after data loads
+      window.scrollTo(0, scrollPosition);
+    });
+  }, [pagination.current_page]);
+
+  const loadAuditLogs = async (page = null) => {
     try {
       setLoading(true);
       const response = await auditService.getAuditLogs({
         ...filters,
-        page: pagination.current_page
+        page: page || pagination.current_page
       });
 
       if (response.success) {
@@ -730,133 +789,263 @@ const previewDateRangeDeletion = async () => {
           )}
         </div>
 
-        {/* Audit Logs Table */}
+        {/* Audit Logs Table - Minute-Based Collapsible Groups */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto -mx-4 sm:mx-0">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Event
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Description
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="hidden lg:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    IP Address
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Severity
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Time
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {auditLogs.map((log) => {
-                  const categoryInfo = getCategoryIcon(log.event_category);
-                  const CategoryIcon = categoryInfo.icon;
-                  const EventIcon = getEventIcon(log.event_type);
+            <div className="divide-y divide-gray-200">
+              {groupLogsByMinute(auditLogs).map((group) => {
+                const isExpanded = expandedMinutes[group.minute] !== false; // Default expanded
+                const hasSuspicious = group.logs.some(l => l.is_suspicious);
+                
+                return (
+                  <div key={group.minute} className="bg-white">
+                    {/* Minute Group Header */}
+                    <button
+                      onClick={() => toggleMinuteGroup(group.minute)}
+                      className={`w-full px-4 md:px-6 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors ${
+                        hasSuspicious ? 'bg-red-50/50' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {isExpanded ? (
+                          <ChevronDown className="w-5 h-5 text-gray-400" />
+                        ) : (
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-gray-500" />
+                          <span className="font-semibold text-gray-900">
+                            {group.displayTime}
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            ({group.logs.length} events)
+                          </span>
+                        </div>
+                        {hasSuspicious && (
+                          <AlertTriangle className="w-4 h-4 text-red-500" title="Contains suspicious events" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {/* Show severity summary */}
+                        {group.logs.some(l => l.severity === 'high') && (
+                          <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
+                            High
+                          </span>
+                        )}
+                        {group.logs.some(l => l.severity === 'medium') && (
+                          <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                            Med
+                          </span>
+                        )}
+                      </div>
+                    </button>
 
-                  return (
-                    <tr key={log.id} className="hover:bg-gray-50">
-                      <td className="px-3 md:px-6 py-3 md:py-4 whitespace-nowrap">
-                        <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                          <div className={`p-2 rounded-lg ${categoryInfo.bg}`}>
-                            <CategoryIcon className={`w-5 h-5 ${categoryInfo.color}`} />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              {log.event_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            </p>
-                            <p className="text-xs text-gray-500">{log.event_category}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-start gap-2">
-                          {log.is_suspicious && (
-                            <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                          )}
-                          <p className="text-sm text-gray-900 max-w-md truncate">
-                            {log.description}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-gray-400" />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              {log.user?.name || 'System'}
-                            </p>
-                            <p className="text-xs text-gray-500">{log.user_role}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
-                        <p className="text-sm text-gray-900 font-mono">{log.ip_address}</p>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getSeverityBadge(log.severity)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-gray-400" />
-                          <p className="text-sm text-gray-900">{formatDate(log.occurred_at)}</p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <button
-                          onClick={() => {
-                            setSelectedLog(log);
-                            setShowModal(true);
-                          }}
-                          className="text-orange-600 hover:text-orange-700 text-sm font-medium"
-                        >
-                          View Details
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                    {/* Expandable Log Rows */}
+                    {isExpanded && (
+                      <div className="bg-gray-50/50">
+                        {group.logs.map((log) => {
+                          const categoryInfo = getCategoryIcon(log.event_category);
+                          const CategoryIcon = categoryInfo.icon;
+                          const EventIcon = getEventIcon(log.event_type);
+
+                          return (
+                            <div 
+                              key={log.id} 
+                              onClick={() => {
+                                setSelectedLog(log);
+                                setShowModal(true);
+                              }}
+                              className={`px-4 md:px-6 py-3 border-l-4 hover:bg-white transition-colors cursor-pointer ${
+                                log.is_suspicious ? 'border-red-400 bg-red-50/30' : 'border-transparent'
+                              }`}
+                            >
+                              <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+                                {/* Event Type */}
+                                <div className="flex items-center gap-2 md:w-48">
+                                  <div className={`p-1.5 rounded ${categoryInfo.bg}`}>
+                                    <CategoryIcon className={`w-4 h-4 ${categoryInfo.color}`} />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-900">
+                                      {log.event_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                    </p>
+                                    <p className="text-xs text-gray-500">{log.event_category}</p>
+                                  </div>
+                                </div>
+
+                                {/* Description */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start gap-2">
+                                    {log.is_suspicious && (
+                                      <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                                    )}
+                                    <p className="text-sm text-gray-700 truncate">
+                                      {log.description}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* User */}
+                                <div className="flex items-center gap-2 md:w-40">
+                                  <User className="w-4 h-4 text-gray-400" />
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                      {log.user?.name || 'System'}
+                                    </p>
+                                    <p className="text-xs text-gray-500">{log.user_role}</p>
+                                  </div>
+                                </div>
+
+                                {/* Location (from geolocation metadata or direct field) */}
+                                <div className="hidden lg:flex items-center gap-2 md:w-32">
+                                  <div className="text-xs text-gray-600">
+                                    {(log.metadata?.geolocation?.city || log.geolocation?.city) && 
+                                     (log.metadata?.geolocation?.country || log.geolocation?.country) ? (
+                                      <span className="flex items-center gap-1" title={log.metadata?.geolocation?.isp || log.geolocation?.isp || ''}>
+                                        <span className="font-medium">
+                                          {log.metadata?.geolocation?.city || log.geolocation?.city}
+                                        </span>
+                                        <span className="text-gray-400">,</span>
+                                        <span>
+                                          {log.metadata?.geolocation?.country || log.geolocation?.country}
+                                        </span>
+                                      </span>
+                                    ) : (log.metadata?.geolocation?.country || log.geolocation?.country) ? (
+                                      <span>{log.metadata?.geolocation?.country || log.geolocation?.country}</span>
+                                    ) : (
+                                      <span className="text-gray-400">-</span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Severity */}
+                                <div className="md:w-24">
+                                  {getSeverityBadge(log.severity)}
+                                </div>
+
+                                {/* Time */}
+                                <div className="text-xs text-gray-500 md:w-20">
+                                  {new Date(log.occurred_at).toLocaleTimeString('en-GB', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    second: '2-digit'
+                                  })}
+                                </div>
+
+                                {/* Actions - View button still works, or click anywhere */}
+                                <div className="md:w-20 text-right" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedLog(log);
+                                      setShowModal(true);
+                                    }}
+                                    className="text-orange-600 hover:text-orange-700 text-sm font-medium"
+                                  >
+                                    View
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Pagination */}
+          {/* Enhanced Pagination */}
           <div className="bg-gray-50 px-4 md:px-6 py-4 border-t border-gray-200">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-xs md:text-sm text-gray-600 text-center sm:text-left">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
+              {/* Results info */}
+              <div className="text-xs md:text-sm text-gray-600 text-center lg:text-left">
                 Showing {((pagination.current_page - 1) * pagination.per_page) + 1} to{' '}
                 {Math.min(pagination.current_page * pagination.per_page, pagination.total)} of{' '}
                 {pagination.total} results
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPagination(prev => ({ ...prev, current_page: prev.current_page - 1 }))}
-                  disabled={pagination.current_page === 1}
-                  className="p-2 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <span className="text-sm text-gray-600">
-                  Page {pagination.current_page} of {pagination.last_page}
-                </span>
-                <button
-                  onClick={() => setPagination(prev => ({ ...prev, current_page: prev.current_page + 1 }))}
-                  disabled={pagination.current_page === pagination.last_page}
-                  className="p-2 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
+
+              {/* Pagination controls */}
+              <div className="flex flex-col sm:flex-row items-center gap-3 md:gap-4">
+                {/* Page navigation */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPagination(prev => ({ ...prev, current_page: 1 }))}
+                    disabled={pagination.current_page === 1}
+                    className="p-2 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="First page"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-4 h-4 -ml-3" />
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      const scrollPosition = window.scrollY;
+                      setPagination(prev => ({ ...prev, current_page: prev.current_page - 1 }));
+                      // Keep scroll position in table area
+                      setTimeout(() => window.scrollTo({ top: scrollPosition, behavior: 'smooth' }), 50);
+                    }}
+                    disabled={pagination.current_page === 1}
+                    className="p-2 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+
+                  {/* Page indicator with input */}
+                  <div className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg">
+                    <span className="text-sm text-gray-600">Page</span>
+                    <span className="text-sm font-semibold text-gray-900 min-w-[3ch] text-center">
+                      {pagination.current_page}
+                    </span>
+                    <span className="text-sm text-gray-600">of {pagination.last_page}</span>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      const scrollPosition = window.scrollY;
+                      setPagination(prev => ({ ...prev, current_page: prev.current_page + 1 }));
+                      setTimeout(() => window.scrollTo({ top: scrollPosition, behavior: 'smooth' }), 50);
+                    }}
+                    disabled={pagination.current_page === pagination.last_page}
+                    className="p-2 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+
+                  <button
+                    onClick={() => setPagination(prev => ({ ...prev, current_page: prev.last_page }))}
+                    disabled={pagination.current_page === pagination.last_page}
+                    className="p-2 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Last page"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-4 h-4 -ml-3" />
+                  </button>
+                </div>
+
+                {/* Go to page input */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Go to:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max={pagination.last_page}
+                    value={gotoPageInput}
+                    onChange={(e) => setGotoPageInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleGotoPage()}
+                    placeholder="#"
+                    className="w-16 px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-center"
+                  />
+                  <button
+                    onClick={handleGotoPage}
+                    disabled={!gotoPageInput}
+                    className="px-3 py-1.5 text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Go
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -937,6 +1126,53 @@ const previewDateRangeDeletion = async () => {
                       <span className="text-sm text-gray-600">IP Address:</span>
                       <span className="text-sm font-mono text-gray-900">{selectedLog.ip_address}</span>
                     </div>
+                    
+                    {/* Location - Directly below IP Address */}
+                    {(selectedLog.metadata?.geolocation || selectedLog.geolocation) && (
+                      <div className="flex justify-between items-start border-l-2 border-orange-300 pl-3 ml-1">
+                        <span className="text-sm text-gray-600">Location:</span>
+                        <div className="text-right">
+                          <div className="text-sm font-medium text-gray-900">
+                            {(selectedLog.metadata?.geolocation?.city || selectedLog.geolocation?.city) && 
+                             (selectedLog.metadata?.geolocation?.country || selectedLog.geolocation?.country) ? (
+                              <>
+                                <span className="font-semibold">
+                                  {selectedLog.metadata?.geolocation?.city || selectedLog.geolocation?.city}
+                                </span>
+                                <span className="text-gray-400 mx-1">,</span>
+                                <span>
+                                  {selectedLog.metadata?.geolocation?.country || selectedLog.geolocation?.country}
+                                </span>
+                              </>
+                            ) : (selectedLog.metadata?.geolocation?.country || selectedLog.geolocation?.country) ? (
+                              <span>
+                                {selectedLog.metadata?.geolocation?.country || selectedLog.geolocation?.country}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">Unknown</span>
+                            )}
+                          </div>
+                          {(selectedLog.metadata?.geolocation?.region || selectedLog.geolocation?.region) && (
+                            <div className="text-xs text-gray-500">
+                              {selectedLog.metadata?.geolocation?.region || selectedLog.geolocation?.region}
+                            </div>
+                          )}
+                          {(selectedLog.metadata?.geolocation?.isp || selectedLog.geolocation?.isp) && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              <span className="font-medium">ISP:</span> {selectedLog.metadata?.geolocation?.isp || selectedLog.geolocation?.isp}
+                            </div>
+                          )}
+                          {(selectedLog.metadata?.geolocation?.latitude || selectedLog.geolocation?.latitude) && 
+                           (selectedLog.metadata?.geolocation?.longitude || selectedLog.geolocation?.longitude) && (
+                            <div className="text-xs text-gray-400 font-mono mt-1">
+                              {(selectedLog.metadata?.geolocation?.latitude || selectedLog.geolocation?.latitude).toFixed(4)}, 
+                              {(selectedLog.metadata?.geolocation?.longitude || selectedLog.geolocation?.longitude).toFixed(4)}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">User Agent:</span>
                       <span className="text-sm text-gray-900 truncate max-w-md">{selectedLog.user_agent}</span>
@@ -953,6 +1189,12 @@ const previewDateRangeDeletion = async () => {
                       <span className="text-sm text-gray-600">Timestamp:</span>
                       <span className="text-sm text-gray-900">{formatDate(selectedLog.occurred_at)}</span>
                     </div>
+                    {selectedLog.metadata?.request_duration_ms && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Response Time:</span>
+                        <span className="text-sm text-gray-900">{selectedLog.metadata.request_duration_ms}ms</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 

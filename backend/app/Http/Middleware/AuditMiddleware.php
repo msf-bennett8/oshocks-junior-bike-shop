@@ -6,6 +6,8 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Log;
+use App\Services\AuditService;
+use App\Services\AuditContextService;
 
 class AuditMiddleware
 {
@@ -16,6 +18,8 @@ class AuditMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        $startTime = microtime(true);
+        
         // Generate correlation ID if not present
         if (!$request->hasHeader('X-Correlation-ID')) {
             $correlationId = (string) \Illuminate\Support\Str::uuid();
@@ -26,24 +30,35 @@ class AuditMiddleware
         $request->attributes->set('correlation_id', $request->header('X-Correlation-ID'));
         $request->attributes->set('request_id', (string) \Illuminate\Support\Str::uuid());
         $request->attributes->set('audit_timestamp', now()->toIso8601String());
+        $request->attributes->set('audit_start_time', $startTime);
+
+        // Initialize audit context
+        AuditContextService::initialize();
 
         // Process the request
         $response = $next($request);
 
+        // Calculate duration
+        $duration = round((microtime(true) - $startTime) * 1000, 2); // milliseconds
+        
+        // Update context with duration
+        AuditContextService::set('request_duration_ms', $duration);
+
         // Add audit headers to response
         $response->headers->set('X-Correlation-ID', $request->header('X-Correlation-ID'));
         $response->headers->set('X-Request-ID', $request->attributes->get('request_id'));
+        $response->headers->set('X-Response-Time', $duration . 'ms');
 
-        // Log the request (but don't let it break the response)
-        $this->logRequest($request, $response);
+        // Log the request using structured audit service
+        $this->logRequest($request, $response, $duration);
 
         return $response;
     }
 
     /**
-     * Log the HTTP request and response
+     * Log the HTTP request and response using AuditService
      */
-    private function logRequest(Request $request, Response $response): void
+    private function logRequest(Request $request, Response $response, float $duration): void
     {
         // Skip logging for health checks and certain public endpoints
         if ($this->shouldSkipLogging($request)) {
@@ -52,36 +67,64 @@ class AuditMiddleware
 
         try {
             $user = \Illuminate\Support\Facades\Auth::user();
+            $statusCode = $response->getStatusCode();
             
-            // Build context data
-            $context = [
-                'method' => $request->method(),
-                'url' => $request->fullUrl(),
-                'path' => $request->path(),
+            // Determine severity based on response status
+            $severity = match(true) {
+                $statusCode >= 500 => 'high',
+                $statusCode >= 400 => 'medium',
+                default => 'low',
+            };
+
+            // Build metadata
+            $metadata = [
+                'request_method' => $request->method(),
+                'request_path' => $request->path(),
                 'route_name' => $request->route()?->getName(),
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
+                'response_status' => $statusCode,
+                'response_duration_ms' => $duration,
+                'response_size_bytes' => strlen($response->getContent()),
                 'request_headers' => $this->filterSensitiveHeaders($request->headers->all()),
-                'response_status' => $response->getStatusCode(),
+                'correlation_id' => $request->header('X-Correlation-ID'),
+                'request_id' => $request->attributes->get('request_id'),
             ];
 
-            // Add request body for non-GET requests (filter sensitive data)
-            if (!in_array($request->method(), ['GET', 'HEAD'])) {
-                $context['request_body'] = $this->filterSensitiveData($request->all());
+            // Add request body for state-changing requests (filter sensitive data)
+            if (in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'])) {
+                $metadata['request_body'] = $this->filterSensitiveData($request->all());
             }
 
-            // Log based on response status
-            if ($response->getStatusCode() >= 500) {
-                Log::error('API Server Error', $context);
-            } elseif ($response->getStatusCode() >= 400) {
-                Log::warning('API Client Error', $context);
-            } else {
-                Log::info('API Request', $context);
-            }
+            // Determine event type based on response status
+            $eventType = match(true) {
+                $statusCode >= 500 => 'API_ERROR_SERVER',
+                $statusCode === 429 => 'API_RATE_LIMITED',
+                $statusCode >= 400 => 'API_ERROR_CLIENT',
+                default => 'API_REQUEST',
+            };
+
+            // Use AuditService for structured logging
+            AuditService::log([
+                'event_type' => $eventType,
+                'event_category' => 'api',
+                'action' => strtolower($request->method()),
+                'model_type' => 'ApiRequest',
+                'model_id' => $request->attributes->get('request_id'),
+                'description' => "{$request->method()} {$request->path()} - {$statusCode} ({$duration}ms)",
+                'severity' => $severity,
+                'metadata' => $metadata,
+                'payload' => [
+                    'path' => $request->path(),
+                    'status' => $statusCode,
+                    'duration_ms' => $duration,
+                    'user_id' => $user?->id,
+                ],
+            ]);
 
         } catch (\Exception $e) {
-            // Don't let audit logging break the application
-            Log::error('Audit middleware logging failed: ' . $e->getMessage());
+            // Fallback to Laravel log if AuditService fails
+            Log::error('Audit middleware logging failed: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
         }
     }
 

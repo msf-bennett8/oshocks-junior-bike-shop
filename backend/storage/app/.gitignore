@@ -2,3 +2,7 @@
 !private/
 !public/
 !.gitignore
+
+# Allow MaxMind database
+!storage/app/GeoLite2-City.mmdb
+
