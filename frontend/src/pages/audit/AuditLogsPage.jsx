@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import auditService from '../../services/auditService';
 import {
@@ -7,8 +7,237 @@ import {
   User, Activity, ShoppingCart, Package, DollarSign, Eye, Clock,
   TrendingUp, BarChart3, FileText, AlertCircle, Lock, Unlock,
   UserCheck, UserX, Settings, LogIn, LogOut, CreditCard, Truck,
-  Star, MessageSquare, Tag, Percent, ArrowUp, ArrowDown, Zap, Archive, Plus 
+  Star, MessageSquare, Tag, Percent, ArrowUp, ArrowDown, Zap, Archive, Plus, Copy, Check, Loader2
 } from 'lucide-react';
+import { List } from 'react-window';
+import { AutoSizer } from 'react-virtualized-auto-sizer';
+
+// Skeleton Loading Row Component
+const SkeletonRow = () => (
+  <div className="px-4 md:px-6 py-3 border-l-4 border-transparent animate-pulse">
+    <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+      {/* Event Type Skeleton */}
+      <div className="flex items-center gap-2 md:w-48">
+        <div className="p-1.5 rounded bg-gray-200 w-8 h-8"></div>
+        <div className="space-y-1 flex-1">
+          <div className="h-4 bg-gray-200 rounded w-24"></div>
+          <div className="h-3 bg-gray-200 rounded w-16"></div>
+        </div>
+      </div>
+
+      {/* Description Skeleton */}
+      <div className="flex-1 min-w-0">
+        <div className="h-4 bg-gray-200 rounded w-full max-w-md"></div>
+      </div>
+
+      {/* User Skeleton */}
+      <div className="flex items-center gap-2 md:w-40">
+        <div className="w-4 h-4 bg-gray-200 rounded-full"></div>
+        <div className="space-y-1 flex-1">
+          <div className="h-4 bg-gray-200 rounded w-20"></div>
+          <div className="h-3 bg-gray-200 rounded w-12"></div>
+        </div>
+      </div>
+
+      {/* Location Skeleton */}
+      <div className="hidden lg:flex items-center gap-2 md:w-32">
+        <div className="h-4 bg-gray-200 rounded w-24"></div>
+      </div>
+
+      {/* Severity Skeleton */}
+      <div className="md:w-24">
+        <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+      </div>
+
+      {/* Time Skeleton */}
+      <div className="md:w-20">
+        <div className="h-3 bg-gray-200 rounded w-16"></div>
+      </div>
+
+      {/* Actions Skeleton */}
+      <div className="md:w-20 text-right">
+        <div className="h-4 bg-gray-200 rounded w-10 inline-block"></div>
+      </div>
+    </div>
+  </div>
+);
+
+// Skeleton Group Header Component
+const SkeletonGroupHeader = () => (
+  <div className="w-full px-4 md:px-6 py-3 flex items-center justify-between bg-gray-50 animate-pulse">
+    <div className="flex items-center gap-3">
+      <div className="w-5 h-5 bg-gray-200 rounded"></div>
+      <div className="flex items-center gap-2">
+        <div className="w-4 h-4 bg-gray-200 rounded"></div>
+        <div className="h-5 bg-gray-200 rounded w-32"></div>
+        <div className="h-4 bg-gray-200 rounded w-16"></div>
+      </div>
+    </div>
+    <div className="flex items-center gap-2">
+      <div className="h-5 bg-gray-200 rounded-full w-12"></div>
+    </div>
+  </div>
+);
+
+// Skeleton Pagination Component
+const SkeletonPagination = () => (
+  <div className="bg-gray-50 px-4 md:px-6 py-4 border-t border-gray-200">
+    <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
+      <div className="h-4 bg-gray-200 rounded w-48 animate-pulse"></div>
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="h-8 w-8 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="h-8 w-24 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="h-8 w-8 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="h-8 w-8 bg-gray-200 rounded-lg animate-pulse"></div>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="h-4 bg-gray-200 rounded w-12 animate-pulse"></div>
+          <div className="h-8 w-16 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="h-8 w-10 bg-gray-200 rounded-lg animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// Virtualized Log Row Component
+const VirtualizedLogRow = ({ data, index, style }) => {
+  const { logs, onLogClick, getCategoryIcon, getEventIcon, getSeverityBadge } = data;
+  const log = logs[index];
+  
+  // Safety check - prevent blank rows
+  if (!log) {
+    return <div style={style} className="px-4 py-3 text-gray-400">Loading...</div>;
+  }
+  
+  const categoryInfo = getCategoryIcon(log.event_category);
+  const CategoryIcon = categoryInfo.icon;
+  
+  return (
+    <div 
+      style={style}
+      onClick={() => onLogClick(log)}
+      className={`px-4 md:px-6 py-3 border-l-4 hover:bg-white transition-colors cursor-pointer border-b border-gray-100 ${
+        log.is_suspicious ? 'border-red-400 bg-red-50/30' : 'border-transparent'
+      }`}
+    >
+      <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 h-full">
+        {/* Event Type */}
+        <div className="flex items-center gap-2 md:w-48 flex-shrink-0">
+          <div className={`p-1.5 rounded ${categoryInfo.bg}`}>
+            <CategoryIcon className={`w-4 h-4 ${categoryInfo.color}`} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {log.event_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            </p>
+            <p className="text-xs text-gray-500">{log.event_category}</p>
+          </div>
+        </div>
+
+        {/* Description */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start gap-2">
+            {log.is_suspicious && (
+              <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+            )}
+            <p className="text-sm text-gray-700 truncate">
+              {log.description}
+            </p>
+          </div>
+        </div>
+
+        {/* User */}
+        <div className="flex items-center gap-2 md:w-40 flex-shrink-0">
+          <User className="w-4 h-4 text-gray-400" />
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {log.user?.name || 'System'}
+            </p>
+            <p className="text-xs text-gray-500">{log.user_role}</p>
+          </div>
+        </div>
+
+        {/* Location */}
+        <div className="hidden lg:flex items-center gap-2 md:w-32 flex-shrink-0">
+          <div className="text-xs text-gray-600 truncate">
+            {(log.metadata?.geolocation?.city || log.geolocation?.city) && 
+             (log.metadata?.geolocation?.country || log.geolocation?.country) ? (
+              <span className="flex items-center gap-1">
+                <span className="font-medium">
+                  {log.metadata?.geolocation?.city || log.geolocation?.city}
+                </span>
+                <span className="text-gray-400">,</span>
+                <span>
+                  {log.metadata?.geolocation?.country || log.geolocation?.country}
+                </span>
+              </span>
+            ) : (log.metadata?.geolocation?.country || log.geolocation?.country) ? (
+              <span>{log.metadata?.geolocation?.country || log.geolocation?.country}</span>
+            ) : (
+              <span className="text-gray-400">-</span>
+            )}
+          </div>
+        </div>
+
+        {/* Severity */}
+        <div className="md:w-24 flex-shrink-0">
+          {getSeverityBadge(log.severity)}
+        </div>
+
+        {/* Time */}
+        <div className="text-xs text-gray-500 md:w-20 flex-shrink-0">
+          {new Date(log.occurred_at).toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          })}
+        </div>
+
+        {/* Actions */}
+        <div className="md:w-20 text-right flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => onLogClick(log)}
+            className="text-orange-600 hover:text-orange-700 text-sm font-medium"
+          >
+            View
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Loading Progress Component for chunked loading
+const LoadingProgress = ({ loaded, total, onCancel }) => (
+  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+    <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center gap-2 text-blue-800">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        <span className="text-sm font-medium">
+          Loading large dataset... {loaded.toLocaleString()} of {total.toLocaleString()} logs
+        </span>
+      </div>
+      <button
+        onClick={onCancel}
+        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+      >
+        Cancel
+      </button>
+    </div>
+    <div className="w-full bg-blue-200 rounded-full h-2">
+      <div 
+        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+        style={{ width: `${total > 0 ? (loaded / total) * 100 : 0}%` }}
+      ></div>
+    </div>
+    <p className="text-xs text-blue-600 mt-2">
+      This may take a while for large datasets. You can cancel and use paginated view instead.
+    </p>
+  </div>
+);
 
 const AuditLogsPage = () => {
   const navigate = useNavigate();
@@ -60,13 +289,14 @@ const AuditLogsPage = () => {
   };
 
   // Handle go to page
-  const handleGotoPage = () => {
+  const handleGotoPage = async () => {
     const page = parseInt(gotoPageInput, 10);
     if (page && page >= 1 && page <= pagination.last_page) {
       const scrollPosition = window.scrollY;
       setPagination(prev => ({ ...prev, current_page: page }));
       setGotoPageInput('');
-      setTimeout(() => window.scrollTo({ top: scrollPosition, behavior: 'smooth' }), 50);
+      await loadAuditLogs(page);
+      window.scrollTo({ top: scrollPosition, behavior: 'smooth' });
     } else {
       alert(`Please enter a valid page number between 1 and ${pagination.last_page}`);
     }
@@ -103,31 +333,251 @@ const AuditLogsPage = () => {
     customEnd: ''
   });
 
+  // Load All mode state with progressive scroll loading
+  const [loadAllMode, setLoadAllMode] = useState(false);
+  const [allLogs, setAllLogs] = useState([]);
+  const [loadingAll, setLoadingAll] = useState(false);
+  const [loadProgress, setLoadProgress] = useState({ loaded: 0, total: 0 });
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [useVirtualization, setUseVirtualization] = useState(false);
+  const VIRTUALIZATION_THRESHOLD = 1000; // Use virtualization for more than 1000 logs
+  const loadAllContainerRef = useRef(null);
+
+  // Time-based export state
+  const [showTimeExportDropdown, setShowTimeExportDropdown] = useState(false);
+  const timeExportOptions = [
+    { label: 'Last 1 Hour', value: '1h', hours: 1 },
+    { label: 'Last 3 Hours', value: '3h', hours: 3 },
+    { label: 'Last 6 Hours', value: '6h', hours: 6 },
+    { label: 'Last 9 Hours', value: '9h', hours: 9 },
+    { label: 'Last 12 Hours', value: '12h', hours: 12 },
+    { label: 'Today', value: 'today', hours: 24 },
+    { label: 'This Month', value: 'month', hours: 720 }, // 30 days
+    { label: 'Last 3 Months', value: '3months', hours: 2190 }, // 90 days
+    { label: 'Last 6 Months', value: '6months', hours: 4380 }, // 180 days
+    { label: 'This Year', value: 'year', hours: 8760 }, // 365 days
+    { label: 'All Time', value: 'all', hours: null },
+  ];
+
+  // Copy to clipboard functionality
+  const [copiedField, setCopiedField] = useState(null);
+  
+  const handleCopyToClipboard = async (text, field) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  // Handle modal close on outside click
+  const handleModalBackdropClick = (e, closeFn) => {
+    if (e.target === e.currentTarget) {
+      closeFn();
+    }
+  };
+
+  // Toggle Load All mode - loads ALL logs at once with skeleton loading
+  const toggleLoadAllMode = async () => {
+    if (!loadAllMode) {
+      // Switching to Load All mode
+      setLoading(false);
+      setLoadAllMode(true);
+      setAllLogs([]); // Clear first
+      setLoadProgress({ loaded: 0, total: 0 });
+      
+      try {
+        // Get total count first
+        const initialResponse = await auditService.getAuditLogs({
+          ...filters,
+          per_page: 1,
+          page: 1
+        });
+        
+        if (!initialResponse.success) {
+          throw new Error('Failed to fetch initial data');
+        }
+        
+        const totalLogs = initialResponse.data?.total || 0;
+        setLoadProgress({ loaded: 0, total: totalLogs });
+        
+        // Load ALL logs in one request
+        const allLogsResponse = await auditService.getAuditLogs({
+          ...filters,
+          per_page: totalLogs || 10000, // Request all at once
+          page: 1,
+          sort_by: 'occurred_at',
+          sort_order: 'desc'
+        });
+        
+        if (allLogsResponse.success) {
+          setAllLogs(allLogsResponse.data?.data || []);
+          setLoadProgress({ loaded: totalLogs, total: totalLogs });
+        }
+        
+      } catch (error) {
+        console.error('Failed to load all logs:', error);
+        alert('Failed to load all logs: ' + error.message);
+        setLoadAllMode(false);
+      }
+    } else {
+      // Switching back to paginated mode
+      setLoadAllMode(false);
+      setAllLogs([]);
+      setLoading(false);
+      await loadAuditLogs(pagination.current_page);
+    }
+  };
+
+  // Cancel loading
+  const handleCancelLoading = () => {
+    setCancelLoading(true);
+  };
+
+  // Calculate date range for time-based export
+  const calculateTimeRange = (hours) => {
+    const now = new Date();
+    const end = now.toISOString();
+    
+    if (!hours) {
+      // All time - return no date_from filter
+      return { date_from: '', date_to: end };
+    }
+    
+    const start = new Date(now.getTime() - (hours * 60 * 60 * 1000));
+    return {
+      date_from: start.toISOString(),
+      date_to: end
+    };
+  };
+
+  // Handle time-based export
+  const handleTimeExport = async (option, format = 'csv') => {
+    setShowTimeExportDropdown(false);
+    setLoading(true);
+    
+    try {
+      const { date_from, date_to } = calculateTimeRange(option.hours);
+      
+      // Build export filters
+      const exportFilters = {
+        ...filters,
+        date_from,
+        date_to,
+        per_page: 10000,
+        page: 1
+      };
+      
+      const response = await auditService.getAuditLogs(exportFilters);
+      
+      if (!response.success || !response.data?.data?.length) {
+        alert(`No logs found for "${option.label}"`);
+        setLoading(false);
+        return;
+      }
+
+      const dataToExport = response.data.data;
+      
+      // Export based on format
+      let blob;
+      let filename;
+      
+      if (format === 'csv') {
+        const headers = [
+          'ID', 'Event Type', 'Category', 'Severity', 'Action', 
+          'Description', 'User', 'Email', 'Role', 'IP Address',
+          'Location', 'User Agent', 'Request Method', 'Request URL',
+          'Timestamp', 'Response Time (ms)', 'Is Suspicious'
+        ];
+        
+        const csvRows = dataToExport.map(log => {
+          const location = log.metadata?.geolocation || log.geolocation;
+          const locationStr = location 
+            ? `${location.city || ''}, ${location.country || ''}`.replace(/^, /, '').replace(/, $/, '')
+            : '';
+          
+          return [
+            log.id,
+            log.event_type,
+            log.event_category,
+            log.severity,
+            log.action,
+            `"${(log.description || '').replace(/"/g, '""')}"`,
+            log.user?.name || 'System',
+            log.user?.email || '',
+            log.user_role,
+            log.ip_address,
+            locationStr,
+            `"${(log.user_agent || '').replace(/"/g, '""')}"`,
+            log.request_method,
+            `"${(log.request_url || '').replace(/"/g, '""')}"`,
+            new Date(log.occurred_at).toISOString(),
+            log.metadata?.request_duration_ms || '',
+            log.is_suspicious ? 'Yes' : 'No'
+          ].join(',');
+        });
+
+        const csvContent = [headers.join(','), ...csvRows].join('\n');
+        blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        filename = `audit-logs-${option.value}-${new Date().toISOString().split('T')[0]}.csv`;
+      } else {
+        const exportData = {
+          exported_at: new Date().toISOString(),
+          time_range: option.label,
+          total_records: dataToExport.length,
+          filters_applied: exportFilters,
+          logs: dataToExport
+        };
+        const dataStr = JSON.stringify(exportData, null, 2);
+        blob = new Blob([dataStr], { type: 'application/json' });
+        filename = `audit-logs-${option.value}-${new Date().toISOString().split('T')[0]}.json`;
+      }
+
+      // Download
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      alert(`✅ Exported ${dataToExport.length.toLocaleString()} logs for "${option.label}" as ${format.toUpperCase()}`);
+      
+    } catch (error) {
+      console.error('Failed to export logs:', error);
+      alert('❌ Failed to export logs: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Load on initial mount and when filters change
   useEffect(() => {
-    loadAuditLogs();
+    // Reset to page 1 when filters change
+    setPagination(prev => ({ ...prev, current_page: 1 }));
+    setAllLogs([]); // Clear all logs
+    loadAuditLogs(1);
     loadStats();
   }, [filters.event_category, filters.severity, filters.is_suspicious]);
 
-  // Handle pagination changes without scroll jump
-  useEffect(() => {
-    const scrollPosition = window.scrollY;
-    loadAuditLogs().then(() => {
-      // Restore scroll position after data loads
-      window.scrollTo(0, scrollPosition);
-    });
-  }, [pagination.current_page]);
-
   const loadAuditLogs = async (page = null) => {
+    if (loadAllMode) return; // Skip when in Load All mode
     try {
       setLoading(true);
+      const targetPage = page || pagination.current_page;
       const response = await auditService.getAuditLogs({
         ...filters,
-        page: page || pagination.current_page
+        page: targetPage
       });
 
       if (response.success) {
         setAuditLogs(response.data.data || []);
+        // Update pagination state from API response
+        // This ensures current_page matches what the API actually returned
         setPagination({
           current_page: response.data.current_page,
           last_page: response.data.last_page,
@@ -155,6 +605,8 @@ const AuditLogsPage = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
+    // Set loading to true to show skeleton
+    setLoading(true);
     await loadAuditLogs();
     await loadStats();
     setRefreshing(false);
@@ -162,7 +614,7 @@ const AuditLogsPage = () => {
 
   const handleSearch = async () => {
     setPagination(prev => ({ ...prev, current_page: 1 }));
-    await loadAuditLogs();
+    await loadAuditLogs(1);
   };
 
   const handleStatCardClick = (filterKey, filterValue) => {
@@ -203,28 +655,112 @@ const AuditLogsPage = () => {
 
     // Reset to first page
     setPagination(prev => ({ ...prev, current_page: 1 }));
+    loadAuditLogs(1);
   };
 
-  const handleExport = async () => {
+  const handleExport = async (format = 'json') => {
     try {
-      const response = await auditService.exportAuditLogs({
-        date_from: filters.date_from,
-        date_to: filters.date_to,
-        event_category: filters.event_category
-      });
-
-      if (response.success) {
-        // Create downloadable file
-        const dataStr = JSON.stringify(response.data, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `audit-logs-${new Date().toISOString().split('T')[0]}.json`;
-        link.click();
+      // Show loading state
+      setLoading(true);
+      
+      let dataToExport;
+      
+      // If in Load All mode, export current allLogs
+      // Otherwise fetch all logs matching current filters
+      if (loadAllMode && allLogs.length > 0) {
+        dataToExport = allLogs;
+      } else {
+        // Fetch all logs matching filters (up to a reasonable limit)
+        const response = await auditService.getAuditLogs({
+          ...filters,
+          per_page: 10000, // Max for export
+          page: 1
+        });
+        dataToExport = response.data?.data || [];
       }
+
+      if (dataToExport.length === 0) {
+        alert('No logs to export');
+        setLoading(false);
+        return;
+      }
+
+      let blob;
+      let filename;
+      let mimeType;
+
+      if (format === 'csv') {
+        // Convert to CSV
+        const headers = [
+          'ID', 'Event Type', 'Category', 'Severity', 'Action', 
+          'Description', 'User', 'Email', 'Role', 'IP Address',
+          'Location', 'User Agent', 'Request Method', 'Request URL',
+          'Timestamp', 'Response Time (ms)', 'Is Suspicious'
+        ];
+        
+        const csvRows = dataToExport.map(log => {
+          const location = log.metadata?.geolocation || log.geolocation;
+          const locationStr = location 
+            ? `${location.city || ''}, ${location.country || ''}`.replace(/^, /, '').replace(/, $/, '')
+            : '';
+          
+          return [
+            log.id,
+            log.event_type,
+            log.event_category,
+            log.severity,
+            log.action,
+            `"${(log.description || '').replace(/"/g, '""')}"`, // Escape quotes
+            log.user?.name || 'System',
+            log.user?.email || '',
+            log.user_role,
+            log.ip_address,
+            locationStr,
+            `"${(log.user_agent || '').replace(/"/g, '""')}"`,
+            log.request_method,
+            `"${(log.request_url || '').replace(/"/g, '""')}"`,
+            new Date(log.occurred_at).toISOString(),
+            log.metadata?.request_duration_ms || '',
+            log.is_suspicious ? 'Yes' : 'No'
+          ].join(',');
+        });
+
+        const csvContent = [headers.join(','), ...csvRows].join('\n');
+        blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        filename = `audit-logs-${new Date().toISOString().split('T')[0]}.csv`;
+        mimeType = 'text/csv';
+      } else {
+        // JSON format (original)
+        const exportData = {
+          exported_at: new Date().toISOString(),
+          total_records: dataToExport.length,
+          filters_applied: filters,
+          logs: dataToExport
+        };
+        const dataStr = JSON.stringify(exportData, null, 2);
+        blob = new Blob([dataStr], { type: 'application/json' });
+        filename = `audit-logs-${new Date().toISOString().split('T')[0]}.json`;
+        mimeType = 'application/json';
+      }
+
+      // Create download
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      // Success message
+      alert(`✅ Successfully exported ${dataToExport.length.toLocaleString()} logs as ${format.toUpperCase()}`);
+      
     } catch (error) {
       console.error('Failed to export logs:', error);
+      alert('❌ Failed to export logs: ' + error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -472,7 +1008,8 @@ const previewDateRangeDeletion = async () => {
     </div>
   );
 
-  if (loading && !auditLogs.length) {
+  // Initial page load - show full page spinner only on first mount with no data (not in Load All mode)
+  if (loading && !auditLogs.length && !loadingAll && !loadAllMode) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
@@ -507,13 +1044,58 @@ const previewDateRangeDeletion = async () => {
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
-              <button
-                onClick={handleExport}
-                className="flex items-center gap-2 px-3 md:px-4 py-2 text-sm md:text-base bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                Export
-              </button>
+              {/* Time-Based Export Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowTimeExportDropdown(!showTimeExportDropdown)}
+                  onBlur={() => setTimeout(() => setShowTimeExportDropdown(false), 200)}
+                  className="flex items-center gap-2 px-3 md:px-4 py-2 text-sm md:text-base bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  Export by Time
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showTimeExportDropdown ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {showTimeExportDropdown && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                    <div className="p-2 max-h-[400px] overflow-y-auto">
+                      <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Select Time Range
+                      </div>
+                      
+                      {timeExportOptions.map((option) => (
+                        <div key={option.value} className="group">
+                          <div className="px-3 py-2 text-sm font-medium text-gray-700 flex items-center justify-between">
+                            <span>{option.label}</span>
+                          </div>
+                          <div className="pl-4 pr-2 pb-2 flex gap-2">
+                            <button
+                              onClick={() => handleTimeExport(option, 'csv')}
+                              className="flex-1 px-2 py-1.5 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100 transition-colors flex items-center justify-center gap-1"
+                            >
+                              <BarChart3 className="w-3 h-3" />
+                              CSV
+                            </button>
+                            <button
+                              onClick={() => handleTimeExport(option, 'json')}
+                              className="flex-1 px-2 py-1.5 text-xs bg-orange-50 text-orange-700 rounded hover:bg-orange-100 transition-colors flex items-center justify-center gap-1"
+                            >
+                              <FileText className="w-3 h-3" />
+                              JSON
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <div className="border-t border-gray-200 my-2"></div>
+                      
+                      <div className="px-3 py-2 text-xs text-gray-500">
+                        Exports include current filters
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <button
                 onClick={() => navigate('/archives/archives')}
@@ -521,6 +1103,36 @@ const previewDateRangeDeletion = async () => {
               >
                 <Archive className="w-4 h-4" />
                 View Archives
+              </button>
+
+              <button
+                onClick={toggleLoadAllMode}
+                disabled={loadingAll}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  loadAllMode 
+                    ? 'bg-orange-100 text-orange-700 border border-orange-300 hover:bg-orange-200' 
+                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                } disabled:opacity-50`}
+                title={loadAllMode ? "Switch back to paginated view" : "Load all logs at once with chunked loading for large datasets"}
+              >
+                {loadingAll ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {loadProgress.total > 0 
+                      ? `${Math.round((loadProgress.loaded / loadProgress.total) * 100)}%` 
+                      : 'Loading...'}
+                  </>
+                ) : loadAllMode ? (
+                  <>
+                    <ChevronLeft className="w-4 h-4" />
+                    Paginated View
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-4 h-4" />
+                    Load All
+                  </>
+                )}
               </button>
               
               {/* Cleanup Dropdown */}
@@ -791,9 +1403,237 @@ const previewDateRangeDeletion = async () => {
 
         {/* Audit Logs Table - Minute-Based Collapsible Groups */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+          {/* Load All Mode Header */}
+          {loadAllMode && (
+            <div className="bg-orange-50 border-b border-orange-200 px-4 py-2 flex items-center justify-between sticky top-0 z-10">
+              <div className="flex items-center gap-2 text-orange-800">
+                <Eye className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {allLogs.length === 0 && loadProgress.total > 0 ? (
+                    <>Loading {loadProgress.total.toLocaleString()} logs...</>
+                  ) : (
+                    <>{allLogs.length.toLocaleString()} logs loaded</>
+                  )}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleExport('csv')}
+                  disabled={allLogs.length === 0}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-orange-300 rounded-md text-xs font-medium text-orange-700 hover:bg-orange-100 transition-colors disabled:opacity-50"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download CSV
+                </button>
+                <button
+                  onClick={toggleLoadAllMode}
+                  className="text-xs text-orange-600 hover:text-orange-800 font-medium px-2 py-1"
+                >
+                  Back to Paginated View
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {/* Loading State - Skeleton */}
+          {(loading || loadingAll) && (
+            <div className="divide-y divide-gray-200">
+              {[1, 2, 3].map((i) => (
+                <div key={`skeleton-group-${i}`}>
+                  <SkeletonGroupHeader />
+                  <div className="bg-gray-50/50">
+                    {[1, 2, 3, 4].map((j) => (
+                      <SkeletonRow key={`skeleton-row-${i}-${j}`} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Load All Mode - Progressive Scroll Loading */}
+          {loadAllMode && (
+            <div 
+              ref={loadAllContainerRef}
+              className="overflow-y-auto max-h-[70vh] w-full"
+            >
+              <div className="divide-y divide-gray-200">
+                {groupLogsByMinute(allLogs).map((group) => {
+                  const isExpanded = expandedMinutes[group.minute] !== false;
+                  const hasSuspicious = group.logs.some(l => l.is_suspicious);
+                  
+                  return (
+                    <div key={group.minute} className="bg-white">
+                      {/* Minute Group Header */}
+                      <button
+                        onClick={() => toggleMinuteGroup(group.minute)}
+                        className={`w-full px-4 md:px-6 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors ${
+                          hasSuspicious ? 'bg-red-50/50' : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          {isExpanded ? (
+                            <ChevronDown className="w-5 h-5 text-gray-400" />
+                          ) : (
+                            <ChevronRight className="w-5 h-5 text-gray-400" />
+                          )}
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-gray-500" />
+                            <span className="font-semibold text-gray-900">
+                              {group.displayTime}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              ({group.logs.length} events)
+                            </span>
+                          </div>
+                          {hasSuspicious && (
+                            <AlertTriangle className="w-4 h-4 text-red-500" title="Contains suspicious events" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {group.logs.some(l => l.severity === 'high') && (
+                            <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">High</span>
+                          )}
+                          {group.logs.some(l => l.severity === 'medium') && (
+                            <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Med</span>
+                          )}
+                        </div>
+                      </button>
+
+                      {/* Expandable Log Rows */}
+                      {isExpanded && (
+                        <div className="bg-gray-50/50">
+                          {group.logs.map((log) => {
+                            const categoryInfo = getCategoryIcon(log.event_category);
+                            const CategoryIcon = categoryInfo.icon;
+                            
+                            return (
+                              <div 
+                                key={log.id} 
+                                onClick={() => {
+                                  setSelectedLog(log);
+                                  setShowModal(true);
+                                }}
+                                className={`px-4 md:px-6 py-3 border-l-4 hover:bg-white transition-colors cursor-pointer ${
+                                  log.is_suspicious ? 'border-red-400 bg-red-50/30' : 'border-transparent'
+                                }`}
+                              >
+                                <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+                                  {/* Event Type */}
+                                  <div className="flex items-center gap-2 md:w-48">
+                                    <div className={`p-1.5 rounded ${categoryInfo.bg}`}>
+                                      <CategoryIcon className={`w-4 h-4 ${categoryInfo.color}`} />
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-900">
+                                        {log.event_type?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                      </p>
+                                      <p className="text-xs text-gray-500">{log.event_category}</p>
+                                    </div>
+                                  </div>
+
+                                  {/* Description */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start gap-2">
+                                      {log.is_suspicious && (
+                                        <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                                      )}
+                                      <p className="text-sm text-gray-700 truncate">{log.description}</p>
+                                    </div>
+                                  </div>
+
+                                  {/* User */}
+                                  <div className="flex items-center gap-2 md:w-40">
+                                    <User className="w-4 h-4 text-gray-400" />
+                                    <div className="min-w-0">
+                                      <p className="text-sm font-medium text-gray-900 truncate">{log.user?.name || 'System'}</p>
+                                      <p className="text-xs text-gray-500">{log.user_role}</p>
+                                    </div>
+                                  </div>
+
+                                  {/* Location */}
+                                  <div className="hidden lg:flex items-center gap-2 md:w-32">
+                                    <div className="text-xs text-gray-600">
+                                      {(log.metadata?.geolocation?.city || log.geolocation?.city) && 
+                                       (log.metadata?.geolocation?.country || log.geolocation?.country) ? (
+                                        <span className="flex items-center gap-1">
+                                          <span className="font-medium">{log.metadata?.geolocation?.city || log.geolocation?.city}</span>
+                                          <span className="text-gray-400">,</span>
+                                          <span>{log.metadata?.geolocation?.country || log.geolocation?.country}</span>
+                                        </span>
+                                      ) : (log.metadata?.geolocation?.country || log.geolocation?.country) ? (
+                                        <span>{log.metadata?.geolocation?.country || log.geolocation?.country}</span>
+                                      ) : (
+                                        <span className="text-gray-400">-</span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Severity */}
+                                  <div className="md:w-24">{getSeverityBadge(log.severity)}</div>
+
+                                  {/* Time */}
+                                  <div className="text-xs text-gray-500 md:w-20">
+                                    {new Date(log.occurred_at).toLocaleTimeString('en-GB', {
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                      second: '2-digit'
+                                    })}
+                                  </div>
+
+                                  {/* Actions */}
+                                  <div className="md:w-20 text-right" onClick={(e) => e.stopPropagation()}>
+                                    <button
+                                      onClick={() => {
+                                        setSelectedLog(log);
+                                        setShowModal(true);
+                                      }}
+                                      className="text-orange-600 hover:text-orange-700 text-sm font-medium"
+                                    >
+                                      View
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Loading State */}
+              {allLogs.length === 0 && loadProgress.total > 0 && (
+                <div className="py-8 flex items-center justify-center bg-gray-50 border-t border-gray-200">
+                  <div className="flex items-center gap-3 text-gray-600">
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                    <div className="text-sm">
+                      <p className="font-medium">Loading all logs...</p>
+                      <p className="text-xs text-gray-500">
+                        Fetching {loadProgress.total.toLocaleString()} logs
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* All Loaded Message */}
+              {allLogs.length > 0 && (
+                <div className="py-6 text-center bg-gray-50 border-t border-gray-200">
+                  <CheckCircle className="w-6 h-6 text-green-500 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-700">All {allLogs.length.toLocaleString()} logs loaded</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Regular Paginated View - Only when NOT in Load All mode */}
+          {!loadAllMode && !loading && (
           <div className="overflow-x-auto -mx-4 sm:mx-0">
             <div className="divide-y divide-gray-200">
-              {groupLogsByMinute(auditLogs).map((group) => {
+              {groupLogsByMinute(loadAllMode ? allLogs : auditLogs).map((group) => {
                 const isExpanded = expandedMinutes[group.minute] !== false; // Default expanded
                 const hasSuspicious = group.logs.some(l => l.is_suspicious);
                 
@@ -955,8 +1795,13 @@ const previewDateRangeDeletion = async () => {
               })}
             </div>
           </div>
+          )}
 
-          {/* Enhanced Pagination */}
+          {/* Skeleton Pagination for regular loading */}
+          {loading && !loadAllMode && <SkeletonPagination />}
+
+          {/* Enhanced Pagination - Hidden in Load All mode */}
+          {!loadAllMode && !loading && (
           <div className="bg-gray-50 px-4 md:px-6 py-4 border-t border-gray-200">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
               {/* Results info */}
@@ -971,7 +1816,12 @@ const previewDateRangeDeletion = async () => {
                 {/* Page navigation */}
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setPagination(prev => ({ ...prev, current_page: 1 }))}
+                    onClick={async () => {
+                      const scrollPosition = window.scrollY;
+                      setPagination(prev => ({ ...prev, current_page: 1 }));
+                      await loadAuditLogs(1);
+                      window.scrollTo({ top: scrollPosition, behavior: 'smooth' });
+                    }}
                     disabled={pagination.current_page === 1}
                     className="p-2 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
                     title="First page"
@@ -981,11 +1831,13 @@ const previewDateRangeDeletion = async () => {
                   </button>
                   
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       const scrollPosition = window.scrollY;
-                      setPagination(prev => ({ ...prev, current_page: prev.current_page - 1 }));
+                      const newPage = pagination.current_page - 1;
+                      setPagination(prev => ({ ...prev, current_page: newPage }));
+                      await loadAuditLogs(newPage);
                       // Keep scroll position in table area
-                      setTimeout(() => window.scrollTo({ top: scrollPosition, behavior: 'smooth' }), 50);
+                      window.scrollTo({ top: scrollPosition, behavior: 'smooth' });
                     }}
                     disabled={pagination.current_page === 1}
                     className="p-2 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1003,10 +1855,12 @@ const previewDateRangeDeletion = async () => {
                   </div>
 
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       const scrollPosition = window.scrollY;
-                      setPagination(prev => ({ ...prev, current_page: prev.current_page + 1 }));
-                      setTimeout(() => window.scrollTo({ top: scrollPosition, behavior: 'smooth' }), 50);
+                      const newPage = pagination.current_page + 1;
+                      setPagination(prev => ({ ...prev, current_page: newPage }));
+                      await loadAuditLogs(newPage);
+                      window.scrollTo({ top: scrollPosition, behavior: 'smooth' });
                     }}
                     disabled={pagination.current_page === pagination.last_page}
                     className="p-2 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1015,7 +1869,13 @@ const previewDateRangeDeletion = async () => {
                   </button>
 
                   <button
-                    onClick={() => setPagination(prev => ({ ...prev, current_page: prev.last_page }))}
+                    onClick={async () => {
+                      const scrollPosition = window.scrollY;
+                      const lastPage = pagination.last_page;
+                      setPagination(prev => ({ ...prev, current_page: lastPage }));
+                      await loadAuditLogs(lastPage);
+                      window.scrollTo({ top: scrollPosition, behavior: 'smooth' });
+                    }}
                     disabled={pagination.current_page === pagination.last_page}
                     className="p-2 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Last page"
@@ -1049,11 +1909,15 @@ const previewDateRangeDeletion = async () => {
               </div>
             </div>
           </div>
+          )}
         </div>
 
         {/* Detail Modal */}
         {showModal && selectedLog && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={(e) => handleModalBackdropClick(e, () => setShowModal(false))}
+          >
             <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto mx-4">
               <div className="p-6 border-b border-gray-200">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
@@ -1080,7 +1944,7 @@ const previewDateRangeDeletion = async () => {
                       <span className="text-sm text-gray-600">Category:</span>
                       <span className="text-sm font-medium text-gray-900">{selectedLog.event_category}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Severity:</span>
                       {getSeverityBadge(selectedLog.severity)}
                     </div>
@@ -1122,9 +1986,23 @@ const previewDateRangeDeletion = async () => {
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Technical Details</h3>
                   <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                    <div className="flex justify-between">
+                    {/* IP Address with Copy Button */}
+                    <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">IP Address:</span>
-                      <span className="text-sm font-mono text-gray-900">{selectedLog.ip_address}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-mono text-gray-900">{selectedLog.ip_address}</span>
+                        <button
+                          onClick={() => handleCopyToClipboard(selectedLog.ip_address, 'ip')}
+                          className="p-1.5 hover:bg-gray-200 rounded-md transition-colors"
+                          title="Copy IP address"
+                        >
+                          {copiedField === 'ip' ? (
+                            <Check className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <Copy className="w-4 h-4 text-gray-500" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                     
                     {/* Location - Directly below IP Address */}
@@ -1223,10 +2101,28 @@ const previewDateRangeDeletion = async () => {
                   </div>
                 )}
 
-                {/* Metadata (if any) */}
+                {/* Metadata (if any) with Copy Button */}
                 {selectedLog.metadata && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 mb-2">Additional Metadata</h3>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-medium text-gray-500">Additional Metadata</h3>
+                      <button
+                        onClick={() => handleCopyToClipboard(JSON.stringify(selectedLog.metadata, null, 2), 'metadata')}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                      >
+                        {copiedField === 'metadata' ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-green-600" />
+                            <span className="text-green-600">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Copy JSON</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                     <pre className="text-xs text-gray-900 bg-gray-50 rounded-lg p-4 overflow-x-auto">
                       {JSON.stringify(selectedLog.metadata, null, 2)}
                     </pre>
@@ -1248,7 +2144,14 @@ const previewDateRangeDeletion = async () => {
 
         {/* Delete Confirmation Modal */}
         {showDeleteModal && deletePreview && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={(e) => handleModalBackdropClick(e, () => {
+              setShowDeleteModal(false);
+              setDeleteParams(null);
+              setDeletePreview(null);
+            })}
+          >
             <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center gap-3 mb-4">
@@ -1339,7 +2242,13 @@ const previewDateRangeDeletion = async () => {
 
         {/* Date Range Selection Modal */}
         {showDateRangeModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={(e) => handleModalBackdropClick(e, () => {
+              setShowDateRangeModal(false);
+              setDateRangeSelection({ mode: '', quickOption: '', customStart: '', customEnd: '' });
+            })}
+          >
             <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col">
               <div className="p-4 md:p-6 border-b border-gray-200 flex-shrink-0">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

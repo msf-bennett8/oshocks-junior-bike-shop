@@ -73,6 +73,7 @@ class ErrorBoundary extends React.Component {
   }
 
   getShortErrorMessage = (error) => {
+    if (!error) return 'Unknown error occurred';
     const message = error.message || error.toString();
     // Extract meaningful error type
     if (message.includes('ChunkLoadError')) return 'Failed to load application chunk';
@@ -84,7 +85,8 @@ class ErrorBoundary extends React.Component {
   };
 
   getErrorCategory = (error) => {
-    const message = error?.message || '';
+    if (!error) return 'general';
+    const message = error.message || '';
     if (message.includes('ChunkLoadError') || message.includes('Loading chunk')) {
       return 'chunk';
     }
@@ -287,7 +289,7 @@ ${this.state.errorInfo?.componentStack || 'No component stack available'}
     if (this.state.hasError) {
       const errorCategory = this.getErrorCategory(this.state.error);
       const canRecover = errorCategory === 'resize-observer' || this.state.errorCount <= 2;
-      const suggestion = this.getErrorSuggestion(this.state.error);
+      const suggestion = this.getErrorSuggestion(this.state.error || {});
 
       return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
@@ -301,7 +303,7 @@ ${this.state.errorInfo?.componentStack || 'No component stack available'}
             </h1>
             
             <p className="text-lg text-gray-600 mb-2">
-              {this.getShortErrorMessage(this.state.error)}
+              {this.getShortErrorMessage(this.state.error || {})}
             </p>
             
             <p className="text-base text-gray-500 mb-8">
