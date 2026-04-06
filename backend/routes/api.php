@@ -487,7 +487,7 @@ Route::post('/v1/payments/card/webhook', [CardPaymentController::class, 'webhook
 Route::post('/v1/webhooks/incoming/{provider}', [\App\Http\Controllers\Api\WebhookController::class, 'handleIncoming']);
 
 // System health endpoints (Phase 6)
-Route::get('/health', [\App\Http\Controllers\Api\SystemHealthController::class, 'health']);
+Route::get('/api/health', fn() => response()->json(['status' => 'ok']));
 Route::get('/system/metrics', [\App\Http\Controllers\Api\SystemHealthController::class, 'metrics']);
 
 // Phase 8: Notification tracking (public but signed URLs)

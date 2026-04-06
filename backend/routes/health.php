@@ -9,3 +9,8 @@ Route::get('/health', function () {
         'service' => 'oshocks-api'
     ]);
 });
+
+// Railway health check endpoint
+Route::get('/api/health', function () {
+    return response()->json(['status' => 'ok']);
+});
