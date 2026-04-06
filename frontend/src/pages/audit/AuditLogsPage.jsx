@@ -560,15 +560,21 @@ const AuditLogsPage = () => {
     // Reset to page 1 when filters change
     setPagination(prev => ({ ...prev, current_page: 1 }));
     setAllLogs([]); // Clear all logs
-    loadAuditLogs(1);
-    loadStats();
+    // Use setTimeout to ensure state update completes before loading
+    const timer = setTimeout(() => {
+      loadAuditLogs(1);
+      loadStats();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [filters.event_category, filters.severity, filters.is_suspicious]);
 
   const loadAuditLogs = async (page = null) => {
     if (loadAllMode) return; // Skip when in Load All mode
     try {
       setLoading(true);
-      const targetPage = page || pagination.current_page;
+      // Use the passed page parameter, or default to 1 if somehow called without one
+      const targetPage = page !== null ? page : 1;
+      
       const response = await auditService.getAuditLogs({
         ...filters,
         page: targetPage
@@ -577,7 +583,6 @@ const AuditLogsPage = () => {
       if (response.success) {
         setAuditLogs(response.data.data || []);
         // Update pagination state from API response
-        // This ensures current_page matches what the API actually returned
         setPagination({
           current_page: response.data.current_page,
           last_page: response.data.last_page,
@@ -605,9 +610,9 @@ const AuditLogsPage = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    // Set loading to true to show skeleton
     setLoading(true);
-    await loadAuditLogs();
+    // Use current page when refreshing
+    await loadAuditLogs(pagination.current_page);
     await loadStats();
     setRefreshing(false);
   };
