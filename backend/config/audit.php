@@ -66,7 +66,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'pii' => [
-        'hash_ips' => true,
+        'hash_ips' => env('AUDIT_PII_HASH_IPS', false),
         'hash_emails' => true,
         'hash_phones' => true,
         'truncate_user_agent' => 500,
@@ -84,13 +84,13 @@ return [
         'batch_size' => 1000,
     ],
 
-    /*
+     /*
     |--------------------------------------------------------------------------
     | Async Publishing
     |--------------------------------------------------------------------------
     */
     'queue' => [
-        'enabled' => env('AUDIT_QUEUE_ENABLED', true),
+        'enabled' => env('AUDIT_QUEUE_ENABLED', false),
         'connection' => env('AUDIT_QUEUE_CONNECTION', 'redis'),
         'queue' => env('AUDIT_QUEUE_NAME', 'audit-logs'),
         'retry_after' => 3600, // 1 hour for audit jobs
