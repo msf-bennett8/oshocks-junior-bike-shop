@@ -40,11 +40,6 @@ const SuperAdminNotificationCenter = () => {
   const [filter, setFilter] = useState('all'); // all, unread, urgent, security, system
   const [acknowledging, setAcknowledging] = useState(new Set());
 
-  // Only render for SuperAdmins
-  if (!user || !['super_admin', 'owner', 'admin'].includes(user.role)) {
-    return null;
-  }
-
   const fetchAuditNotifications = useCallback(async () => {
     setLoading(true);
     try {
@@ -181,6 +176,11 @@ const SuperAdminNotificationCenter = () => {
     if (filter === 'urgent') return n.priority === 'urgent' || n.metadata?.priority === 'urgent';
     return n.type === filter;
   });
+
+  // Only render for SuperAdmins
+  if (!user || !['super_admin', 'owner', 'admin'].includes(user.role)) {
+    return null;
+  }
 
   return (
     <div className="relative">

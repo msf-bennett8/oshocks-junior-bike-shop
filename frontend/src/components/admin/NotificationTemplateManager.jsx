@@ -394,7 +394,7 @@ const NotificationTemplateManager = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Title * (use {{variables}})
+                  {`Title * (use {{variables}})`}
                 </label>
                 <input
                   type="text"
@@ -408,7 +408,7 @@ const NotificationTemplateManager = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Message * (use {{variables}})
+                  {`Message * (use {{variables}})`}
                 </label>
                 <textarea
                   value={formData.message}
