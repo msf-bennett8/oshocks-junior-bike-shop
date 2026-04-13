@@ -143,6 +143,9 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
 
     // General list route comes last
     Route::get('/audit-logs/archives', [App\Http\Controllers\Api\AuditLogController::class, 'archives']);
+    
+    // Batch audit logging for frontend
+    Route::post('/audit-logs/batch', [App\Http\Controllers\Api\AuditLogController::class, 'batchStore']);
 
         // General audit logs routes
     Route::get('/audit-logs', [\App\Http\Controllers\Api\AuditLogController::class, 'index']);

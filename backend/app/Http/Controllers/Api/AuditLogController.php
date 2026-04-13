@@ -853,4 +853,68 @@ class AuditLogController extends Controller
             'message' => 'Notification acknowledged'
         ]);
     }
+
+    /**
+     * Store batch audit logs from frontend
+     * POST /api/v1/audit-logs/batch
+     */
+    public function batchStore(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'logs' => 'required|array',
+            'logs.*.event_type' => 'required|string',
+            'logs.*.event_category' => 'required|string',
+            'logs.*.action' => 'required|string',
+            'logs.*.description' => 'required|string',
+            'logs.*.severity' => 'nullable|in:low,medium,high',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = $request->user();
+        $stored = 0;
+
+        foreach ($request->logs as $logData) {
+            try {
+                AuditLog::create([
+                    'event_type' => $logData['event_type'],
+                    'event_category' => $logData['event_category'],
+                    'user_id' => $user?->id,
+                    'user_role' => $user?->role ?? 'guest',
+                    'action' => $logData['action'],
+                    'model_type' => $logData['model_type'] ?? null,
+                    'model_id' => $logData['model_id'] ?? null,
+                    'description' => $logData['description'],
+                    'old_values' => $logData['old_values'] ?? null,
+                    'new_values' => $logData['new_values'] ?? null,
+                    'metadata' => array_merge($logData['metadata'] ?? [], [
+                        'source' => 'frontend_batch',
+                        'batch_id' => uniqid(),
+                    ]),
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'request_method' => $request->method(),
+                    'request_url' => $request->url(),
+                    'severity' => $logData['severity'] ?? 'low',
+                    'is_suspicious' => $logData['is_suspicious'] ?? false,
+                    'occurred_at' => $logData['timestamp'] ?? now(),
+                ]);
+                $stored++;
+            } catch (\Exception $e) {
+                \Log::error('Failed to store audit log', ['error' => $e->getMessage()]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Stored {$stored} audit logs",
+            'stored_count' => $stored
+        ]);
+    }
 }

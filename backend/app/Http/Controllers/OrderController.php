@@ -45,11 +45,11 @@ class OrderController extends Controller
 
         if ($validator->fails()) {
             \Log::error('❌ Order validation failed', [
-            'errors' => $validator->errors()->toArray(),
-            'input' => $request->except(['payment_proof']),
-            'items_received' => $request->items,
-            'first_item_id' => $request->items[0]['id'] ?? 'none'
-        ]);
+                'errors' => $validator->errors()->toArray(),
+                'input' => $request->except(['payment_proof']),
+                'items_received' => $request->items,
+                'first_item_id' => $request->items[0]['id'] ?? 'none'
+            ]);
             
             return response()->json([
                 'success' => false,
