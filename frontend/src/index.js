@@ -403,17 +403,22 @@ function sendMetricToAnalytics(metric) {
 }
 
 function registerServiceWorker() {
-  if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+  if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker
         .register('/service-worker.js')
         .then((registration) => {
           console.log('✅ Service Worker registered:', registration.scope);
           
+          // Set up push notification handling
+          setupPushNotifications(registration);
+          
+          // Check for updates every 5 minutes
           setInterval(() => {
             registration.update();
           }, 5 * 60 * 1000);
           
+          // Handle updates
           registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing;
             
@@ -429,6 +434,58 @@ function registerServiceWorker() {
         });
     });
   }
+}
+
+function setupPushNotifications(registration) {
+  // Request permission on first user interaction
+  const requestPermission = async () => {
+    if (!('Notification' in window)) {
+      console.log('Notifications not supported');
+      return;
+    }
+    
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      console.log('🔔 Notification permission granted');
+      
+      // Subscribe to push
+      try {
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(
+            process.env.REACT_APP_VAPID_PUBLIC_KEY || 
+            'BLZWRkpWcYxFT4mCZKXuio9h8kdTasrmT7Bp12NlbKPPRhz-HGYktiX15JCG8qODNdsxtt8fT8GirYUMvOU3VZ0'
+          ),
+        });
+        
+        // Send subscription to backend
+        const { subscribeToPush } = require('./services/notificationService').default;
+        await subscribeToPush(subscription);
+        
+        console.log('✅ Push subscription created');
+      } catch (err) {
+        console.error('Push subscription failed:', err);
+      }
+    }
+  };
+  
+  // Request on first click
+  document.addEventListener('click', requestPermission, { once: true });
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
 }
 
 function showUpdateNotification() {
@@ -769,9 +826,7 @@ detectBrowserFeatures();
 initializeSecurity();
 initializeMonitoring();
 initializeNetworkMonitoring();
-if (process.env.NODE_ENV === 'production') {
-  registerServiceWorker();
-}
+registerServiceWorker();
 monitorLongTasks();
 monitorLayoutShifts();
 

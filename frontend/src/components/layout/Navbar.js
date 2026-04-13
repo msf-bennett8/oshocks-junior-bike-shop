@@ -5,6 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import authService from '../../services/authService';
+import NotificationCenter from '../notifications/NotificationCenter';
+import SuperAdminNotificationCenter from '../notifications/SuperAdminNotificationCenter';
 import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowRight, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, Users, Package2, BarChart3, FolderTree, Heart, Bell } from 'lucide-react';
 import SearchBar from '../common/SearchBar';
 
@@ -21,42 +23,10 @@ const Navbar = () => {
   const [searchFocused, setSearchFocused] = useState(false);
   const profileMenuRef = useRef(null);
   
-  // Notification dropdown state
-  const [showNotificationMenu, setShowNotificationMenu] = useState(false);
-  const notificationMenuRef = useRef(null);
-  
   // Role switcher state
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
   
-  // Sample notifications data (in production, fetch from API)
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      title: 'Order Confirmed',
-      message: 'Your order #OJ2024-1234 has been confirmed',
-      timestamp: new Date(Date.now() - 1000 * 60 * 15),
-      isRead: false,
-      type: 'orders'
-    },
-    {
-      id: 2,
-      title: 'Flash Sale Alert!',
-      message: '40% OFF on all Mountain Bikes! Limited time offer',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
-      isRead: true,
-      type: 'promotions'
-    },
-    {
-      id: 3,
-      title: 'Price Drop Alert',
-      message: 'Giant Talon 2 in your wishlist is now KES 10,000 cheaper!',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8),
-      isRead: false,
-      type: 'wishlist'
-    }
-  ]);
-  
-  const [notificationFilter, setNotificationFilter] = useState('all'); // 'all' or 'unread'
+  // Notifications are now handled by NotificationCenter component
   const [elevationPassword, setElevationPassword] = useState('');
   const [isElevating, setIsElevating] = useState(false);
   const [elevationError, setElevationError] = useState('');
@@ -89,20 +59,6 @@ const Navbar = () => {
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showProfileMenu]);
-
-  // Close notification menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (notificationMenuRef.current && !notificationMenuRef.current.contains(event.target)) {
-        setShowNotificationMenu(false);
-      }
-    };
-
-    if (showNotificationMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showNotificationMenu]);
 
   // Handle scroll to show/hide navbar
   useEffect(() => {
@@ -167,26 +123,6 @@ const Navbar = () => {
     setShowRoleSwitcher(false);
     setShowProfileMenu(false);
     window.location.reload();
-  };
-
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-  
-  const filteredNotifications = notificationFilter === 'unread' 
-    ? notifications.filter(n => !n.isRead)
-    : notifications;
-
-  const formatTimestamp = (date) => {
-    const now = new Date();
-    const diff = now - new Date(date);
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days === 1) return 'Yesterday';
-    return new Date(date).toLocaleDateString();
   };
 
   const handleUserIconClick = (e) => {
@@ -356,6 +292,7 @@ const Navbar = () => {
           { name: 'Categories', link: '/super-admin/categories', icon: FolderTree },
           { name: 'Analytics', link: '/super-admin/analytics', icon: BarChart3 },
           { name: 'Reports', link: '/super-admin/reports', icon: BarChart3 },
+          { name: 'Notification Templates', link: '/super-admin/notification-templates', icon: Bell },
           { name: 'Settings', link: '/super-admin/settings', icon: Settings },
         ]
       });
@@ -387,11 +324,11 @@ const Navbar = () => {
         }
         .animate-fade-in { animation: fade-in 0.2s ease-out; }
         
-        @keyframes slide-in-right {
-          from { opacity: 0; transform: translateX(100%); }
+        @keyframes slide-in-left {
+          from { opacity: 0; transform: translateX(-100%); }
           to { opacity: 1; transform: translateX(0); }
         }
-        .animate-slide-in-right { animation: slide-in-right 0.3s ease-out; }
+        .animate-slide-in-left { animation: slide-in-left 0.3s ease-out; }
         
         @keyframes bounce-in {
           0% { transform: scale(0); }
@@ -487,108 +424,10 @@ const Navbar = () => {
                 )}
               </Link>
 
-              {/* Notification Icon - Mobile Only */}
+              {/* Notification Icon - Mobile Only - Using NotificationCenter */}
               {isAuthenticated && (
-                <div className="md:hidden relative">
-                  <button
-                    onClick={() => setShowNotificationMenu(!showNotificationMenu)}
-                    className="p-2 sm:p-2.5 rounded-full hover:bg-orange-50 transition-colors relative"
-                    aria-label="Notifications"
-                  >
-                    <Bell className="w-5 h-5 text-gray-700" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </span>
-                    )}
-                  </button>
-
-                  {/* Mobile Notification Dropdown */}
-                  {showNotificationMenu && (
-                    <div className="fixed right-4 top-16 w-80 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-[60] animate-fade-in">
-                      {/* Header */}
-                      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
-                        <h3 className="font-semibold text-gray-900">Notifications</h3>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setNotificationFilter('all')}
-                            className={`text-xs px-2 py-1 rounded-full transition-colors ${
-                              notificationFilter === 'all' 
-                                ? 'bg-orange-500 text-white' 
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                          >
-                            All
-                          </button>
-                          <button
-                            onClick={() => setNotificationFilter('unread')}
-                            className={`text-xs px-2 py-1 rounded-full transition-colors ${
-                              notificationFilter === 'unread' 
-                                ? 'bg-orange-500 text-white' 
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                          >
-                            Unread {unreadCount > 0 && `(${unreadCount})`}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Notification List */}
-                      <div className="max-h-64 overflow-y-auto">
-                        {filteredNotifications.length === 0 ? (
-                          <div className="px-4 py-8 text-center text-gray-500">
-                            <Bell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                            <p className="text-sm">No notifications</p>
-                          </div>
-                        ) : (
-                          filteredNotifications.slice(0, 5).map((notification) => (
-                            <div
-                              key={notification.id}
-                              onClick={() => {
-                                setShowNotificationMenu(false);
-                                setTimeout(() => navigate('/notifications'), 10);
-                              }}
-                              className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 ${
-                                !notification.isRead ? 'bg-blue-50/50' : ''
-                              }`}
-                            >
-                              <div className="flex items-start gap-3">
-                                <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                                  !notification.isRead ? 'bg-blue-500' : 'bg-gray-300'
-                                }`} />
-                                <div className="flex-1 min-w-0">
-                                  <p className={`text-sm font-medium truncate ${
-                                    !notification.isRead ? 'text-gray-900' : 'text-gray-600'
-                                  }`}>
-                                    {notification.title}
-                                  </p>
-                                  <p className="text-xs text-gray-500 truncate mt-0.5">
-                                    {notification.message}
-                                  </p>
-                                  <p className="text-xs text-gray-400 mt-1">
-                                    {formatTimestamp(notification.timestamp)}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-
-                      {/* Footer */}
-                      <div className="border-t border-gray-100 px-4 py-2">
-                        <button
-                          onClick={() => {
-                            setShowNotificationMenu(false);
-                            setTimeout(() => navigate('/notifications'), 10);
-                          }}
-                          className="block w-full text-center text-sm text-orange-600 hover:text-orange-700 font-medium py-1"
-                        >
-                          View All
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                <div className="md:hidden">
+                  <NotificationCenter />
                 </div>
               )}
 
@@ -825,108 +664,28 @@ const Navbar = () => {
                 </Link>
               )}
 
-              {/* Notification Icon - Authenticated users only */}
+              {/* Notification Icon - Authenticated users only - Desktop */}
               {isAuthenticated && (
-                <div className="relative hidden md:block" ref={notificationMenuRef}>
-                  <button
-                    onClick={() => setShowNotificationMenu(!showNotificationMenu)}
-                    className="p-2.5 rounded-full hover:bg-orange-50 transition-colors relative"
-                    aria-label="Notifications"
-                  >
-                    <Bell className="w-5 h-5 text-gray-700" />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </span>
-                    )}
-                  </button>
-
-                  {/* Notification Dropdown */}
-                  {showNotificationMenu && (
-                    <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-fade-in">
-                      {/* Header */}
-                      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
-                        <h3 className="font-semibold text-gray-900">Notifications</h3>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setNotificationFilter('all')}
-                            className={`text-xs px-2 py-1 rounded-full transition-colors ${
-                              notificationFilter === 'all' 
-                                ? 'bg-orange-500 text-white' 
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                          >
-                            All
-                          </button>
-                          <button
-                            onClick={() => setNotificationFilter('unread')}
-                            className={`text-xs px-2 py-1 rounded-full transition-colors ${
-                              notificationFilter === 'unread' 
-                                ? 'bg-orange-500 text-white' 
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                            }`}
-                          >
-                            Unread {unreadCount > 0 && `(${unreadCount})`}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Notification List */}
-                      <div className="max-h-64 overflow-y-auto">
-                        {filteredNotifications.length === 0 ? (
-                          <div className="px-4 py-8 text-center text-gray-500">
-                            <Bell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                            <p className="text-sm">No notifications</p>
-                          </div>
-                        ) : (
-                          filteredNotifications.slice(0, 5).map((notification) => (
-                            <div
-                              key={notification.id}
-                              onClick={() => {
-                                navigate('/notifications');
-                                setShowNotificationMenu(false);
-                              }}
-                              className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 ${
-                                !notification.isRead ? 'bg-blue-50/50' : ''
-                              }`}
-                            >
-                              <div className="flex items-start gap-3">
-                                <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                                  !notification.isRead ? 'bg-blue-500' : 'bg-gray-300'
-                                }`} />
-                                <div className="flex-1 min-w-0">
-                                  <p className={`text-sm font-medium truncate ${
-                                    !notification.isRead ? 'text-gray-900' : 'text-gray-600'
-                                  }`}>
-                                    {notification.title}
-                                  </p>
-                                  <p className="text-xs text-gray-500 truncate mt-0.5">
-                                    {notification.message}
-                                  </p>
-                                  <p className="text-xs text-gray-400 mt-1">
-                                    {formatTimestamp(notification.timestamp)}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-
-                      {/* Footer */}
-                      <div className="border-t border-gray-100 px-4 py-2">
-                        <Link
-                          to="/notifications"
-                          onClick={() => setShowNotificationMenu(false)}
-                          className="block text-center text-sm text-orange-600 hover:text-orange-700 font-medium py-1"
-                        >
-                          View All
-                        </Link>
-                      </div>
-                    </div>
-                  )}
+                <div className="hidden md:block">
+                  <NotificationCenter />
                 </div>
               )}
+
+              {/* SuperAdmin Notification Center - Only for admins */}
+              {isAuthenticated && (user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'owner') && (
+                <div className="hidden md:block">
+                  <SuperAdminNotificationCenter />
+                </div>
+              )}
+
+              {/* Hamburger - Opens Left Sidebar - Mobile/Tablet only */}
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="lg:hidden p-2 sm:p-2.5 hover:bg-gray-100 rounded-lg transition-colors mr-2"
+                aria-label="Menu"
+              >
+                <Menu className="w-6 h-6 text-gray-700" />
+              </button>
 
               {/* Shop Now Button - Desktop only */}
               <Link
@@ -936,15 +695,6 @@ const Navbar = () => {
                 Shop Now
                 <ArrowRight className="w-4 h-4" />
               </Link>
-
-              {/* Hamburger - Opens Right Sidebar (always last) */}
-              <button
-                onClick={() => setIsSidebarOpen(true)}
-                className="p-2 sm:p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
-                aria-label="Menu"
-              >
-                <Menu className="w-6 h-6 text-gray-700" />
-              </button>
             </div>
           </div>
         </div>
@@ -1017,7 +767,7 @@ const Navbar = () => {
         <SearchBar onClose={() => setIsSearchOpen(false)} variant="overlay" />
       )}
 
-      {/* Right Sidebar - Desktop & Mobile */}
+      {/* Left Sidebar - Desktop & Mobile */}
       <div
         className={`fixed inset-0 bg-black z-50 transition-opacity duration-300 ${
           isSidebarOpen ? 'bg-opacity-50' : 'bg-opacity-0 pointer-events-none'
@@ -1026,8 +776,8 @@ const Navbar = () => {
       >
         <div
           ref={sidebarRef}
-          className={`fixed top-0 right-0 h-full w-80 max-w-[85%] bg-white shadow-2xl transform transition-transform duration-300 overflow-y-auto ${
-            isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
+          className={`fixed top-0 left-0 h-full w-80 max-w-[85%] bg-white shadow-2xl transform transition-transform duration-300 overflow-y-auto z-50 ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
           onClick={(e) => e.stopPropagation()}
         >
@@ -1038,8 +788,8 @@ const Navbar = () => {
               background: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)',
             }}
           >
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
+            <div className="flex items-start justify-between flex-row-reverse">
+              <div className="flex items-center gap-3 flex-row-reverse">
                 {/* Logo - same height as greeting text */}
                 <div 
                   className="rounded-lg flex items-end justify-start p-1.5 flex-shrink-0"

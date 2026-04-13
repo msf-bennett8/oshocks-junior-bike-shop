@@ -110,6 +110,7 @@ const SuperAdminAnalytics = lazy(() => import('./pages/superadmin/SuperAdminAnal
 const SuperAdminReportsPage = lazy(() => import('./pages/superadmin/SuperAdminReportsPage'));
 const SuperAdminSettingsPage = lazy(() => import('./pages/superadmin/SuperAdminSettingsPage'));
 const PayoutManagementPage = lazy(() => import('./pages/payout/PayoutManagementPage'));
+const NotificationTemplateManager = lazy(() => import('./components/admin/NotificationTemplateManager'));
 
 // Legal & Policy Pages
 const PrivacyPolicyPage = lazy(() => import('./pages/legal/PrivacyPolicyPage'));
@@ -864,6 +865,15 @@ function App() {
                   element={
                     <SuperAdminRoute>
                       <PayoutManagementPage />
+                    </SuperAdminRoute>
+                  }
+                />
+
+                <Route
+                  path="/super-admin/notification-templates"
+                  element={
+                    <SuperAdminRoute>
+                      <NotificationTemplateManager />
                     </SuperAdminRoute>
                   }
                 />

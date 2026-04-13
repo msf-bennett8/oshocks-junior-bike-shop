@@ -29,6 +29,7 @@ use App\Http\Controllers\Dashboard\OwnerDashboardController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\Dashboard\PayoutController;
 use App\Http\Controllers\CardPaymentController;
+use App\Http\Controllers\Admin;
 
 // ============================================================================
 // OAUTH ROUTES - STATELESS (No CSRF, No Session)
@@ -262,20 +263,54 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
     Route::post('/coupons/validate', [CouponController::class, 'validate']);
     Route::post('/coupons/apply', [CouponUsageController::class, 'apply']);
     
-    // Phase 8: Notifications with Audit
-    Route::prefix('notifications')->group(function () {
+    // Phase 9: Notifications with Rate Limiting
+    Route::prefix('notifications')->middleware(['notification.rate'])->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
+        Route::get('/unread-count', [\App\Http\Controllers\Api\NotificationController::class, 'getUnreadCount']);
+        Route::get('/{id}', [\App\Http\Controllers\Api\NotificationController::class, 'show']);
         Route::put('/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
         Route::put('/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
         Route::delete('/{id}', [\App\Http\Controllers\Api\NotificationController::class, 'destroy']);
         Route::post('/{id}/archive', [\App\Http\Controllers\Api\NotificationController::class, 'archive']);
         Route::post('/{id}/unarchive', [\App\Http\Controllers\Api\NotificationController::class, 'unarchive']);
+        Route::post('/{id}/pin', [\App\Http\Controllers\Api\NotificationController::class, 'pin']);
+        Route::post('/{id}/unpin', [\App\Http\Controllers\Api\NotificationController::class, 'unpin']);
         Route::post('/bulk-delete', [\App\Http\Controllers\Api\NotificationController::class, 'bulkDelete']);
+        Route::post('/bulk-archive', [\App\Http\Controllers\Api\NotificationController::class, 'bulkArchive']);
+        Route::post('/bulk-mark-read', [\App\Http\Controllers\Api\NotificationController::class, 'bulkMarkRead']);
+    });
+
+    // Phase 9: Notification Analytics (Admin only)
+    Route::prefix('admin/notifications')->middleware(['auth:sanctum', 'role:super_admin,owner,admin'])->group(function () {
+        Route::get('/analytics/dashboard', [\App\Http\Controllers\Api\NotificationAnalyticsController::class, 'dashboard']);
+        Route::get('/analytics/realtime', [\App\Http\Controllers\Api\NotificationAnalyticsController::class, 'realtime']);
+        Route::get('/analytics/export', [\App\Http\Controllers\Api\NotificationAnalyticsController::class, 'export']);
+    });
+
+    // Phase 9:(Templates) Notification Template Management (Super Admin only)
+    Route::prefix('admin/notification-templates')->middleware(['auth:sanctum', 'role:super_admin,owner'])->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\NotificationTemplateController::class, 'index']);
+        Route::get('/categories', [\App\Http\Controllers\Admin\NotificationTemplateController::class, 'categories']);
+        Route::post('/sync-from-config', [\App\Http\Controllers\Admin\NotificationTemplateController::class, 'syncFromConfig']);
+        Route::post('/', [\App\Http\Controllers\Admin\NotificationTemplateController::class, 'store']);
+        Route::get('/{id}', [\App\Http\Controllers\Admin\NotificationTemplateController::class, 'show']);
+        Route::put('/{id}', [\App\Http\Controllers\Admin\NotificationTemplateController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\NotificationTemplateController::class, 'destroy']);
+        Route::post('/{id}/duplicate', [\App\Http\Controllers\Admin\NotificationTemplateController::class, 'duplicate']);
+        Route::post('/{id}/preview', [\App\Http\Controllers\Admin\NotificationTemplateController::class, 'preview']);
     });
     
     // Notification preferences
     Route::get('/user/notification-preferences', [\App\Http\Controllers\Api\NotificationPreferenceController::class, 'show']);
     Route::put('/user/notification-preferences', [\App\Http\Controllers\Api\NotificationPreferenceController::class, 'update']);
+    
+    // Push Subscriptions (Phase 4)
+    Route::prefix('push-subscriptions')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'store']);
+        Route::delete('/{id}', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'destroy']);
+        Route::post('/test', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'test']);
+    });
     
     // ============================================================================
     // SELLER ROUTES WITH CLOUDINARY SUPPORT
@@ -493,6 +528,11 @@ Route::get('/system/metrics', [\App\Http\Controllers\Api\SystemHealthController:
 // Phase 8: Notification tracking (public but signed URLs)
 Route::get('/v1/notifications/track-click/{notificationId}', [\App\Http\Controllers\Api\NotificationController::class, 'trackClick']);
 Route::get('/v1/notifications/pixel/{notificationId}', [\App\Http\Controllers\Api\NotificationController::class, 'trackingPixel']);
+Route::post('/v1/notifications/track-delivery/{notificationId}', [\App\Http\Controllers\Api\NotificationController::class, 'trackDelivery']);
+// Audit notification acknowledgment
+Route::post('/v1/audit/notifications/{notificationId}/acknowledge', [\App\Http\Controllers\Api\AuditLogController::class, 'acknowledgeNotification'])
+    ->middleware('auth:sanctum');
+
 
 // Phase 9: Marketing tracking (public for webhooks and pixels)
 Route::get('/v1/marketing/pixel/{campaignId}/{userId}/{messageId}', [\App\Http\Controllers\Api\MarketingController::class, 'trackingPixel']);

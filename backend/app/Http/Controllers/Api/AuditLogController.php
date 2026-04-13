@@ -830,4 +830,27 @@ class AuditLogController extends Controller
             'data' => $archives
         ]);
     }
+
+    /**
+     * Acknowledge an audit notification
+     */
+    public function acknowledgeNotification(Request $request, $notificationId)
+    {
+        $success = AuditNotificationService::acknowledgeNotification(
+            $notificationId,
+            $request->user()->id
+        );
+
+        if (!$success) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Notification not found or already acknowledged'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification acknowledged'
+        ]);
+    }
 }

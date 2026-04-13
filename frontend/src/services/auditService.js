@@ -160,7 +160,21 @@ const auditService = {
     
     const response = await api.get(`/audit-logs/archives/export?${queryParams.toString()}`);
     return response.data;
+  },
+  
+  /**
+   * Acknowledge an audit notification
+   */
+  acknowledgeAuditNotification: async (notificationId) => {
+    try {
+      const response = await api.post(`/audit/notifications/${notificationId}/acknowledge`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to acknowledge audit notification:', error);
+      throw error;
+    }
   }
+  
 };
 
 export default auditService;

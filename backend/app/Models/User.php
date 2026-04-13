@@ -106,6 +106,16 @@ class User extends Authenticatable
         return $this->hasMany(SellerPayout::class, 'processed_by');
     }
 
+    public function notificationSettings()
+    {
+        return $this->hasOne(NotificationSetting::class);
+    }
+
+    public function pushSubscriptions()
+    {
+        return $this->hasMany(PushSubscription::class);
+    }
+
     // Helper methods
     public function isSeller()
     {

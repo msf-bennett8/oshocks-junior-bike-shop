@@ -51,6 +51,107 @@ class EventServiceProvider extends ServiceProvider
         JobFailed::class => [
             [QueueJobListener::class, 'handleJobFailed'],
         ],
+
+        // ============================================================================
+        // NOTIFICATION EVENTS - PHASE 3
+        // ============================================================================
+        
+        // Order Events
+        \App\Events\OrderPlaced::class => [
+            \App\Listeners\SendOrderConfirmation::class,
+        ],
+        \App\Events\OrderStatusChanged::class => [
+            \App\Listeners\SendStatusUpdate::class,
+        ],
+        \App\Events\OrderShipped::class => [
+            \App\Listeners\SendStatusUpdate::class,
+        ],
+        \App\Events\DeliveryOutForDelivery::class => [
+            \App\Listeners\SendDeliveryNotification::class,
+        ],
+        \App\Events\DeliveryCompleted::class => [
+            \App\Listeners\SendStatusUpdate::class,
+        ],
+
+        // Payment Events
+        \App\Events\PaymentSuccessful::class => [
+            \App\Listeners\SendPaymentConfirmation::class,
+        ],
+        \App\Events\PaymentFailed::class => [
+            \App\Listeners\SendPaymentFailure::class,
+        ],
+        \App\Events\PaymentRefunded::class => [
+            \App\Listeners\SendRefundNotification::class,
+        ],
+
+        // Product/Inventory Events
+        \App\Events\LowStockAlert::class => [
+            \App\Listeners\SendStockAlert::class,
+        ],
+        \App\Events\BackInStock::class => [
+            \App\Listeners\SendBackInStockNotification::class,
+        ],
+        \App\Events\PriceDrop::class => [
+            \App\Listeners\SendPriceAlert::class,
+        ],
+        \App\Events\NewProductArrival::class => [
+            \App\Listeners\SendNewProductNotification::class,
+        ],
+
+        // Wishlist Events
+        \App\Events\WishlistPriceDrop::class => [
+            \App\Listeners\SendWishlistPriceNotification::class,
+        ],
+        \App\Events\WishlistBackInStock::class => [
+            \App\Listeners\SendWishlistStockNotification::class,
+        ],
+
+        // Security Events
+        \App\Events\SecurityAlert::class => [
+            \App\Listeners\SendSecurityNotification::class,
+        ],
+        \App\Events\LoginFailed::class => [
+            \App\Listeners\SendFailedLoginAlert::class,
+        ],
+
+        // Audit/Admin Events
+        \App\Events\AuditAlert::class => [
+            \App\Listeners\SendAuditNotification::class,
+        ],
+        \App\Events\MassPurchaseAlert::class => [
+            \App\Listeners\SendMassPurchaseNotification::class,
+        ],
+        \App\Events\BulkOperationAlert::class => [
+            \App\Listeners\SendBulkOperationNotification::class,
+        ],
+        \App\Events\SystemMaintenanceNotice::class => [
+            \App\Listeners\SendMaintenanceNotification::class,
+        ],
+
+        // Marketing Events
+        \App\Events\FlashSaleStarted::class => [
+            \App\Listeners\SendFlashSaleNotification::class,
+        ],
+        \App\Events\LoyaltyTierChanged::class => [
+            \App\Listeners\SendLoyaltyNotification::class,
+        ],
+
+        // Support Events
+        \App\Events\SupportMessageReceived::class => [
+            \App\Listeners\SendSupportNotification::class,
+        ],
+        \App\Events\DeliveryIssueReported::class => [
+            \App\Listeners\SendDeliveryIssueNotification::class,
+        ],
+    ];
+
+    /**
+     * The subscriber classes to register.
+     *
+     * @var array
+     */
+    protected $subscribe = [
+        \App\Listeners\SecurityEventSubscriber::class,
     ];
 
     /**
@@ -59,6 +160,8 @@ class EventServiceProvider extends ServiceProvider
     public function boot(): void
     {
         WishlistItem::observe(WishlistObserver::class);
+        \App\Models\Order::observe(\App\Observers\OrderObserver::class);
+        \App\Models\Product::observe(\App\Observers\ProductObserver::class);
     }
 
     /**

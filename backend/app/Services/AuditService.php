@@ -112,6 +112,9 @@ class AuditService
 
             // Synchronous processing for TIER_3 or when queue disabled
             $log = AuditLog::create($auditData);
+
+            // Phase 8:(Notifications) Trigger notifications for critical events
+            self::notifyIfCritical($auditData, $log);
             
             // Update cache with latest hash for chaining
             if ($tier === 'TIER_1_IMMUTABLE' && $integrityHash) {
@@ -5805,5 +5808,28 @@ class AuditService
         Log::channel('daily')->error('AUDIT_FALLBACK', $logEntry);
         
         // Could also write to Redis, SQS, etc.
+    }
+
+        /**
+     * Phase 8: Hook to create notifications for critical audit events
+     * Call this at the end of the log() method
+     */
+    protected static function notifyIfCritical(array $auditData, ?AuditLog $auditLog): void
+    {
+        if (!$auditLog) {
+            return;
+        }
+
+        // Only notify for critical events
+        if (!AuditNotificationService::isCriticalEvent($auditData['event_type'] ?? '')) {
+            return;
+        }
+
+        // Queue the notification creation to not block the audit log
+        dispatch(function () use ($auditData, $auditLog) {
+            AuditNotificationService::convertAuditToNotification(
+                array_merge($auditData, ['id' => $auditLog->id])
+            );
+        })->afterResponse();
     }
 }

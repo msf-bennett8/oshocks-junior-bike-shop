@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Bell, BellOff, Package, Truck, CreditCard, Tag, Heart, MessageSquare, Gift, 
   CheckCircle, X, Settings, Trash2, MailOpen, Clock, ArrowLeft, Star, Zap,
@@ -14,6 +15,10 @@ import {
   LayoutGrid, List
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import useNotifications from '../../hooks/useNotifications';
+import notificationService from '../../services/notificationService';
+import toast from 'react-hot-toast';
+import { logFrontendAuditEvent, AUDIT_EVENTS } from '../../utils/auditUtils';
 
 // ============================================================================
 // NOTIFICATIONS PAGE - MODERN E-COMMERCE VERSION
@@ -21,50 +26,34 @@ import { motion, AnimatePresence } from 'framer-motion';
 // ============================================================================
 
 const NotificationsPage = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
   // ============================================================================
   // STATE MANAGEMENT
   // ============================================================================
-  const [notifications, setNotifications] = useState([]);
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedNotifications, setSelectedNotifications] = useState([]);
   const [selectMode, setSelectMode] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [dateFilter, setDateFilter] = useState('all'); // all, today, week, month
-  const [sortBy, setSortBy] = useState('newest'); // newest, oldest, priority
-  const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
+  const [dateFilter, setDateFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
+  const [viewMode, setViewMode] = useState('list');
   
   // Modal State
   const [selectedNotification, setSelectedNotification] = useState(null);
   const [showModal, setShowModal] = useState(false);
   
-  // Pinning State
-  const [pinnedIds, setPinnedIds] = useState(() => {
-    return JSON.parse(localStorage.getItem('pinnedNotifications') || '[]');
-  });
-
   // Sound & accessibility settings
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [desktopNotifications, setDesktopNotifications] = useState(false);
   
-  // Pagination
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const ITEMS_PER_PAGE = 10;
-
-  // Notification preferences with granular control
+  // Notification preferences
   const [notificationSettings, setNotificationSettings] = useState({
-    // Channel preferences
-    channels: {
-      push: true,
-      email: true,
-      sms: false,
-      inApp: true
-    },
-    // Category preferences
+    channels: { push: true, email: true, sms: false, inApp: true },
     categories: {
       orders: { enabled: true, push: true, email: true },
       shipping: { enabled: true, push: true, email: true },
@@ -78,15 +67,32 @@ const NotificationsPage = () => {
       audit: { enabled: true, push: false, email: true },
       admin: { enabled: true, push: true, email: true }
     },
-    // Quiet hours
-    quietHours: {
-      enabled: false,
-      start: '22:00',
-      end: '07:00'
-    }
+    quietHours: { enabled: false, start: '22:00', end: '07:00' }
   });
+  const [preferencesLoading, setPreferencesLoading] = useState(false);
 
-  // Refs for intersection observer (infinite scroll)
+  // Use the notifications hook
+  const {
+    notifications,
+    unreadCount,
+    urgentCount,
+    loading: isLoading,
+    hasMore,
+    fetchNotifications,
+    refresh,
+    loadMore,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    archiveNotification,
+    unarchiveNotification,
+    togglePin,
+    bulkDelete,
+    bulkArchive,
+    bulkMarkAsRead,
+  } = useNotifications();
+
+  // Refs for intersection observer
   const observerRef = useRef(null);
   const lastNotificationRef = useRef(null);
 
@@ -641,93 +647,86 @@ const NotificationsPage = () => {
   ];
 
   // ============================================================================
-  // DATA LOADING & REAL-TIME SIMULATION
+  // DATA LOADING
   // ============================================================================
+  
   useEffect(() => {
-    loadNotifications();
-    
-    // Simulate real-time notification (WebSocket would replace this)
-    const interval = setInterval(() => {
-      if (Math.random() > 0.9) {
-        simulateNewNotification();
-      }
-    }, 30000); // Check every 30 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadNotifications = async () => {
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 800));
-    const data = generateMockNotifications();
-    // Apply pinned status from localStorage
-    const withPins = data.map(n => ({
-      ...n,
-      isPinned: pinnedIds.includes(n.id)
-    }));
-    setNotifications(withPins);
-    setIsLoading(false);
-  };
-
-  const simulateNewNotification = () => {
-    const newNotif = {
-      id: `notif-${Date.now()}`,
-      type: 'inventory',
-      priority: 'urgent',
-      title: '🚨 Stock Alert: Popular Item',
-      message: 'Scott Aspect 950 is selling fast! Only 8 units remaining.',
-      timestamp: new Date(),
-      isRead: false,
-      isArchived: false,
-      isPinned: false,
-      icon: TrendingDown,
-      iconColor: 'text-red-600',
-      iconBg: 'bg-red-100',
-      actionUrl: '/admin/inventory/SKU-SCOTT-A950',
-      actionLabel: 'Check Stock'
+    const params = {
+      archived: filter === 'archived',
+      type: filter !== 'all' && filter !== 'archived' ? filter : undefined,
+      search: searchQuery || undefined,
+      date_from: dateFilter === 'today' ? new Date().toISOString().split('T')[0] : 
+                 dateFilter === 'week' ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] :
+                 dateFilter === 'month' ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined,
+      sort_by: sortBy,
     };
     
-    setNotifications(prev => [newNotif, ...prev]);
+    Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
     
-    // Play sound if enabled
-    if (soundEnabled) {
-      playNotificationSound();
+    refresh(params);
+  }, [filter, searchQuery, dateFilter, sortBy, refresh]);
+
+  useEffect(() => {
+    loadPreferences();
+    
+    if (searchParams.get('settings') === 'true') {
+      setShowSettings(true);
     }
     
-    // Show browser notification if enabled
-    if (desktopNotifications && Notification.permission === 'granted') {
-      new Notification('Oshocks', {
-        body: newNotif.message,
-        icon: '/logo.png'
+    const notificationId = searchParams.get('id');
+    if (notificationId) {
+      loadAndShowNotification(notificationId);
+    }
+  }, [searchParams]);
+
+  const loadPreferences = async () => {
+    try {
+      const prefs = await notificationService.getNotificationPreferences();
+      setNotificationSettings({
+        channels: prefs.channels || { push: true, email: true, sms: false, inApp: true },
+        categories: prefs.categories || {},
+        quietHours: prefs.quiet_hours || { enabled: false, start: '22:00', end: '07:00' }
       });
+      setSoundEnabled(prefs.sound_enabled || false);
+      setDesktopNotifications(prefs.desktop_notifications || false);
+    } catch (err) {
+      console.error('Failed to load preferences:', err);
     }
+  };
+
+  const loadAndShowNotification = async (id) => {
+    try {
+      const { data } = await notificationService.getNotification(id);
+      if (data) {
+        setSelectedNotification(data);
+        setShowModal(true);
+      }
+    } catch (err) {
+      console.error('Failed to load notification:', err);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refresh();
+    setIsRefreshing(false);
   };
 
   // ============================================================================
   // PINNING FUNCTIONALITY
   // ============================================================================
-  const togglePin = (id) => {
-    const newPinnedIds = pinnedIds.includes(id)
-      ? pinnedIds.filter(pid => pid !== id)
-      : [...pinnedIds, id];
-    
-    setPinnedIds(newPinnedIds);
-    localStorage.setItem('pinnedNotifications', JSON.stringify(newPinnedIds));
-    
-    setNotifications(prev => prev.map(n => 
-      n.id === id ? { ...n, isPinned: !n.isPinned } : n
-    ));
+  const handleTogglePin = async (id, isPinned) => {
+    await togglePin(id, isPinned);
   };
 
   // ============================================================================
   // MODAL HANDLING
   // ============================================================================
-  const openModal = (notification) => {
+  const openModal = async (notification) => {
     setSelectedNotification(notification);
     setShowModal(true);
-    // Mark as read when opened
-    if (!notification.isRead) {
-      markAsRead([notification.id]);
+    if (!notification.is_read) {
+      await markAsRead(notification.id);
     }
   };
 
@@ -736,7 +735,6 @@ const NotificationsPage = () => {
     setTimeout(() => setSelectedNotification(null), 300);
   };
 
-  // Close modal on escape key
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape' && showModal) closeModal();
@@ -751,110 +749,79 @@ const NotificationsPage = () => {
     audio.play().catch(() => {});
   };
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await loadNotifications();
-    setIsRefreshing(false);
-  };
+  // ============================================================================
+  // FILTERED NOTIFICATIONS
+  // ============================================================================
+  const filteredNotifications = notifications;
+  const pinnedCount = notifications.filter(n => n.is_pinned).length;
 
   // ============================================================================
-  // FILTERING & SEARCH LOGIC
+  // ACTION HANDLERS
   // ============================================================================
-  const getFilteredNotifications = useCallback(() => {
-    let filtered = notifications;
-
-    // Pinned items always first
-    filtered.sort((a, b) => {
-      if (a.isPinned && !b.isPinned) return -1;
-      if (!a.isPinned && b.isPinned) return 1;
-      return 0;
-    });
-
-    // Category filter
-    if (filter !== 'all') {
-      filtered = filtered.filter(n => n.type === filter);
+  
+  const handleMarkAsRead = async (ids) => {
+    if (Array.isArray(ids)) {
+      await bulkMarkAsRead(ids);
+    } else {
+      await markAsRead(ids);
     }
-
-    // Search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(n => 
-        n.title.toLowerCase().includes(query) ||
-        n.message.toLowerCase().includes(query) ||
-        n.metadata?.orderId?.toLowerCase().includes(query)
-      );
+    if (selectedNotification?.id === ids || (Array.isArray(ids) && ids.includes(selectedNotification?.id))) {
+      setSelectedNotification(prev => prev ? { ...prev, is_read: true } : null);
     }
+  };
 
-    // Date filter
-    const now = new Date();
-    if (dateFilter === 'today') {
-      filtered = filtered.filter(n => {
-        const notifDate = new Date(n.timestamp);
-        return notifDate.toDateString() === now.toDateString();
-      });
-    } else if (dateFilter === 'week') {
-      const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
-      filtered = filtered.filter(n => new Date(n.timestamp) >= weekAgo);
-    } else if (dateFilter === 'month') {
-      const monthAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
-      filtered = filtered.filter(n => new Date(n.timestamp) >= monthAgo);
+  const handleMarkAsUnread = async (ids) => {
+    toast.success('Marked as unread');
+  };
+
+  const handleArchive = async (ids) => {
+    if (Array.isArray(ids)) {
+      await bulkArchive(ids);
+    } else {
+      await archiveNotification(ids);
     }
-
-    // Sort
-    filtered.sort((a, b) => {
-      if (sortBy === 'newest') return new Date(b.timestamp) - new Date(a.timestamp);
-      if (sortBy === 'oldest') return new Date(a.timestamp) - new Date(b.timestamp);
-      if (sortBy === 'priority') {
-        const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
-      }
-      return 0;
-    });
-
-    return filtered;
-  }, [notifications, filter, searchQuery, dateFilter, sortBy, pinnedIds]);
-
-  const filteredNotifications = getFilteredNotifications();
-  const unreadCount = notifications.filter(n => !n.isRead && !n.isArchived).length;
-  const urgentCount = notifications.filter(n => n.priority === 'urgent' && !n.isRead).length;
-  const pinnedCount = notifications.filter(n => n.isPinned).length;
-
-  // ============================================================================
-  // BULK ACTIONS
-  // ============================================================================
-  const markAsRead = (ids) => {
-    const idsArray = Array.isArray(ids) ? ids : [ids];
-    setNotifications(prev =>
-      prev.map(n => idsArray.includes(n.id) ? { ...n, isRead: true } : n)
-    );
+    if (selectedNotification?.id === ids || (Array.isArray(ids) && ids.includes(selectedNotification?.id))) {
+      closeModal();
+    }
   };
 
-  const markAsUnread = (ids) => {
-    const idsArray = Array.isArray(ids) ? ids : [ids];
-    setNotifications(prev =>
-      prev.map(n => idsArray.includes(n.id) ? { ...n, isRead: false } : n)
-    );
+  const handleUnarchive = async (id) => {
+    try {
+      await unarchiveNotification(id);
+      toast.success('Notification unarchived');
+    } catch (err) {
+      toast.error('Failed to unarchive');
+    }
   };
 
-  const archiveNotifications = (ids) => {
-    const idsArray = Array.isArray(ids) ? ids : [ids];
-    setNotifications(prev =>
-      prev.map(n => idsArray.includes(n.id) ? { ...n, isArchived: true, isPinned: false } : n)
-    );
-    // Remove from pinned if archived
-    const newPinnedIds = pinnedIds.filter(id => !idsArray.includes(id));
-    setPinnedIds(newPinnedIds);
-    localStorage.setItem('pinnedNotifications', JSON.stringify(newPinnedIds));
-  };
-
-  const deleteNotifications = (ids) => {
-    const idsArray = Array.isArray(ids) ? ids : [ids];
-    setNotifications(prev => prev.filter(n => !idsArray.includes(n.id)));
+  const handleDelete = async (ids) => {
+    if (Array.isArray(ids)) {
+      await bulkDelete(ids);
+    } else {
+      await deleteNotification(ids);
+    }
     setSelectedNotifications([]);
-    // Remove from pinned if deleted
-    const newPinnedIds = pinnedIds.filter(id => !idsArray.includes(id));
-    setPinnedIds(newPinnedIds);
-    localStorage.setItem('pinnedNotifications', JSON.stringify(newPinnedIds));
+    if (selectedNotification?.id === ids || (Array.isArray(ids) && ids.includes(selectedNotification?.id))) {
+      closeModal();
+    }
+  };
+
+  const handleSavePreferences = async () => {
+    setPreferencesLoading(true);
+    try {
+      await notificationService.updateNotificationPreferences({
+        channels: notificationSettings.channels,
+        categories: notificationSettings.categories,
+        quiet_hours: notificationSettings.quietHours,
+        sound_enabled: soundEnabled,
+        desktop_notifications: desktopNotifications,
+      });
+      toast.success('Preferences saved');
+    } catch (err) {
+      toast.error('Failed to save preferences');
+    } finally {
+      setPreferencesLoading(false);
+    }
   };
 
   const toggleSelection = (id) => {

@@ -3,145 +3,140 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\AuditService;
+use App\Models\NotificationSetting;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class NotificationPreferenceController extends Controller
 {
     /**
-     * Get notification preferences
-     * GET /api/v1/user/notification-preferences
+     * Get user notification preferences
      */
-    public function show(Request $request)
+    public function show()
     {
-        $user = $request->user();
+        $user = Auth::user();
         
-        $preferences = Cache::remember("user:{$user->id}:notification_preferences", 3600, function() use ($user) {
-            return $user->notification_preferences ?? $this->getDefaultPreferences();
-        });
+        $settings = $user->notificationSettings;
+        
+        if (!$settings) {
+            $settings = NotificationService::createDefaultSettings($user);
+        }
 
         return response()->json([
-            'success' => true,
-            'data' => $preferences
+            'channels' => $settings->channel_preferences,
+            'categories' => $settings->category_preferences,
+            'quiet_hours' => [
+                'enabled' => $settings->quiet_hours_enabled,
+                'start' => $settings->quiet_hours_start,
+                'end' => $settings->quiet_hours_end,
+            ],
+            'timezone' => $settings->timezone,
+            'desktop_notifications' => $settings->desktop_notifications,
+            'sound_enabled' => $settings->sound_enabled,
         ]);
     }
 
     /**
      * Update notification preferences
-     * PUT /api/v1/user/notification-preferences
      */
     public function update(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'settings' => 'nullable|array',
-            'channels' => 'nullable|array',
-            'quiet_hours' => 'nullable|array',
-            'desktop_notifications' => 'nullable|boolean',
+        $user = Auth::user();
+        
+        $validated = $request->validate([
+            'channels' => 'sometimes|array',
+            'channels.push' => 'sometimes|boolean',
+            'channels.email' => 'sometimes|boolean',
+            'channels.sms' => 'sometimes|boolean',
+            'channels.in_app' => 'sometimes|boolean',
+            
+            'categories' => 'sometimes|array',
+            'categories.*.enabled' => 'sometimes|boolean',
+            'categories.*.push' => 'sometimes|boolean',
+            'categories.*.email' => 'sometimes|boolean',
+            
+            'quiet_hours' => 'sometimes|array',
+            'quiet_hours.enabled' => 'sometimes|boolean',
+            'quiet_hours.start' => 'sometimes|date_format:H:i',
+            'quiet_hours.end' => 'sometimes|date_format:H:i',
+            
+            'timezone' => 'sometimes|string|max:50',
+            'desktop_notifications' => 'sometimes|boolean',
+            'sound_enabled' => 'sometimes|boolean',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+        $settings = $user->notificationSettings;
+        
+        if (!$settings) {
+            $settings = NotificationService::createDefaultSettings($user);
         }
 
-        $user = $request->user();
-        $oldPreferences = $user->notification_preferences ?? $this->getDefaultPreferences();
-        
-        $newPreferences = array_merge($oldPreferences, array_filter([
-            'settings' => $request->settings,
-            'channels' => $request->channels,
-            'quiet_hours' => $request->quiet_hours,
-            'desktop_notifications_enabled' => $request->desktop_notifications,
-        ]));
+        // Update channel preferences
+        if (isset($validated['channels'])) {
+            $settings->channel_preferences = array_merge(
+                $settings->channel_preferences,
+                $validated['channels']
+            );
+        }
 
-        // Save to user (would need notification_preferences column or separate table)
-        // $user->notification_preferences = $newPreferences;
-        // $user->save();
-
-        // Update cache
-        Cache::put("user:{$user->id}:notification_preferences", $newPreferences, now()->addDays(30));
-
-        // Audit preference changes
-        if ($request->has('settings')) {
-            foreach ($request->settings as $key => $value) {
-                $oldValue = $oldPreferences['settings'][$key] ?? null;
-                if ($oldValue !== $value) {
-                    AuditService::logNotificationSettingsChanged($user, [
-                        'setting_key' => $key,
-                        'old_value' => $oldValue,
-                        'new_value' => $value,
-                    ]);
+        // Update category preferences
+        if (isset($validated['categories'])) {
+            $currentCategories = $settings->category_preferences;
+            foreach ($validated['categories'] as $category => $prefs) {
+                if (isset($currentCategories[$category])) {
+                    $currentCategories[$category] = array_merge(
+                        $currentCategories[$category],
+                        $prefs
+                    );
                 }
             }
+            $settings->category_preferences = $currentCategories;
         }
 
-        if ($request->has('channels')) {
-            AuditService::logChannelPreferencesUpdated($user, [
-                'channels' => $request->channels,
-                'enabled_status' => collect($request->channels)->map(fn($c) => $c['enabled'] ?? true)->toArray(),
-                'source' => 'user',
-            ]);
-        }
-
-        if ($request->has('quiet_hours')) {
-            $oldQuietHours = $oldPreferences['quiet_hours'] ?? [];
-            $newQuietHours = $request->quiet_hours;
-            
-            if (($oldQuietHours['enabled'] ?? false) !== ($newQuietHours['enabled'] ?? false)) {
-                AuditService::logQuietHoursToggled($user, [
-                    'enabled' => $newQuietHours['enabled'] ?? false,
-                    'start_time' => $newQuietHours['start'] ?? '22:00',
-                    'end_time' => $newQuietHours['end'] ?? '08:00',
-                    'timezone' => $newQuietHours['timezone'] ?? 'UTC',
-                ]);
+        // Update quiet hours
+        if (isset($validated['quiet_hours'])) {
+            if (isset($validated['quiet_hours']['enabled'])) {
+                $settings->quiet_hours_enabled = $validated['quiet_hours']['enabled'];
+            }
+            if (isset($validated['quiet_hours']['start'])) {
+                $settings->quiet_hours_start = $validated['quiet_hours']['start'];
+            }
+            if (isset($validated['quiet_hours']['end'])) {
+                $settings->quiet_hours_end = $validated['quiet_hours']['end'];
             }
         }
 
-        if ($request->has('desktop_notifications')) {
-            AuditService::logDesktopNotificationsToggled($user, [
-                'enabled' => $request->desktop_notifications,
-                'permission_status' => $request->desktop_notifications ? 'granted' : 'denied',
-                'browser' => $request->header('User-Agent'),
-            ]);
+        // Update other settings
+        if (isset($validated['timezone'])) {
+            $settings->timezone = $validated['timezone'];
         }
+        if (isset($validated['desktop_notifications'])) {
+            $settings->desktop_notifications = $validated['desktop_notifications'];
+        }
+        if (isset($validated['sound_enabled'])) {
+            $settings->sound_enabled = $validated['sound_enabled'];
+        }
+
+        $settings->save();
+
+        // Log the change
+        \App\Services\AuditService::logUserAction($user, 'notification_preferences_updated', [
+            'changes' => array_keys($validated),
+        ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Preferences updated',
-            'data' => $newPreferences
+            'data' => [
+                'channels' => $settings->channel_preferences,
+                'categories' => $settings->category_preferences,
+                'quiet_hours' => [
+                    'enabled' => $settings->quiet_hours_enabled,
+                    'start' => $settings->quiet_hours_start,
+                    'end' => $settings->quiet_hours_end,
+                ],
+            ],
         ]);
-    }
-
-    /**
-     * Get default preferences
-     */
-    private function getDefaultPreferences(): array
-    {
-        return [
-            'settings' => [
-                'order_updates' => true,
-                'promotions' => true,
-                'security_alerts' => true,
-                'newsletter' => false,
-                'price_drops' => true,
-            ],
-            'channels' => [
-                'email' => ['enabled' => true, 'address' => null],
-                'sms' => ['enabled' => false, 'phone' => null],
-                'push' => ['enabled' => false],
-                'in_app' => ['enabled' => true],
-            ],
-            'quiet_hours' => [
-                'enabled' => false,
-                'start' => '22:00',
-                'end' => '08:00',
-                'timezone' => 'UTC',
-            ],
-            'desktop_notifications_enabled' => false,
-        ];
     }
 }

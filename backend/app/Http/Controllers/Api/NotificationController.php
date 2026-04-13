@@ -5,243 +5,457 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Services\NotificationService;
-use App\Services\AuditService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
     /**
-     * Get user notifications
-     * GET /api/v1/notifications
+     * List notifications with filtering
      */
     public function index(Request $request)
     {
-        $user = $request->user();
+        $user = Auth::user();
 
         $query = Notification::where('user_id', $user->id)
-            ->where('is_archived', false);
+            ->notExpired()
+            ->with(['user']);
+
+        // Filter by archived status
+        if ($request->has('archived')) {
+            $isArchived = filter_var($request->archived, FILTER_VALIDATE_BOOLEAN);
+            $query->where('is_archived', $isArchived);
+        } else {
+            // Default: show unarchived
+            $query->unarchived();
+        }
 
         // Filter by read status
-        if ($request->has('unread_only')) {
-            $query->where('is_read', false);
+        if ($request->has('read')) {
+            $isRead = filter_var($request->read, FILTER_VALIDATE_BOOLEAN);
+            if ($isRead) {
+                $query->read();
+            } else {
+                $query->unread();
+            }
         }
 
         // Filter by type
         if ($request->has('type')) {
-            $query->where('type', $request->type);
+            $query->byType($request->type);
         }
 
-        $notifications = $query->orderBy('created_at', 'desc')
-            ->paginate($request->per_page ?? 20);
+        // Filter by priority
+        if ($request->has('priority')) {
+            $query->byPriority($request->priority);
+        }
+
+        // Search
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('message', 'like', "%{$search}%")
+                  ->orWhereJsonContains('metadata->orderId', $search)
+                  ->orWhereJsonContains('metadata->sku', $search);
+            });
+        }
+
+        // Date range
+        if ($request->has('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->has('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Sorting: Pinned first, then priority, then created_at
+        $sortBy = $request->get('sort_by', 'newest');
+        $sortOrder = $request->get('sort_order', 'desc');
+
+        $query->orderBy('is_pinned', 'desc')
+              ->orderByRaw("FIELD(priority, 'urgent', 'high', 'normal', 'low')")
+              ->orderBy('created_at', $sortOrder === 'oldest' ? 'asc' : 'desc');
+
+        $perPage = $request->get('per_page', 15);
+        $notifications = $query->paginate($perPage);
 
         return response()->json([
-            'success' => true,
-            'data' => $notifications,
-            'unread_count' => Notification::where('user_id', $user->id)
-                ->where('is_read', false)
-                ->where('is_archived', false)
-                ->count(),
+            'data' => $notifications->map(fn ($n) => $this->formatNotification($n)),
+            'meta' => [
+                'current_page' => $notifications->currentPage(),
+                'last_page' => $notifications->lastPage(),
+                'per_page' => $notifications->perPage(),
+                'total' => $notifications->total(),
+                'unread_count' => NotificationService::getUnreadCount($user),
+            ],
         ]);
     }
 
     /**
-     * Mark notification as read
-     * PUT /api/v1/notifications/{id}/read
+     * Get single notification
      */
-    public function markAsRead(Request $request, $id)
+    public function show($id)
     {
-        $user = $request->user();
+        $user = Auth::user();
 
         $notification = Notification::where('id', $id)
             ->where('user_id', $user->id)
-            ->first();
+            ->firstOrFail();
 
-        if (!$notification) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Notification not found'
-            ], 404);
-        }
-
-        $notification->update([
-            'is_read' => true,
-            'read_at' => now(),
-        ]);
-
-        // Track as opened if not already tracked
-        if (!$notification->opened_at) {
-            NotificationService::trackOpen(
-                $notification->notification_id,
-                $notification->channel,
-                $request->ip(),
-                $request->header('X-Device-Type') ?? 'web'
-            );
+        // Auto-mark as read when viewed
+        if (!$notification->read_at) {
+            $notification->markAsRead();
         }
 
         return response()->json([
-            'success' => true,
-            'message' => 'Notification marked as read'
+            'data' => $this->formatNotification($notification, true),
         ]);
     }
 
     /**
-     * Mark all notifications as read
-     * PUT /api/v1/notifications/read-all
+     * Mark as read
+     */
+    public function markAsRead($id)
+    {
+        $user = Auth::user();
+
+        $notification = Notification::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $notification->markAsRead();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification marked as read',
+            'unread_count' => NotificationService::getUnreadCount($user),
+        ]);
+    }
+
+    /**
+     * Mark all as read
      */
     public function markAllAsRead(Request $request)
     {
-        $user = $request->user();
+        $user = Auth::user();
 
-        $count = Notification::where('user_id', $user->id)
-            ->where('is_read', false)
-            ->where('is_archived', false)
-            ->update([
-                'is_read' => true,
-                'read_at' => now(),
-            ]);
+        $query = Notification::where('user_id', $user->id)
+            ->whereNull('read_at')
+            ->unarchived();
+
+        // Optional: filter by type
+        if ($request->has('type')) {
+            $query->byType($request->type);
+        }
+
+        $count = $query->count();
+        $query->update(['read_at' => now()]);
 
         return response()->json([
             'success' => true,
-            'message' => "{$count} notifications marked as read"
+            'message' => "{$count} notifications marked as read",
+            'count' => $count,
+            'unread_count' => NotificationService::getUnreadCount($user),
         ]);
     }
 
     /**
-     * Delete notification
-     * DELETE /api/v1/notifications/{id}
+     * Soft delete notification
      */
-    public function destroy(Request $request, $id)
+    public function destroy($id)
     {
-        $user = $request->user();
+        $user = Auth::user();
 
-        $success = NotificationService::delete($user, $id, 'manual');
+        $notification = Notification::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
 
-        if (!$success) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Notification not found'
-            ], 404);
-        }
+        NotificationService::delete($user, $notification->id);
 
         return response()->json([
             'success' => true,
-            'message' => 'Notification deleted'
+            'message' => 'Notification deleted',
         ]);
     }
 
     /**
      * Archive notification
-     * POST /api/v1/notifications/{id}/archive
      */
-    public function archive(Request $request, $id)
+    public function archive($id)
     {
-        $user = $request->user();
+        $user = Auth::user();
 
-        $success = NotificationService::archive($user, $id);
+        $notification = Notification::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
 
-        if (!$success) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Notification not found'
-            ], 404);
+        // Unpin if archiving
+        if ($notification->is_pinned) {
+            $notification->unpin();
         }
+
+        $notification->archive();
 
         return response()->json([
             'success' => true,
-            'message' => 'Notification archived'
+            'message' => 'Notification archived',
         ]);
     }
 
     /**
      * Unarchive notification
-     * POST /api/v1/notifications/{id}/unarchive
      */
-    public function unarchive(Request $request, $id)
+    public function unarchive($id)
     {
-        $user = $request->user();
+        $user = Auth::user();
 
-        $success = NotificationService::unarchive($user, $id);
+        $notification = Notification::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
 
-        if (!$success) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Notification not found'
-            ], 404);
-        }
+        $notification->unarchive();
 
         return response()->json([
             'success' => true,
-            'message' => 'Notification unarchived'
+            'message' => 'Notification unarchived',
         ]);
     }
 
     /**
-     * Bulk delete notifications
-     * POST /api/v1/notifications/bulk-delete
+     * Pin notification
+     */
+    public function pin($id)
+    {
+        $user = Auth::user();
+
+        $notification = Notification::where('id', $id)
+            ->where('user_id', $user->id)
+            ->where('is_archived', false)
+            ->firstOrFail();
+
+        $notification->pin();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification pinned',
+        ]);
+    }
+
+    /**
+     * Unpin notification
+     */
+    public function unpin($id)
+    {
+        $user = Auth::user();
+
+        $notification = Notification::where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
+
+        $notification->unpin();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification unpinned',
+        ]);
+    }
+
+    /**
+     * Bulk delete
      */
     public function bulkDelete(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $user = Auth::user();
+
+        $validated = $request->validate([
             'ids' => 'required|array',
             'ids.*' => 'integer|exists:notifications,id',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $user = $request->user();
-        $count = NotificationService::bulkDelete($user, $request->ids, [
-            'type' => $request->filter_type,
-            'date_range' => $request->date_range,
+        $count = NotificationService::bulkDelete($user, $validated['ids'], [
+            'source' => 'api_bulk_delete',
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => "{$count} notifications deleted"
+            'message' => "{$count} notifications deleted",
+            'count' => $count,
         ]);
     }
 
     /**
-     * Track notification click (public endpoint for email links)
-     * GET /api/v1/notifications/track-click/{notificationId}
+     * Bulk archive
      */
-    public function trackClick(Request $request, $notificationId)
+    public function bulkArchive(Request $request)
     {
-        $redirectUrl = $request->get('redirect', '/');
+        $user = Auth::user();
 
-        NotificationService::trackClick(
-            $notificationId,
-            $request->get('channel', 'email'),
-            $redirectUrl,
-            $request->ip()
-        );
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:notifications,id',
+        ]);
 
-        return redirect($redirectUrl);
+        $count = Notification::whereIn('id', $validated['ids'])
+            ->where('user_id', $user->id)
+            ->update([
+                'is_archived' => true,
+                'is_pinned' => false,
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$count} notifications archived",
+            'count' => $count,
+        ]);
     }
 
     /**
-     * Get notification tracking pixel (for email opens)
-     * GET /api/v1/notifications/pixel/{notificationId}
+     * Bulk mark as read
      */
-    public function trackingPixel(Request $request, $notificationId)
+    public function bulkMarkRead(Request $request)
     {
-        NotificationService::trackOpen(
-            $notificationId,
-            'email',
-            $request->ip(),
-            'email_client'
-        );
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:notifications,id',
+        ]);
+
+        $count = Notification::whereIn('id', $validated['ids'])
+            ->where('user_id', $user->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$count} notifications marked as read",
+            'count' => $count,
+            'unread_count' => NotificationService::getUnreadCount($user),
+        ]);
+    }
+
+    /**
+     * Get unread count
+     */
+    public function getUnreadCount()
+    {
+        $user = Auth::user();
+        $count = NotificationService::getUnreadCount($user);
+
+        // Get counts by priority
+        $urgentCount = Notification::where('user_id', $user->id)
+            ->whereNull('read_at')
+            ->unarchived()
+            ->byPriority('urgent')
+            ->count();
+
+        return response()->json([
+            'unread_count' => $count,
+            'urgent_count' => $urgentCount,
+        ]);
+    }
+
+    /**
+     * Track click (public endpoint with signed URL)
+     */
+    public function trackClick(Request $request, $notificationId)
+    {
+        $notification = Notification::where('notification_id', $notificationId)->first();
+
+        if (!$notification) {
+            return redirect('/notifications');
+        }
+
+        $clickedUrl = $request->get('url', $notification->action_url ?? '/notifications');
+        
+        NotificationService::trackClick($notificationId, 'email', $clickedUrl, $request->ip());
+
+        return redirect($clickedUrl);
+    }
+
+    /**
+     * Tracking pixel (for email opens)
+     */
+    public function trackingPixel($notificationId)
+    {
+        $notification = Notification::where('notification_id', $notificationId)->first();
+
+        if ($notification) {
+            NotificationService::trackOpen($notificationId, 'email', request()->ip());
+        }
 
         // Return 1x1 transparent GIF
-        $pixel = base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
-        
-        return response($pixel, 200)
+        return response(base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'))
             ->header('Content-Type', 'image/gif')
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+
+    /**
+     * Format notification for API response
+     */
+    private function formatNotification(Notification $n, bool $full = false): array
+    {
+        $data = [
+            'id' => $n->id,
+            'notification_id' => $n->notification_id,
+            'type' => $n->type,
+            'priority' => $n->priority,
+            'title' => $n->title,
+            'message' => $n->message,
+            'is_read' => $n->isRead,
+            'is_archived' => $n->is_archived,
+            'is_pinned' => $n->is_pinned,
+            'read_at' => $n->read_at?->toIso8601String(),
+            'created_at' => $n->created_at->toIso8601String(),
+            'time_ago' => $n->timeAgo,
+            'icon' => [
+                'type' => $n->icon_type,
+                'color' => $n->icon_color,
+                'gradient' => $n->icon_gradient,
+            ],
+            'action' => [
+                'url' => $n->action_url,
+                'text' => $n->action_text,
+            ],
+        ];
+
+        // Include metadata and actions if available
+        if ($n->metadata) {
+            $data['metadata'] = $n->metadata;
+        }
+        if ($n->actions) {
+            $data['actions'] = $n->actions;
+        }
+
+        // Full details for single view
+        if ($full) {
+            $data['audit_log'] = $n->audit_log;
+            $data['channel'] = $n->channel;
+            $data['delivery_status'] = $n->delivery_status;
+            $data['sent_at'] = $n->sent_at?->toIso8601String();
+            $data['delivered_at'] = $n->delivered_at?->toIso8601String();
+            $data['clicked_at'] = $n->clicked_at?->toIso8601String();
+            $data['open_count'] = $n->open_count;
+            $data['click_count'] = $n->click_count;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Track delivery (from service worker push)
+     */
+    public function trackDelivery(Request $request, $notificationId)
+    {
+        $notification = Notification::where('notification_id', $notificationId)->first();
+
+        if (!$notification) {
+            return response()->json(['success' => false, 'message' => 'Not found'], 404);
+        }
+
+        NotificationService::trackDelivery($notificationId, $request->ip());
+
+        return response()->json(['success' => true]);
     }
 }

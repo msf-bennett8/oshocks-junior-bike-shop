@@ -74,5 +74,6 @@ class Kernel extends HttpKernel
         'api.rate' => \App\Http\Middleware\ApiRateLimiter::class,
         'security.monitor' => \App\Http\Middleware\SecurityMonitoringMiddleware::class,
         'query.monitor' => \App\Http\Middleware\PrivilegedQueryMonitoringMiddleware::class,
+        'notification.rate' => \App\Http\Middleware\NotificationRateLimit::class,
     ];
 }
