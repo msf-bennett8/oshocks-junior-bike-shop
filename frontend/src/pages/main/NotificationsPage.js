@@ -25,6 +25,24 @@ import { logFrontendAuditEvent, AUDIT_EVENTS } from '../../utils/auditUtils';
 // Version: 3.0 - With Real-time Features & Modern UI
 // ============================================================================
 
+// ============================================================================
+// ICON MAPPING - Map string names to actual icon components
+// ============================================================================
+const iconMap = {
+  TrendingDown, Users, Zap, AlertTriangle, PackageCheck, FileText, Shield,
+  Megaphone, Wallet, Heart, AlertCircle, Store, Star, Bell, ShoppingBag,
+  Truck, CreditCard, Tag, MessageSquare, Gift, CheckCircle, X, Settings,
+  Trash2, MailOpen, Clock, ArrowLeft, Sparkles, Archive, Volume2, VolumeX,
+  Smartphone, Mail, CheckSquare, Square, RefreshCw, Download, BellRing,
+  MapPin, TrendingUp, User, Calendar, Clock3, CheckCheck, Trash, ExternalLink,
+  Pin, PinOff, History, Boxes, Receipt, BarChart3, Package, PackageX,
+  PackageOpen, Clock4, Timer, CalendarDays, ArrowUpRight, ArrowDownRight,
+  MoreVertical, Flag, Bookmark, BookmarkX, Send, Reply, ThumbsUp, ThumbsDown,
+  LayoutGrid, List, Search, Filter, ChevronDown, MoreHorizontal, Eye,
+  ChevronRight, Share2, Printer, Copy, XCircle, Info, FileText, TruckIcon,
+  Check, Pin, PinOff
+};
+
 const NotificationsPage = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -175,7 +193,7 @@ const NotificationsPage = () => {
     { 
       id: 'wishlist', 
       label: 'Wishlist', 
-      icon: Heart, 
+      iconName: 'Heart', 
       color: 'pink',
       gradient: 'from-pink-500 to-pink-600',
       description: 'Price drops & back in stock'
@@ -237,7 +255,7 @@ const NotificationsPage = () => {
       isRead: false,
       isArchived: false,
       isPinned: true,
-      icon: TrendingDown,
+      iconName: 'TrendingDown',
       iconColor: 'text-red-600',
       iconBg: 'bg-red-100',
       iconGradient: 'from-red-400 to-red-600',
@@ -278,7 +296,7 @@ const NotificationsPage = () => {
       isRead: false,
       isArchived: false,
       isPinned: false,
-      icon: Users,
+      iconName: 'Users',
       iconColor: 'text-emerald-600',
       iconBg: 'bg-emerald-100',
       iconGradient: 'from-emerald-400 to-emerald-600',
@@ -316,7 +334,7 @@ const NotificationsPage = () => {
       timestamp: new Date(Date.now() - 1000 * 60 * 30),
       isRead: false,
       isArchived: false,
-      icon: Zap,
+      iconName: 'Zap',
       iconColor: 'text-violet-600',
       iconBg: 'bg-violet-100',
       iconGradient: 'from-violet-400 to-violet-600',
@@ -348,7 +366,7 @@ const NotificationsPage = () => {
       timestamp: new Date(Date.now() - 1000 * 60 * 45),
       isRead: false,
       isArchived: false,
-      icon: AlertTriangle,
+      iconName: 'AlertTriangle',
       iconColor: 'text-orange-600',
       iconBg: 'bg-orange-100',
       iconGradient: 'from-orange-400 to-orange-600',
@@ -387,7 +405,7 @@ const NotificationsPage = () => {
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
       isRead: false,
       isArchived: false,
-      icon: PackageCheck,
+      iconName: 'PackageCheck',
       iconColor: 'text-cyan-600',
       iconBg: 'bg-cyan-100',
       iconGradient: 'from-cyan-400 to-cyan-600',
@@ -425,7 +443,7 @@ const NotificationsPage = () => {
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3),
       isRead: true,
       isArchived: false,
-      icon: FileText,
+      iconName: 'FileText',
       iconColor: 'text-slate-600',
       iconBg: 'bg-slate-100',
       iconGradient: 'from-slate-400 to-slate-600',
@@ -463,7 +481,7 @@ const NotificationsPage = () => {
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4),
       isRead: false,
       isArchived: false,
-      icon: Shield,
+      iconName: 'Shield',
       iconColor: 'text-slate-600',
       iconBg: 'bg-slate-100',
       iconGradient: 'from-slate-400 to-slate-600',
@@ -500,7 +518,7 @@ const NotificationsPage = () => {
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
       isRead: false,
       isArchived: false,
-      icon: Megaphone,
+      iconName: 'Megaphone',
       iconColor: 'text-cyan-600',
       iconBg: 'bg-cyan-100',
       iconGradient: 'from-cyan-400 to-cyan-600',
@@ -538,7 +556,7 @@ const NotificationsPage = () => {
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6),
       isRead: true,
       isArchived: false,
-      icon: Wallet,
+      iconName: 'Wallet',
       iconColor: 'text-amber-600',
       iconBg: 'bg-amber-100',
       iconGradient: 'from-amber-400 to-amber-600',
@@ -575,7 +593,7 @@ const NotificationsPage = () => {
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8),
       isRead: false,
       isArchived: false,
-      icon: Heart,
+      iconName: 'Heart',
       iconColor: 'text-pink-600',
       iconBg: 'bg-pink-100',
       iconGradient: 'from-pink-400 to-pink-600',
@@ -603,7 +621,7 @@ const NotificationsPage = () => {
       timestamp: new Date(Date.now() - 1000 * 60 * 30),
       isRead: false,
       isArchived: false,
-      icon: AlertCircle,
+      iconName: 'AlertCircle',
       iconColor: 'text-indigo-600',
       iconBg: 'bg-indigo-100',
       iconGradient: 'from-indigo-400 to-indigo-600',
@@ -630,7 +648,7 @@ const NotificationsPage = () => {
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12),
       isRead: true,
       isArchived: false,
-      icon: Store,
+      iconName: 'Store',
       iconColor: 'text-emerald-600',
       iconBg: 'bg-emerald-100',
       iconGradient: 'from-emerald-400 to-emerald-600',
@@ -654,7 +672,7 @@ const NotificationsPage = () => {
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
       isRead: true,
       isArchived: false,
-      icon: Star,
+      iconName: 'Star',
       iconColor: 'text-yellow-600',
       iconBg: 'bg-yellow-100',
       iconGradient: 'from-yellow-400 to-yellow-600',
@@ -909,7 +927,7 @@ const NotificationsPage = () => {
     if (!selectedNotification) return null;
     
     const n = selectedNotification;
-    const Icon = n.icon;
+    const Icon = iconMap[n.iconName] || Bell;
     
     return (
       <AnimatePresence>
@@ -1629,7 +1647,7 @@ const NotificationsPage = () => {
             }}
           >
             {categories.map((category) => {
-              const Icon = category.icon;
+              const Icon = category.icon || Bell;
               const count = category.id === 'all' 
                 ? notifications.filter(n => !n.isArchived).length
                 : notifications.filter(n => n.type === category.id && !n.isArchived).length;
@@ -1754,7 +1772,7 @@ const NotificationsPage = () => {
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
               {filteredNotifications.map((notification, index) => {
-                const Icon = notification.icon;
+                const Icon = iconMap[notification.iconName] || Bell;
                 const isSelected = selectedNotifications.includes(notification.id);
                 const isLast = index === filteredNotifications.length - 1;
 
@@ -1888,23 +1906,12 @@ const NotificationsPage = () => {
                             {/* More Actions - Fixed for mobile touch */}
                             <div className="relative group/actions" onClick={(e) => e.stopPropagation()}>
                               <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // Toggle dropdown visibility via state or CSS class
-                                  const dropdown = e.currentTarget.nextElementSibling;
-                                  if (dropdown) {
-                                    dropdown.classList.toggle('opacity-0');
-                                    dropdown.classList.toggle('invisible');
-                                    dropdown.classList.toggle('opacity-100');
-                                    dropdown.classList.toggle('visible');
-                                  }
-                                }}
-                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors touch-manipulation"
+                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors touch-manipulation group-hover/actions:text-gray-600"
                                 style={{ WebkitTapHighlightColor: 'transparent' }}
                               >
                                 <MoreHorizontal className="w-5 h-5 pointer-events-none" />
                               </button>
-                              <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 opacity-0 invisible transition-all z-50 group-hover/actions:opacity-100 group-hover/actions:visible sm:group-hover/actions:opacity-100 sm:group-hover/actions:visible data-[open=true]:opacity-100 data-[open=true]:visible">
+                              <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 opacity-0 invisible transition-all z-50 group-hover/actions:opacity-100 group-hover/actions:visible">
                                 <button
                                   onClick={(e) => { e.stopPropagation(); markAsUnread([notification.id]); }}
                                   className="w-full px-4 py-3 sm:py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 active:bg-gray-100"
@@ -1942,7 +1949,7 @@ const NotificationsPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <AnimatePresence mode="popLayout">
               {filteredNotifications.map((notification, index) => {
-                const Icon = notification.icon;
+                const Icon = iconMap[notification.iconName] || Bell;
                 const isSelected = selectedNotifications.includes(notification.id);
                 const category = categories.find(c => c.id === notification.type);
                 const isLast = index === filteredNotifications.length - 1;
