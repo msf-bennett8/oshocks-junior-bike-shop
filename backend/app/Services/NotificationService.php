@@ -98,6 +98,44 @@ class NotificationService
     }
 
     /**
+     * Create a notification record (used by AuditNotificationService)
+     */
+    public static function createNotification(
+        User $user, 
+        string $type, 
+        string $title, 
+        string $message, 
+        array $data = []
+    ): Notification
+    {
+        $notificationId = 'ntf_' . Str::random(16);
+        
+        return Notification::create([
+            'notification_id' => $notificationId,
+            'user_id' => $user->id,
+            'type' => $type,
+            'channel' => $data['channel'] ?? 'in_app',
+            'title' => $title,
+            'message' => $message,
+            'data' => $data['data'] ?? [],
+            'metadata' => $data['metadata'] ?? null,
+            'priority' => $data['priority'] ?? 'normal',
+            'action_url' => $data['action_url'] ?? null,
+            'action_text' => $data['action_text'] ?? null,
+            'icon_type' => $data['icon_type'] ?? null,
+            'icon_color' => $data['icon_color'] ?? null,
+            'icon_gradient' => $data['icon_gradient'] ?? null,
+            'is_pinned' => $data['is_pinned'] ?? false,
+            'actions' => $data['actions'] ?? null,
+            'audit_log' => $data['audit_log'] ?? null,
+            'template_id' => $data['template_id'] ?? null,
+            'scheduled_for' => $data['scheduled_for'] ?? null,
+            'expires_at' => $data['expires_at'] ?? null,
+            'delivery_status' => $data['delivery_status'] ?? 'pending',
+        ]);
+    }
+
+    /**
      * Send notification using template
      */
     public static function sendFromTemplate(User $user, string $templateKey, array $variables = [], string $channel = 'in_app', array $overrides = []): array
@@ -690,64 +728,6 @@ class NotificationService
             'quiet_hours_enabled' => config('notifications.default_preferences.quiet_hours.enabled'),
             'quiet_hours_start' => config('notifications.default_preferences.quiet_hours.start'),
             'quiet_hours_end' => config('notifications.default_preferences.quiet_hours.end'),
-        ]);
-    }
-
-        /**
-     * Track notification click (matches your AuditService signature)
-     */
-    public static function trackClick(string $notificationId, string $channel, string $clickedUrl, ?string $ipAddress = null): void
-    {
-        $notification = \App\Models\Notification::where('notification_id', $notificationId)->first();
-        
-        if (!$notification) {
-            \Illuminate\Support\Facades\Log::warning('Notification not found for click tracking', ['id' => $notificationId]);
-            return;
-        }
-
-        $notification->markAsClicked($clickedUrl);
-
-        // Use your AuditService signature
-        \App\Services\AuditService::logNotificationClicked($notification->user, [
-            'notification_id' => $notificationId,
-            'channel' => $channel,
-            'clicked_url' => $clickedUrl,
-            'timestamp' => now()->toIso8601String(),
-            'ip_address' => $ipAddress,
-        ]);
-    }
-
-    /**
-     * Track notification open (email pixel or push delivery)
-     */
-    public static function trackOpen(string $notificationId, string $channel, ?string $ipAddress = null, ?string $deviceType = null): void
-    {
-        $notification = \App\Models\Notification::where('notification_id', $notificationId)->first();
-        
-        if (!$notification || $notification->opened_at) {
-            return;
-        }
-
-        $notification->markAsOpened();
-
-        // Use your AuditService pattern
-        \App\Services\AuditService::log([
-            'event_type' => 'NOTIFICATION_OPENED',
-            'event_category' => 'notification',
-            'actor_type' => 'USER',
-            'user_id' => $notification->user_id,
-            'action' => 'opened',
-            'model_type' => 'Notification',
-            'model_id' => $notificationId,
-            'description' => "Notification opened via {$channel}",
-            'severity' => 'LOW',
-            'tier' => 'TIER_2_OPERATIONAL',
-            'metadata' => [
-                'notification_id' => $notificationId,
-                'channel' => $channel,
-                'device_type' => $deviceType ?? 'unknown',
-                'ip_address' => $ipAddress,
-            ],
         ]);
     }
 

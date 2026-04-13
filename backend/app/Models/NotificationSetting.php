@@ -21,6 +21,48 @@ class NotificationSetting extends Model
         'sound_enabled',
     ];
 
+    protected $attributes = [
+        'channel_preferences' => null,
+        'category_preferences' => null,
+        'quiet_hours_enabled' => false,
+        'quiet_hours_start' => '22:00',
+        'quiet_hours_end' => '07:00',
+        'timezone' => 'Africa/Nairobi',
+        'desktop_notifications' => false,
+        'sound_enabled' => false,
+    ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (is_null($model->channel_preferences)) {
+                $model->channel_preferences = [
+                    'push' => true,
+                    'email' => true,
+                    'sms' => false,
+                    'in_app' => true
+                ];
+            }
+            if (is_null($model->category_preferences)) {
+                $model->category_preferences = [
+                    'orders' => ['enabled' => true, 'push' => true, 'email' => true],
+                    'shipping' => ['enabled' => true, 'push' => true, 'email' => true],
+                    'payments' => ['enabled' => true, 'push' => true, 'email' => true],
+                    'promotions' => ['enabled' => true, 'push' => false, 'email' => true],
+                    'wishlist' => ['enabled' => true, 'push' => false, 'email' => false],
+                    'messages' => ['enabled' => true, 'push' => true, 'email' => false],
+                    'reviews' => ['enabled' => true, 'push' => false, 'email' => true],
+                    'system' => ['enabled' => true, 'push' => true, 'email' => true],
+                    'inventory' => ['enabled' => true, 'push' => true, 'email' => true],
+                    'audit' => ['enabled' => true, 'push' => false, 'email' => true],
+                    'admin' => ['enabled' => true, 'push' => true, 'email' => true]
+                ];
+            }
+        });
+    }
+
     protected $casts = [
         'channel_preferences' => 'array',
         'category_preferences' => 'array',

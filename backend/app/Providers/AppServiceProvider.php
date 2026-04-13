@@ -23,6 +23,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(CloudinaryService::class, function ($app) {
             return new CloudinaryService();
         });
+
+        // Register notification rate limiter middleware
+        $this->app->singleton('notification.rate', function ($app) {
+            return new \App\Http\Middleware\NotificationRateLimiter();
+        });
     }
 
     /**
