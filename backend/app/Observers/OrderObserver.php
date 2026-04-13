@@ -22,7 +22,7 @@ class OrderObserver
     public function created(Order $order): void
     {
         // Fire OrderPlaced event
-        OrderPlaced::dispatch($order->user, $order, [
+        OrderPlaced::dispatch($order, [
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);
