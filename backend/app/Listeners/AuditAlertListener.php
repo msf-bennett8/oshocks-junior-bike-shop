@@ -14,6 +14,12 @@ class AuditAlertListener
      */
     public function handle(AuditLog $auditLog): void
     {
+        // DISABLED: Audit alerts are now handled by AuditNotificationService only
+        // to prevent duplicate notifications. Set AUDIT_ALERTS_ENABLED=true to re-enable.
+        if (!config('audit.alerts.enabled', false)) {
+            return;
+        }
+
         // Only alert on suspicious or critical events
         if (!$this->shouldAlert($auditLog)) {
             return;

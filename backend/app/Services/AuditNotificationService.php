@@ -65,10 +65,20 @@ class AuditNotificationService
      */
     public static function convertAuditToNotification(array $auditData): ?Notification
     {
+        // CHECK IF AUDIT NOTIFICATIONS ARE ENABLED
+        if (!config('audit.notifications.enabled', false)) {
+            return null;
+        }
+
         $eventType = $auditData['event_type'] ?? '';
         
         // Only process critical events
         if (!in_array($eventType, self::CRITICAL_EVENTS)) {
+            return null;
+        }
+
+        // If only_urgent is set, skip non-urgent events
+        if (config('audit.notifications.only_urgent', true) && !in_array($eventType, self::URGENT_EVENTS)) {
             return null;
         }
 

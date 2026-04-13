@@ -706,7 +706,8 @@ const NotificationsPage = () => {
     Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
     
     refresh(params);
-  }, [filter, searchQuery, dateFilter, sortBy, refresh]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, searchQuery, dateFilter, sortBy]);
 
   useEffect(() => {
     loadPreferences();
@@ -950,31 +951,38 @@ const NotificationsPage = () => {
               className="fixed inset-4 sm:inset-auto sm:bottom-6 sm:right-6 sm:top-auto sm:left-auto sm:w-full sm:max-w-2xl sm:max-h-[calc(100vh-100px)] bg-white rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col"
             >
               {/* Modal Header */}
-              <div className={`bg-gradient-to-r ${n.iconGradient} p-6 text-white flex-shrink-0`}>
+              <div 
+                className="p-6 text-white flex-shrink-0"
+                style={{ 
+                  background: n.iconGradient 
+                    ? `linear-gradient(to right, ${n.iconGradient.includes('from-') ? 'var(--tw-gradient-from)' : '#f97316'}, ${n.iconGradient.includes('to-') ? 'var(--tw-gradient-to)' : '#ea580c'})`
+                    : 'linear-gradient(to right, #f97316, #ea580c)'
+                }}
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
-                      <Icon className="w-7 h-7" />
+                    <div className="w-14 h-14 bg-black/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                      <Icon className="w-7 h-7 text-white" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <h2 className="text-xl font-bold">{n.title}</h2>
-                        {n.isPinned && <Pin className="w-5 h-5 fill-current" />}
+                        <h2 className="text-xl font-bold text-white drop-shadow-sm">{n.title}</h2>
+                        {n.isPinned && <Pin className="w-5 h-5 fill-current text-white drop-shadow-sm" />}
                       </div>
-                      <p className="text-white/80 text-sm flex items-center gap-2">
+                      <p className="text-white/90 text-sm flex items-center gap-2 drop-shadow-sm">
                         <Clock className="w-4 h-4" />
                         {formatTimestamp(n.timestamp)}
                         {n.priority === 'urgent' && (
-                          <span className="bg-red-500/80 px-2 py-0.5 rounded text-xs">URGENT</span>
+                          <span className="bg-red-600 text-white px-2 py-0.5 rounded text-xs font-bold shadow-sm">URGENT</span>
                         )}
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={closeModal}
-                    className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                    className="p-2 hover:bg-black/20 rounded-lg transition-colors bg-black/10"
                   >
-                    <X className="w-6 h-6" />
+                    <X className="w-6 h-6 text-white drop-shadow-sm" />
                   </button>
                 </div>
               </div>
@@ -2127,7 +2135,7 @@ const NotificationsPage = () => {
         {filteredNotifications.length > 0 && hasMore && (
           <div className="mt-8 text-center">
             <button
-              onClick={() => setPage(p => p + 1)}
+              onClick={() => loadMore()}
               className="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors font-medium shadow-sm"
             >
               Load More Notifications

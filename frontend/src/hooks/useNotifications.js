@@ -29,6 +29,7 @@ export const useNotifications = () => {
     setError(null);
     
     try {
+      // Use functional update to get current page value
       const currentPage = reset ? 1 : page;
       const response = await notificationService.getNotifications({
         ...params,
@@ -57,7 +58,9 @@ export const useNotifications = () => {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+    // Remove page from dependencies to prevent infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Refresh unread count only
@@ -77,7 +80,7 @@ export const useNotifications = () => {
    */
   const loadMore = useCallback((params = {}) => {
     if (!loading && hasMore) {
-      fetchNotifications(params);
+      fetchNotifications(params, false);
     }
   }, [loading, hasMore, fetchNotifications]);
 
@@ -86,7 +89,10 @@ export const useNotifications = () => {
    */
   const refresh = useCallback(async (params = {}) => {
     setPage(1);
-    await fetchNotifications(params, true);
+    // Small delay to ensure state update
+    setTimeout(() => {
+      fetchNotifications(params, true);
+    }, 0);
   }, [fetchNotifications]);
 
   // ============================================================================

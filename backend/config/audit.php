@@ -148,10 +148,25 @@ return [
     |--------------------------------------------------------------------------
     */
     'alerts' => [
-        'enabled' => env('AUDIT_ALERTS_ENABLED', true),
+        'enabled' => env('AUDIT_ALERTS_ENABLED', false),  // DISABLED - was creating too many notifications
         'email_recipients' => explode(',', env('AUDIT_ALERT_EMAILS', '')),
         'webhook_url' => env('AUDIT_ALERT_WEBHOOK'),
         'sms_numbers' => explode(',', env('AUDIT_ALERT_SMS', '')),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Notification Conversion Settings
+    |--------------------------------------------------------------------------
+    |
+    | Controls whether audit events are converted to in-app notifications.
+    | Disable to prevent notification spam from audit logs.
+    |
+    */
+    'notifications' => [
+        'enabled' => env('AUDIT_NOTIFICATIONS_ENABLED', false),  // DISABLED - prevents duplicate notifications
+        'only_urgent' => env('AUDIT_NOTIFICATIONS_ONLY_URGENT', true),  // Only convert URGENT events if enabled
+        'rate_limit' => env('AUDIT_NOTIFICATION_RATE_LIMIT', 10),  // Max notifications per hour
     ],
 
 ];
