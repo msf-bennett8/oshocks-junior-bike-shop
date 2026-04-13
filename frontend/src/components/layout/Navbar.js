@@ -30,7 +30,7 @@ const Navbar = () => {
   const [elevationPassword, setElevationPassword] = useState('');
   const [isElevating, setIsElevating] = useState(false);
   const [elevationError, setElevationError] = useState('');
-
+  
   const { isAuthenticated, user, logout, isSuperAdmin, switchRole, resetRole, getEffectiveRole, getUserWithEffectiveRole, switchedRole, availableRoles } = useAuth();
   const { cartItems } = useCart();
   const { wishlistCount } = useWishlist();
@@ -324,11 +324,11 @@ const Navbar = () => {
         }
         .animate-fade-in { animation: fade-in 0.2s ease-out; }
         
-        @keyframes slide-in-left {
-          from { opacity: 0; transform: translateX(-100%); }
+        @keyframes slide-in-right {
+          from { opacity: 0; transform: translateX(100%); }
           to { opacity: 1; transform: translateX(0); }
         }
-        .animate-slide-in-left { animation: slide-in-left 0.3s ease-out; }
+        .animate-slide-in-right { animation: slide-in-right 0.3s ease-out; }
         
         @keyframes bounce-in {
           0% { transform: scale(0); }
@@ -520,6 +520,23 @@ const Navbar = () => {
                         <Settings size={18} className="text-gray-600" />
                         <span className="text-gray-900">Settings</span>
                       </button>
+                      
+                      {/* Admin Alerts - Mobile Only */}
+                      {(user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'owner') && (
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setShowProfileMenu(false);
+                            // Open admin alerts modal via global event or navigate to admin alerts page
+                            window.dispatchEvent(new CustomEvent('open-admin-alerts'));
+                          }}
+                          className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors w-full text-left"
+                        >
+                          <Shield size={18} className="text-gray-600" />
+                          <span className="text-gray-900">Admin Alerts</span>
+                        </button>
+                      )}
+                      
                       <hr className="my-2" />
                       <button 
                         onClick={(e) => { e.stopPropagation(); handleLogout(); setShowProfileMenu(false); }} 
@@ -671,21 +688,10 @@ const Navbar = () => {
                 </div>
               )}
 
-              {/* SuperAdmin Notification Center - Only for admins */}
+              {/* SuperAdmin Notification Center - Only for admins - Always render for mobile event handling */}
               {isAuthenticated && (user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'owner') && (
-                <div className="hidden md:block">
-                  <SuperAdminNotificationCenter />
-                </div>
+                <SuperAdminNotificationCenter />
               )}
-
-              {/* Hamburger - Opens Left Sidebar - Mobile/Tablet only */}
-              <button
-                onClick={() => setIsSidebarOpen(true)}
-                className="lg:hidden p-2 sm:p-2.5 hover:bg-gray-100 rounded-lg transition-colors mr-2"
-                aria-label="Menu"
-              >
-                <Menu className="w-6 h-6 text-gray-700" />
-              </button>
 
               {/* Shop Now Button - Desktop only */}
               <Link
@@ -695,6 +701,15 @@ const Navbar = () => {
                 Shop Now
                 <ArrowRight className="w-4 h-4" />
               </Link>
+
+              {/* Hamburger - Opens Right Sidebar - Moved after Shop Now */}
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 sm:p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Menu"
+              >
+                <Menu className="w-6 h-6 text-gray-700" />
+              </button>
             </div>
           </div>
         </div>
@@ -767,7 +782,7 @@ const Navbar = () => {
         <SearchBar onClose={() => setIsSearchOpen(false)} variant="overlay" />
       )}
 
-      {/* Left Sidebar - Desktop & Mobile */}
+      {/* Right Sidebar - Desktop & Mobile */}
       <div
         className={`fixed inset-0 bg-black z-50 transition-opacity duration-300 ${
           isSidebarOpen ? 'bg-opacity-50' : 'bg-opacity-0 pointer-events-none'
@@ -776,8 +791,8 @@ const Navbar = () => {
       >
         <div
           ref={sidebarRef}
-          className={`fixed top-0 left-0 h-full w-80 max-w-[85%] bg-white shadow-2xl transform transition-transform duration-300 overflow-y-auto z-50 ${
-            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          className={`fixed top-0 right-0 h-full w-80 max-w-[85%] bg-white shadow-2xl transform transition-transform duration-300 overflow-y-auto z-50 ${
+            isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
           onClick={(e) => e.stopPropagation()}
         >
@@ -788,8 +803,8 @@ const Navbar = () => {
               background: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)',
             }}
           >
-            <div className="flex items-start justify-between flex-row-reverse">
-              <div className="flex items-center gap-3 flex-row-reverse">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
                 {/* Logo - same height as greeting text */}
                 <div 
                   className="rounded-lg flex items-end justify-start p-1.5 flex-shrink-0"

@@ -4,7 +4,7 @@ import {
   ShoppingBag, Truck, DollarSign, AlertCircle, Info, Package,
   CreditCard, Tag, Heart, MessageSquare, Sparkles, Shield,
   TrendingDown, Users, FileText, Megaphone, Wallet, Pin,
-  RefreshCw, CheckCheck, Archive
+  RefreshCw, CheckCheck, Archive, CheckCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { logFrontendAuditEvent, AUDIT_EVENTS } from '../../utils/auditUtils';
@@ -187,60 +187,80 @@ const NotificationCenter = () => {
         )}
       </button>
 
-      {/* Dropdown */}
+      {/* Dropdown/Modal */}
       {isOpen && (
         <>
           <div 
-            className="fixed inset-0 z-40" 
+            className="fixed inset-0 z-40 bg-black/50 md:bg-transparent" 
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
+          <div className="fixed md:absolute inset-x-4 md:inset-x-auto md:right-0 top-20 md:top-full md:mt-2 w-auto md:w-[480px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden max-h-[80vh] md:max-h-none">
             {/* Header */}
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <div className="bg-gradient-to-r from-slate-800 to-slate-900 p-4 text-white flex items-center justify-between">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Bell className="w-5 h-5 text-cyan-400" />
                 Notifications
-                {loading && <RefreshCw className="w-4 h-4 animate-spin text-gray-400" />}
+                {loading && <RefreshCw className="w-4 h-4 animate-spin text-slate-400" />}
               </h3>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => refresh({ archived: false }, true)}
-                  className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600"
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
                   title="Refresh"
                 >
                   <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 </button>
                 <button
                   onClick={handleMarkAllAsRead}
-                  className="text-xs text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
+                  className="text-xs text-cyan-400 hover:text-cyan-300 font-medium disabled:opacity-50 px-2 py-1"
                   disabled={unreadCount === 0}
                 >
                   Mark all read
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-1 hover:bg-gray-100 rounded"
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
                 >
-                  <X size={16} />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
             {/* Filters */}
-            <div className="flex gap-1 p-2 border-b border-gray-200 overflow-x-auto">
-              {['all', 'unread', 'order', 'payment', 'shipping'].map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={`px-3 py-1 text-xs font-medium rounded-full capitalize whitespace-nowrap ${
-                    filter === f 
-                      ? 'bg-blue-100 text-blue-700' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {f === 'all' ? 'All' : f}
-                  {f === 'unread' && unreadCount > 0 && ` (${unreadCount})`}
-                </button>
-              ))}
+            <div className="flex gap-1 p-3 border-b border-gray-200 bg-gray-50 overflow-x-auto">
+              {[
+                { key: 'all', label: 'All', icon: Bell },
+                { key: 'unread', label: 'Unread', icon: Info },
+                { key: 'order', label: 'Orders', icon: ShoppingBag },
+                { key: 'payment', label: 'Payment', icon: CreditCard },
+                { key: 'shipping', label: 'Shipping', icon: Truck },
+              ].map((f) => {
+                const Icon = f.icon;
+                const isActive = filter === f.key;
+                const count = f.key === 'unread' ? unreadCount : null;
+                
+                return (
+                  <button
+                    key={f.key}
+                    onClick={() => setFilter(f.key)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
+                      isActive 
+                        ? 'bg-slate-800 text-white' 
+                        : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {f.label}
+                    {count !== null && count > 0 && (
+                      <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] ${
+                        isActive ? 'bg-white/20' : 'bg-red-100 text-red-600'
+                      }`}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Notification List */}
@@ -323,24 +343,26 @@ const NotificationCenter = () => {
 
             {/* Footer */}
             <div className="p-3 border-t border-gray-200 bg-gray-50">
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  navigate('/notifications');
-                }}
-                className="w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium"
-              >
-                View all notifications
-              </button>
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  navigate('/notifications?settings=true');
-                }}
-                className="w-full text-center text-xs text-gray-500 hover:text-gray-700 mt-2"
-              >
-                Notification settings
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    navigate('/notifications');
+                  }}
+                  className="flex-1 py-2 text-center text-sm text-slate-600 hover:text-slate-800 font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+                >
+                  View All Notifications
+                </button>
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    navigate('/notifications?settings=true');
+                  }}
+                  className="flex-1 py-2 text-center text-sm text-slate-600 hover:text-slate-800 font-medium bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+                >
+                  Notification Settings
+                </button>
+              </div>
             </div>
           </div>
         </>

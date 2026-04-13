@@ -74,6 +74,16 @@ const SuperAdminNotificationCenter = () => {
     }
   }, [filter]);
 
+    // Listen for mobile menu trigger
+  useEffect(() => {
+    const handleOpenAlerts = () => {
+      setIsOpen(true);
+    };
+    
+    window.addEventListener('open-admin-alerts', handleOpenAlerts);
+    return () => window.removeEventListener('open-admin-alerts', handleOpenAlerts);
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       fetchAuditNotifications();
@@ -184,10 +194,10 @@ const SuperAdminNotificationCenter = () => {
 
   return (
     <div className="relative">
-      {/* Shield Icon with Badge */}
+      {/* Shield Icon with Badge - Desktop Only */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+        className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors hidden md:block"
         title="Admin Alerts"
       >
         <Shield className="w-6 h-6" />
@@ -201,14 +211,14 @@ const SuperAdminNotificationCenter = () => {
         )}
       </button>
 
-      {/* Dropdown */}
+      {/* Dropdown/Modal */}
       {isOpen && (
         <>
           <div 
-            className="fixed inset-0 z-40" 
+            className="fixed inset-0 z-40 bg-black/50 md:bg-transparent" 
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-[480px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
+          <div className="fixed md:absolute inset-x-4 md:inset-x-auto top-20 md:top-auto md:right-0 md:mt-2 w-auto md:w-[480px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden max-h-[80vh] md:max-h-none">
             {/* Header */}
             <div className="bg-gradient-to-r from-slate-800 to-slate-900 p-4 text-white">
               <div className="flex items-center justify-between">
