@@ -575,8 +575,8 @@ const updateQuantity = async (itemId, newQuantity) => {
     }
   };
 
-  // Get cart totals
-  const getCartTotals = () => {
+  // Get cart totals - shipping will be calculated based on location
+  const getCartTotals = (shippingCost = null) => {
     const subtotal = cartItems.reduce(
       (total, item) => total + (item.price * item.quantity),
       0
@@ -587,8 +587,8 @@ const updateQuantity = async (itemId, newQuantity) => {
       0
     );
 
-    // Calculate shipping (you can customize this logic)
-    const shipping = subtotal > 5000 ? 0 : 300; // Free shipping over KES 5000
+    // Use provided shipping cost or default to 0 (will be calculated by component)
+    const shipping = shippingCost !== null ? shippingCost : 0;
 
     // Calculate tax (if applicable)
     const taxRate = 0; // Kenya VAT already included in prices

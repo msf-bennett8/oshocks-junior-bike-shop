@@ -491,8 +491,8 @@ const OrderTracker = () => {
                     <span className="text-2xl font-bold text-orange-600">
                       {formatCurrency(
                         orderData.items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0) + 
-                        (orderData.payment.shippingCost || 0) - 
-                        (orderData.payment.discount || 0)
+                        Number(orderData.payment.shippingCost || 0) - 
+                        Number(orderData.payment.discount || 0)
                       )}
                     </span>
                   </div>

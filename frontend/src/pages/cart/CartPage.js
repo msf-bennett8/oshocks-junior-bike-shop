@@ -8,7 +8,10 @@ import {
   Trash2,
   Heart,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  CheckCircle,
+  MapPin,
+  Truck
 } from 'lucide-react';
 
 // Import your existing components
@@ -44,6 +47,13 @@ const CartPage = () => {
   const [checkingOutRecommended, setCheckingOutRecommended] = useState(null);
   const [lastDeliveryLocation, setLastDeliveryLocation] = useState(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  
+  // Location selection state (same as checkout)
+  const [selectedCounty, setSelectedCounty] = useState('');
+  const [selectedZone, setSelectedZone] = useState('');
+  const [showCountyModal, setShowCountyModal] = useState(false);
+  const [showZoneModal, setShowZoneModal] = useState(false);
+  const [availableZones, setAvailableZones] = useState([]);
     
   const [modal, setModal] = useState({
     isOpen: false,
@@ -61,9 +71,84 @@ const CartPage = () => {
     setModal(prev => ({ ...prev, isOpen: false }));
   };
 
+  // County information with descriptions
+const countyInfo = {
+  'Nairobi County': {
+    description: 'Capital city with same-day delivery available',
+    zones: 6,
+    startingFrom: 150
+  },
+  'Kiambu County': {
+    description: 'Neighboring county with reliable delivery',
+    zones: 5,
+    startingFrom: 200
+  },
+  'Machakos County': {
+    description: 'Eastern region with 2-3 day delivery',
+    zones: 2,
+    startingFrom: 1000
+  },
+  'Kajiado County': {
+    description: 'Southern region with scheduled delivery',
+    zones: 2,
+    startingFrom: 800
+  },
+  'Other (Arrange own courier)': {
+    description: 'Nationwide coverage - arrange your own courier',
+    zones: 1,
+    startingFrom: 0
+  }
+};
+
   // Calculate totals - with safe defaults
   const totalItems = cartItems?.reduce((sum, item) => sum + (item?.quantity || 0), 0) || 0;
   const subtotal = cartItems?.reduce((sum, item) => sum + (Number(item?.price || 0) * (item?.quantity || 0)), 0) || 0;
+
+  // County/Zone options with costs (same as checkout)
+  const countyZones = {
+    'Nairobi County': [
+      { name: 'Kasarani Area (0-5km)', locations: 'Kahawa West, Kahawa Sukari, Kahawa Wendani, Kasarani (parts near Mwiki), Mwiki', cost: 150 },
+      { name: 'Roysambu Area (5-10km)', locations: 'Roysambu, Garden Estate, Thome, Ruaraka, Kasarani (central), Lucky Summer, Clay City', cost: 250 },
+      { name: 'Parklands Area (10-15km)', locations: 'Pangani, Muthaiga, Parklands, Highridge, Ngara, Eastleigh, Huruma, Mathare, Kariobangi', cost: 350 },
+      { name: 'CBD & Westlands (15-25km)', locations: 'CBD, Westlands, Kilimani, Kileleshwa, Lavington, Upper Hill, South B, South C, Buru Buru, Donholm, Umoja, Embakasi, Starehe, Hurlingham, Spring Valley, Madaraka, Industrial Area, Dagoretti, Kariokor, Loresho', cost: 500 },
+      { name: 'Karen & Suburbs (25-40km)', locations: 'Karen, Langata, Runda, Gigiri, Kitisuru, Nairobi West, Ruai, Utawala, Syokimau', cost: 700 },
+      { name: 'Outer Limits (40-50km)', locations: 'Ngong (Nairobi side), Mlolongo (Nairobi side)', cost: 1000 }
+    ],
+    'Machakos County': [
+      { name: 'Zone 1 (40-60km)', locations: 'Mlolongo (Machakos side), Athi River (Machakos side), Katani', cost: 1000 },
+      { name: 'Zone 2 (60-80km)', locations: 'Machakos Town, Tala, Kangundo', cost: 1500 }
+    ],
+    'Kiambu County': [
+      { name: 'Githurai Area (0-10km)', locations: 'Githurai 44, Githurai 45, Zimmerman, Kiambu Town, Thindigua, Ridgeways', cost: 200 },
+      { name: 'Ruiru Area (10-20km)', locations: 'Ruiru Town, Juja Road, Bypass (Kiambu Road), Cianda, Village Market area, Ndumberi, Membley', cost: 350 },
+      { name: 'Ruaka & Kikuyu (20-30km)', locations: 'Ruaka, Rosslyn, Limuru, Kikuyu, Kabete, Banana Hill, Wangige', cost: 500 },
+      { name: 'Thika Town (30-45km)', locations: 'Thika Town, Juja Town, Kalimoni, Gatuanyaga, Makongeni (Thika), Gatundu', cost: 700 },
+      { name: 'Far Kiambu (45km+)', locations: 'Gatanga, Githunguri, Lari, Karuri (far areas)', cost: 1000 }
+    ],
+    'Kajiado County': [
+      { name: 'Zone 1 (35-50km)', locations: 'Kitengela, Ongata Rongai', cost: 800 },
+      { name: 'Zone 2 (50-70km)', locations: 'Ngong (Kajiado side), Kiserian, Kajiado Town', cost: 1200 }
+    ],
+    'Other (Arrange own courier)': [
+      { name: 'Self-arranged courier service', locations: 'Contact us at +254 700 000 000 for packaging assistance', cost: 0 }
+    ]
+  };
+
+  // Calculate shipping cost based on selected location
+  const shippingCost = (() => {
+    const FREE_SHIPPING_THRESHOLD = 5000;
+    if (subtotal >= FREE_SHIPPING_THRESHOLD) return 0;
+    if (!selectedZone || !selectedCounty) return null; // TBD
+    
+    const zones = countyZones[selectedCounty];
+    if (!zones) return null;
+    
+    const zoneName = selectedZone.split(' - ')[0];
+    const zone = zones.find(z => z.name === zoneName);
+    return zone?.cost || 0;
+  })();
+
+  const hasLocation = selectedCounty && selectedZone;
 
   // Show notification
   const showNotification = (message, type = 'success') => {
@@ -117,6 +202,16 @@ const CartPage = () => {
 
   // Handle checkout
   const handleCheckout = () => {
+    // Save selected location to localStorage for checkout page
+    if (selectedCounty && selectedZone) {
+      const locationData = {
+        county: selectedCounty,
+        zone: selectedZone,
+        shippingCost: shippingCost,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('cartSelectedLocation', JSON.stringify(locationData));
+    }
     navigate('/checkout');
   };
 
@@ -160,13 +255,37 @@ const CartPage = () => {
     loadLastDeliveryLocation();
   }, []);
 
-  // Load user's last delivery location
+  // Load user's last delivery location (same pattern as checkout)
   const loadLastDeliveryLocation = async () => {
     setIsLoadingLocation(true);
     try {
       const response = await orderService.getLastDeliveryLocation();
+      
       if (response.success && response.data) {
-        setLastDeliveryLocation(response.data);
+        const location = response.data;
+        setLastDeliveryLocation(location);
+        
+        // Auto-select county and zone (same logic as checkout)
+        if (countyZones[location.county]) {
+          setSelectedCounty(location.county);
+          setAvailableZones(countyZones[location.county]);
+          
+          // Parse zone format: "Zone Name - Location" or just location
+          let matchedZone = location.zone;
+          if (location.zone && location.zone.includes(' - ')) {
+            matchedZone = location.zone; // Already in correct format
+          } else if (location.zone) {
+            // Find zone that contains this location
+            const zones = countyZones[location.county];
+            const foundZone = zones.find(z => 
+              z.locations.toLowerCase().includes(location.zone.toLowerCase())
+            );
+            if (foundZone) {
+              matchedZone = `${foundZone.name} - ${location.zone}`;
+            }
+          }
+          setSelectedZone(matchedZone);
+        }
       }
     } catch (error) {
       console.error('Error loading last delivery location:', error);
@@ -657,7 +776,13 @@ const CartPage = () => {
                   showPromoCode={true}
                   showShippingEstimate={true}
                   showPaymentMethods={false}
-                  deliveryLocation={lastDeliveryLocation ? `${lastDeliveryLocation.zone}, ${lastDeliveryLocation.county}` : null}
+                  deliveryLocation={hasLocation ? `${selectedZone}, ${selectedCounty}` : null}
+                  shippingCost={shippingCost}
+                  subtotal={subtotal}
+                  selectedCounty={selectedCounty}
+                  selectedZone={selectedZone}
+                  onChangeLocation={() => setShowCountyModal(true)}
+                  hasLocation={hasLocation}
                   sticky={false}
                 />
 
@@ -689,6 +814,195 @@ const CartPage = () => {
           </button>
         </div>
       </div>
+
+      {/* County Selection Modal */}
+      {showCountyModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-2xl font-bold">Select County/City</h3>
+                  <p className="text-orange-100 text-sm mt-1">Choose your delivery location</p>
+                </div>
+                <button
+                  onClick={() => setShowCountyModal(false)}
+                  className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+              <div className="space-y-3">
+                {Object.keys(countyZones).map((county, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCounty(county);
+                      setAvailableZones(countyZones[county] || []);
+                      setShowCountyModal(false);
+                      setShowZoneModal(true);
+                    }}
+                    className={`w-full text-left p-5 border-2 rounded-xl transition-all hover:border-orange-500 hover:shadow-lg ${
+                      selectedCounty === county
+                        ? 'border-orange-500 bg-orange-50'
+                        : 'border-gray-200 hover:bg-orange-50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      {/* Content */}
+                      <div className="flex-1">
+                        <h4 className="font-bold text-gray-900 text-lg mb-1">{county}</h4>
+                        <p className="text-sm text-gray-600 mb-2">{countyInfo[county]?.description}</p>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {countyInfo[county]?.zones} {countyInfo[county]?.zones === 1 ? 'zone' : 'zones'}
+                          </span>
+                          {countyInfo[county]?.startingFrom > 0 && (
+                            <span className="flex items-center gap-1">
+                              <Truck className="w-3 h-3" />
+                              From KSh {countyInfo[county]?.startingFrom.toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Selected Indicator */}
+                      {selectedCounty === county && (
+                        <div className="flex-shrink-0">
+                          <CheckCircle className="w-6 h-6 text-orange-600" />
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="border-t border-gray-200 p-4 bg-gray-50">
+              <button
+                onClick={() => setShowCountyModal(false)}
+                className="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition"
+              >
+                {selectedCounty ? 'Continue' : 'Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Zone Selection Modal */}
+      {showZoneModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-2xl font-bold">Select Delivery Zone</h3>
+                  <p className="text-orange-100 text-sm mt-1">{selectedCounty}</p>
+                </div>
+                <button
+                  onClick={() => setShowZoneModal(false)}
+                  className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+              <div className="space-y-3">
+                {availableZones.map((zone, index) => {
+                  const locationList = zone.locations.split(',').map(loc => loc.trim());
+                  const isZoneSelected = selectedZone?.startsWith(zone.name);
+                  
+                  return (
+                    <div
+                      key={index}
+                      className={`border-2 rounded-xl transition-all ${
+                        isZoneSelected
+                          ? 'border-orange-500 bg-orange-50'
+                          : 'border-gray-200'
+                      }`}
+                    >
+                      <div className="p-4 border-b border-gray-200">
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-bold text-gray-900 text-lg">{zone.name}</h4>
+                          <div className="flex flex-col items-end">
+                            {subtotal >= 5000 && zone.cost > 0 && (
+                              <span className="text-gray-400 line-through text-sm mb-1">
+                                KSh {zone.cost.toLocaleString()}
+                              </span>
+                            )}
+                            <div className={`px-4 py-2 rounded-lg font-bold text-lg whitespace-nowrap ${
+                              subtotal >= 5000 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-orange-100 text-orange-700'
+                            }`}>
+                              {subtotal >= 5000 ? 'FREE' : `KSh ${zone.cost.toLocaleString()}`}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="p-4">
+                        <p className="text-xs text-gray-500 mb-3 font-medium">Click on your specific location:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {locationList.map((location, locIndex) => {
+                            const fullZoneValue = `${zone.name} - ${location}`;
+                            const isSelected = selectedZone === fullZoneValue;
+                            
+                            return (
+                              <button
+                                key={locIndex}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedZone(fullZoneValue);
+                                  setShowZoneModal(false);
+                                }}
+                                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                  isSelected
+                                    ? 'bg-orange-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-orange-100 hover:text-orange-700'
+                                }`}
+                              >
+                                {location}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="border-t border-gray-200 p-4 bg-gray-50">
+              <button
+                onClick={() => setShowZoneModal(false)}
+                className="w-full bg-orange-600 text-white py-3 rounded-lg font-semibold hover:bg-orange-700 transition"
+              >
+                {selectedZone ? 'Confirm Selection' : 'Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

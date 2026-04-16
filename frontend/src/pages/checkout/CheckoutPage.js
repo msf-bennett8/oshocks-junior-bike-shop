@@ -911,10 +911,46 @@ const countyInfo = {
         address: user.address || prev.address
       }));
       
-      // Load last delivery location for auto-fill
-      loadLastDeliveryLocation();
+      // Only load last delivery location if no cart location was set
+      // Cart location takes priority over saved location
+      const cartLocation = localStorage.getItem('cartSelectedLocation');
+      if (!cartLocation) {
+        loadLastDeliveryLocation();
+      } else {
+        console.log('📍 Cart location exists, skipping saved location load');
+      }
     }
   }, [user]);
+
+  // Load location from cart page if available
+  useEffect(() => {
+    const cartLocation = localStorage.getItem('cartSelectedLocation');
+    if (cartLocation) {
+      try {
+        const locationData = JSON.parse(cartLocation);
+        // Only use if less than 30 minutes old
+        const locationTime = new Date(locationData.timestamp).getTime();
+        const now = new Date().getTime();
+        const thirtyMinutes = 30 * 60 * 1000;
+        
+        if (now - locationTime < thirtyMinutes) {
+          // Apply the cart location to shipping info
+          if (countyZones[locationData.county]) {
+            setShippingInfo(prev => ({
+              ...prev,
+              city: locationData.county,
+              zone: locationData.zone
+            }));
+            setAvailableZones(countyZones[locationData.county]);
+          }
+        }
+        // Clean up
+        localStorage.removeItem('cartSelectedLocation');
+      } catch (e) {
+        console.error('Error parsing cart location:', e);
+      }
+    }
+  }, []);
 
   // Load user's last delivery location
   const loadLastDeliveryLocation = async () => {
@@ -1340,9 +1376,19 @@ const countyInfo = {
                     {errors.zone && <p className="text-red-500 text-xs mt-1">{errors.zone}</p>}
                     {shippingInfo.city === 'Other (Arrange own courier)' && (
                       <p className="text-xs text-gray-600 mt-1">
-                        Contact us at +254 700 000 000 for courier assistance
+                        Contact us at +254 714 641 152 for courier assistance
                       </p>
                     )}
+
+                    {/* Green Change Location button in shipping form */}
+                    <button
+                      type="button"
+                      onClick={() => setShowCountyModal(true)}
+                      className="mt-2 text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
+                    >
+                      <MapPin className="w-4 h-4" />
+                      Change Location
+                    </button>
                   </div>
                   
                   <div>
@@ -1815,25 +1861,33 @@ const countyInfo = {
               
               {/* Shipping Info Display */}
               {shippingInfo.city && shippingInfo.zone && (
-                <div className="bg-orange-50 rounded-lg p-3 mb-4">
-                  <div className="flex items-center text-sm text-orange-800 mb-1">
-                    <Truck className="w-4 h-4 mr-1" />
-                    <span className="font-semibold">
-                      {shippingInfo.city === 'Nairobi County' ? 'Same-day delivery available' : 'Delivery in 2-3 days'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-orange-700">
-                    Shipping to: <span className="font-semibold">
-                      {shippingInfo.zone.includes(' - ') 
-                        ? shippingInfo.zone.split(' - ')[1] 
-                        : shippingInfo.zone}
-                    </span>
-                  </p>
-                  <p className="text-xs text-orange-600">
-                    {shippingInfo.city} ({formatCityDisplay(shippingInfo.zone.split(' - ')[0])})
-                  </p>
+              <div className="bg-orange-50 rounded-lg p-3 mb-4">
+                <div className="flex items-center text-sm text-orange-800 mb-1">
+                  <Truck className="w-4 h-4 mr-1" />
+                  <span className="font-semibold">
+                    {shippingInfo.city === 'Nairobi County' ? 'Same-day delivery available' : 'Delivery in 2-3 days'}
+                  </span>
                 </div>
-              )}
+                <p className="text-xs text-orange-700">
+                  Shipping to: <span className="font-semibold">
+                    {shippingInfo.zone.includes(' - ') 
+                      ? shippingInfo.zone.split(' - ')[1] 
+                      : shippingInfo.zone}
+                  </span>
+                </p>
+                <p className="text-xs text-orange-600">
+                  {shippingInfo.city} ({formatCityDisplay(shippingInfo.zone.split(' - ')[0])})
+                </p>
+                {/* Green Change Location link */}
+                <button
+                  onClick={() => setShowCountyModal(true)}
+                  className="text-xs text-green-600 hover:text-green-700 font-medium mt-2 flex items-center gap-1"
+                >
+                  <MapPin className="w-3 h-3" />
+                  Change Location
+                </button>
+              </div>
+            )}
               
               {/* Security Badge */}
               <div className="border-t border-gray-200 pt-4">

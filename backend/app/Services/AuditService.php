@@ -1586,6 +1586,23 @@ class AuditService
      */
     public static function logPaymentSuccessful($payment, array $context = []): ?AuditLog
     {
+        // Build enhanced description using purchase_id components
+        $order = $payment->order;
+        $description = "Payment successful: {$payment->transaction_reference} - KES {$payment->amount}";
+        
+        if ($order && $order->purchase_id) {
+            // Parse purchase_id: AEHVFNR7DA-ADGTCIVLAC-CUPINCRD-NRBKAKSU
+            $parts = explode('-', $order->purchase_id);
+            if (count($parts) >= 4) {
+                $orderDisplay = $parts[0];      // AEHVFNR7DA
+                $transactionCode = $parts[1];   // ADGTCIVLAC
+                $routingId = $parts[2];         // CUPINCRD
+                $locationCode = $parts[3];      // NRBKAKSU
+                
+                $description = "Payment successful: Order {$orderDisplay} | TXN {$transactionCode} | {$routingId} | {$locationCode} - KES {$payment->amount}";
+            }
+        }
+        
         return self::log([
             'event_type' => 'PAYMENT_SUCCESSFUL',
             'event_category' => 'financial',
@@ -1594,11 +1611,13 @@ class AuditService
             'action' => 'completed',
             'model_type' => 'Payment',
             'model_id' => $payment->id,
-            'description' => "Payment successful: {$payment->transaction_reference} - KES {$payment->amount}",
+            'description' => $description,
             'severity' => 'CRITICAL',
             'tier' => 'TIER_1_IMMUTABLE',
             'metadata' => [
                 'order_id' => $payment->order_id,
+                'purchase_id' => $order?->purchase_id,
+                'order_display' => $order?->order_display,
                 'payment_intent_id' => $context['payment_intent_id'] ?? $payment->transaction_reference,
                 'amount' => $payment->amount,
                 'currency' => $context['currency'] ?? 'KES',
@@ -1609,6 +1628,7 @@ class AuditService
             ],
             'payload' => [
                 'order_id' => $payment->order_id,
+                'purchase_id' => $order?->purchase_id,
                 'payment_intent_id' => $context['payment_intent_id'] ?? $payment->transaction_reference,
                 'amount' => $payment->amount,
                 'currency' => $context['currency'] ?? 'KES',
@@ -1625,6 +1645,21 @@ class AuditService
      */
     public static function logPaymentFailed($order, string $failureReason, array $context = []): ?AuditLog
     {
+        // Build enhanced description using purchase_id components
+        $description = "Payment failed for order {$order->order_display}: {$failureReason}";
+        
+        if ($order->purchase_id) {
+            $parts = explode('-', $order->purchase_id);
+            if (count($parts) >= 4) {
+                $orderDisplay = $parts[0];
+                $transactionCode = $parts[1];
+                $routingId = $parts[2];
+                $locationCode = $parts[3];
+                
+                $description = "Payment failed: Order {$orderDisplay} | TXN {$transactionCode} | {$routingId} | {$locationCode} - {$failureReason}";
+            }
+        }
+        
         return self::log([
             'event_type' => 'PAYMENT_FAILED',
             'event_category' => 'financial',
@@ -1633,7 +1668,7 @@ class AuditService
             'action' => 'failed',
             'model_type' => 'Payment',
             'model_id' => $context['payment_intent_id'] ?? null,
-            'description' => "Payment failed for order {$order->order_display}: {$failureReason}",
+            'description' => $description,
             'severity' => 'CRITICAL',
             'tier' => 'TIER_1_IMMUTABLE',
             'is_suspicious' => ($context['failure_count'] ?? 0) > 3,

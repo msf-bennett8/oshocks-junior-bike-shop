@@ -36,6 +36,10 @@ const CartSummary = ({
   showShippingEstimate = true,
   showPaymentMethods = true,
   deliveryLocation = null,
+  shippingCost: propShippingCost = null, // NEW: Actual shipping cost from parent
+  subtotal: propSubtotal = null, // NEW: Subtotal from parent (optional)
+  hasLocation: propHasLocation = null, // NEW: Explicit location flag
+  onChangeLocation = null, // NEW: Location change handler
   sticky = true,
   className = ''
 }) => {
@@ -58,16 +62,25 @@ const CartSummary = ({
   };
 
   // Calculate pricing - ensure all prices are numbers
-  const subtotal = cartItems.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
+  const calculatedSubtotal = cartItems.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
+  const subtotal = propSubtotal !== null ? propSubtotal : calculatedSubtotal;
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Shipping calculation - only calculate if location is known
+  // Shipping calculation - use prop from parent if available, otherwise fallback
   const freeShippingThreshold = 5000;
-  const hasLocation = !!deliveryLocation;
+  const hasLocation = propHasLocation !== null ? propHasLocation : !!deliveryLocation;
   
+  // Use provided shipping cost, or calculate fallback, or null if no location
   let shippingCost = 0;
   if (hasLocation) {
-    shippingCost = subtotal >= freeShippingThreshold ? 0 : 300;
+    if (propShippingCost !== null) {
+      shippingCost = propShippingCost; // Use parent's calculated cost
+    } else {
+      // Fallback: free if over threshold, otherwise TBD (don't assume 300)
+      shippingCost = subtotal >= freeShippingThreshold ? 0 : null;
+    }
+  } else {
+    shippingCost = null; // TBD - no location selected
   }
   
   // Apply free shipping promo
@@ -90,8 +103,8 @@ const CartSummary = ({
   // const taxAmount = (subtotal - discount) * taxRate / (1 + taxRate);
   const taxAmount = 0;
 
-  // Total calculation - don't add shipping if location unknown (will be calculated at checkout)
-  const total = subtotal - discount + (hasLocation ? shippingCost : 0);
+  // Total calculation - only add shipping if known
+  const total = subtotal - discount + (hasLocation && shippingCost !== null ? shippingCost : 0);
 
   // Savings calculation
   const regularPriceTotal = cartItems.reduce((sum, item) => 
@@ -240,11 +253,37 @@ const paymentMethods = [
             </div>
             <div className="text-right">
               {!hasLocation ? (
-                <span className="font-medium text-orange-600 text-xs sm:text-sm">TBD (based on location)</span>
+                <div className="flex flex-col items-end">
+                  <span className="font-medium text-orange-600 text-xs sm:text-sm">TBD (based on location)</span>
+                  {onChangeLocation && (
+                    <button 
+                      onClick={onChangeLocation}
+                      className="text-xs text-blue-600 hover:text-blue-700 mt-1 underline"
+                    >
+                      Select location
+                    </button>
+                  )}
+                </div>
+              ) : shippingCost === null ? (
+                <div className="flex flex-col items-end">
+                  <span className="font-medium text-orange-600 text-xs sm:text-sm">Calculating...</span>
+                </div>
               ) : shippingCost === 0 ? (
-                <span className="text-green-600 font-semibold">FREE</span>
+                <div className="flex flex-col items-end">
+                  <span className="text-green-600 font-semibold">FREE</span>
+                  {/* Green text for previous orders - shown when location is selected */}
+                  <small className="text-green-600 text-xs mt-0.5">
+                    Based on your previous orders
+                  </small>
+                </div>
               ) : (
-                <span className="font-medium text-gray-600">{formatPrice(shippingCost)}</span>
+                <div className="flex flex-col items-end">
+                  <span className="font-medium text-gray-600">{formatPrice(shippingCost)}</span>
+                  {/* Green text for previous orders - shown when location is selected */}
+                  <small className="text-green-600 text-xs mt-0.5">
+                    Based on your previous orders
+                  </small>
+                </div>
               )}
             </div>
           </div>
@@ -380,13 +419,31 @@ const paymentMethods = [
               <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-gray-700">Delivering to</p>
-                <p className="text-xs sm:text-sm text-gray-600 truncate">{formatCityDisplay(deliveryLocation)}</p>
-                <button 
-                  onClick={onCheckout}
-                  className="text-xs sm:text-sm text-green-600 hover:text-green-700 mt-1 font-medium"
-                >
-                  Change location
-                </button>
+                {hasLocation && deliveryLocation ? (
+                  <>
+                    <p className="text-xs sm:text-sm text-gray-600 truncate">{formatCityDisplay(deliveryLocation)}</p>
+                    {onChangeLocation && (
+                      <button 
+                        onClick={onChangeLocation}
+                        className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 mt-1 font-medium"
+                      >
+                        Change location
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs sm:text-sm text-gray-500">No delivery location selected</p>
+                    {onChangeLocation && (
+                      <button 
+                        onClick={onChangeLocation}
+                        className="text-xs sm:text-sm bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors w-fit"
+                      >
+                        Select Location
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
             

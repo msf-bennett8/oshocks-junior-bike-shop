@@ -674,7 +674,7 @@ const OrderDetails = () => {
                 <div className="border-t-2 border-gray-200 pt-3 mt-3">
                   <div className="flex justify-between text-xl font-bold text-gray-900">
                     <span>Total</span>
-                    <span className="text-orange-600">{formatCurrency(order.items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0) + order.shipping - (order.discount || 0))}</span>
+                    <span className="text-orange-600">{formatCurrency(order.items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0) + Number(order.shipping || 0) - Number(order.discount || 0))}</span>
                   </div>
                 </div>
               </div>
