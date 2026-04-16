@@ -92,7 +92,7 @@ const markReviewHelpful = async (reviewId, helpful) => {
 };
 
 const ProductDetails = () => {
-  const { addToCart, loading: cartLoading } = useCart();
+  const { addToCart, toggleCart, isInCart, loading: cartLoading } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { id } = useParams();
   const [product, setProduct] = useState(null);
@@ -349,19 +349,25 @@ const ProductDetails = () => {
       {/* Breadcrumb */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <a href="/" className="hover:text-blue-600">Home</a>
-            <span>›</span>
-            <a href="/shop" className="hover:text-blue-600">Shop</a>
-            <span>›</span>
+          <nav className="flex items-center gap-2 text-sm text-gray-600" aria-label="Breadcrumb">
+            <a href="/" className="hover:text-blue-600 flex items-center">Home</a>
+            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            <a href="/shop" className="hover:text-blue-600 flex items-center">Shop</a>
             {product.category && (
               <>
-                <a href={`/shop?category=${product.category.id}`} className="hover:text-blue-600">{product.category.name}</a>
-                <span>›</span>
+                <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <a href={`/shop?category=${product.category.id}`} className="hover:text-blue-600 flex items-center">{product.category.name}</a>
               </>
             )}
-            <span className="text-gray-900 font-medium truncate">{product.name}</span>
-          </div>
+            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            <span className="text-gray-900 font-medium truncate flex items-center">{product.name}</span>
+          </nav>
         </div>
       </div>
 
@@ -964,27 +970,33 @@ const ProductDetails = () => {
                             
                             try {
                               const variant = relatedProduct.variants?.[0] || null;
-                              const result = await addToCart(relatedProduct, 1, variant);
+                              const result = await toggleCart(relatedProduct, variant);
                               
                               if (result.success) {
-                                alert('✅ Added to cart!');
+                                // Show appropriate message based on action
+                                const message = result.action === 'remove' 
+                                  ? '❌ Removed from cart' 
+                                  : '✅ Added to cart!';
+                                alert(message);
                               } else {
                                 alert('❌ ' + result.error);
                               }
                             } catch (error) {
-                              console.error('Error adding to cart:', error);
-                              alert('❌ Failed to add to cart');
+                              console.error('Error toggling cart:', error);
+                              alert('❌ Failed to update cart');
                             } finally {
                               setAddingRelatedToCart(null);
                             }
                           }}
                           disabled={!relatedProduct.quantity || relatedProduct.quantity === 0 || addingRelatedToCart === relatedProduct.id}
-                          className={`p-2 rounded-full transition-all duration-200 shadow-lg ${
-                            relatedProduct.quantity > 0 && addingRelatedToCart !== relatedProduct.id
+                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg ${
+                            isInCart(relatedProduct.id, relatedProduct.variants?.[0] || null)
+                              ? 'bg-red-500 text-white hover:bg-red-600 hover:scale-110'
+                              : relatedProduct.quantity > 0 && addingRelatedToCart !== relatedProduct.id
                               ? 'bg-white text-gray-700 hover:bg-blue-500 hover:text-white hover:scale-110'
                               : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                           }`}
-                          title={relatedProduct.quantity > 0 ? 'Add to cart' : 'Out of stock'}
+                          title={isInCart(relatedProduct.id, relatedProduct.variants?.[0] || null) ? 'Remove from cart' : relatedProduct.quantity > 0 ? 'Add to cart' : 'Out of stock'}
                         >
                           {addingRelatedToCart === relatedProduct.id ? (
                             <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
@@ -1017,7 +1029,7 @@ const ProductDetails = () => {
                             }
                           }}
                           disabled={togglingRelatedWishlist === relatedProduct.id}
-                          className={`p-2 rounded-full transition-all duration-200 shadow-lg ${
+                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg ${
                             togglingRelatedWishlist === relatedProduct.id
                               ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                               : isInWishlist(relatedProduct.id, null)
