@@ -17,6 +17,15 @@ class WishlistController extends Controller
     {
         $wishlist = $this->getOrCreateWishlist($request);
 
+        // For guests (no wishlist in DB), return empty array
+        if (!$wishlist) {
+            return response()->json([
+                'wishlist_id' => null,
+                'items' => [],
+                'count' => 0,
+            ]);
+        }
+
         $wishlistItems = WishlistItem::with([
             'product.images',
             'product.category',
@@ -359,13 +368,89 @@ class WishlistController extends Controller
                 'user_id' => $user->id
             ]);
         } else {
-            // For guest users - create a single guest wishlist
-            // In production, you'd use session or token-based identification
-            $wishlist = Wishlist::firstOrCreate([
-                'user_id' => null
-            ]);
+            // For guest users - use session-based wishlist
+            $sessionId = $request->session()->getId() ?? $request->header('X-Session-ID') ?? uniqid('guest_', true);
+            
+            // Store session ID in session if not exists
+            if (!$request->session()->has('wishlist_session_id')) {
+                $request->session()->put('wishlist_session_id', $sessionId);
+            } else {
+                $sessionId = $request->session()->get('wishlist_session_id');
+            }
+            
+            // For guests, we don't store in database - return null and handle in controller
+            // Guest wishlist is handled entirely in frontend localStorage
+            return null;
         }
         
         return $wishlist;
+    }
+
+    /**
+     * Merge guest wishlist items into user wishlist after login
+     */
+    public function mergeGuestWishlist(Request $request)
+    {
+        $request->validate([
+            'items' => 'required|array',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.variant_id' => 'nullable|exists:product_variants,id',
+        ]);
+
+        $user = null;
+        if ($request->bearerToken()) {
+            try {
+                $token = \Laravel\Sanctum\PersonalAccessToken::findToken($request->bearerToken());
+                if ($token) {
+                    $user = $token->tokenable;
+                }
+            } catch (\Exception $e) {
+                return response()->json(['message' => 'Invalid authentication'], 401);
+            }
+        }
+
+        if (!$user) {
+            return response()->json(['message' => 'Authentication required'], 401);
+        }
+
+        $wishlist = Wishlist::firstOrCreate(['user_id' => $user->id]);
+        
+        $merged = 0;
+        $skipped = 0;
+        $results = [];
+
+        foreach ($request->items as $item) {
+            try {
+                // Check if already exists
+                $exists = WishlistItem::where('wishlist_id', $wishlist->id)
+                    ->where('product_id', $item['product_id'])
+                    ->where('variant_id', $item['variant_id'] ?? null)
+                    ->first();
+
+                if ($exists) {
+                    $skipped++;
+                    $results[] = ['product_id' => $item['product_id'], 'action' => 'skipped', 'reason' => 'already_exists'];
+                    continue;
+                }
+
+                WishlistItem::create([
+                    'wishlist_id' => $wishlist->id,
+                    'product_id' => $item['product_id'],
+                    'variant_id' => $item['variant_id'] ?? null,
+                ]);
+                
+                $merged++;
+                $results[] = ['product_id' => $item['product_id'], 'action' => 'added'];
+            } catch (\Exception $e) {
+                $results[] = ['product_id' => $item['product_id'], 'action' => 'failed', 'error' => $e->getMessage()];
+            }
+        }
+
+        return response()->json([
+            'message' => 'Wishlist merge completed',
+            'merged' => $merged,
+            'skipped' => $skipped,
+            'results' => $results
+        ]);
     }
 }

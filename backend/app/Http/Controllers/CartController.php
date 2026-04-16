@@ -183,7 +183,7 @@ class CartController extends Controller
         ]);
     }
 
-   /**
+       /**
      * Get or create cart for current user/session
      */
     private function getOrCreateCart(Request $request)
@@ -207,15 +207,112 @@ class CartController extends Controller
         if ($user) {
             $cart = Cart::firstOrCreate([
                 'user_id' => $user->id
+            ], [
+                'session_id' => null
             ]);
+            
+            // If this cart had a session_id (was a guest cart), clear it
+            if ($cart->session_id) {
+                $cart->update(['session_id' => null]);
+            }
         } else {
-            // For guest users - create a single guest cart
-            // In production, you'd use session or token-based identification
+            // For guest users - use session-based cart
+            $sessionId = $request->session()->getId() ?? $request->header('X-Session-ID') ?? uniqid('guest_', true);
+            
+            // Store session ID in session if not exists
+            if (!$request->session()->has('cart_session_id')) {
+                $request->session()->put('cart_session_id', $sessionId);
+            } else {
+                $sessionId = $request->session()->get('cart_session_id');
+            }
+            
             $cart = Cart::firstOrCreate([
+                'session_id' => $sessionId,
                 'user_id' => null
             ]);
         }
         
         return $cart;
+    }
+
+    /**
+     * Merge guest cart items into user cart after login
+     */
+    public function mergeGuestCart(Request $request)
+    {
+        $request->validate([
+            'items' => 'required|array',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.variant_id' => 'nullable|exists:product_variants,id',
+        ]);
+
+        $user = null;
+        if ($request->bearerToken()) {
+            try {
+                $token = \Laravel\Sanctum\PersonalAccessToken::findToken($request->bearerToken());
+                if ($token) {
+                    $user = $token->tokenable;
+                }
+            } catch (\Exception $e) {
+                return response()->json(['message' => 'Invalid authentication'], 401);
+            }
+        }
+
+        if (!$user) {
+            return response()->json(['message' => 'Authentication required'], 401);
+        }
+
+        $userCart = Cart::firstOrCreate(['user_id' => $user->id]);
+        
+        $merged = 0;
+        $failed = 0;
+        $results = [];
+
+        foreach ($request->items as $item) {
+            try {
+                $product = Product::findOrFail($item['product_id']);
+                
+                // Check if item already exists in user's cart
+                $existingItem = CartItem::where('cart_id', $userCart->id)
+                    ->where('product_id', $item['product_id'])
+                    ->where('variant_id', $item['variant_id'] ?? null)
+                    ->first();
+
+                if ($existingItem) {
+                    // Update quantity
+                    $newQuantity = $existingItem->quantity + $item['quantity'];
+                    
+                    if ($newQuantity > $product->quantity) {
+                        $newQuantity = $product->quantity;
+                    }
+                    
+                    $existingItem->quantity = $newQuantity;
+                    $existingItem->save();
+                    $results[] = ['product_id' => $item['product_id'], 'action' => 'updated'];
+                } else {
+                    // Create new item
+                    CartItem::create([
+                        'cart_id' => $userCart->id,
+                        'product_id' => $item['product_id'],
+                        'variant_id' => $item['variant_id'] ?? null,
+                        'quantity' => $item['quantity'],
+                        'price' => $product->price,
+                    ]);
+                    $results[] = ['product_id' => $item['product_id'], 'action' => 'added'];
+                }
+                $merged++;
+            } catch (\Exception $e) {
+                $failed++;
+                $results[] = ['product_id' => $item['product_id'], 'action' => 'failed', 'error' => $e->getMessage()];
+            }
+        }
+
+        return response()->json([
+            'message' => 'Cart merge completed',
+            'merged' => $merged,
+            'failed' => $failed,
+            'results' => $results
+        ]);
     }
 }

@@ -115,10 +115,10 @@ const login = async (credentials) => {
     // Trigger merge events for cart and wishlist
     window.dispatchEvent(new StorageEvent('storage', { key: 'authToken' }));
     
-    // Small delay to allow contexts to pick up the new auth state
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('userLoggedIn'));
-    }, 100);
+    // Dispatch login event immediately for contexts to handle sync
+    window.dispatchEvent(new CustomEvent('userLoggedIn', { 
+      detail: { user: data.user, timestamp: Date.now() } 
+    }));
 
     return { success: true, user: data.user };
   } catch (err) {

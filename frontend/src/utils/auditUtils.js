@@ -584,6 +584,12 @@ export const AUDIT_EVENTS = {
   WISHLIST_ITEM_ADDED: 'WISHLIST_ITEM_ADDED',
   WISHLIST_ITEM_REMOVED: 'WISHLIST_ITEM_REMOVED',
   PRODUCT_VIEWED: 'PRODUCT_VIEWED',
+
+  //================================================
+  //Cart and wishlist merging
+  //================================================
+  CART_MERGED: 'cart_merged',
+  WISHLIST_MERGED: 'wishlist_merged',
 };
 
 // ============================================================================

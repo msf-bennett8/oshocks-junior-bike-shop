@@ -629,20 +629,77 @@ const updateQuantity = async (itemId, newQuantity) => {
       
       if (guestCart.length > 0 && isAuthenticated) {
         const token = authService.getToken();
-        await axios.post(`${API_URL}/cart/merge`, {
-          items: guestCart
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        
+        // Add items one by one to handle conflicts gracefully
+        const mergedItems = [];
+        const failedItems = [];
+        
+        for (const item of guestCart) {
+          try {
+            // Check if item already exists in user's cart
+            const existingItem = cartItems.find(
+              cartItem => cartItem.product_id === item.product_id && 
+              JSON.stringify(cartItem.variant) === JSON.stringify(item.variant)
+            );
+            
+            if (existingItem) {
+              // Update quantity if item exists
+              await axios.put(`${API_URL}/cart/items/${existingItem.id}`, {
+                quantity: existingItem.quantity + item.quantity
+              }, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+            } else {
+              // Add as new item
+              await axios.post(`${API_URL}/cart/add`, {
+                product_id: item.product_id,
+                quantity: item.quantity,
+                variant_id: item.variant?.id || null
+              }, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+            }
+            mergedItems.push(item);
+          } catch (itemErr) {
+            console.error(`Failed to merge cart item ${item.product_id}:`, itemErr);
+            failedItems.push(item);
+          }
+        }
 
-        // Clear guest cart
-        localStorage.removeItem('cart');
+        // Only clear localStorage after successful server sync
+        if (mergedItems.length > 0) {
+          localStorage.removeItem('cart');
+          
+          // Log successful merge
+          try {
+            const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+            logFrontendAuditEvent(AUDIT_EVENTS.CART_MERGED, {
+              category: 'cart',
+              severity: 'low',
+              metadata: {
+                items_merged: mergedItems.length,
+                items_failed: failedItems.length,
+                timestamp: new Date().toISOString(),
+              },
+            });
+          } catch (e) {
+            // Silently fail
+          }
+        }
 
-        // Reload cart from API
+        // Reload cart from API to get updated state
         await loadCartFromAPI();
+        
+        return { 
+          success: true, 
+          merged: mergedItems.length, 
+          failed: failedItems.length 
+        };
       }
+      return { success: true, merged: 0, failed: 0 };
     } catch (err) {
       console.error('Failed to merge guest cart:', err);
+      return { success: false, error: err.message };
     }
   };
 

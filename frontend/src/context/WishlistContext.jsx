@@ -196,36 +196,103 @@ export const WishlistProvider = ({ children }) => {
     }
     };
 
+  // Load guest wishlist from localStorage
+  const loadGuestWishlistFromStorage = () => {
+    try {
+      const guestWishlist = JSON.parse(localStorage.getItem('guestWishlist') || '[]');
+      setWishlistItems(guestWishlist.map(item => ({
+        id: `guest_${item.product_id}_${item.variant_id || 'null'}`,
+        product_id: item.product_id,
+        variant: item.variant_id ? { id: item.variant_id } : null,
+        product: {
+          name: item.name,
+          price: item.price,
+          images: [{ image_url: item.image }]
+        },
+        added_at: item.added_at
+      })));
+      setWishlistCount(guestWishlist.length);
+    } catch (error) {
+      console.error('Error loading guest wishlist:', error);
+      setWishlistItems([]);
+      setWishlistCount(0);
+    }
+  };
+
   // Merge guest wishlist with user wishlist after login
   const mergeGuestWishlist = async () => {
     try {
       const guestWishlist = JSON.parse(localStorage.getItem('guestWishlist') || '[]');
       
-      if (guestWishlist.length === 0) return;
+      if (guestWishlist.length === 0) return { success: true, merged: 0 };
 
       setLoading(true);
+      
+      const mergedItems = [];
+      const skippedItems = [];
       
       // Add each guest item to server wishlist
       for (const item of guestWishlist) {
         try {
-          await api.post('/wishlist/add', {
+          // Check if already in wishlist to avoid duplicates
+          const exists = wishlistItems.some(
+            w => w.product_id === item.product_id && 
+            (w.variant?.id || null) === (item.variant_id || null)
+          );
+          
+          if (exists) {
+            skippedItems.push(item);
+            continue;
+          }
+          
+          const response = await api.post('/wishlist/add', {
             product_id: item.product_id,
             variant_id: item.variant_id || null
           });
+          
+          if (response.data) {
+            mergedItems.push(item);
+          }
         } catch (error) {
-          // Item might already exist, continue
-          console.log('Wishlist merge item skipped:', error.message);
+          // Item might already exist or other error
+          console.log('Wishlist merge item skipped:', error.response?.data?.message || error.message);
+          skippedItems.push(item);
         }
       }
 
-      // Clear guest wishlist
-      localStorage.removeItem('guestWishlist');
+      // Only clear guest wishlist after successful merges
+      if (mergedItems.length > 0 || skippedItems.length > 0) {
+        localStorage.removeItem('guestWishlist');
+        
+        // Log merge event
+        try {
+          const { logFrontendAuditEvent, AUDIT_EVENTS } = await import('../utils/auditUtils');
+          logFrontendAuditEvent(AUDIT_EVENTS.WISHLIST_MERGED, {
+            category: 'business',
+            severity: 'low',
+            metadata: {
+              items_merged: mergedItems.length,
+              items_skipped: skippedItems.length,
+              timestamp: new Date().toISOString(),
+            },
+          });
+        } catch (e) {
+          // Silently fail
+        }
+      }
       
-      // Reload from server
+      // Reload from server to get updated state
       await loadWishlistFromAPI();
+      
+      return { 
+        success: true, 
+        merged: mergedItems.length, 
+        skipped: skippedItems.length 
+      };
       
     } catch (error) {
       console.error('Error merging guest wishlist:', error);
+      return { success: false, error: error.message };
     } finally {
       setLoading(false);
     }
@@ -272,22 +339,30 @@ export const WishlistProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     if (token) {
-      loadWishlistFromAPI();
+      loadWishlistFromAPI().then(() => {
+        // After loading, merge any guest wishlist items
+        mergeGuestWishlist();
+      });
     } else {
       // Load from guest wishlist
-      const guestWishlist = JSON.parse(localStorage.getItem('guestWishlist') || '[]');
-      setWishlistItems(guestWishlist.map(item => ({
-        product_id: item.product_id,
-        variant: item.variant_id ? { id: item.variant_id } : null,
-        product: {
-          name: item.name,
-          price: item.price,
-          images: [{ image_url: item.image }]
-        }
-      })));
-      setWishlistCount(guestWishlist.length);
+      loadGuestWishlistFromStorage();
     }
   }, []);
+
+  // Listen for login events to trigger merge
+  useEffect(() => {
+    const handleLogin = () => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        loadWishlistFromAPI().then(() => {
+          mergeGuestWishlist();
+        });
+      }
+    };
+
+    window.addEventListener('userLoggedIn', handleLogin);
+    return () => window.removeEventListener('userLoggedIn', handleLogin);
+  }, [wishlistItems]);
 
   // Listen for auth changes (login/logout)
   useEffect(() => {

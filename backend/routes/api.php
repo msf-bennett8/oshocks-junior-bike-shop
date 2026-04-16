@@ -75,6 +75,10 @@ Route::middleware(['api', 'audit'])->prefix('v1')->group(function () {
     Route::delete('/wishlist/items/{itemId}', [WishlistController::class, 'removeItem']);
     Route::delete('/wishlist/remove-by-product', [WishlistController::class, 'removeByProduct']);
     Route::delete('/wishlist/clear', [WishlistController::class, 'clearWishlist']);
+    
+    // Guest cart/wishlist merge endpoints (public but auth-aware)
+    Route::post('/cart/merge', [CartController::class, 'mergeGuestCart']);
+    Route::post('/wishlist/merge', [WishlistController::class, 'mergeGuestWishlist']);
 
     // search
     Route::get('/search', [SearchController::class, 'search']);
