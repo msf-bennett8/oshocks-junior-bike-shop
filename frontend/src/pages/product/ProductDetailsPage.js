@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
+import ActionModal from '../../components/common/ActionModal';
 
 // ============================================================================
 // PRODUCT DETAIL COMPONENT
@@ -93,7 +94,7 @@ const markReviewHelpful = async (reviewId, helpful) => {
 
 const ProductDetails = () => {
   const { addToCart, toggleCart, isInCart, loading: cartLoading } = useCart();
-  const { toggleWishlist, isInWishlist } = useWishlist();
+  const { toggleWishlist, isInWishlist, loading: wishlistLoading } = useWishlist();
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -111,6 +112,27 @@ const ProductDetails = () => {
   const [togglingRelatedWishlist, setTogglingRelatedWishlist] = useState(null);
   const [loadedMainImage, setLoadedMainImage] = useState(false);
   const [loadedThumbnails, setLoadedThumbnails] = useState(new Set());
+  
+  // Modal state for cart/wishlist actions
+  const [modal, setModal] = useState({
+    isOpen: false,
+    type: 'cart',
+    action: 'add',
+    productName: '',
+    section: 'product'
+  });
+  
+  // Loading states for main product actions
+  const [togglingWishlist, setTogglingWishlist] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
+
+  const showModal = (type, action, productName, section = 'product') => {
+    setModal({ isOpen: true, type, action, productName, section });
+  };
+
+  const closeModal = () => {
+    setModal(prev => ({ ...prev, isOpen: false }));
+  };
 
   const handleMainImageLoad = () => {
     setLoadedMainImage(true);
@@ -290,53 +312,67 @@ const ProductDetails = () => {
 
   const handleAddToCart = async () => {
     if (product.variants && product.variants.length > 0 && !selectedVariant) {
-      alert('Please select a color');
+      showModal('cart', 'error', 'Please select a color', 'product');
       return;
     }
     if (product.specifications?.sizes && product.specifications.sizes.length > 0 && !selectedSize) {
-      alert('Please select a frame size');
+      showModal('cart', 'error', 'Please select a frame size', 'product');
       return;
     }
     
+    setAddingToCart(true);
+    
     try {
       const selectedVariantData = product.variants?.find(v => v.id === selectedVariant);
-      const result = await addToCart(product, quantity, selectedVariantData, selectedSize);
+      const wasInCart = isInCart(product.id, selectedVariantData);
+      const result = await toggleCart(product, selectedVariantData);
       
       if (result.success) {
-        alert('✅ Added to cart successfully!');
+        showModal('cart', wasInCart ? 'remove' : 'add', product.name, 'product');
       } else {
-        alert('❌ ' + result.error);
+        showModal('cart', 'error', result.error, 'product');
       }
     } catch (error) {
-      console.error('Error adding to cart:', error);
-      alert('❌ Failed to add to cart. Please try again.');
+      console.error('Error toggling cart:', error);
+      showModal('cart', 'error', 'Failed to update cart', 'product');
+    } finally {
+      setAddingToCart(false);
     }
   };
 
   const handleBuyNow = async () => {
     if (product.variants && product.variants.length > 0 && !selectedVariant) {
-      alert('Please select a color');
+      showModal('cart', 'error', 'Please select a color', 'product');
       return;
     }
     if (product.specifications?.sizes && product.specifications.sizes.length > 0 && !selectedSize) {
-      alert('Please select a frame size');
+      showModal('cart', 'error', 'Please select a frame size', 'product');
       return;
     }
     
+    setAddingToCart(true);
+    
     try {
-      // Add to cart first
+      // Add to cart first (force add, not toggle for buy now)
       const selectedVariantData = product.variants?.find(v => v.id === selectedVariant);
-      const result = await addToCart(product, quantity, selectedVariantData, selectedSize);
+      const inCart = isInCart(product.id, selectedVariantData);
       
-      if (result.success) {
-        // Navigate to checkout
-        window.location.href = '/checkout';
-      } else {
-        alert('❌ ' + result.error);
+      // Only add if not already in cart
+      if (!inCart) {
+        const result = await addToCart(product, quantity, selectedVariantData, selectedSize);
+        if (!result.success) {
+          showModal('cart', 'error', result.error, 'product');
+          setAddingToCart(false);
+          return;
+        }
       }
+      
+      // Navigate to checkout
+      window.location.href = '/checkout';
     } catch (error) {
       console.error('Error adding to cart:', error);
-      alert('❌ Failed to add to cart. Please try again.');
+      showModal('cart', 'error', 'Failed to proceed to checkout', 'product');
+      setAddingToCart(false);
     }
   };
 
@@ -408,34 +444,48 @@ const ProductDetails = () => {
                   e.preventDefault();
                   e.stopPropagation();
                   
+                  if (togglingWishlist) return;
+                  
+                  setTogglingWishlist(true);
+                  
                   try {
-                    // Use currently selected variant or first variant
-                    const currentVariant = product.variants?.find(v => v.id === selectedVariant) || product.variants?.[0];
+                    // Use currently selected variant or null for main product
+                    const currentVariant = product.variants?.find(v => v.id === selectedVariant) || null;
+                    const wasInWishlist = isInWishlist(product.id, currentVariant?.id || null);
                     const result = await toggleWishlist(product, currentVariant);
                     
-                    if (!result.success) {
-                      alert('❌ ' + result.error);
+                    if (result.success) {
+                      showModal('wishlist', wasInWishlist ? 'remove' : 'add', product.name, 'product');
+                    } else {
+                      showModal('cart', 'error', result.error, 'product');
                     }
                   } catch (error) {
                     console.error('Error toggling wishlist:', error);
-                    alert('❌ Failed to update wishlist');
+                    showModal('cart', 'error', 'Failed to update wishlist', 'product');
+                  } finally {
+                    setTogglingWishlist(false);
                   }
                 }}
-                className={`absolute top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg ${
+                disabled={togglingWishlist}
+                className={`absolute top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
                   isInWishlist(product.id, selectedVariant) 
                     ? 'bg-red-600 text-white' 
                     : 'bg-white text-gray-700 hover:text-red-600 hover:bg-red-50'
                 }`}
                 title={isInWishlist(product.id, selectedVariant) ? 'Remove from wishlist' : 'Add to wishlist'}
               >
-                <svg 
-                  className="w-6 h-6" 
-                  fill={isInWishlist(product.id, selectedVariant) ? 'currentColor' : 'none'} 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
+                {togglingWishlist ? (
+                  <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg 
+                    className="w-6 h-6" 
+                    fill={isInWishlist(product.id, selectedVariant) ? 'currentColor' : 'none'} 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                )}
               </button>
 
               <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1 rounded-md text-sm">{selectedImage + 1} / {product.images.length}</div>
@@ -613,22 +663,36 @@ const ProductDetails = () => {
             )}
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <button onClick={handleAddToCart} disabled={product.quantity === 0 || cartLoading} className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 md:py-4 px-4 md:px-6 rounded-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-sm md:text-base">
-                {cartLoading ? (
+              <button 
+                onClick={handleAddToCart} 
+                disabled={product.quantity === 0 || addingToCart} 
+                className={`flex-1 font-semibold py-3 md:py-4 px-4 md:px-6 rounded-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-sm md:text-base ${
+                  isInCart(product.id, product.variants?.find(v => v.id === selectedVariant))
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400'
+                }`}
+              >
+                {addingToCart ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Adding...</span>
+                    <span>Updating...</span>
                   </>
                 ) : (
                   <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                Add to Cart
+                    <svg className="w-5 h-5" fill={isInCart(product.id, product.variants?.find(v => v.id === selectedVariant)) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    {isInCart(product.id, product.variants?.find(v => v.id === selectedVariant)) ? 'Remove from Cart' : 'Add to Cart'}
                   </>
                 )}
               </button>
-              <button onClick={handleBuyNow} disabled={product.quantity === 0} className="flex-1 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white font-semibold py-3 md:py-4 px-4 md:px-6 rounded-lg transition-all active:scale-95 text-sm md:text-base">Buy Now</button>
+              <button 
+                onClick={handleBuyNow} 
+                disabled={product.quantity === 0 || addingToCart} 
+                className="flex-1 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white font-semibold py-3 md:py-4 px-4 md:px-6 rounded-lg transition-all active:scale-95 text-sm md:text-base"
+              >
+                {addingToCart ? 'Processing...' : 'Buy Now'}
+              </button>
             </div>
 
             <div className="bg-green-50 rounded-lg p-4 border border-green-200">
@@ -970,20 +1034,17 @@ const ProductDetails = () => {
                             
                             try {
                               const variant = relatedProduct.variants?.[0] || null;
+                              const wasInCart = isInCart(relatedProduct.id, variant);
                               const result = await toggleCart(relatedProduct, variant);
                               
                               if (result.success) {
-                                // Show appropriate message based on action
-                                const message = result.action === 'remove' 
-                                  ? '❌ Removed from cart' 
-                                  : '✅ Added to cart!';
-                                alert(message);
+                                showModal('cart', wasInCart ? 'remove' : 'add', relatedProduct.name, 'product');
                               } else {
-                                alert('❌ ' + result.error);
+                                showModal('cart', 'error', result.error, 'product');
                               }
                             } catch (error) {
                               console.error('Error toggling cart:', error);
-                              alert('❌ Failed to update cart');
+                              showModal('cart', 'error', 'Failed to update cart', 'product');
                             } finally {
                               setAddingRelatedToCart(null);
                             }
@@ -1001,7 +1062,7 @@ const ProductDetails = () => {
                           {addingRelatedToCart === relatedProduct.id ? (
                             <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
                           ) : (
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4" fill={isInCart(relatedProduct.id, relatedProduct.variants?.[0] || null) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                           )}
@@ -1016,14 +1077,17 @@ const ProductDetails = () => {
                             setTogglingRelatedWishlist(relatedProduct.id);
                             
                             try {
+                              const wasInWishlist = isInWishlist(relatedProduct.id, null);
                               const result = await toggleWishlist(relatedProduct, null);
                               
-                              if (!result.success) {
-                                alert('❌ ' + result.error);
+                              if (result.success) {
+                                showModal('wishlist', wasInWishlist ? 'remove' : 'add', relatedProduct.name, 'product');
+                              } else {
+                                showModal('cart', 'error', result.error, 'product');
                               }
                             } catch (error) {
                               console.error('Error toggling wishlist:', error);
-                              alert('❌ Failed to update wishlist');
+                              showModal('cart', 'error', 'Failed to update wishlist', 'product');
                             } finally {
                               setTogglingRelatedWishlist(null);
                             }
@@ -1149,6 +1213,16 @@ const ProductDetails = () => {
           )}
         </div>
       </div>
+      
+      {/* Action Modal for Cart/Wishlist Feedback */}
+      <ActionModal 
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        type={modal.type}
+        action={modal.action}
+        productName={modal.productName}
+        section={modal.section}
+      />
     </div>
   );
 };
