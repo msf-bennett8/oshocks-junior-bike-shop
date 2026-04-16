@@ -995,7 +995,7 @@ class AuditService
             'action' => 'reserved',
             'model_type' => 'Product',
             'model_id' => $product->id,
-            'description' => "Reserved {$quantity} units of {$product->name} for order {$order->order_number}",
+            'description' => "Reserved {$quantity} units of {$product->name} for order {$order->order_display}",
             'severity' => 'HIGH',
             'metadata' => [
                 'order_id' => $order->id,
@@ -1056,7 +1056,7 @@ class AuditService
             'action' => 'released',
             'model_type' => 'Product',
             'model_id' => $product->id,
-            'description' => "Released {$quantity} units of {$product->name} - Reason: {$reason}",
+            'description' => "Released {$quantity} units of {$product->name} for order {$order->order_display} - Reason: {$reason}",
             'severity' => 'MEDIUM',
             'metadata' => [
                 'order_id' => $order->id,
@@ -1090,7 +1090,7 @@ class AuditService
             'action' => 'placed',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Order placed: {$order->order_number} - KES {$order->total}",
+            'description' => "Order placed: {$order->order_display} - KES {$order->total}",
             'severity' => 'HIGH',
             'metadata' => [
                 'order_number' => $order->order_number,
@@ -1220,7 +1220,7 @@ class AuditService
             'action' => 'updated',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Order {$order->order_number} status: {$oldStatus} → {$newStatus}",
+            'description' => "Order {$order->order_display} status: {$oldStatus} → {$newStatus}",
             'severity' => 'HIGH',
             'metadata' => [
                 'order_id' => $order->id,
@@ -1253,7 +1253,7 @@ class AuditService
             'action' => 'shipped',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Order {$order->order_number} shipped via " . ($context['carrier'] ?? 'Unknown'),
+            'description' => "Order {$order->order_display} shipped via " . ($context['carrier'] ?? 'Unknown'),
             'severity' => 'HIGH',
             'metadata' => [
                 'order_id' => $order->id,
@@ -1287,7 +1287,7 @@ class AuditService
             'action' => 'delivered',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Order {$order->order_number} delivered",
+            'description' => "Order {$order->order_display} delivered",
             'severity' => 'HIGH',
             'metadata' => [
                 'order_id' => $order->id,
@@ -1319,7 +1319,7 @@ class AuditService
             'action' => 'cancelled',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Order {$order->order_number} cancelled - Reason: {$reason}",
+            'description' => "Order {$order->order_display} cancelled - Reason: {$reason}",
             'severity' => 'HIGH',
             'metadata' => [
                 'order_id' => $order->id,
@@ -1351,7 +1351,7 @@ class AuditService
             'action' => 'return_requested',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Return requested for order {$order->order_number}",
+            'description' => "Return requested for order {$order->order_display}",
             'severity' => 'HIGH',
             'metadata' => [
                 'order_id' => $order->id,
@@ -1381,7 +1381,7 @@ class AuditService
             'action' => 'return_approved',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Return approved for order {$order->order_number}",
+            'description' => "Return approved for order {$order->order_display}",
             'severity' => 'HIGH',
             'metadata' => [
                 'order_id' => $order->id,
@@ -1409,7 +1409,7 @@ class AuditService
             'action' => 'return_received',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Return received for order {$order->order_number}",
+            'description' => "Return received for order {$order->order_display}",
             'severity' => 'HIGH',
             'metadata' => [
                 'order_id' => $order->id,
@@ -1438,7 +1438,7 @@ class AuditService
             'action' => 'return_completed',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Return completed for order {$order->order_number} - Refund: KES " . ($context['refund_amount'] ?? 0),
+            'description' => "Return completed for order {$order->order_display} - Refund: KES " . ($context['refund_amount'] ?? 0),
             'severity' => 'HIGH',
             'metadata' => [
                 'order_id' => $order->id,
@@ -1561,7 +1561,7 @@ class AuditService
             'action' => 'created',
             'model_type' => 'Payment',
             'model_id' => $context['payment_intent_id'] ?? null,
-            'description' => "Payment intent created for order {$order->order_number}",
+            'description' => "Payment intent created for order {$order->order_display}",
             'severity' => 'CRITICAL',
             'tier' => 'TIER_1_IMMUTABLE',
             'metadata' => [
@@ -1633,7 +1633,7 @@ class AuditService
             'action' => 'failed',
             'model_type' => 'Payment',
             'model_id' => $context['payment_intent_id'] ?? null,
-            'description' => "Payment failed for order {$order->order_number}: {$failureReason}",
+            'description' => "Payment failed for order {$order->order_display}: {$failureReason}",
             'severity' => 'CRITICAL',
             'tier' => 'TIER_1_IMMUTABLE',
             'is_suspicious' => ($context['failure_count'] ?? 0) > 3,
@@ -1671,7 +1671,7 @@ class AuditService
             'action' => 'retried',
             'model_type' => 'Payment',
             'model_id' => $context['payment_intent_id'] ?? null,
-            'description' => "Payment retry #{$attemptNumber} for order {$order->order_number}",
+            'description' => "Payment retry #{$attemptNumber} for order {$order->order_display}",
             'severity' => 'HIGH',
             'tier' => 'TIER_1_IMMUTABLE',
             'metadata' => [
@@ -1700,7 +1700,7 @@ class AuditService
             'action' => 'dispute_opened',
             'model_type' => 'Payment',
             'model_id' => $order->payment?->id,
-            'description' => "Payment dispute opened for order {$order->order_number}",
+            'description' => "Payment dispute opened for order {$order->order_display}",
             'severity' => 'CRITICAL',
             'tier' => 'TIER_1_IMMUTABLE',
             'is_suspicious' => true,
@@ -1734,7 +1734,7 @@ class AuditService
             'action' => 'dispute_updated',
             'model_type' => 'Payment',
             'model_id' => $order->payment?->id,
-            'description' => "Payment dispute updated for order {$order->order_number}: {$statusUpdate}",
+            'description' => "Payment dispute updated for order {$order->order_display}: {$statusUpdate}",
             'severity' => 'CRITICAL',
             'tier' => 'TIER_1_IMMUTABLE',
             'metadata' => [
@@ -1763,7 +1763,7 @@ class AuditService
             'action' => 'dispute_resolved',
             'model_type' => 'Payment',
             'model_id' => $order->payment?->id,
-            'description' => "Payment dispute resolved for order {$order->order_number}: {$resolution}",
+            'description' => "Payment dispute resolved for order {$order->order_display}: {$resolution}",
             'severity' => 'CRITICAL',
             'tier' => 'TIER_1_IMMUTABLE',
             'metadata' => [
@@ -1795,7 +1795,7 @@ class AuditService
             'action' => 'chargeback_received',
             'model_type' => 'Payment',
             'model_id' => $order->payment?->id,
-            'description' => "Chargeback received for order {$order->order_number}",
+            'description' => "Chargeback received for order {$order->order_display}",
             'severity' => 'CRITICAL',
             'tier' => 'TIER_1_IMMUTABLE',
             'is_suspicious' => true,
@@ -1829,7 +1829,7 @@ class AuditService
             'action' => 'chargeback_contested',
             'model_type' => 'Payment',
             'model_id' => $order->payment?->id,
-            'description' => "Chargeback contested for order {$order->order_number}",
+            'description' => "Chargeback contested for order {$order->order_display}",
             'severity' => 'CRITICAL',
             'tier' => 'TIER_1_IMMUTABLE',
             'metadata' => [
@@ -1859,7 +1859,7 @@ class AuditService
             'action' => 'chargeback_resolved',
             'model_type' => 'Payment',
             'model_id' => $order->payment?->id,
-            'description' => "Chargeback resolved for order {$order->order_number}: {$outcome}",
+            'description' => "Chargeback resolved for order {$order->order_display}: {$outcome}",
             'severity' => 'CRITICAL',
             'tier' => 'TIER_1_IMMUTABLE',
             'metadata' => [
@@ -1890,7 +1890,7 @@ class AuditService
             'action' => 'refund_requested',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Refund requested for order {$order->order_number}: KES {$amount}",
+            'description' => "Refund requested for order {$order->order_display}: KES {$amount}",
             'severity' => 'CRITICAL',
             'tier' => 'TIER_1_IMMUTABLE',
             'metadata' => [
@@ -1922,7 +1922,7 @@ class AuditService
             'action' => 'refund_processed',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Refund processed for order {$order->order_number}: KES " . ($context['refund_amount'] ?? 0),
+            'description' => "Refund processed for order {$order->order_display}: KES " . ($context['refund_amount'] ?? 0),
             'severity' => 'CRITICAL',
             'tier' => 'TIER_1_IMMUTABLE',
             'metadata' => [
@@ -1955,7 +1955,7 @@ class AuditService
             'action' => 'partial_refund_processed',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Partial refund processed for order {$order->order_number}",
+            'description' => "Partial refund processed for order {$order->order_display}",
             'severity' => 'CRITICAL',
             'tier' => 'TIER_1_IMMUTABLE',
             'metadata' => [
@@ -1988,7 +1988,7 @@ class AuditService
             'action' => 'refund_rejected',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Refund rejected for order {$order->order_number}: {$reason}",
+            'description' => "Refund rejected for order {$order->order_display}: {$reason}",
             'severity' => 'HIGH',
             'tier' => 'TIER_1_IMMUTABLE',
             'metadata' => [
@@ -2646,7 +2646,7 @@ class AuditService
             'action' => 'status_overridden',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Order {$order->order_number} status manually changed: {$oldStatus} → {$newStatus}",
+            'description' => "Order {$order->order_display} status manually changed: {$oldStatus} → {$newStatus}",
             'severity' => 'CRITICAL',
             'tier' => 'TIER_1_IMMUTABLE',
             'metadata' => [
