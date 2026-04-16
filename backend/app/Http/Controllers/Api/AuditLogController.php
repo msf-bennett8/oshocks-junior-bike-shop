@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\AuditNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AuditLogController extends Controller
 {
@@ -860,13 +862,21 @@ class AuditLogController extends Controller
      */
     public function batchStore(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        // Support both 'events' (frontend) and 'logs' (legacy) keys
+        $payload = $request->all();
+        if (isset($payload['events']) && !isset($payload['logs'])) {
+            $payload['logs'] = $payload['events'];
+        }
+        
+        $validator = Validator::make($payload, [
             'logs' => 'required|array',
-            'logs.*.event_type' => 'required|string',
-            'logs.*.event_category' => 'required|string',
-            'logs.*.action' => 'required|string',
-            'logs.*.description' => 'required|string',
-            'logs.*.severity' => 'nullable|in:low,medium,high',
+            'logs.*.event_type' => 'required|string|max:100',
+            'logs.*.event_category' => 'required|string|max:50',
+            'logs.*.action' => 'nullable|string|max:50',
+            'logs.*.description' => 'nullable|string|max:1000',
+            'logs.*.severity' => 'nullable|in:low,medium,high,critical',
+            'logs.*.actor_type' => 'nullable|string|max:50',
+            'logs.*.metadata' => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
@@ -879,23 +889,35 @@ class AuditLogController extends Controller
 
         $user = $request->user();
         $stored = 0;
+        $failed = 0;
 
-        foreach ($request->logs as $logData) {
+        foreach ($payload['logs'] as $logData) {
             try {
+                // Sanitize model_id to prevent database errors
+                $modelId = $logData['model_id'] ?? null;
+                if ($modelId === 'unknown' || $modelId === 'null' || $modelId === '') {
+                    $modelId = null;
+                }
+                if (is_string($modelId) && strlen($modelId) > 64) {
+                    $modelId = substr(hash('sha256', $modelId), 0, 32);
+                }
+
                 AuditLog::create([
-                    'event_type' => $logData['event_type'],
-                    'event_category' => $logData['event_category'],
+                    'event_type' => strtoupper($logData['event_type']),
+                    'event_category' => strtolower($logData['event_category']),
                     'user_id' => $user?->id,
-                    'user_role' => $user?->role ?? 'guest',
-                    'action' => $logData['action'],
+                    'user_role' => $user?->role ?? ($user ? 'user' : 'guest'),
+                    'actor_type' => $logData['actor_type'] ?? ($user ? 'USER' : 'ANONYMOUS'),
+                    'action' => $logData['action'] ?? 'logged',
                     'model_type' => $logData['model_type'] ?? null,
-                    'model_id' => $logData['model_id'] ?? null,
-                    'description' => $logData['description'],
+                    'model_id' => $modelId,
+                    'description' => $logData['description'] ?? ($logData['event_type'] ?? 'Frontend event'),
                     'old_values' => $logData['old_values'] ?? null,
                     'new_values' => $logData['new_values'] ?? null,
-                    'metadata' => array_merge($logData['metadata'] ?? [], [
+                    'metadata' => array_merge(is_array($logData['metadata'] ?? null) ? $logData['metadata'] : [], [
                         'source' => 'frontend_batch',
                         'batch_id' => uniqid(),
+                        'received_at' => now()->toIso8601String(),
                     ]),
                     'ip_address' => $request->ip(),
                     'user_agent' => $request->userAgent(),

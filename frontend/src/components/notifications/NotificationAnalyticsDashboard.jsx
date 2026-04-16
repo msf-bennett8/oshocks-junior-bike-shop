@@ -36,7 +36,7 @@ const NotificationAnalyticsDashboard = () => {
 
   useEffect(() => {
     fetchDashboard();
-    const interval = setInterval(fetchDashboard, 60000); // Refresh every minute
+    const interval = setInterval(fetchDashboard, 300000); // Refresh every 5 minutes
     return () => clearInterval(interval);
   }, [period]);
 

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 class QueueJobListener
 {
     protected array $jobStartTimes = [];
+    protected array $skipLoggingFlags = []; // NEW: Track which jobs to skip
 
     /**
      * Handle job start.
@@ -25,14 +26,17 @@ class QueueJobListener
         // Extract job details
         $payload = $job->payload();
         $command = unserialize($payload['data']['command'] ?? '');
+        $jobName = get_class($command);
         
-        AuditService::logScheduledJobStarted(null, [
-            'job_name' => get_class($command),
-            'job_id' => $jobId,
-            'cron_expression' => $payload['cron'] ?? null,
-            'scheduled_time' => $payload['scheduled_at'] ?? now(),
-            'actual_start_time' => now(),
-        ]);
+        // SKIP: Don't log high-frequency internal jobs (audit, notifications, etc.)
+        $skipLogging = $this->shouldSkipLogging($jobName);
+        
+        // Store skip flag for handleJobProcessed to check
+        $this->skipLoggingFlags[$jobId] = $skipLogging;
+        
+        // Early return - don't log job starts at all (too verbose)
+        // Only log completions and failures
+        return;
     }
 
     /**
@@ -42,6 +46,12 @@ class QueueJobListener
     {
         $job = $event->job;
         $jobId = $job->uuid() ?? $job->getJobId();
+        
+        // Check if we should skip logging
+        if ($this->skipLoggingFlags[$jobId] ?? false) {
+            unset($this->jobStartTimes[$jobId], $this->skipLoggingFlags[$jobId]);
+            return;
+        }
         
         $startTime = $this->jobStartTimes[$jobId] ?? microtime(true);
         $duration = round((microtime(true) - $startTime) * 1000, 2);
@@ -56,7 +66,7 @@ class QueueJobListener
             'records_processed' => $this->extractRecordCount($command),
         ]);
 
-        unset($this->jobStartTimes[$jobId]);
+        unset($this->jobStartTimes[$jobId], $this->skipLoggingFlags[$jobId]);
     }
 
     /**
@@ -98,7 +108,30 @@ class QueueJobListener
             ]);
         }
 
-        unset($this->jobStartTimes[$jobId]);
+        unset($this->jobStartTimes[$jobId], $this->skipLoggingFlags[$jobId]);
+    }
+
+    /**
+     * Determine if we should skip logging this job
+     */
+    private function shouldSkipLogging(string $jobName): bool
+    {
+        // Skip audit log jobs (they create recursive loops)
+        if (str_contains($jobName, 'ProcessAuditLog') || str_contains($jobName, 'ShipToColdStorage')) {
+            return true;
+        }
+        
+        // Skip notification jobs (high volume)
+        if (str_contains($jobName, 'SendNotification') || str_contains($jobName, 'Notification')) {
+            return true;
+        }
+        
+        // Skip anonymous closures (CallQueuedClosure) unless they fail
+        if ($jobName === 'Illuminate\Queue\CallQueuedClosure') {
+            return true;
+        }
+        
+        return false;
     }
 
     /**

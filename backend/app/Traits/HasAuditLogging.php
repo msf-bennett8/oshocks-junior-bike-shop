@@ -4,25 +4,71 @@ namespace App\Traits;
 
 use App\Services\AuditService;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Cache;
 
 trait HasAuditLogging
 {
+    /**
+     * Models to skip or sample (high-frequency models)
+     */
+    protected static array $samplingConfig = [
+        'AuditLog' => ['skip' => true],
+        'Notification' => ['skip' => true],
+        'ActivityLog' => ['skip' => true],
+        'Cart' => ['sample_rate' => 10],
+        'CartItem' => ['sample_rate' => 10],
+        'Wishlist' => ['sample_rate' => 10],
+        'WishlistItem' => ['sample_rate' => 10],
+        'ProductView' => ['sample_rate' => 20],
+    ];
+
     /**
      * Boot the audit logging trait for a model.
      */
     public static function bootHasAuditLogging(): void
     {
         static::created(function ($model) {
-            $model->logModelEvent('created');
+            if ($model->shouldLogEvent('created')) {
+                $model->logModelEvent('created');
+            }
         });
 
         static::updated(function ($model) {
-            $model->logModelEvent('updated');
+            if ($model->shouldLogEvent('updated')) {
+                $model->logModelEvent('updated');
+            }
         });
 
         static::deleted(function ($model) {
-            $model->logModelEvent('deleted');
+            if ($model->shouldLogEvent('deleted')) {
+                $model->logModelEvent('deleted');
+            }
         });
+    }
+
+    /**
+     * Check if this event should be logged (sampling/deduplication)
+     */
+    protected function shouldLogEvent(string $action): bool
+    {
+        $modelClass = class_basename($this);
+        
+        if (isset(self::$samplingConfig[$modelClass]['skip']) && self::$samplingConfig[$modelClass]['skip']) {
+            return false;
+        }
+        
+        if (isset(self::$samplingConfig[$modelClass]['sample_rate'])) {
+            $rate = self::$samplingConfig[$modelClass]['sample_rate'];
+            return rand(1, $rate) === 1;
+        }
+        
+        $cacheKey = "audit:model:{$modelClass}:{$this->getKey()}:{$action}";
+        if (Cache::has($cacheKey)) {
+            return false;
+        }
+        Cache::put($cacheKey, true, 5);
+        
+        return true;
     }
 
     /**

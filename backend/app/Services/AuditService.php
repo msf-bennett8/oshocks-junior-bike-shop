@@ -36,15 +36,22 @@ class AuditService
             // Get geolocation from context
             $geolocation = $context['geolocation'] ?? null;
             
+            // Safely get request data (null when in queue/CLI context)
+            $request = request();
+            $requestMethod = $request?->method() ?? ($context['request_method'] ?? 'CLI');
+            $requestUrl = $request?->fullUrl() ?? ($context['request_url'] ?? 'queue/job');
+            $userAgent = $request?->userAgent() ?? ($context['user_agent'] ?? 'queue-worker');
+            $ipAddress = $context['ip_address'] ?? ($request?->ip() ?? '127.0.0.1');
+            
             // Build metadata with geolocation and context data
             $metadata = array_merge($data['metadata'] ?? [], [
                 'geolocation' => $geolocation,
                 'request_id' => $context['request_id'] ?? null,
                 'correlation_id' => $context['correlation_id'] ?? null,
                 'session_id' => $context['session_id'] ?? null,
-                'ip_address' => $context['ip_address'] ?? null,
-                'user_agent' => $context['user_agent'] ?? null,
-                'referrer' => $context['referrer'] ?? null,
+                'ip_address' => $ipAddress,
+                'user_agent' => substr($userAgent, 0, 500),
+                'referrer' => $context['referrer'] ?? ($request?->header('referer') ?? null),
                 'request_duration_ms' => $context['request_duration_ms'] ?? null,
             ]);
 
@@ -73,12 +80,12 @@ class AuditService
                 'payload' => $payload,
                 
                 // Context
-                'ip_address' => $context['ip_address'] ?? self::hashIp(self::getRealClientIp(request())),
-                'user_agent' => $context['user_agent'] ?? substr(request()->userAgent() ?? '', 0, 500),
+                'ip_address' => $context['ip_address'] ?? self::hashIp(self::getRealClientIp($request)),
+                'user_agent' => $context['user_agent'] ?? substr($userAgent, 0, 500),
                 'device_fingerprint' => $data['device_fingerprint'] ?? null,
                 'geolocation' => $context['geolocation'] ?? null,
-                'request_method' => request()->method(),
-                'request_url' => substr(request()->fullUrl(), 0, 2048),
+                'request_method' => $requestMethod,
+                'request_url' => substr($requestUrl, 0, 2048),
                 'session_id' => $context['session_id'] ?? null,
                 'correlation_id' => $context['correlation_id'] ?? (string) Str::uuid(),
                 
@@ -682,6 +689,25 @@ class AuditService
         }
         
         return hash('sha256', $ip . config('app.key'));
+    }
+
+    /**
+     * Sanitize header value to prevent header injection attacks
+     * Removes newlines and null bytes that could be used for response splitting
+     */
+    private static function sanitizeHeaderValue(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        
+        // Remove CRLF, LF, CR, and null bytes
+        $value = str_replace(["\r\n", "\n", "\r", "\0"], '', $value);
+        
+        // Also remove other control characters except tab
+        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $value);
+        
+        return $value;
     }
 
         /**
@@ -4498,6 +4524,16 @@ class AuditService
      */
     public static function logDeviceFingerprintMismatch($user, array $context = []): ?AuditLog
     {
+        // DEDUPLICATION: Check if we already logged this exact mismatch recently
+        $fingerprintHash = isset($context['actual_fingerprint']) ? md5($context['actual_fingerprint']) : 'unknown';
+        $cacheKey = "audit:fp_mismatch:{$user->id}:" . $fingerprintHash;
+        if (Cache::has($cacheKey)) {
+            return null; // Skip duplicate logging
+        }
+        
+        // Mark as logged (10 minute cooldown for same fingerprint)
+        Cache::put($cacheKey, true, 600); // 10 minutes
+
         return self::log([
             'event_type' => 'DEVICE_FINGERPRINT_MISMATCH',
             'event_category' => 'security',
@@ -4505,16 +4541,16 @@ class AuditService
             'user_id' => $user->id,
             'action' => 'fingerprint_mismatch',
             'model_type' => 'Device',
-            'model_id' => $context['actual_fingerprint'],
+            'model_id' => $fingerprintHash, // Use hashed value, not full fingerprint
             'description' => "Device fingerprint mismatch for {$user->email}",
             'severity' => 'HIGH',
             'tier' => 'TIER_1_IMMUTABLE',
             'metadata' => [
-                'expected_fingerprint' => $context['expected_fingerprint'],
-                'actual_fingerprint' => $context['actual_fingerprint'],
-                'similarity_score' => $context['similarity_score'],
-                'confidence_score' => $context['confidence_score'],
-                'action_taken' => $context['action_taken'],
+                'expected_fingerprint' => $context['expected_fingerprint'] ?? null,
+                'actual_fingerprint' => $context['actual_fingerprint'] ?? null,
+                'similarity_score' => $context['similarity_score'] ?? 0,
+                'confidence_score' => $context['confidence_score'] ?? 70,
+                'action_taken' => $context['action_taken'] ?? 'logged',
             ],
             'payload' => [
                 'similarity_score' => $context['similarity_score'],

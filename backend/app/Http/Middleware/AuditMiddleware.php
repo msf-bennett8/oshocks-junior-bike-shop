@@ -76,6 +76,26 @@ class AuditMiddleware
                 default => 'low',
             };
 
+            // SAMPLING: For high-frequency low-value endpoints, only log 10% of requests
+            $samplingPaths = [
+                'notifications/unread-count',
+                'notifications',
+                'user/preferences',
+                'user/stats',
+                'dashboard',
+            ];
+            
+            $path = $request->path();
+            foreach ($samplingPaths as $samplingPath) {
+                if (str_contains($path, $samplingPath) && $severity === 'low') {
+                    // Only log 10% of these requests (1 in 10)
+                    if (rand(1, 10) !== 1) {
+                        return; // Skip logging this request
+                    }
+                    break;
+                }
+            }
+
             // Build metadata
             $metadata = [
                 'request_method' => $request->method(),
@@ -140,7 +160,11 @@ class AuditMiddleware
             'notifications/pixel',
             'marketing/pixel',
             '_debugbar',
-            'up', // Laravel health check
+            'up',
+            'notifications/unread-count',
+            'audit-logs',
+            'audit-logs/stats',
+            'audit-logs/archives',
         ];
 
         $path = $request->path();
@@ -151,7 +175,40 @@ class AuditMiddleware
             }
         }
 
+        // DEDUPLICATION: Check if we've already logged this exact request recently
+        $requestFingerprint = $this->getRequestFingerprint($request);
+        $cacheKey = "audit:req:{$requestFingerprint}";
+        
+        if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+            return true;
+        }
+        
+        // Mark as logged for 60 seconds (longer cooldown for same requests)
+        \Illuminate\Support\Facades\Cache::put($cacheKey, true, 60);
+
+        // SAMPLING: For GET requests, only log 20% of the time (1 in 5)
+        if ($request->isMethod('GET') && rand(1, 5) !== 1) {
+            return true;
+        }
+
         return false;
+    }
+
+    /**
+     * Generate a fingerprint for the request to detect duplicates
+     */
+    private function getRequestFingerprint(Request $request): string
+    {
+        $userId = \Illuminate\Support\Facades\Auth::id() ?? 'guest';
+        $path = $request->path();
+        $method = $request->method();
+        
+        // For GET requests, include query params in fingerprint
+        $queryHash = $method === 'GET' 
+            ? md5(serialize($request->query())) 
+            : '';
+            
+        return md5("{$userId}:{$method}:{$path}:{$queryHash}");
     }
 
     /**

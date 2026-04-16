@@ -236,7 +236,7 @@ class AuditBatchQueue {
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` }),
         },
-        body: JSON.stringify({ events: batch }),
+        body: JSON.stringify({ events: batch }), // Backend now accepts both 'events' and 'logs'
         keepalive: true,
       }).catch(() => {});
     } catch (error) {
@@ -707,6 +707,17 @@ export const logApiRetry = (endpoint, attemptNumber, maxAttempts, nextRetryDelay
 export const recordServiceSuccess = (url) => {
   const serviceName = determineServiceName(url);
   serviceHealth.recordSuccess(serviceName);
+};
+
+// Helper to sanitize resource IDs before logging
+export const sanitizeResourceId = (id) => {
+  if (!id || id === 'unknown' || id === 'null' || id === 'undefined' || id === '') {
+    return null;
+  }
+  if (typeof id === 'string' && id.length > 64) {
+    return id.substring(0, 32);
+  }
+  return id;
 };
 
 // Log impersonation action during impersonation session

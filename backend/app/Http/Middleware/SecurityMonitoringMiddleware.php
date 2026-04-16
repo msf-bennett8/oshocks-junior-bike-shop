@@ -34,6 +34,23 @@ class SecurityMonitoringMiddleware
             return $next($request);
         }
 
+        // Skip ALL security monitoring for high-frequency polling endpoints
+        $pollingEndpoints = [
+            'api/v1/notifications/unread-count',
+            'api/v1/notifications',
+            'api/v1/audit-logs',
+            'api/v1/audit-logs/stats',
+            'api/v1/cart',
+            'api/v1/wishlist',
+            'api/v1/auth/me',
+        ];
+        
+        foreach ($pollingEndpoints as $endpoint) {
+            if (str_contains($path, $endpoint) || $path === $endpoint) {
+                return $next($request);
+            }
+        }
+
         // 1. Device fingerprint check
         $this->checkDeviceFingerprint($request, $user);
 
@@ -70,14 +87,16 @@ class SecurityMonitoringMiddleware
                 'confidence_score' => $fingerprintData['confidence_score'],
             ]);
         } elseif (!$mismatchCheck['match']) {
-            // Device mismatch detected
-            AuditService::logDeviceFingerprintMismatch($user, [
-                'expected_fingerprint' => $mismatchCheck['expected_fingerprint'],
-                'actual_fingerprint' => $mismatchCheck['actual_fingerprint'],
-                'similarity_score' => $mismatchCheck['similarity_score'],
-                'confidence_score' => $mismatchCheck['confidence_score'],
-                'action_taken' => DeviceFingerprintService::isTrusted($user->id, $fingerprint) ? 'allowed_trusted' : 'alerted',
-            ]);
+            // Device mismatch detected - only log if we have the expected fingerprint
+            if (!empty($mismatchCheck['expected_fingerprint'])) {
+                AuditService::logDeviceFingerprintMismatch($user, [
+                    'expected_fingerprint' => $mismatchCheck['expected_fingerprint'],
+                    'actual_fingerprint' => $mismatchCheck['actual_fingerprint'] ?? $fingerprint,
+                    'similarity_score' => $mismatchCheck['similarity_score'] ?? 0,
+                    'confidence_score' => $mismatchCheck['confidence_score'] ?? 70,
+                    'action_taken' => DeviceFingerprintService::isTrusted($user->id, $fingerprint) ? 'allowed_trusted' : 'alerted',
+                ]);
+            }
 
             // If not trusted, require additional verification
             if (!DeviceFingerprintService::isTrusted($user->id, $fingerprint)) {

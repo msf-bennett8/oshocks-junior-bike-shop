@@ -50,34 +50,6 @@ class DeviceFingerprintService
     }
 
     /**
-     * Check for fingerprint mismatch (impossible travel/ device change)
-     */
-    public static function checkMismatch(string $userId, string $currentFingerprint): array
-    {
-        $storedFingerprint = Cache::get("device_fp:{$userId}");
-        
-        if (!$storedFingerprint) {
-            return ['match' => true, 'is_new' => true]; // First login
-        }
-
-        if ($storedFingerprint === $currentFingerprint) {
-            return ['match' => true, 'is_new' => false];
-        }
-
-        // Calculate similarity
-        $similarity = self::calculateSimilarity($storedFingerprint, $currentFingerprint);
-
-        return [
-            'match' => false,
-            'is_new' => false,
-            'expected_fingerprint' => $storedFingerprint,
-            'actual_fingerprint' => $currentFingerprint,
-            'similarity_score' => $similarity,
-            'confidence_score' => 70, // Lower confidence on mismatch
-        ];
-    }
-
-    /**
      * Store fingerprint for user
      */
     public static function store(string $userId, string $fingerprint, int $ttlDays = 30): void
@@ -123,5 +95,43 @@ class DeviceFingerprintService
     {
         similar_text($fp1, $fp2, $percent);
         return (int) $percent;
+    }
+
+    /**
+     * Check for fingerprint mismatch with deduplication
+     */
+    public static function checkMismatch(string $userId, string $currentFingerprint): array
+    {
+        // DEDUPLICATION: Check if we already logged a mismatch recently (5 min cooldown)
+        $cacheKey = "fp_mismatch_logged:{$userId}";
+        if (Cache::has($cacheKey)) {
+            return ['match' => false, 'is_new' => false, 'recently_logged' => true];
+        }
+        
+        $storedFingerprint = Cache::get("device_fp:{$userId}");
+        
+        if (!$storedFingerprint) {
+            // First time seeing this device - treat as new, not a match
+            return ['match' => false, 'is_new' => true];
+        }
+
+        if ($storedFingerprint === $currentFingerprint) {
+            return ['match' => true, 'is_new' => false];
+        }
+
+        // Calculate similarity
+        $similarity = self::calculateSimilarity($storedFingerprint, $currentFingerprint);
+        
+        // Mark as logged to prevent spam (5 minute cooldown)
+        Cache::put($cacheKey, true, 300); // 5 minutes
+
+        return [
+            'match' => false,
+            'is_new' => false,
+            'expected_fingerprint' => $storedFingerprint,
+            'actual_fingerprint' => $currentFingerprint,
+            'similarity_score' => $similarity,
+            'confidence_score' => 70,
+        ];
     }
 }
