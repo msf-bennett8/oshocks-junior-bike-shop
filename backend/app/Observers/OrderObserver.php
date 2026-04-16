@@ -102,7 +102,7 @@ class OrderObserver
     public function deleted(Order $order): void
     {
         // Orders should not be deleted, only cancelled
-        AuditService::logSuspiciousActivity("Order deleted: {$order->order_number}", [
+        AuditService::logSuspiciousActivity("Order deleted: {$order->order_display}", [
             'activity_type' => 'order_deleted',
             'order_id' => $order->id,
         ]);

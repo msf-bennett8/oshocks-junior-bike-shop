@@ -1166,7 +1166,7 @@ class AuditService
             'action' => 'pending',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Payment pending for order {$order->order_number}",
+            'description' => "Payment pending for order {$order->order_display}",
             'severity' => 'HIGH',
             'metadata' => [
                 'order_id' => $order->id,
@@ -1194,7 +1194,7 @@ class AuditService
             'action' => 'processing',
             'model_type' => 'Order',
             'model_id' => $order->id,
-            'description' => "Payment processing for order {$order->order_number}",
+            'description' => "Payment processing for order {$order->order_display}",
             'severity' => 'HIGH',
             'metadata' => [
                 'order_id' => $order->id,
