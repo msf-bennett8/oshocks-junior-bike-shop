@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import payoutService from '../../services/payoutService';
+import exportService from '../../services/exportService';
+import { copyToClipboard } from '../../utils/exportUtils';
 import { 
   DollarSign, Users, Clock, CheckCircle, AlertCircle, 
   RefreshCw, Search, Filter, Download, Eye, 
-  CreditCard, Building2, TrendingUp, Calendar
+  CreditCard, Building2, TrendingUp, Calendar,
+  Copy, Check, FileSpreadsheet, FileJson, ChevronDown,
+  MoreHorizontal, X
 } from 'lucide-react';
 
 const PayoutManagementPage = () => {
@@ -22,6 +26,17 @@ const PayoutManagementPage = () => {
   const [historyPayoutDetails, setHistoryPayoutDetails] = useState(null);
   const [isLoadingHistoryDetails, setIsLoadingHistoryDetails] = useState(false);
   const { user } = useAuth();
+
+  // Display preferences
+  const [transactionIdMode, setTransactionIdMode] = useState('purchase'); // 'purchase' | 'transaction'
+  const [orderIdMode, setOrderIdMode] = useState('display'); // 'display' | 'number'
+  
+  // Copy feedback
+  const [copiedId, setCopiedId] = useState(null);
+  
+  // Selection for export
+  const [selectedPayments, setSelectedPayments] = useState([]);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Pending payouts data
   const [pendingPayouts, setPendingPayouts] = useState([]);
@@ -301,6 +316,58 @@ const PayoutManagementPage = () => {
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  // Get transaction ID based on mode
+  const getTransactionId = (payment) => {
+    if (transactionIdMode === 'purchase') {
+      return payment.order?.purchase_id || payment.purchase_id || payment.transaction_reference;
+    }
+    return payment.transaction_reference || payment.transaction_id || 'N/A';
+  };
+
+  // Get order identifier based on mode
+  const getOrderId = (payment) => {
+    if (orderIdMode === 'display') {
+      return payment.order?.order_display || payment.order_display || payment.order?.order_number || 'N/A';
+    }
+    return payment.order?.order_number || payment.order_number || 'N/A';
+  };
+
+  // Handle copy to clipboard
+  const handleCopy = async (text, id) => {
+    const success = await copyToClipboard(text);
+    if (success) {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
+  };
+
+  // Toggle payment selection for export
+  const togglePaymentSelection = (paymentId) => {
+    if (selectedPayments.includes(paymentId)) {
+      setSelectedPayments(selectedPayments.filter(id => id !== paymentId));
+    } else {
+      setSelectedPayments([...selectedPayments, paymentId]);
+    }
+  };
+
+  // Export handlers
+  const handleExportAll = (format) => {
+    const data = activeTab === 'pending' 
+      ? selectedSellerDetails?.payments || []
+      : historyPayoutDetails?.payments || [];
+    exportService.exportPayouts(activeTab, data, format);
+    setShowExportMenu(false);
+  };
+
+  const handleExportSelected = (format) => {
+    const allData = activeTab === 'pending' 
+      ? selectedSellerDetails?.payments || []
+      : historyPayoutDetails?.payments || [];
+    const data = allData.filter(p => selectedPayments.includes(p.id));
+    exportService.exportPayouts('selected', data, format);
+    setShowExportMenu(false);
   };
 
   return (
@@ -843,8 +910,32 @@ const PayoutManagementPage = () => {
                   <table className="w-full">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Transaction ID</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={transactionIdMode}
+                              onChange={(e) => setTransactionIdMode(e.target.value)}
+                              className="text-xs border-none bg-transparent font-medium text-gray-500 focus:ring-0 cursor-pointer hover:text-gray-700"
+                            >
+                              <option value="purchase">Purchase ID</option>
+                              <option value="transaction">Transaction Ref</option>
+                            </select>
+                            <ChevronDown size={12} />
+                          </div>
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={orderIdMode}
+                              onChange={(e) => setOrderIdMode(e.target.value)}
+                              className="text-xs border-none bg-transparent font-medium text-gray-500 focus:ring-0 cursor-pointer hover:text-gray-700"
+                            >
+                              <option value="display">Order Display</option>
+                              <option value="number">Order Number</option>
+                            </select>
+                            <ChevronDown size={12} />
+                          </div>
+                        </th>
                         <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Method</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Commission</th>
@@ -856,14 +947,40 @@ const PayoutManagementPage = () => {
                       {selectedSellerDetails.payments.map((payment) => (
                         <tr key={payment.id} className="hover:bg-gray-50">
                           <td className="px-4 py-3">
-                            <span className="text-xs font-mono text-gray-900">
-                              {payment.transaction_reference}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-mono text-gray-900">
+                                {getTransactionId(payment)}
+                              </span>
+                              <button
+                                onClick={() => handleCopy(getTransactionId(payment), `tx-${payment.id}`)}
+                                className="text-gray-400 hover:text-blue-600 transition-colors"
+                                title="Copy to clipboard"
+                              >
+                                {copiedId === `tx-${payment.id}` ? (
+                                  <Check size={14} className="text-green-600" />
+                                ) : (
+                                  <Copy size={14} />
+                                )}
+                              </button>
+                            </div>
                           </td>
                           <td className="px-4 py-3">
-                            <span className="text-xs text-gray-700">
-                              {payment.order?.order_number || 'N/A'}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-700">
+                                {getOrderId(payment)}
+                              </span>
+                              <button
+                                onClick={() => handleCopy(getOrderId(payment), `ord-${payment.id}`)}
+                                className="text-gray-400 hover:text-blue-600 transition-colors"
+                                title="Copy to clipboard"
+                              >
+                                {copiedId === `ord-${payment.id}` ? (
+                                  <Check size={14} className="text-green-600" />
+                                ) : (
+                                  <Copy size={14} />
+                                )}
+                              </button>
+                            </div>
                           </td>
                           <td className="px-4 py-3 text-center">
                             <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-xs">
@@ -895,6 +1012,61 @@ const PayoutManagementPage = () => {
                     </tbody>
                   </table>
                 </div>
+              </div>
+
+              {/* Export Section */}
+              <div className="mt-4 flex items-center justify-between bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-gray-600">
+                    {selectedPayments.length > 0 ? `${selectedPayments.length} selected` : 'All items'}
+                  </span>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowExportMenu(!showExportMenu)}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
+                    >
+                      <Download size={16} />
+                      Export
+                      <ChevronDown size={14} />
+                    </button>
+                    {showExportMenu && (
+                      <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
+                        <button
+                          onClick={() => handleExportAll('csv')}
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                        >
+                          <FileSpreadsheet size={14} />
+                          Export All (CSV)
+                        </button>
+                        <button
+                          onClick={() => handleExportAll('json')}
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                        >
+                          <FileJson size={14} />
+                          Export All (JSON)
+                        </button>
+                        {selectedPayments.length > 0 && (
+                          <>
+                            <div className="border-t my-1"></div>
+                            <button
+                              onClick={() => handleExportSelected('csv')}
+                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-blue-600"
+                            >
+                              <FileSpreadsheet size={14} />
+                              Export Selected ({selectedPayments.length})
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedPayments([])}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  Clear Selection
+                </button>
               </div>
 
               {/* Recorded By Info */}
@@ -991,8 +1163,32 @@ const PayoutManagementPage = () => {
                       <table className="w-full">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Transaction ID</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                              <div className="flex items-center gap-2">
+                                <select
+                                  value={transactionIdMode}
+                                  onChange={(e) => setTransactionIdMode(e.target.value)}
+                                  className="text-xs border-none bg-transparent font-medium text-gray-500 focus:ring-0 cursor-pointer hover:text-gray-700"
+                                >
+                                  <option value="purchase">Purchase ID</option>
+                                  <option value="transaction">Transaction Ref</option>
+                                </select>
+                                <ChevronDown size={12} />
+                              </div>
+                            </th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                              <div className="flex items-center gap-2">
+                                <select
+                                  value={orderIdMode}
+                                  onChange={(e) => setOrderIdMode(e.target.value)}
+                                  className="text-xs border-none bg-transparent font-medium text-gray-500 focus:ring-0 cursor-pointer hover:text-gray-700"
+                                >
+                                  <option value="display">Order Display</option>
+                                  <option value="number">Order Number</option>
+                                </select>
+                                <ChevronDown size={12} />
+                              </div>
+                            </th>
                             <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Method</th>
                             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
                             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Commission</th>
@@ -1004,14 +1200,40 @@ const PayoutManagementPage = () => {
                           {historyPayoutDetails.payments?.map((payment) => (
                             <tr key={payment.id} className="hover:bg-gray-50">
                               <td className="px-4 py-3">
-                                <span className="text-xs font-mono text-gray-900">
-                                  {payment.transaction_reference || payment.transaction_id || 'N/A'}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-mono text-gray-900">
+                                    {getTransactionId(payment)}
+                                  </span>
+                                  <button
+                                    onClick={() => handleCopy(getTransactionId(payment), `hist-tx-${payment.id}`)}
+                                    className="text-gray-400 hover:text-blue-600 transition-colors"
+                                    title="Copy to clipboard"
+                                  >
+                                    {copiedId === `hist-tx-${payment.id}` ? (
+                                      <Check size={14} className="text-green-600" />
+                                    ) : (
+                                      <Copy size={14} />
+                                    )}
+                                  </button>
+                                </div>
                               </td>
                               <td className="px-4 py-3">
-                                <span className="text-xs text-gray-700">
-                                  {payment.order?.order_number || payment.order_code || 'N/A'}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-gray-700">
+                                    {getOrderId(payment)}
+                                  </span>
+                                  <button
+                                    onClick={() => handleCopy(getOrderId(payment), `hist-ord-${payment.id}`)}
+                                    className="text-gray-400 hover:text-blue-600 transition-colors"
+                                    title="Copy to clipboard"
+                                  >
+                                    {copiedId === `hist-ord-${payment.id}` ? (
+                                      <Check size={14} className="text-green-600" />
+                                    ) : (
+                                      <Copy size={14} />
+                                    )}
+                                  </button>
+                                </div>
                               </td>
                               <td className="px-4 py-3 text-center">
                                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-xs">

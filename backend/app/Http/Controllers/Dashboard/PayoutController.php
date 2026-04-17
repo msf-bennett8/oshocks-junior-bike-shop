@@ -77,7 +77,7 @@ class PayoutController extends Controller
         $payments = Payment::where('seller_id', $sellerId)
             ->where('status', 'completed')
             ->where('payout_status', 'pending')
-            ->with(['order:id,order_number', 'recordedBy:id,name'])
+            ->with(['order:id,order_number,order_display,purchase_id', 'recordedBy:id,name'])
             ->orderBy('payment_collected_at')
             ->get();
         
@@ -259,7 +259,7 @@ class PayoutController extends Controller
             // Load payments separately with their relationships
             // belongsToMany with with() constraints needs to be handled differently
             $payments = $payout->payments()
-                ->with(['order:id,order_number,total', 'recordedBy:id,name'])
+                ->with(['order:id,order_number,order_display,purchase_id,total', 'recordedBy:id,name'])
                 ->get();
 
             // Calculate summary from actual payment data
@@ -290,8 +290,11 @@ class PayoutController extends Controller
                         return [
                             'id' => $payment->id,
                             'transaction_reference' => $payment->transaction_reference ?? $payment->transaction_id,
+                            'purchase_id' => $payment->order->purchase_id ?? null,
                             'order' => [
                                 'order_number' => $payment->order->order_number ?? 'N/A',
+                                'order_display' => $payment->order->order_display ?? null,
+                                'purchase_id' => $payment->order->purchase_id ?? null,
                                 'total' => $payment->order->total ?? 0
                             ],
                             'payment_method' => $payment->payment_method,
