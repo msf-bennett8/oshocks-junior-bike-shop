@@ -3,7 +3,7 @@ import api from './api';
 const exportService = {
   /**
    * Export payouts to CSV/JSON (client-side generation)
-   * @param {string} type - 'pending' | 'history' | 'payments'
+   * @param {string} type - 'pending' | 'history' | 'payments' | 'pending-selected' | 'pending-all'
    * @param {Array} data - Data to export
    * @param {string} format - 'csv' | 'json'
    * @param {Object} options - Additional options

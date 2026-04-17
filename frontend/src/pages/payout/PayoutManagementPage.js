@@ -37,6 +37,7 @@ const PayoutManagementPage = () => {
   // Selection for export
   const [selectedPayments, setSelectedPayments] = useState([]);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showPendingExportMenu, setShowPendingExportMenu] = useState(false);
 
   // Pending payouts data
   const [pendingPayouts, setPendingPayouts] = useState([]);
@@ -48,6 +49,11 @@ const PayoutManagementPage = () => {
 
   // History data
   const [payoutHistory, setPayoutHistory] = useState([]);
+  const [historySummary, setHistorySummary] = useState({
+    total_payouts: 0,
+    total_amount: 0,
+    currency: 'KES'
+  });
   const [historyPagination, setHistoryPagination] = useState({
     current_page: 1,
     total_pages: 1,
@@ -97,6 +103,11 @@ const PayoutManagementPage = () => {
           total_pages: 1,
           per_page: 20,
           total: 0
+        });
+        setHistorySummary(response.summary || {
+          total_payouts: response.pagination?.total || 0,
+          total_amount: response.data?.reduce((sum, p) => sum + Number(p.payout_amount), 0) || 0,
+          currency: 'KES'
         });
       }
     } catch (error) {
@@ -370,6 +381,47 @@ const PayoutManagementPage = () => {
     setShowExportMenu(false);
   };
 
+  // Export selected pending payouts (sellers)
+  const handleExportPendingSelected = (format) => {
+    const selectedData = pendingPayouts.filter(p => selectedSellers.includes(p.seller_id));
+    const exportData = selectedData.map(p => ({
+      seller_id: p.seller_id,
+      seller_name: p.seller_name,
+      seller_email: p.seller_email,
+      seller_phone: p.seller_phone,
+      payment_method: p.payment_method,
+      transaction_count: p.transaction_count,
+      total_sales: p.total_sales,
+      total_commission: p.total_commission,
+      payout_amount: p.payout_amount,
+      period_from: p.period?.from,
+      period_to: p.period?.to,
+      currency: p.currency
+    }));
+    exportService.exportPayouts('pending-selected', exportData, format);
+    setShowPendingExportMenu(false);
+  };
+
+  // Export all pending payouts
+  const handleExportPendingAll = (format) => {
+    const exportData = filteredPendingPayouts.map(p => ({
+      seller_id: p.seller_id,
+      seller_name: p.seller_name,
+      seller_email: p.seller_email,
+      seller_phone: p.seller_phone,
+      payment_method: p.payment_method,
+      transaction_count: p.transaction_count,
+      total_sales: p.total_sales,
+      total_commission: p.total_commission,
+      payout_amount: p.payout_amount,
+      period_from: p.period?.from,
+      period_to: p.period?.to,
+      currency: p.currency
+    }));
+    exportService.exportPayouts('pending-all', exportData, format);
+    setShowPendingExportMenu(false);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
@@ -394,19 +446,57 @@ const PayoutManagementPage = () => {
           </button>
 
           {activeTab === 'pending' && selectedSellers.length > 0 && (
-            <button
-              onClick={() => setShowProcessModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-            >
-              <CheckCircle size={18} />
-              Process {selectedSellers.length} Payout{selectedSellers.length > 1 ? 's' : ''}
-            </button>
+            <>
+              <div className="relative">
+                <button
+                  onClick={() => setShowPendingExportMenu(!showPendingExportMenu)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  <Download size={18} />
+                  Export {selectedSellers.length} Selected
+                  <ChevronDown size={16} />
+                </button>
+                {showPendingExportMenu && (
+                  <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[180px]">
+                    <button
+                      onClick={() => handleExportPendingSelected('csv')}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <FileSpreadsheet size={14} />
+                      Export Selected (CSV)
+                    </button>
+                    <button
+                      onClick={() => handleExportPendingSelected('json')}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <FileJson size={14} />
+                      Export Selected (JSON)
+                    </button>
+                    <div className="border-t my-1"></div>
+                    <button
+                      onClick={() => handleExportPendingAll('csv')}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-600"
+                    >
+                      <FileSpreadsheet size={14} />
+                      Export All Pending (CSV)
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => setShowProcessModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                <CheckCircle size={18} />
+                Process {selectedSellers.length} Payout{selectedSellers.length > 1 ? 's' : ''}
+              </button>
+            </>
           )}
         </div>
       </div>
 
       {/* Summary Cards */}
-      {activeTab === 'pending' && (
+      {activeTab === 'pending' ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
             <div className="flex items-center gap-3 mb-3">
@@ -440,6 +530,45 @@ const PayoutManagementPage = () => {
               <div>
                 <p className="text-sm opacity-90">Selected</p>
                 <p className="text-3xl font-bold">{selectedSellers.length}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* History Summary Cards */
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg shadow-lg p-6 text-white">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-3 bg-white bg-opacity-20 rounded-lg">
+                <CheckCircle size={24} />
+              </div>
+              <div>
+                <p className="text-sm opacity-90">Total Payouts</p>
+                <p className="text-3xl font-bold">{historySummary.total_payouts}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg shadow-lg p-6 text-white">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-3 bg-white bg-opacity-20 rounded-lg">
+                <DollarSign size={24} />
+              </div>
+              <div>
+                <p className="text-sm opacity-90">Total Paid Out</p>
+                <p className="text-3xl font-bold">{formatCurrency(historySummary.total_amount)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg shadow-lg p-6 text-white">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-3 bg-white bg-opacity-20 rounded-lg">
+                <Calendar size={24} />
+              </div>
+              <div>
+                <p className="text-sm opacity-90">This Page</p>
+                <p className="text-3xl font-bold">{payoutHistory.length}</p>
               </div>
             </div>
           </div>
@@ -503,14 +632,65 @@ const PayoutManagementPage = () => {
                   />
                 </div>
 
-                {filteredPendingPayouts.length > 0 && (
-                  <button
-                    onClick={handleSelectAll}
-                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                  >
-                    {selectedSellers.length === filteredPendingPayouts.length ? 'Deselect All' : 'Select All'}
-                  </button>
-                )}
+                <div className="flex gap-2">
+                  {filteredPendingPayouts.length > 0 && (
+                    <button
+                      onClick={handleSelectAll}
+                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      {selectedSellers.length === filteredPendingPayouts.length ? 'Deselect All' : 'Select All'}
+                    </button>
+                  )}
+                  
+                  {/* Export All Pending Button */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowPendingExportMenu(!showPendingExportMenu)}
+                      className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      <Download size={18} />
+                      Export
+                      <ChevronDown size={16} />
+                    </button>
+                    {showPendingExportMenu && (
+                      <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[180px]">
+                        {selectedSellers.length > 0 && (
+                          <>
+                            <button
+                              onClick={() => handleExportPendingSelected('csv')}
+                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-blue-600 font-medium"
+                            >
+                              <FileSpreadsheet size={14} />
+                              Export {selectedSellers.length} Selected (CSV)
+                            </button>
+                            <button
+                              onClick={() => handleExportPendingSelected('json')}
+                              className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-blue-600 font-medium"
+                            >
+                              <FileJson size={14} />
+                              Export {selectedSellers.length} Selected (JSON)
+                            </button>
+                            <div className="border-t my-1"></div>
+                          </>
+                        )}
+                        <button
+                          onClick={() => handleExportPendingAll('csv')}
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                        >
+                          <FileSpreadsheet size={14} />
+                          Export All Pending (CSV)
+                        </button>
+                        <button
+                          onClick={() => handleExportPendingAll('json')}
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                        >
+                          <FileJson size={14} />
+                          Export All Pending (JSON)
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Pending Payouts Table */}
@@ -550,8 +730,12 @@ const PayoutManagementPage = () => {
                     </thead>
                     <tbody className="divide-y">
                       {filteredPendingPayouts.map((payout) => (
-                        <tr key={payout.seller_id} className="hover:bg-gray-50">
-                          <td className="py-4 pr-4">
+                        <tr 
+                          key={payout.seller_id} 
+                          className="hover:bg-gray-50 cursor-pointer transition-colors"
+                          onClick={() => viewPayoutDetails(payout)}
+                        >
+                          <td className="py-4 pr-4" onClick={(e) => e.stopPropagation()}>
                             <input
                               type="checkbox"
                               checked={selectedSellers.includes(payout.seller_id)}
@@ -601,7 +785,10 @@ const PayoutManagementPage = () => {
                           </td>
                           <td className="py-4 text-center">
                             <button
-                              onClick={() => viewPayoutDetails(payout)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                viewPayoutDetails(payout);
+                              }}
                               className="inline-flex items-center gap-1 px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             >
                               <Eye size={16} />
@@ -620,6 +807,37 @@ const PayoutManagementPage = () => {
           {/* Payout History Tab */}
           {activeTab === 'history' && (
             <div>
+              {/* Search and Export Actions */}
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                  <input
+                    type="text"
+                    placeholder="Search payouts by seller or reference..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => exportService.exportPayouts('history', payoutHistory, 'csv')}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  >
+                    <FileSpreadsheet size={18} />
+                    Export CSV
+                  </button>
+                  <button
+                    onClick={() => exportService.exportPayouts('history', payoutHistory, 'json')}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    <FileJson size={18} />
+                    Export JSON
+                  </button>
+                </div>
+              </div>
+
               {isLoading ? (
                 <div className="text-center py-12">
                   <RefreshCw className="animate-spin mx-auto mb-4 text-blue-600" size={32} />
@@ -649,7 +867,11 @@ const PayoutManagementPage = () => {
                       </thead>
                       <tbody className="divide-y">
                         {payoutHistory.map((payout) => (
-                          <tr key={payout.id} className="hover:bg-gray-50">
+                          <tr 
+                            key={payout.id} 
+                            onClick={() => viewPayoutHistoryDetails(payout)}
+                            className="hover:bg-gray-50 cursor-pointer transition-colors"
+                          >
                             <td className="py-4">
                               <span className="text-sm font-mono text-gray-900">#{payout.id}</span>
                             </td>
@@ -670,7 +892,22 @@ const PayoutManagementPage = () => {
                               </span>
                             </td>
                             <td className="py-4">
-                              <span className="text-sm font-mono text-gray-700">{payout.payout_reference}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-mono text-gray-700">{payout.payout_reference}</span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCopy(payout.payout_reference, `ref-${payout.id}`);
+                                  }}
+                                  className="text-gray-400 hover:text-blue-600 transition-colors"
+                                >
+                                  {copiedId === `ref-${payout.id}` ? (
+                                    <Check size={14} className="text-green-600" />
+                                  ) : (
+                                    <Copy size={14} />
+                                  )}
+                                </button>
+                              </div>
                             </td>
                             <td className="py-4 text-center">
                               <span className="text-sm text-gray-700">{payout.processed_by_name}</span>
@@ -688,7 +925,10 @@ const PayoutManagementPage = () => {
                             </td>
                             <td className="py-4 text-center">
                               <button
-                                onClick={() => viewPayoutHistoryDetails(payout)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  viewPayoutHistoryDetails(payout);
+                                }}
                                 className="inline-flex items-center gap-1 px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                               >
                                 <Eye size={16} />
@@ -734,7 +974,14 @@ const PayoutManagementPage = () => {
 
       {/* Process Payout Modal */}
       {showProcessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowProcessModal(false);
+            }
+          }}
+        >
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b">
               <h2 className="text-xl font-bold text-gray-900">Process Payouts</h2>
@@ -848,8 +1095,16 @@ const PayoutManagementPage = () => {
 
       {/* Seller Details Modal */}
       {showDetailsModal && selectedSellerDetails && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowDetailsModal(false);
+              setSelectedPayments([]);
+            }
+          }}
+        >
+          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto lg:max-w-7xl">
             <div className="p-6 border-b">
               <div className="flex items-start justify-between">
                 <div>
@@ -1095,8 +1350,16 @@ const PayoutManagementPage = () => {
 
       {/* History Payout Details Modal */}
       {showHistoryDetailsModal && selectedHistoryPayout && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowHistoryDetailsModal(false);
+              setSelectedPayments([]);
+            }
+          }}
+        >
+          <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto lg:max-w-7xl">
             <div className="p-6 border-b">
               <div className="flex items-start justify-between">
                 <div>

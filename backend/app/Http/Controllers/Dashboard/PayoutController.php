@@ -219,6 +219,14 @@ class PayoutController extends Controller
             ]);
         }
         
+        // Get summary before pagination
+        $summaryQuery = clone $query;
+        $summary = [
+            'total_payouts' => $summaryQuery->count(),
+            'total_amount' => $summaryQuery->sum('payout_amount'),
+            'currency' => 'KES'
+        ];
+        
         // Pagination
         $perPage = $request->query('per_page', 20);
         $payouts = $query->orderByDesc('processed_at')->paginate($perPage);
@@ -233,6 +241,7 @@ class PayoutController extends Controller
         return response()->json([
             'success' => true,
             'data' => $data,
+            'summary' => $summary,
             'pagination' => [
                 'current_page' => $payouts->currentPage(),
                 'total_pages' => $payouts->lastPage(),
