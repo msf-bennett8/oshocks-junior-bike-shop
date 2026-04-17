@@ -241,4 +241,84 @@ class PayoutController extends Controller
             ]
         ]);
     }
+    
+    /**
+     * GET /api/v1/payouts/{id}/details
+     * Get detailed information about a specific payout with associated payments
+     */
+    public function details($id)
+    {
+        try {
+            // Get the payout with seller and processor info
+            $payout = SellerPayout::with([
+                'seller:id,business_name,user_id',
+                'seller.user:id,name,email,phone',
+                'processedBy:id,name'
+            ])->findOrFail($id);
+
+            // Load payments separately with their relationships
+            // belongsToMany with with() constraints needs to be handled differently
+            $payments = $payout->payments()
+                ->with(['order:id,order_number,total', 'recordedBy:id,name'])
+                ->get();
+
+            // Calculate summary from actual payment data
+            $summary = [
+                'transaction_count' => $payments->count(),
+                'total_sales' => $payments->sum('amount'),
+                'total_commission' => $payments->sum('platform_commission_amount'),
+                'payout_amount' => $payout->payout_amount
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'payout' => [
+                        'id' => $payout->id,
+                        'seller_id' => $payout->seller_id,
+                        'seller_name' => $payout->seller->business_name ?? $payout->seller->user->name ?? 'Unknown',
+                        'seller_email' => $payout->seller->user->email ?? 'N/A',
+                        'seller_phone' => $payout->seller->user->phone ?? 'N/A',
+                        'payout_amount' => $payout->payout_amount,
+                        'payout_method' => $payout->payout_method,
+                        'payout_reference' => $payout->payout_reference,
+                        'processed_by_name' => $payout->processedBy->name ?? 'System',
+                        'processed_at' => $payout->processed_at,
+                        'notes' => $payout->notes,
+                    ],
+                    'payments' => $payments->map(function($payment) {
+                        return [
+                            'id' => $payment->id,
+                            'transaction_reference' => $payment->transaction_reference ?? $payment->transaction_id,
+                            'order' => [
+                                'order_number' => $payment->order->order_number ?? 'N/A',
+                                'total' => $payment->order->total ?? 0
+                            ],
+                            'payment_method' => $payment->payment_method,
+                            'amount' => $payment->amount,
+                            'platform_commission_amount' => $payment->platform_commission_amount,
+                            'seller_payout_amount' => $payment->seller_payout_amount,
+                            'payment_collected_at' => $payment->payment_collected_at,
+                            'recordedBy' => [
+                                'name' => $payment->recordedBy->name ?? 'System'
+                            ]
+                        ];
+                    }),
+                    'summary' => $summary
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error fetching payout details', [
+                'error' => $e->getMessage(),
+                'payout_id' => $id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch payout details: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

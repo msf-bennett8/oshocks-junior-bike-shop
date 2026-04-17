@@ -96,6 +96,23 @@ const payoutService = {
     }
   },
 
+
+  /**
+   * Get detailed information about a specific payout (history)
+   * @param {number} payoutId - The payout ID
+   * @returns {Promise} Detailed payout information with associated payments
+   */
+  getPayoutDetails: async (payoutId) => {
+    try {
+      console.log('📋 Fetching payout details:', payoutId);
+      const response = await api.get(`/payouts/${payoutId}/details`);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error fetching payout details:', error);
+      throw error;
+    }
+  },
+
   // ============================================================================
   // UTILITY METHODS
   // ============================================================================

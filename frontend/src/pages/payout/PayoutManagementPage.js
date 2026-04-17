@@ -15,6 +15,12 @@ const PayoutManagementPage = () => {
   const [showProcessModal, setShowProcessModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedSellerDetails, setSelectedSellerDetails] = useState(null);
+  
+  // History payout details modal
+  const [showHistoryDetailsModal, setShowHistoryDetailsModal] = useState(false);
+  const [selectedHistoryPayout, setSelectedHistoryPayout] = useState(null);
+  const [historyPayoutDetails, setHistoryPayoutDetails] = useState(null);
+  const [isLoadingHistoryDetails, setIsLoadingHistoryDetails] = useState(false);
   const { user } = useAuth();
 
   // Pending payouts data
@@ -112,8 +118,61 @@ const PayoutManagementPage = () => {
     }
   };
 
-  // View seller payment details
-  const viewSellerDetails = async (seller) => {
+
+  // View completed payout history details
+  const viewPayoutHistoryDetails = async (payout) => {
+    setSelectedHistoryPayout(payout);
+    setIsLoadingHistoryDetails(true);
+    setShowHistoryDetailsModal(true);
+    
+    try {
+      const response = await payoutService.getPayoutDetails(payout.id);
+      if (response.success) {
+        setHistoryPayoutDetails(response.data);
+      } else {
+        // Fallback: construct basic details from the payout row itself
+        setHistoryPayoutDetails({
+          payout: payout,
+          payments: [{
+            id: payout.id,
+            transaction_reference: payout.payout_reference,
+            order: { order_number: 'N/A' },
+            payment_method: payout.payout_method,
+            amount: payout.payout_amount,
+            platform_commission_amount: 0,
+            seller_payout_amount: payout.payout_amount,
+            payment_collected_at: payout.processed_at
+          }],
+          summary: {
+            transaction_count: 1,
+            total_sales: payout.payout_amount,
+            total_commission: 0,
+            payout_amount: payout.payout_amount
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching payout details:', error);
+      // Fallback on error
+      setHistoryPayoutDetails({
+        payout: payout,
+        payments: [],
+        summary: {
+          transaction_count: 0,
+          total_sales: 0,
+          total_commission: 0,
+          payout_amount: payout.payout_amount
+        }
+      });
+    } finally {
+      setIsLoadingHistoryDetails(false);
+    }
+  };
+
+  
+
+  // View seller payment details (for pending payouts)
+  const viewPayoutDetails = async (seller) => {
     try {
       const response = await payoutService.getSellerPendingPayments(seller.seller_id);
       if (response.success) {
@@ -475,7 +534,7 @@ const PayoutManagementPage = () => {
                           </td>
                           <td className="py-4 text-center">
                             <button
-                              onClick={() => viewSellerDetails(payout)}
+                              onClick={() => viewPayoutDetails(payout)}
                               className="inline-flex items-center gap-1 px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             >
                               <Eye size={16} />
@@ -518,6 +577,7 @@ const PayoutManagementPage = () => {
                           <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Reference</th>
                           <th className="text-center text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Processed By</th>
                           <th className="text-center text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Date</th>
+                          <th className="text-center text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
@@ -558,6 +618,15 @@ const PayoutManagementPage = () => {
                                   minute: '2-digit'
                                 })}
                               </span>
+                            </td>
+                            <td className="py-4 text-center">
+                              <button
+                                onClick={() => viewPayoutHistoryDetails(payout)}
+                                className="inline-flex items-center gap-1 px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              >
+                                <Eye size={16} />
+                                View
+                              </button>
                             </td>
                           </tr>
                         ))}
@@ -843,6 +912,186 @@ const PayoutManagementPage = () => {
             <div className="p-6 border-t bg-gray-50">
               <button
                 onClick={() => setShowDetailsModal(false)}
+                className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* History Payout Details Modal */}
+      {showHistoryDetailsModal && selectedHistoryPayout && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Payout Details #{selectedHistoryPayout.id}
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {selectedHistoryPayout.seller_name} • {selectedHistoryPayout.seller_email}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowHistoryDetailsModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {isLoadingHistoryDetails ? (
+                <div className="text-center py-12">
+                  <RefreshCw className="animate-spin mx-auto mb-4 text-blue-600" size={32} />
+                  <p className="text-gray-600">Loading payout details...</p>
+                </div>
+              ) : historyPayoutDetails ? (
+                <>
+                  {/* Summary Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <p className="text-xs text-blue-600 font-medium mb-1">Transactions</p>
+                      <p className="text-2xl font-bold text-blue-900">
+                        {historyPayoutDetails.summary?.transaction_count || 0}
+                      </p>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-4">
+                      <p className="text-xs text-green-600 font-medium mb-1">Total Sales</p>
+                      <p className="text-2xl font-bold text-green-900">
+                        {formatCurrency(historyPayoutDetails.summary?.total_sales || 0)}
+                      </p>
+                    </div>
+                    <div className="bg-red-50 rounded-lg p-4">
+                      <p className="text-xs text-red-600 font-medium mb-1">Commission</p>
+                      <p className="text-2xl font-bold text-red-900">
+                        {formatCurrency(historyPayoutDetails.summary?.total_commission || 0)}
+                      </p>
+                    </div>
+                    <div className="bg-purple-50 rounded-lg p-4">
+                      <p className="text-xs text-purple-600 font-medium mb-1">Payout Amount</p>
+                      <p className="text-2xl font-bold text-purple-900">
+                        {formatCurrency(historyPayoutDetails.summary?.payout_amount || selectedHistoryPayout.payout_amount)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Payment Details Table */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="bg-gray-50 px-4 py-3 border-b">
+                      <h3 className="text-sm font-semibold text-gray-900">Payment Details</h3>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Transaction ID</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Method</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Commission</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Net</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {historyPayoutDetails.payments?.map((payment) => (
+                            <tr key={payment.id} className="hover:bg-gray-50">
+                              <td className="px-4 py-3">
+                                <span className="text-xs font-mono text-gray-900">
+                                  {payment.transaction_reference || payment.transaction_id || 'N/A'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="text-xs text-gray-700">
+                                  {payment.order?.order_number || payment.order_code || 'N/A'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-xs">
+                                  {payment.payment_method || selectedHistoryPayout.payout_method}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-sm font-medium text-gray-900">
+                                  {formatCurrency(payment.amount)}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-sm text-red-600">
+                                  -{formatCurrency(payment.platform_commission_amount || payment.commission || 0)}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="text-sm font-semibold text-green-600">
+                                  {formatCurrency(payment.seller_payout_amount || payment.net_amount || payment.amount)}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <span className="text-xs text-gray-600">
+                                  {new Date(payment.payment_collected_at || payment.created_at || selectedHistoryPayout.processed_at).toLocaleDateString('en-GB')}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Payout Metadata */}
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-xs text-gray-500 mb-1">Payment Method</p>
+                      <p className="text-sm font-medium text-gray-900 capitalize">
+                        {selectedHistoryPayout.payout_method}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-xs text-gray-500 mb-1">Reference</p>
+                      <p className="text-sm font-mono text-gray-900">
+                        {selectedHistoryPayout.payout_reference}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-xs text-gray-500 mb-1">Processed By</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {selectedHistoryPayout.processed_by_name}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-xs text-gray-500 mb-1">Processed At</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {new Date(selectedHistoryPayout.processed_at).toLocaleString('en-GB')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Notes if available */}
+                  {selectedHistoryPayout.notes && (
+                    <div className="mt-4 bg-yellow-50 rounded-lg p-4">
+                      <p className="text-xs text-yellow-700 font-medium mb-1">Notes</p>
+                      <p className="text-sm text-yellow-900">{selectedHistoryPayout.notes}</p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <AlertCircle className="mx-auto mb-4 text-gray-400" size={48} />
+                  <p className="text-gray-600">No details available</p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t bg-gray-50">
+              <button
+                onClick={() => setShowHistoryDetailsModal(false)}
                 className="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
               >
                 Close

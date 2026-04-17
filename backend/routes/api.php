@@ -379,6 +379,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
         Route::get('/seller/{seller_id}/pending-payments', [PayoutController::class, 'sellerPendingPayments']);
         Route::post('/process', [PayoutController::class, 'process']);
         Route::get('/history', [PayoutController::class, 'history']);
+        Route::get('/{id}/details', [PayoutController::class, 'details']);
     });
 
     // ============================================================================
