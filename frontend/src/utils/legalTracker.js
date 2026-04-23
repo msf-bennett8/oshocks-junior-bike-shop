@@ -204,10 +204,23 @@ export const checkForVersionUpdate = () => {
   }
 };
 
+/**
+ * Fetch versions from GitHub (stub for future GitHub integration)
+ */
+export const fetchVersionsFromGitHub = async () => {
+  // For now, return local versions. In production, fetch from GitHub raw files
+  return {
+    terms: LEGAL_VERSIONS.TERMS_OF_SERVICE,
+    privacy: LEGAL_VERSIONS.PRIVACY_POLICY,
+    cookie: LEGAL_VERSIONS.COOKIE_POLICY,
+  };
+};
+
 export default {
   LEGAL_VERSIONS,
   LEGAL_EVENTS,
   getLegalDocumentContent,
+  fetchVersionsFromGitHub,
   trackDocumentOpened,
   trackDocumentScrolledToBottom,
   recordLegalAcceptance,

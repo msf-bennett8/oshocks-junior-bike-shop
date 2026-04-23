@@ -1,12 +1,13 @@
+// frontend/src/components/legal/ReadOnlyLegalModal.jsx
 import React, { useState, useEffect } from 'react';
-import { X, FileText, Shield, Cookie } from 'lucide-react';
+import { X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { getLegalDocumentContent } from '../../utils/legalTracker';
 
 const TABS = {
-  terms: { label: 'Terms of Service', icon: FileText, key: 'terms' },
-  privacy: { label: 'Privacy Policy', icon: Shield, key: 'privacy' },
-  cookie: { label: 'Cookie Policy', icon: Cookie, key: 'cookie' },
+  terms: { label: 'Terms of Service', key: 'terms' },
+  privacy: { label: 'Privacy Policy', key: 'privacy' },
+  cookie: { label: 'Cookie Policy', key: 'cookie' },
 };
 
 const ReadOnlyLegalModal = ({ visible, onClose, initialTab = 'terms' }) => {
@@ -48,8 +49,6 @@ const ReadOnlyLegalModal = ({ visible, onClose, initialTab = 'terms' }) => {
 
   if (!visible) return null;
 
-  const ActiveIcon = TABS[activeTab].icon;
-
   return (
     <div className="fixed inset-0 z-[60] overflow-hidden">
       {/* Backdrop */}
@@ -68,16 +67,8 @@ const ReadOnlyLegalModal = ({ visible, onClose, initialTab = 'terms' }) => {
 
           {/* Header */}
           <div className="flex items-start justify-between px-6 pb-4 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <ActiveIcon className="w-5 h-5 text-blue-600" />
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">
-                  {TABS[activeTab].label}
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  Version {activeTab === 'terms' ? '1.0.0' : activeTab === 'privacy' ? '1.0.0' : '1.0.0'}
-                </p>
-              </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">{TABS[activeTab].label}</h2>
             </div>
             <button
               onClick={onClose}
@@ -89,7 +80,7 @@ const ReadOnlyLegalModal = ({ visible, onClose, initialTab = 'terms' }) => {
 
           {/* Tabs */}
           <div className="flex border-b border-gray-200">
-            {Object.entries(TABS).map(([key, { label, icon: Icon }]) => (
+            {Object.entries(TABS).map(([key, { label }]) => (
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
@@ -102,7 +93,6 @@ const ReadOnlyLegalModal = ({ visible, onClose, initialTab = 'terms' }) => {
                 `}
               >
                 <span className="flex items-center justify-center gap-2">
-                  <Icon className="w-4 h-4" />
                   {label}
                 </span>
               </button>
@@ -116,7 +106,7 @@ const ReadOnlyLegalModal = ({ visible, onClose, initialTab = 'terms' }) => {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
               </div>
             ) : (
-              <div className="prose prose-sm max-w-none">
+              <div className="prose prose-sm max-w-none prose-headings:text-gray-900 prose-h1:text-2xl prose-h1:font-bold prose-h2:text-xl prose-h2:font-bold prose-h3:text-lg prose-h3:font-semibold prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-table:w-full prose-table:border-collapse prose-th:bg-gray-100 prose-th:p-3 prose-th:text-left prose-th:font-semibold prose-th:text-gray-900 prose-td:p-3 prose-td:border-t prose-td:border-gray-200 prose-td:text-gray-700 prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:p-4 prose-blockquote:rounded-r-lg prose-hr:my-6">
                 <ReactMarkdown>{content[activeTab]}</ReactMarkdown>
               </div>
             )}
@@ -124,9 +114,6 @@ const ReadOnlyLegalModal = ({ visible, onClose, initialTab = 'terms' }) => {
 
           {/* Footer */}
           <div className="border-t border-gray-200 px-6 py-4">
-            <p className="text-xs text-gray-500 text-center mb-3">
-              Effective: April 23, 2026
-            </p>
             <button
               onClick={onClose}
               className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"

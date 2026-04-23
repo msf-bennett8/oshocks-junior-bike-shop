@@ -1,12 +1,13 @@
+// frontend/src/components/legal/LegalDocumentBottomSheet.jsx
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Check, FileText, Shield, Cookie } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { getLegalDocumentContent, trackDocumentOpened, trackDocumentScrolledToBottom } from '../../utils/legalTracker';
 
 const TABS = {
-  terms: { label: 'Terms of Service', icon: FileText, key: 'terms' },
-  privacy: { label: 'Privacy Policy', icon: Shield, key: 'privacy' },
-  cookie: { label: 'Cookie Policy', icon: Cookie, key: 'cookie' },
+  terms: { label: 'Terms of Service', key: 'terms' },
+  privacy: { label: 'Privacy Policy', key: 'privacy' },
+  cookie: { label: 'Cookie Policy', key: 'cookie' },
 };
 
 const LegalDocumentBottomSheet = ({
@@ -41,7 +42,6 @@ const LegalDocumentBottomSheet = ({
   const scrollRef = useRef(null);
   const currentScrollPosition = useRef(0);
 
-  // Load markdown files when modal opens
   useEffect(() => {
     if (visible) {
       loadContent();
@@ -69,14 +69,12 @@ const LegalDocumentBottomSheet = ({
     }
   };
 
-  // Track when tab is opened
   useEffect(() => {
     if (visible && activeTab) {
       trackDocumentOpened(activeTab);
     }
   }, [activeTab, visible]);
 
-  // Reset scroll position on tab change
   useEffect(() => {
     if (visible && scrollRef.current) {
       scrollRef.current.scrollTop = 0;
@@ -99,7 +97,6 @@ const LegalDocumentBottomSheet = ({
       setHasScrolledToBottom(prev => ({ ...prev, [activeTab]: true }));
       trackDocumentScrolledToBottom(activeTab);
       
-      // Automatically mark as read when scrolled to bottom
       if (activeTab === 'terms') setTermsRead(true);
       else if (activeTab === 'privacy') setPrivacyRead(true);
       else if (activeTab === 'cookie') setCookieRead(true);
@@ -116,19 +113,20 @@ const LegalDocumentBottomSheet = ({
   const canAccept = hasScrolledToBottom.terms && hasScrolledToBottom.privacy && hasScrolledToBottom.cookie;
 
   const getButtonText = () => {
-    if (canAccept) return 'I Accept All Terms and Policies';
+    if (canAccept) return 'I Accept Terms and Policies';
     if (!hasStartedScrolling[activeTab]) return 'Please Read These Documents';
     if (!hasScrolledToBottom[activeTab]) return 'Continue Scrolling';
     const remaining = ['terms', 'privacy', 'cookie'].filter(t => !hasScrolledToBottom[t]);
-    return `Read ${remaining.length} More Document${remaining.length > 1 ? 's' : ''}`;
+    const remainingLabels = remaining.map(r => TABS[r].label);
+    return `Please read the ${remainingLabels.join(' and ')} as well`;
   };
 
   const getButtonHint = () => {
     if (canAccept) return null;
     
     const currentDocRead = hasScrolledToBottom[activeTab];
-    const unreadDocs = Object.entries(TABS)
-      .filter(([key]) => !hasScrolledToBottom[key])
+    const otherDocs = Object.entries(TABS)
+      .filter(([key]) => key !== activeTab && !hasScrolledToBottom[key])
       .map(([_, val]) => val.label);
     
     if (!hasStartedScrolling[activeTab]) {
@@ -139,8 +137,8 @@ const LegalDocumentBottomSheet = ({
       return 'Continue scrolling to the bottom';
     }
     
-    if (currentDocRead && unreadDocs.length > 0) {
-      return `Please read: ${unreadDocs.join(', ')}`;
+    if (currentDocRead && otherDocs.length > 0) {
+      return `Please read the ${otherDocs.join(' and ')} as well`;
     }
     
     return null;
@@ -163,8 +161,6 @@ const LegalDocumentBottomSheet = ({
 
   if (!visible) return null;
 
-  const ActiveIcon = TABS[activeTab].icon;
-
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
@@ -176,17 +172,14 @@ const LegalDocumentBottomSheet = ({
       {/* Modal */}
       <div className="fixed inset-0 overflow-hidden flex items-center justify-center p-4">
         <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col">
-          {/* Drag Handle (Visual Only) */}
+          {/* Drag Handle */}
           <div className="flex justify-center py-3">
             <div className="w-10 h-1 bg-gray-300 rounded-full" />
           </div>
 
           {/* Header */}
           <div className="flex items-center justify-between px-6 pb-4 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <ActiveIcon className="w-5 h-5 text-blue-600" />
-              <h2 className="text-xl font-bold text-gray-900">Legal Documents</h2>
-            </div>
+            <h2 className="text-xl font-bold text-gray-900">Legal Documents</h2>
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -197,7 +190,7 @@ const LegalDocumentBottomSheet = ({
 
           {/* Tabs */}
           <div className="flex border-b border-gray-200">
-            {Object.entries(TABS).map(([key, { label, icon: Icon }]) => (
+            {Object.entries(TABS).map(([key, { label }]) => (
               <button
                 key={key}
                 onClick={() => handleTabChange(key)}
@@ -210,7 +203,6 @@ const LegalDocumentBottomSheet = ({
                 `}
               >
                 <span className="flex items-center justify-center gap-2">
-                  <Icon className="w-4 h-4" />
                   {label}
                   {hasScrolledToBottom[key] && (
                     <Check className="w-4 h-4 text-green-500" />
@@ -231,7 +223,7 @@ const LegalDocumentBottomSheet = ({
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
               </div>
             ) : (
-              <div className="prose prose-sm max-w-none">
+              <div className="prose prose-sm max-w-none prose-headings:text-gray-900 prose-h1:text-2xl prose-h1:font-bold prose-h2:text-xl prose-h2:font-bold prose-h3:text-lg prose-h3:font-semibold prose-p:text-gray-700 prose-li:text-gray-700 prose-strong:text-gray-900 prose-table:w-full prose-table:border-collapse prose-th:bg-gray-100 prose-th:p-3 prose-th:text-left prose-th:font-semibold prose-th:text-gray-900 prose-td:p-3 prose-td:border-t prose-td:border-gray-200 prose-td:text-gray-700 prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:p-4 prose-blockquote:rounded-r-lg prose-hr:my-6">
                 <ReactMarkdown>{content[activeTab]}</ReactMarkdown>
               </div>
             )}
@@ -239,22 +231,6 @@ const LegalDocumentBottomSheet = ({
 
           {/* Footer */}
           <div className="border-t border-gray-200 px-6 py-4">
-            {/* Progress indicator */}
-            <div className="flex items-center gap-2 mb-3">
-              {Object.entries(TABS).map(([key, { label }]) => (
-                <div key={key} className="flex items-center gap-1">
-                  <div className={`w-2 h-2 rounded-full ${
-                    hasScrolledToBottom[key] ? 'bg-green-500' : 'bg-gray-300'
-                  }`} />
-                  <span className={`text-xs ${
-                    hasScrolledToBottom[key] ? 'text-green-600' : 'text-gray-400'
-                  }`}>
-                    {label.split(' ')[0]}
-                  </span>
-                </div>
-              ))}
-            </div>
-
             {getButtonHint() && (
               <p className="text-xs text-gray-600 text-center mb-3">
                 {getButtonHint()}

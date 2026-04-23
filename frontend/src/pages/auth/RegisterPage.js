@@ -655,26 +655,26 @@ const RegisterPage = () => {
 
                 {/* Legal Documents - Scroll-to-Read */}
                 <div className="space-y-3">
-                  {/* Read Legal Documents Button */}
+                  {/* Read Legal Documents Button - AccellaX Style */}
                   <div>
                     <button
                       type="button"
                       data-legal-button
                       onClick={() => setShowLegalModal(true)}
                       className={`
-                        w-full flex items-center justify-between p-4 border-2 rounded-lg
-                        transition-all duration-200 hover:border-blue-300 hover:shadow-md
+                        w-full flex items-center justify-between p-4 border-2 rounded-xl
+                        transition-all duration-200 hover:border-primary-300 hover:shadow-md
                         ${termsRead && privacyRead && cookieRead
-                          ? 'border-green-500 bg-green-50' 
+                          ? 'border-success-500 bg-success-50' 
                           : legalButtonBlink
-                          ? 'border-red-500 bg-red-50 animate-pulse'
+                          ? 'border-danger-500 bg-danger-50 animate-pulse'
                           : 'border-gray-300 bg-white'
                         }
                       `}
                     >
                       <div className="flex items-center gap-3">
                         <FileText className={`w-6 h-6 ${
-                          termsRead && privacyRead && cookieRead ? 'text-green-600' : 'text-blue-600'
+                          termsRead && privacyRead && cookieRead ? 'text-success-600' : 'text-primary-600'
                         }`} />
                         <div className="text-left">
                           <div className="text-sm font-semibold text-gray-900">
@@ -690,11 +690,11 @@ const RegisterPage = () => {
                       <ChevronRight className="w-5 h-5 text-gray-400" />
                     </button>
                     {validationErrors.agreeToTerms && (
-                      <p className="mt-2 text-xs text-red-600">{validationErrors.agreeToTerms}</p>
+                      <p className="mt-2 text-xs text-danger-600">{validationErrors.agreeToTerms}</p>
                     )}
                   </div>
 
-                  {/* Auto-checked read-only checkboxes (visual only) */}
+                  {/* Auto-checked read-only checkboxes (visual only) - Clickable labels open modal */}
                   <div className="flex items-start">
                     <input
                       id="agreeToTerms"
@@ -702,13 +702,38 @@ const RegisterPage = () => {
                       type="checkbox"
                       checked={termsRead && privacyRead && cookieRead}
                       readOnly
-                      className="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded pointer-events-none"
+                      className="h-4 w-4 mt-0.5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded pointer-events-none"
                     />
                     <label htmlFor="agreeToTerms" className="ml-2 block text-sm text-gray-700">
                       I have read and agree to the{' '}
-                      <span className="text-blue-600 font-medium">Terms of Service</span>,{' '}
-                      <span className="text-blue-600 font-medium">Privacy Policy</span>, and{' '}
-                      <span className="text-blue-600 font-medium">Cookie Policy</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowLegalModal(true);
+                          // The modal opens on terms by default, but we could track which was clicked
+                        }}
+                        className="text-primary-600 hover:text-primary-700 font-medium underline cursor-pointer bg-transparent border-none p-0"
+                      >
+                        Terms of Service
+                      </button>,{' '}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowLegalModal(true);
+                        }}
+                        className="text-primary-600 hover:text-primary-700 font-medium underline cursor-pointer bg-transparent border-none p-0"
+                      >
+                        Privacy Policy
+                      </button>, and{' '}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowLegalModal(true);
+                        }}
+                        className="text-primary-600 hover:text-primary-700 font-medium underline cursor-pointer bg-transparent border-none p-0"
+                      >
+                        Cookie Policy
+                      </button>
                       {' *'}
                     </label>
                   </div>
