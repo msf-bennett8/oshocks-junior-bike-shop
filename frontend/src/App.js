@@ -5,7 +5,7 @@
 //              error boundaries, and performance optimizations
 // ============================================================================
 
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useState, useRef } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useSelector, useDispatch } from 'react-redux';
@@ -40,6 +40,8 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import FloatingSupportWidget from './components/navigation/FloatingSupportWidget';
 import ImpersonationBanner from './components/impersonator/ImpersonationBanner';
+import LegalUpdateModal from './components/legal/LegalUpdateModal';
+import { checkForVersionUpdate, recordLegalAcceptance } from './utils/legalTracker';
 // REMOVED: ToastContainer import - it's now handled by ToastProvider in index.js
 
 // ============================================================================
@@ -301,6 +303,8 @@ function App() {
   //const { isAuthenticated, user } = useAuth();
   //const { cartItems } = useCart();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [showLegalUpdate, setShowLegalUpdate] = useState(false);
+  const [legalUpdateInfo, setLegalUpdateInfo] = useState(null);
 
   // ============================================================================
   // LIFECYCLE EFFECTS
@@ -385,6 +389,20 @@ function App() {
     if (process.env.NODE_ENV === 'production') {
       monitorPerformance();
     }
+
+    // Check for legal document updates
+    const checkLegalUpdates = () => {
+      try {
+        const updateCheck = checkForVersionUpdate();
+        if (updateCheck.needsReAcceptance) {
+          setLegalUpdateInfo(updateCheck);
+          setShowLegalUpdate(true);
+        }
+      } catch (error) {
+        console.error('Error checking legal updates:', error);
+      }
+    };
+    checkLegalUpdates();
   }, []);
 
   // ============================================================================
@@ -436,6 +454,17 @@ function App() {
   const monitorPerformance = () => {
     // Monitor performance metrics
     console.log('⚡ Monitoring performance...');
+  };
+
+  // ============================================================================
+  // LEGAL UPDATE HANDLER
+  // ============================================================================
+
+  const handleAcceptLegalUpdate = () => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    recordLegalAcceptance(user.id || 'anonymous', user.email || '');
+    setShowLegalUpdate(false);
+    setLegalUpdateInfo(null);
   };
 
   // ============================================================================
@@ -1004,6 +1033,13 @@ function App() {
             '/contact-support',
             '/checkout'
           ]} 
+        />
+
+        {/* Legal Update Modal */}
+        <LegalUpdateModal
+          visible={showLegalUpdate}
+          onAccept={handleAcceptLegalUpdate}
+          updatedDocuments={legalUpdateInfo?.updatedDocuments}
         />
 
         {/* Toast Notifications - REMOVED */}

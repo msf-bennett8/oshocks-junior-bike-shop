@@ -4,7 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import authService from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader, User, Phone, MapPin, CheckCircle2, X } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader, User, Phone, MapPin, CheckCircle2, X, FileText, ChevronRight } from 'lucide-react';
+import LegalDocumentBottomSheet from '../../components/legal/LegalDocumentBottomSheet';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -31,6 +32,13 @@ const RegisterPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [currentStep, setCurrentStep] = useState(1);
+  
+  // Legal document states
+  const [termsRead, setTermsRead] = useState(false);
+  const [privacyRead, setPrivacyRead] = useState(false);
+  const [cookieRead, setCookieRead] = useState(false);
+  const [showLegalModal, setShowLegalModal] = useState(false);
+  const [legalButtonBlink, setLegalButtonBlink] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -127,8 +135,8 @@ const RegisterPage = () => {
       errors.city = 'City is required';
     }
     
-    if (!formData.agreeToTerms) {
-      errors.agreeToTerms = 'You must agree to the terms and conditions';
+    if (!termsRead || !privacyRead || !cookieRead) {
+      errors.agreeToTerms = 'You must read all legal documents before registering';
     }
     
     setValidationErrors(errors);
@@ -152,6 +160,22 @@ const RegisterPage = () => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check if legal docs are read
+    if (!termsRead || !privacyRead || !cookieRead) {
+      setLegalButtonBlink(true);
+      // Scroll to legal button
+      const legalButton = document.querySelector('[data-legal-button]');
+      legalButton?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      setTimeout(() => setLegalButtonBlink(false), 3000);
+      
+      setValidationErrors(prev => ({
+        ...prev,
+        agreeToTerms: 'Please read all legal documents before continuing'
+      }));
+      return;
+    }
     
     // Validate current step
     if (!validateStep2()) {
@@ -629,33 +653,65 @@ const RegisterPage = () => {
                   )}
                 </div>
 
-                {/* Terms and Newsletter */}
+                {/* Legal Documents - Scroll-to-Read */}
                 <div className="space-y-3">
+                  {/* Read Legal Documents Button */}
+                  <div>
+                    <button
+                      type="button"
+                      data-legal-button
+                      onClick={() => setShowLegalModal(true)}
+                      className={`
+                        w-full flex items-center justify-between p-4 border-2 rounded-lg
+                        transition-all duration-200 hover:border-blue-300 hover:shadow-md
+                        ${termsRead && privacyRead && cookieRead
+                          ? 'border-green-500 bg-green-50' 
+                          : legalButtonBlink
+                          ? 'border-red-500 bg-red-50 animate-pulse'
+                          : 'border-gray-300 bg-white'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center gap-3">
+                        <FileText className={`w-6 h-6 ${
+                          termsRead && privacyRead && cookieRead ? 'text-green-600' : 'text-blue-600'
+                        }`} />
+                        <div className="text-left">
+                          <div className="text-sm font-semibold text-gray-900">
+                            Read Legal Documents
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {termsRead && privacyRead && cookieRead
+                              ? '✓ All documents read'
+                              : 'Tap to read Terms, Privacy & Cookie Policy'}
+                          </div>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                    </button>
+                    {validationErrors.agreeToTerms && (
+                      <p className="mt-2 text-xs text-red-600">{validationErrors.agreeToTerms}</p>
+                    )}
+                  </div>
+
+                  {/* Auto-checked read-only checkboxes (visual only) */}
                   <div className="flex items-start">
                     <input
                       id="agreeToTerms"
                       name="agreeToTerms"
                       type="checkbox"
-                      checked={formData.agreeToTerms}
-                      onChange={handleChange}
-                      className={`h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer ${
-                        validationErrors.agreeToTerms ? 'border-red-300' : ''
-                      }`}
+                      checked={termsRead && privacyRead && cookieRead}
+                      readOnly
+                      className="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded pointer-events-none"
                     />
-                    <label htmlFor="agreeToTerms" className="ml-2 block text-sm text-gray-700 cursor-pointer">
-                      I agree to the{' '}
-                      <Link to="/terms-of-service" className="text-blue-600 hover:text-blue-500 font-medium">
-                        Terms of Service
-                      </Link>{' '}
-                      and{' '}
-                      <Link to="/privacy-policy" className="text-blue-600 hover:text-blue-500 font-medium">
-                        Privacy Policy
-                      </Link>
+                    <label htmlFor="agreeToTerms" className="ml-2 block text-sm text-gray-700">
+                      I have read and agree to the{' '}
+                      <span className="text-blue-600 font-medium">Terms of Service</span>,{' '}
+                      <span className="text-blue-600 font-medium">Privacy Policy</span>, and{' '}
+                      <span className="text-blue-600 font-medium">Cookie Policy</span>
+                      {' *'}
                     </label>
                   </div>
-                  {validationErrors.agreeToTerms && (
-                    <p className="text-xs text-red-600">{validationErrors.agreeToTerms}</p>
-                  )}
 
                   <div className="flex items-start">
                     <input
@@ -743,6 +799,21 @@ const RegisterPage = () => {
             </>
           )}
         </div>
+
+        {/* Legal Document Modal */}
+        <LegalDocumentBottomSheet
+          visible={showLegalModal}
+          onClose={() => setShowLegalModal(false)}
+          onAcceptAll={() => {
+            setShowLegalModal(false);
+          }}
+          termsRead={termsRead}
+          privacyRead={privacyRead}
+          cookieRead={cookieRead}
+          setTermsRead={setTermsRead}
+          setPrivacyRead={setPrivacyRead}
+          setCookieRead={setCookieRead}
+        />
 
         {/* Sign In Link */}
         <p className="mt-6 text-center text-sm text-gray-600">

@@ -26,6 +26,10 @@ class User extends Authenticatable
     'provider', 
     'is_active',
     'email_verified_at',
+    'terms_version',
+    'privacy_version',
+    'cookie_version',
+    'legal_accepted_at',
 ];
 
     protected $hidden = [

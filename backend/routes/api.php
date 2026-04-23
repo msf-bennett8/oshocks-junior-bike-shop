@@ -510,6 +510,12 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
     });
 
     // ============================================================================
+    // LEGAL ACCEPTANCE ROUTES
+    // ============================================================================
+    Route::post('/legal/accept', [\App\Http\Controllers\Api\LegalController::class, 'recordAcceptance']);
+    Route::get('/legal/status', [\App\Http\Controllers\Api\LegalController::class, 'getStatus']);
+
+    // ============================================================================
     // DYNAMIC PUBLIC ROUTES - MUST COME LAST (Inside protected group but public access)
     // ============================================================================
     // These routes use dynamic parameters and MUST be defined after all specific routes
