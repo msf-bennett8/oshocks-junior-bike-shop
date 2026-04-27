@@ -3,7 +3,7 @@ import { Shield, ChevronDown, ChevronUp, Lock, Eye, Users, CreditCard, Mail, Pho
 
 export default function PrivacyPolicyPage() {
   const [expandedSections, setExpandedSections] = useState({});
-  const lastUpdated = "October 11, 2025";
+  const lastUpdated = "April 27, 2026"; //Initially created on October 11, 2025
 
   const toggleSection = (id) => {
     setExpandedSections(prev => ({
@@ -360,7 +360,7 @@ export default function PrivacyPolicyPage() {
           <div className="bg-green-50 p-4 rounded-lg mt-6">
             <h4 className="font-semibold text-gray-900 mb-2">How to Exercise Your Rights</h4>
             <p>
-              To exercise any of these rights, please contact us at <a href="mailto:privacy@oshocksjunior.co.ke" className="text-blue-600 hover:underline">privacy@oshocksjunior.co.ke</a> or through your account settings. We will respond within 30 days of receiving your request.
+              To exercise any of these rights, please contact us at <a href="mailto:oshocksstores@gmail.com" className="text-blue-600 hover:underline">oshocksstores@gmail.com</a> or through your account settings. We will respond within 30 days of receiving your request.
             </p>
           </div>
         </div>
@@ -404,7 +404,7 @@ export default function PrivacyPolicyPage() {
             Our platform is not intended for users under the age of 18.
           </p>
           <p>
-            We do not knowingly collect personal information from children under 18. If you are a parent or guardian and believe your child has provided us with personal information, please contact us immediately at <a href="mailto:privacy@oshocksjunior.co.ke" className="text-blue-600 hover:underline">privacy@oshocksjunior.co.ke</a>.
+            We do not knowingly collect personal information from children under 18. If you are a parent or guardian and believe your child has provided us with personal information, please contact us immediately at <a href="mailto:oshocksstores@gmail.com" className="text-blue-600 hover:underline">oshocksstores@gmail.com</a>.
           </p>
           <p>
             Upon verification, we will promptly delete such information from our systems and terminate the associated account.
@@ -475,8 +475,8 @@ export default function PrivacyPolicyPage() {
               <Mail className="w-5 h-5 text-blue-600 mt-1" />
               <div>
                 <p className="font-semibold text-gray-900">Email</p>
-                <a href="mailto:privacy@oshocksjunior.co.ke" className="text-blue-600 hover:underline">
-                  privacy@oshocksjunior.co.ke
+                <a href="mailto:oshocksstores@gmail.com" className="text-blue-600 hover:underline">
+                  oshocksstores@gmail.com
                 </a>
               </div>
             </div>
@@ -485,8 +485,8 @@ export default function PrivacyPolicyPage() {
               <Phone className="w-5 h-5 text-blue-600 mt-1" />
               <div>
                 <p className="font-semibold text-gray-900">Phone</p>
-                <a href="tel:+254712345678" className="text-blue-600 hover:underline">
-                  +254 712 345 678
+                <a href="tel:+254715061213" className="text-blue-600 hover:underline">
+                  +254 715 051 213
                 </a>
               </div>
             </div>
@@ -498,7 +498,7 @@ export default function PrivacyPolicyPage() {
                 <p className="text-gray-700">
                   Oshocks Junior Bike Shop<br />
                   Nairobi, Kenya<br />
-                  P.O. Box [Your Box Number]
+                  P.O. Box 1213 – 00618
                 </p>
               </div>
             </div>
@@ -507,7 +507,7 @@ export default function PrivacyPolicyPage() {
           <div className="bg-amber-50 p-4 rounded-lg">
             <h4 className="font-semibold text-gray-900 mb-2">Data Protection Officer</h4>
             <p className="text-gray-700">
-              For data protection inquiries, you may also contact our Data Protection Officer at <a href="mailto:dpo@oshocksjunior.co.ke" className="text-blue-600 hover:underline">dpo@oshocksjunior.co.ke</a>
+              For data protection inquiries, you may also contact our Data Protection Officer at <a href="mailto:oshocksstores@gmail.com" className="text-blue-600 hover:underline">dpo@oshocksjunior.co.ke</a>
             </p>
           </div>
 

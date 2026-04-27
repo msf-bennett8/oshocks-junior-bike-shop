@@ -20,7 +20,7 @@ const PaymentTerms = () => {
     }));
   };
 
-  const lastUpdated = "November 15, 2024";
+  const lastUpdated = "April 27, 2026"; //Intial creation gate November 15, 2024
 
   const paymentMethods = [
     {
@@ -861,10 +861,10 @@ const PaymentTerms = () => {
                 For payment failures, refund queries, or transaction problems
               </p>
               <a 
-                href="mailto:payments@oshocksjunior.co.ke" 
+                href="mailto:oshocksstores@gmail.com" 
                 className="text-white underline hover:text-green-200 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-green-700 rounded"
               >
-                payments@oshocksjunior.co.ke
+                oshocksstores@gmail.com
               </a>
             </div>
 
@@ -877,10 +877,10 @@ const PaymentTerms = () => {
                 Report suspicious activity or security concerns
               </p>
               <a 
-                href="mailto:security@oshocksjunior.co.ke" 
+                href="mailto:oshocksstores@gmail.com" 
                 className="text-white underline hover:text-green-200 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-green-700 rounded"
               >
-                security@oshocksjunior.co.ke
+                oshocksstores@gmail.com
               </a>
             </div>
 
@@ -893,10 +893,10 @@ const PaymentTerms = () => {
                 For all other payment-related questions
               </p>
               <a 
-                href="mailto:support@oshocksjunior.co.ke" 
+                href="mailto:oshocksstores@gmail.com" 
                 className="text-white underline hover:text-green-200 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-green-700 rounded"
               >
-                support@oshocksjunior.co.ke
+                oshocksstores@gmail.com
               </a>
             </div>
           </div>

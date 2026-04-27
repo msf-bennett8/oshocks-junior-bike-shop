@@ -412,7 +412,7 @@ const GiftCards = () => {
                         type={deliveryMethod === 'email' ? 'email' : 'tel'}
                         value={recipientEmail}
                         onChange={(e) => setRecipientEmail(e.target.value)}
-                        placeholder={deliveryMethod === 'email' ? 'recipient@example.com' : '+254 712 345 678'}
+                        placeholder={deliveryMethod === 'email' ? 'bennett@example.com' : '+254 712 345 678'}
                         className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>

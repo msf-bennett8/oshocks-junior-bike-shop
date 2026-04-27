@@ -11,7 +11,7 @@ export default function ShippingPolicyPage() {
   const [isSearchBarVisible, setIsSearchBarVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   
-  const lastUpdated = "October 11, 2025";
+  const lastUpdated = "April 27, 2025"; //Initial creation date October 11, 2025
 
   // Handle scroll to show/hide search and filter bar
   useEffect(() => {
@@ -88,7 +88,7 @@ export default function ShippingPolicyPage() {
       id: 'nairobi-cbd', 
       name: 'Nairobi CBD', 
       time: '1-2 business days', 
-      cost: 'KES 200',
+      cost: 'KES 150',
       icon: MapPin,
       color: 'green',
       description: 'Central Business District and surrounding areas'
@@ -457,8 +457,8 @@ export default function ShippingPolicyPage() {
                   <p className="text-xs text-gray-600">Mon-Sat: 9 AM - 6 PM EAT</p>
                 </div>
               </div>
-              <a href="tel:+254712345678" className="text-lg font-bold text-green-600 hover:underline block mb-2">
-                +254 712 345 678
+              <a href="tel:+254715061213" className="text-lg font-bold text-green-600 hover:underline block mb-2">
+                +254 715 061 213
               </a>
               <p className="text-xs text-gray-600">Toll-free within Kenya</p>
             </div>
@@ -473,8 +473,8 @@ export default function ShippingPolicyPage() {
                   <p className="text-xs text-gray-600">Response within 24 hours</p>
                 </div>
               </div>
-              <a href="mailto:shipping@oshocksjunior.co.ke" className="text-blue-600 hover:underline font-semibold block mb-2">
-                shipping@oshocksjunior.co.ke
+              <a href="mailto:oshocksstores@gmail.com" className="text-blue-600 hover:underline font-semibold block mb-2">
+                oshocksstores@gmail.com
               </a>
               <p className="text-xs text-gray-600">Include order number for faster service</p>
             </div>

@@ -43,7 +43,7 @@ const AboutPage = () => {
               About Oshocks Junior Bike Shop
             </h1>
             <p className="text-xl md:text-2xl text-blue-100">
-              Kenya's Premier Cycling Marketplace
+              A Premier Cycling Marketplace
             </p>
           </div>
         </div>
@@ -55,7 +55,7 @@ const AboutPage = () => {
           <div className="bg-white rounded-lg shadow-md p-8 md:p-12 mb-12">
             <h2 className="text-3xl font-bold mb-6 text-gray-900">Our Vision</h2>
             <p className="text-lg text-gray-700 leading-relaxed mb-4">
-              Oshocks Junior Bike Shop is more than just an online store—it's a comprehensive cycling ecosystem designed to revolutionize how Kenyans discover, purchase, and experience cycling products. Inspired by the functionality of the global marketplaces, we're building Kenya's first truly integrated cycling marketplace.
+              Oshocks Junior Bike Shop is more than just an online store—it's a comprehensive cycling ecosystem designed to revolutionize how to discover, purchase, and experience cycling products. Inspired by the functionality of the global marketplaces and customer needs, we're building a first truly integrated cycling marketplace.
             </p>
             <p className="text-lg text-gray-700 leading-relaxed">
               Starting from our physical shop in Nairobi, we're expanding to create a platform where cycling enthusiasts can find everything they need, from complete bicycles to the smallest spare parts, all while supporting local businesses and sellers across the country.

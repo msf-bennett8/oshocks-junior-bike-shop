@@ -423,8 +423,8 @@ const WarrantyInformation = () => {
                   <Phone className="w-12 h-12 text-blue-600 mx-auto mb-4" />
                   <h3 className="font-bold text-gray-900 mb-2">Phone Support</h3>
                   <p className="text-gray-600 mb-4">Mon-Sat: 8AM - 6PM</p>
-                  <a href="tel:+254712345678" className="text-blue-600 hover:underline font-semibold">
-                    +254 712 345 678
+                  <a href="tel:+254715061213" className="text-blue-600 hover:underline font-semibold">
+                    +254 715 061 213
                   </a>
                 </div>
 
@@ -432,8 +432,8 @@ const WarrantyInformation = () => {
                   <Mail className="w-12 h-12 text-blue-600 mx-auto mb-4" />
                   <h3 className="font-bold text-gray-900 mb-2">Email Support</h3>
                   <p className="text-gray-600 mb-4">24/7 Response</p>
-                  <a href="mailto:warranty@oshocksjunior.co.ke" className="text-blue-600 hover:underline font-semibold">
-                    warranty@oshocksjunior.co.ke
+                  <a href="mailto:oshocksstores@gmail.com" className="text-blue-600 hover:underline font-semibold">
+                    oshocksstores@gmail.com
                   </a>
                 </div>
 
@@ -456,7 +456,7 @@ const WarrantyInformation = () => {
                     <input
                       type="text"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="John Doe"
+                      placeholder="Zablon Bennett"
                     />
                   </div>
                   <div>
@@ -464,7 +464,7 @@ const WarrantyInformation = () => {
                     <input
                       type="email"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="john@example.com"
+                      placeholder="bennett@example.com"
                     />
                   </div>
                 </div>
@@ -475,7 +475,7 @@ const WarrantyInformation = () => {
                     <input
                       type="tel"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="+254 712 345 678"
+                      placeholder="+254 700 000 000"
                     />
                   </div>
                   <div>
@@ -483,7 +483,7 @@ const WarrantyInformation = () => {
                     <input
                       type="text"
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="ORD-123456"
+                      placeholder="ACTB4THMTX"
                     />
                   </div>
                 </div>

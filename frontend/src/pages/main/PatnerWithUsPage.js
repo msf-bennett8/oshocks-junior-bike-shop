@@ -296,9 +296,9 @@ const PartnerWithUsPage = () => {
   ];
 
   const stats = [
-    { icon: Users, value: '10,000+', label: 'Active Customers' },
-    { icon: Store, value: '250+', label: 'Seller Partners' },
-    { icon: Package, value: '50,000+', label: 'Products Listed' },
+    { icon: Users, value: '5,000+', label: 'Active Customers' },
+    { icon: Store, value: '70+', label: 'Seller Partners' },
+    { icon: Package, value: '5,000+', label: 'Products Listed' },
     { icon: TrendingUp, value: '95%', label: 'Seller Satisfaction' }
   ];
 
@@ -882,8 +882,8 @@ const PartnerWithUsPage = () => {
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Phone</h3>
               <p className="text-gray-600 mb-2">Call us Monday - Saturday</p>
-              <a href="tel:+254700000000" className="text-blue-600 font-semibold hover:underline">
-                +254 700 000 000
+              <a href="tel:+254715061213" className="text-blue-600 font-semibold hover:underline">
+                +254 715 061 213
               </a>
             </div>
 
@@ -893,8 +893,8 @@ const PartnerWithUsPage = () => {
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Email</h3>
               <p className="text-gray-600 mb-2">We'll respond within 24 hours</p>
-              <a href="mailto:sellers@oshocksjunior.com" className="text-green-600 font-semibold hover:underline">
-                sellers@oshocksjunior.com
+              <a href="mailto:oshocksstores@gmail.com" className="text-green-600 font-semibold hover:underline">
+                oshocksstores@gmail.com
               </a>
             </div>
 

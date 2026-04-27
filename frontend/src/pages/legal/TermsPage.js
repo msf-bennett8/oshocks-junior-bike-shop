@@ -9,8 +9,8 @@ export default function TermsPage() {
   const [isSearchBarVisible, setIsSearchBarVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   
-  const lastUpdated = "October 11, 2025";
-  const effectiveDate = "January 15, 2025";
+  const lastUpdated = "April 27, 2026"; //Initial Creation date October 11, 2025
+  const effectiveDate = "June 1, 2026"; //Initial Effective Date January 15, 2025
 
   // Handle scroll to show/hide search and filter bar
   useEffect(() => {
@@ -320,8 +320,8 @@ export default function TermsPage() {
                   <p className="text-xs text-gray-600">Mon-Sat: 9 AM - 6 PM</p>
                 </div>
               </div>
-              <a href="tel:+254712345678" className="text-base sm:text-lg font-bold text-green-600 hover:underline block">
-                +254 712 345 678
+              <a href="tel:+254715061213" className="text-base sm:text-lg font-bold text-green-600 hover:underline block">
+                +254 715 061 213
               </a>
             </div>
 
@@ -335,8 +335,8 @@ export default function TermsPage() {
                   <p className="text-xs text-gray-600">Response within 24 hours</p>
                 </div>
               </div>
-              <a href="mailto:legal@oshocksjunior.co.ke" className="text-sm sm:text-base text-blue-600 hover:underline font-semibold block break-all">
-                legal@oshocksjunior.co.ke
+              <a href="mailto:oshocksstores@gmail.com" className="text-sm sm:text-base text-blue-600 hover:underline font-semibold block break-all">
+                oshocksstores@gmail.com
               </a>
             </div>
           </div>

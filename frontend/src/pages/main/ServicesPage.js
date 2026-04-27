@@ -54,7 +54,7 @@ const ServicesPage = () => {
       icon: <Package className="w-12 h-12" />,
       title: "Custom Bike Assembly",
       subtitle: "Build your dream bike",
-      price: "From KSh 2,500",
+      price: "From KSh 1,000",
       description: "Whether you've purchased a new bike or want to build a custom setup, our professional assembly service ensures everything is perfectly configured.",
       features: [
         "Complete bike assembly from box",
@@ -75,7 +75,7 @@ const ServicesPage = () => {
       icon: <Zap className="w-12 h-12" />,
       title: "E-Bike Service & Repair",
       subtitle: "Specialized electric bike care",
-      price: "From KSh 1,500",
+      price: "From KSh 1,000",
       description: "Specialized service for electric bikes including motor diagnostics, battery maintenance, and electrical system troubleshooting.",
       features: [
         "Motor performance diagnostics",
@@ -117,7 +117,7 @@ const ServicesPage = () => {
       icon: <Clock className="w-12 h-12" />,
       title: "Express Service",
       subtitle: "Same-day repairs when you need them",
-      price: "From KSh 1,000",
+      price: "From KSh 500",
       description: "Need your bike fixed urgently? Our express service prioritizes your repair with same-day completion for most issues.",
       features: [
         "Same-day service completion",
@@ -138,7 +138,7 @@ const ServicesPage = () => {
       icon: <CheckCircle className="w-12 h-12" />,
       title: "Pre-Purchase Inspection",
       subtitle: "Expert evaluation before you buy",
-      price: "KSh 1,500",
+      price: "KSh 1,000",
       description: "Planning to buy a used bike? Get a professional inspection to ensure you're making a sound investment.",
       features: [
         "Comprehensive frame inspection",
@@ -356,7 +356,7 @@ const ServicesPage = () => {
                 <tbody className="divide-y divide-gray-200">
                   <tr className="hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium text-gray-900">Basic Tune-Up</td>
-                    <td className="px-6 py-4 text-gray-700">KSh 1,000</td>
+                    <td className="px-6 py-4 text-gray-700">KSh 500</td>
                     <td className="px-6 py-4 text-gray-700">1-2 hours</td>
                   </tr>
                   <tr className="hover:bg-gray-50">
@@ -366,17 +366,17 @@ const ServicesPage = () => {
                   </tr>
                   <tr className="hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium text-gray-900">Brake Adjustment</td>
-                    <td className="px-6 py-4 text-gray-700">KSh 300</td>
+                    <td className="px-6 py-4 text-gray-700">KSh 150</td>
                     <td className="px-6 py-4 text-gray-700">45 minutes</td>
                   </tr>
                   <tr className="hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium text-gray-900">Gear Tune-Up</td>
-                    <td className="px-6 py-4 text-gray-700">KSh 5,000</td>
+                    <td className="px-6 py-4 text-gray-700">KSh 1,000</td>
                     <td className="px-6 py-4 text-gray-700">1 hour</td>
                   </tr>
                   <tr className="hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium text-gray-900">Wheel Truing</td>
-                    <td className="px-6 py-4 text-gray-700">KSh 700</td>
+                    <td className="px-6 py-4 text-gray-700">KSh 500</td>
                     <td className="px-6 py-4 text-gray-700">1-2 hours</td>
                   </tr>
                   <tr className="hover:bg-gray-50">
@@ -419,7 +419,7 @@ const ServicesPage = () => {
                   <Phone className="w-6 h-6 flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold mb-1">Call Us</h3>
-                    <p className="text-blue-100">+254 798 558 285</p>
+                    <p className="text-blue-100">+254 715 061 213</p>
                     <p className="text-blue-100 text-sm">Available during business hours</p>
                   </div>
                 </div>
@@ -427,7 +427,7 @@ const ServicesPage = () => {
                   <Mail className="w-6 h-6 flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold mb-1">Email Us</h3>
-                    <p className="text-blue-100">oshocksjuniorbikeshop@gmail.com</p>
+                    <p className="text-blue-100">oshocksstores@gmail.com</p>
                     <p className="text-blue-100 text-sm">We'll respond within 24 hours</p>
                   </div>
                 </div>

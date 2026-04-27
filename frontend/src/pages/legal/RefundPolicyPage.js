@@ -12,7 +12,7 @@ export default function RefundPolicyPage() {
   const [calculatorResult, setCalculatorResult] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
   
-  const lastUpdated = "October 11, 2025";
+  const lastUpdated = "April 27, 2025"; //Initial creation date October 11, 2025
 
   const toggleSection = (id) => {
     setExpandedSections(prev => ({
@@ -581,11 +581,11 @@ export default function RefundPolicyPage() {
                 <div className="grid md:grid-cols-2 gap-3 text-sm text-gray-700">
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-blue-600" />
-                    <span>Email: returns@oshocksjunior.co.ke</span>
+                    <span>Email: oshocksstores@gmail.com</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-green-600" />
-                    <span>Phone: +254 712 345 678</span>
+                    <span>Phone: +254 715 061 213</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MessageSquare className="w-4 h-4 text-purple-600" />
@@ -593,7 +593,7 @@ export default function RefundPolicyPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <MessageSquare className="w-4 h-4 text-orange-600" />
-                    <span>WhatsApp: +254 712 345 678</span>
+                    <span>WhatsApp: +254 715 061 213</span>
                   </div>
                 </div>
               </div>
@@ -1119,7 +1119,7 @@ export default function RefundPolicyPage() {
               <ul className="space-y-2 text-sm text-gray-700">
                 <li className="flex items-start gap-2">
                   <Mail className="w-4 h-4 text-green-600 mt-0.5" />
-                  <span>Contact our B2B team at <a href="mailto:wholesale@oshocksjunior.co.ke" className="text-blue-600 hover:underline font-semibold">wholesale@oshocksjunior.co.ke</a></span>
+                  <span>Contact our B2B team at <a href="mailto:oshocksstores@gmail.com" className="text-blue-600 hover:underline font-semibold">oshocksstores@gmail.com</a></span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
@@ -1177,7 +1177,7 @@ export default function RefundPolicyPage() {
                 If you're not satisfied with a return decision:
               </p>
               <ol className="space-y-2 text-sm text-gray-700 list-decimal pl-5">
-                <li>Contact our Returns Manager at <a href="mailto:returns.manager@oshocksjunior.co.ke" className="text-blue-600 hover:underline font-semibold">returns.manager@oshocksjunior.co.ke</a></li>
+                <li>Contact our Returns Manager at <a href="mailto:oshocksstores@gmail.com" className="text-blue-600 hover:underline font-semibold">oshocksstores@gmail.com</a></li>
                 <li>Escalate to Customer Service Director if needed</li>
                 <li>Final arbitration available through Kenyan Consumer Protection Authority</li>
               </ol>
@@ -1215,8 +1215,8 @@ export default function RefundPolicyPage() {
                 <p className="text-gray-700">
                   <strong>Hours:</strong> Mon-Sat: 9 AM - 6 PM EAT
                 </p>
-                <a href="tel:+254712345678" className="text-green-600 hover:underline font-semibold text-lg block">
-                  +254 712 345 678
+                <a href="tel:+254715061213" className="text-green-600 hover:underline font-semibold text-lg block">
+                  +254 712 061 213
                 </a>
                 <p className="text-xs text-gray-600">Average wait time: 2-3 minutes</p>
               </div>
@@ -1257,8 +1257,8 @@ export default function RefundPolicyPage() {
                 <p className="text-gray-700">
                   <strong>Response:</strong> Within 24 hours
                 </p>
-                <a href="mailto:returns@oshocksjunior.co.ke" className="text-blue-600 hover:underline font-semibold block">
-                  returns@oshocksjunior.co.ke
+                <a href="mailto:oshocksstores@gmail.com" className="text-blue-600 hover:underline font-semibold block">
+                  oshocksstores@gmail.com
                 </a>
                 <p className="text-xs text-gray-600">Include order number for faster service</p>
               </div>
@@ -1278,8 +1278,8 @@ export default function RefundPolicyPage() {
                 <p className="text-gray-700">
                   <strong>Hours:</strong> Mon-Sat: 9 AM - 6 PM EAT
                 </p>
-                <a href="https://wa.me/254712345678" className="text-orange-600 hover:underline font-semibold text-lg block">
-                  +254 712 345 678
+                <a href="https://wa.me/254715061213" className="text-orange-600 hover:underline font-semibold text-lg block">
+                  +254 715 061 213
                 </a>
                 <p className="text-xs text-gray-600">Fast responses during business hours</p>
               </div>
@@ -1296,7 +1296,7 @@ export default function RefundPolicyPage() {
                 <h5 className="font-semibold text-gray-900 mb-3">Physical Location</h5>
                 <div className="space-y-2 text-sm text-gray-700">
                   <p className="font-semibold text-blue-600">Oshocks Junior Bike Shop</p>
-                  <p>[Your Street Address]</p>
+                  <p>1213 - 00618</p>
                   <p>Nairobi, Kenya</p>
                   <div className="mt-3 pt-3 border-t border-gray-300">
                     <p className="font-semibold mb-1">Returns Desk Hours:</p>
@@ -1342,7 +1342,7 @@ export default function RefundPolicyPage() {
             <div className="grid md:grid-cols-2 gap-2 text-sm text-gray-700">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-amber-600" />
-                <span>Order number (e.g., #OSJ-12345)</span>
+                <span>Order number (e.g., #ACDVWRW4TQP)</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-amber-600" />

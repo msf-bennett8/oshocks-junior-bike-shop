@@ -15,7 +15,7 @@ const StoreLocation = () => {
       id: 1,
       businessName: 'Oshocks Junior Bike Shop',
       sellerType: 'Premium Seller',
-      ownerName: 'John Kamau',
+      ownerName: 'Michael Ndun\'gu',
       description: 'Leading bicycle retailer in Kenya with over 10 years of experience',
       address: 'Moi Avenue, Nairobi CBD',
       fullAddress: 'Building 45, Moi Avenue, Near Kenya National Archives, Nairobi, Kenya',

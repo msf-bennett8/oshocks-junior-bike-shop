@@ -76,23 +76,23 @@ const ContactPage = () => {
     {
       icon: <Phone className="text-blue-600" size={24} />,
       title: 'Phone',
-      details: '+254 700 000 000',
+      details: '+254 715 061 213',
       subDetails: 'Mon-Sat, 8AM-8PM',
-      link: 'tel:+254700000000'
+      link: 'tel:+254715061213'
     },
     {
       icon: <Mail className="text-purple-600" size={24} />,
       title: 'Email',
-      details: 'support@oshocks.co.ke',
+      details: 'oshocksstores@gmail.com',
       subDetails: 'We reply within 24 hours',
-      link: 'mailto:support@oshocks.co.ke'
+      link: 'mailto:oshocksstores@gmail.com'
     },
     {
       icon: <Smartphone className="text-green-600" size={24} />,
       title: 'WhatsApp',
-      details: '+254 700 000 000',
+      details: '+254 715 061 213',
       subDetails: 'Quick responses',
-      link: 'https://wa.me/254700000000'
+      link: 'https://wa.me/254715061213'
     },
     {
       icon: <MessageSquare className="text-orange-600" size={24} />,
@@ -105,25 +105,25 @@ const ContactPage = () => {
 
   const officeLocations = [
     {
-      name: 'Main Store - Nairobi CBD',
-      address: 'Tom Mboya Street, Nairobi',
+      name: 'Main Store - Nairobi Virtual',
+      address: 'Online Store, Nationwide',
       hours: 'Mon-Sat: 8:00 AM - 8:00 PM',
       sunday: 'Sunday: 10:00 AM - 6:00 PM',
-      phone: '+254 700 000 000'
+      phone: '+254 715 061 213'
     },
     {
-      name: 'Westlands Branch',
-      address: 'Westlands, Nairobi',
+      name: 'Mwihoko Branch',
+      address: 'Cables Mwihoko, Nairobi',
       hours: 'Mon-Sat: 9:00 AM - 7:00 PM',
       sunday: 'Sunday: 10:00 AM - 5:00 PM',
-      phone: '+254 700 000 001'
+      phone: '+254 715 061 213'
     },
     {
-      name: 'Mombasa Branch',
-      address: 'Moi Avenue, Mombasa',
+      name: 'Githurai Branch',
+      address: 'Riflo Githurai, Nairobi',
       hours: 'Mon-Sat: 8:30 AM - 7:30 PM',
       sunday: 'Sunday: Closed',
-      phone: '+254 700 000 002'
+      phone: '+254 715 061 213'
     }
   ];
 

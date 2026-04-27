@@ -2,7 +2,7 @@
 ## Comprehensive Documentation
 
 **Version:** 1.0.0  
-**Author:** Bennett  
+**Author:** Zablon Bennett  
 **Date:** 2026-03-26  
 **Language:** JavaScript (ES6+)
 

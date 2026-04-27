@@ -17,7 +17,7 @@ const CookiePolicy = () => {
     }));
   };
 
-  const lastUpdated = "November 15, 2024";
+  const lastUpdated = "April 27, 2026"; //Initial Creation Date November 15, 2024
 
   const cookieCategories = [
     {
@@ -641,8 +641,8 @@ const CookiePolicy = () => {
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <h3 className="font-semibold mb-2">Email Us</h3>
-              <p className="text-blue-100">privacy@oshocksjunior.co.ke</p>
-              <p className="text-blue-100">support@oshocksjunior.co.ke</p>
+              <p className="text-blue-100">oshocksstores@gmail.com</p>
+              <p className="text-blue-100">oshocksbikeshop@gmail.com</p>
             </div>
             <div>
               <h3 className="font-semibold mb-2">Visit Our Shop</h3>

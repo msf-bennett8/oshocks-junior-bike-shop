@@ -15,21 +15,21 @@ const Careers = () => {
       department: 'Engineering',
       location: 'Nairobi, Kenya',
       type: 'Full-time',
-      salary: 'KSh 150,000 - 250,000',
+      salary: 'KSh 15,000 - 25,000',
       experience: '3-5 years',
       description: 'Build the future of cycling e-commerce in Kenya! Join Oshocks Junior Bike Shop as we develop a world-class marketplace platform using React.js and Laravel.',
       responsibilities: [
-        'Develop and maintain React.js frontend for our cycling marketplace',
-        'Build robust Laravel backend APIs for product catalog and orders',
-        'Implement M-Pesa Daraja API and Stripe payment integrations',
-        'Optimize MySQL database queries and application performance',
+        'Develop and maintain frontend for our cycling marketplace',
+        'Build robust backend APIs for product catalog and orders',
+        'Implement M-Pesa Daraja API and Stripe/Flutterwave payment integrations',
+        'Optimize database queries and application performance',
         'Integrate Cloudinary for product image management',
         'Implement real-time features using Redis caching',
         'Write clean, maintainable, and well-documented code'
       ],
       requirements: [
         'Bachelor\'s degree in Computer Science or related field',
-        '3+ years of experience with React.js and Laravel PHP',
+        '3+ years of experience with JS and PHP and other technologies',
         'Strong knowledge of MySQL database design and optimization',
         'Experience with RESTful API development',
         'Familiarity with M-Pesa, Stripe, or payment gateway integrations',
@@ -52,7 +52,7 @@ const Careers = () => {
       department: 'Marketing',
       location: 'Nairobi, Kenya',
       type: 'Full-time',
-      salary: 'KSh 80,000 - 120,000',
+      salary: 'KSh 8,000 - 12,000',
       experience: '2-3 years',
       description: 'Create compelling content for Kenya\'s premier cycling marketplace. Showcase bicycles, accessories, and gear through engaging photography, videos, and product descriptions.',
       responsibilities: [
@@ -89,7 +89,7 @@ const Careers = () => {
       department: 'Customer Support',
       location: 'Nairobi, Kenya',
       type: 'Full-time',
-      salary: 'KSh 55,000 - 85,000',
+      salary: 'KSh 15,000 - 25,000',
       experience: '1-3 years',
       description: 'Provide exceptional customer service for Kenya\'s growing cycling marketplace. Help customers find the perfect bikes and accessories while managing inquiries across multiple channels.',
       responsibilities: [
@@ -103,7 +103,7 @@ const Careers = () => {
         'Maintain excellent customer satisfaction ratings'
       ],
       requirements: [
-        'Diploma or Bachelor\'s degree in any field',
+        'Diploma or Bachelor\'s degree in related field',
         '1+ years of customer service experience (e-commerce preferred)',
         'Excellent communication skills in English and Swahili',
         'Knowledge of bicycles and cycling products is highly advantageous',
@@ -127,7 +127,7 @@ const Careers = () => {
       department: 'Operations',
       location: 'Nairobi, Kenya',
       type: 'Full-time',
-      salary: 'KSh 70,000 - 110,000',
+      salary: 'KSh 10,000 - 20,000',
       experience: '2-3 years',
       description: 'Manage the logistics of delivering bicycles and cycling products across Kenya. Coordinate with courier services and ensure safe, timely delivery of orders from our marketplace.',
       responsibilities: [
@@ -165,7 +165,7 @@ const Careers = () => {
       department: 'Product',
       location: 'Nairobi, Kenya',
       type: 'Full-time',
-      salary: 'KSh 120,000 - 180,000',
+      salary: 'KSh 20,000 - 50,000',
       experience: '3-5 years',
       description: 'Lead the strategic development of Oshocks Junior Bike Shop marketplace. Shape the future of cycling e-commerce in Kenya by managing platform features, seller relationships, and customer experience.',
       responsibilities: [
@@ -204,7 +204,7 @@ const Careers = () => {
       department: 'Technical',
       location: 'Nairobi, Kenya',
       type: 'Full-time',
-      salary: 'KSh 50,000 - 80,000',
+      salary: 'KSh 15,000 - 35,000',
       experience: '2+ years',
       description: 'Join our technical team to assemble, service, and repair bicycles sold through our marketplace. Provide expert mechanical support and create educational content for our cycling community.',
       responsibilities: [
@@ -242,7 +242,7 @@ const Careers = () => {
       department: 'Marketing',
       location: 'Nairobi, Kenya',
       type: 'Full-time',
-      salary: 'KSh 90,000 - 140,000',
+      salary: 'KSh 10,000 - 20,000',
       experience: '2-4 years',
       description: 'Drive growth for Kenya\'s premier cycling marketplace through strategic digital marketing. Reach cycling enthusiasts across Kenya and build our brand in the cycling community.',
       responsibilities: [
@@ -281,7 +281,7 @@ const Careers = () => {
       department: 'Operations',
       location: 'Nairobi, Kenya',
       type: 'Full-time',
-      salary: 'KSh 75,000 - 115,000',
+      salary: 'KSh 15,000 - 20,000',
       experience: '2-3 years',
       description: 'Help bicycle sellers across Kenya succeed on our marketplace platform. Onboard new vendors, provide training, and ensure they maximize their sales potential on Oshocks.',
       responsibilities: [

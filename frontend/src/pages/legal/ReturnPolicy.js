@@ -17,7 +17,7 @@ const ReturnPolicy = () => {
     }));
   };
 
-  const lastUpdated = "November 15, 2024";
+  const lastUpdated = "April 27, 2024"; //Intitial creation date November 15, 2024
 
   const returnEligibility = [
     {
@@ -945,10 +945,10 @@ const ReturnPolicy = () => {
                 For return requests and status updates
               </p>
               <a 
-                href="mailto:returns@oshocksjunior.co.ke" 
+                href="mailto:oshocksstores@gmail.com" 
                 className="text-white underline hover:text-green-200 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-green-700 rounded"
               >
-                returns@oshocksjunior.co.ke
+                oshocksstores@gmail.com
               </a>
             </div>
 
@@ -961,10 +961,10 @@ const ReturnPolicy = () => {
                 For refund status and payment questions
               </p>
               <a 
-                href="mailto:refunds@oshocksjunior.co.ke" 
+                href="mailto:oshocksstores@gmail.com" 
                 className="text-white underline hover:text-green-200 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-green-700 rounded"
               >
-                refunds@oshocksjunior.co.ke
+                oshocksstores@gmail.com
               </a>
             </div>
 
@@ -977,10 +977,10 @@ const ReturnPolicy = () => {
                 For all other questions and assistance
               </p>
               <a 
-                href="mailto:support@oshocksjunior.co.ke" 
+                href="mailto:oshocksstores@gmail.com" 
                 className="text-white underline hover:text-green-200 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-green-700 rounded"
               >
-                support@oshocksjunior.co.ke
+                oshocksstores@gmail.com
               </a>
             </div>
           </div>

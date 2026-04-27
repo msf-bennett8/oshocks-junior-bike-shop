@@ -79,7 +79,7 @@ const BecomeASeller = () => {
     {
       icon: Users,
       title: 'Reach Thousands of Customers',
-      description: 'Access Kenya\'s largest cycling community with over 50,000+ active buyers',
+      description: 'Access Kenya\'s largest cycling community with over 5,000+ active buyers',
       color: 'blue'
     },
     {
@@ -116,9 +116,9 @@ const BecomeASeller = () => {
 
   // Statistics
   const stats = [
-    { value: '10,000+', label: 'Active Sellers', icon: Store },
-    { value: '50,000+', label: 'Monthly Buyers', icon: Users },
-    { value: 'KSh 2M+', label: 'Average Monthly Sales', icon: DollarSign },
+    { value: '10+', label: 'Active Sellers', icon: Store },
+    { value: '1000+', label: 'Monthly Buyers', icon: Users },
+    { value: 'KSh 300K+', label: 'Average Monthly Sales', icon: DollarSign },
     { value: '4.8/5', label: 'Seller Satisfaction', icon: Star }
   ];
 
@@ -477,7 +477,7 @@ const BecomeASeller = () => {
               Start Selling on Oshocks
             </h1>
             <p className="text-xl text-blue-100 max-w-3xl mx-auto mb-8">
-              Join Kenya's premier cycling marketplace and reach thousands of customers nationwide. 
+              Join a premier cycling marketplace and reach thousands of customers nationwide. 
               Free registration, low commissions, secure payments.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
@@ -554,7 +554,7 @@ const BecomeASeller = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Sell on Oshocks?</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Join thousands of successful sellers who trust Oshocks to grow their cycling business
+              Join other successful sellers who trust Oshocks to grow their cycling business
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1515,7 +1515,7 @@ const BecomeASeller = () => {
           <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg shadow-xl p-8 text-white">
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold mb-4">What Our Sellers Say</h2>
-              <p className="text-purple-100">Join thousands of successful sellers across Kenya</p>
+              <p className="text-purple-100">Join other successful sellers across Kenya</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[

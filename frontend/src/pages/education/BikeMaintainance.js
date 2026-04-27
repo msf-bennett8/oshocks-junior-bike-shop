@@ -667,17 +667,17 @@ const BikeMaintenance = () => {
             <div className="bg-white/10 backdrop-blur rounded-lg p-4">
               <h3 className="font-bold text-lg mb-2">Full Service</h3>
               <p className="text-sm text-blue-100 mb-3">Complete bike tune-up and inspection</p>
-              <p className="text-2xl font-bold">KES 3,500</p>
+              <p className="text-2xl font-bold">KES 1,500</p>
             </div>
             <div className="bg-white/10 backdrop-blur rounded-lg p-4">
               <h3 className="font-bold text-lg mb-2">Basic Service</h3>
               <p className="text-sm text-blue-100 mb-3">Essential maintenance and adjustments</p>
-              <p className="text-2xl font-bold">KES 1,800</p>
+              <p className="text-2xl font-bold">KES 1,000</p>
             </div>
             <div className="bg-white/10 backdrop-blur rounded-lg p-4">
               <h3 className="font-bold text-lg mb-2">Wheel Service</h3>
               <p className="text-sm text-blue-100 mb-3">Truing, spoke replacement, bearing service</p>
-              <p className="text-2xl font-bold">KES 1,200</p>
+              <p className="text-2xl font-bold">KES 800</p>
             </div>
           </div>
           <button className="mt-6 px-8 py-4 bg-white text-blue-600 font-bold rounded-lg hover:bg-blue-50 transition-colors shadow-lg">

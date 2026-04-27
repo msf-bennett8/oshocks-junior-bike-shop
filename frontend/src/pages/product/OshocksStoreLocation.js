@@ -10,14 +10,14 @@ const StoreLocation = () => {
   const stores = [
     {
       id: 1,
-      name: 'Oshocks Junior Bike Shop - Nairobi Main',
+      name: 'Oshocks Bike Shop - Nairobi Main',
       type: 'Flagship Store',
       address: 'Mwihoko, Eastern Bypass, Nairobi',
       fullAddress: 'Mwihoko, Eastern Bypass, Communication Authority of Kenya Kahawa Sukari, Nairobi',
       city: 'Nairobi',
       phone: '+254 798 558 285',
       whatsapp: '+254 798 558 285',
-      email: 'nairobi@oshocksjunior.co.ke',
+      email: 'oshocksstores@gmail.com',
       coordinates: { lat: -1.2864, lng: 36.8172 },
       image: 'https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=600',
       hours: {
@@ -49,26 +49,26 @@ const StoreLocation = () => {
       ],
       payment: ['Cash', 'M-Pesa', 'Card', 'Bank Transfer'],
       transportation: {
-        matatu: 'Route 46, 33, 111 - Stop at Kenya National Archives',
-        bus: 'City Hoppa Bus 19, 23 - Moi Avenue stop',
-        uber: 'Set destination to "Oshocks Junior - Moi Avenue"',
+        matatu: 'Route 46, 33, 111 - Stop at Mwihoko at Kenya Cmmunication Authority Kahawa Sukari',
+        bus: 'Lopha Travels Bus 19, 23 from CBD - Mwihoko at Kenya Cmmunication Authority Kahawa Sukari',
+        uber: 'Mwihoko at Kenya Cmmunication Authority Kahawa Sukari"',
         parking: 'Street parking available, paid parking 100m away'
       },
-      manager: 'John Kamau',
+      manager: 'Michael Ndung\'u',
       rating: 4.8,
       reviews: 342,
       isOpen: true
     },
     {
       id: 2,
-      name: 'Oshocks Junior - Mwihoko Branch',
+      name: 'Oshocks Bike Shop - Githurai Branch',
       type: 'Branch Store',
       address: 'Githurai, Thika Road, Nairobi',
       fullAddress: 'Githurai, Thika Road',
       city: 'Nairobi',
       phone: '++254 798 558 285',
       whatsapp: '+254 798 558 285',
-      email: 'oshocksjuniorbikeshop@gmail.com',
+      email: 'oshocksstores@gmail.com',
       coordinates: { lat: -1.2649, lng: 36.8061 },
       image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600',
       hours: {
@@ -97,26 +97,26 @@ const StoreLocation = () => {
       ],
       payment: ['Cash', 'M-Pesa', 'Card'],
       transportation: {
-        matatu: 'Route 23, 44 - Sarit Centre stop',
-        bus: 'City Hoppa to Westlands',
-        uber: 'Set destination to "Sarit Centre"',
-        parking: 'Free parking at Sarit Centre for 3 hours'
+        matatu: 'Route 46, 33, 111 - Stop at Githurai Riflo Garrage Building',
+        bus: 'Nicco Bus 19, 23 from CBD - Githurai Riflo Garrage Building',
+        uber: 'Githurai Riflo Garrage Building"',
+        parking: 'Street parking available, paid parking 100m away'
       },
-      manager: 'Jane Wanjiku',
+      manager: 'Michael Ndung\'u',
       rating: 4.7,
       reviews: 198,
       isOpen: true
     },
     {
       id: 3,
-      name: 'Oshocks Junior - Githurai Outlet',
+      name: 'Oshocks Junior - Online Outlet',
       type: 'Outlet Store',
       address: 'online, Virtual',
-      fullAddress: 'Githurai Shopping Centre, Ground Floor, Karen Road, Nairobi, Kenya',
+      fullAddress: 'Kasarani Soweto Shopping Centre, Ground Floor, Hunters Road, Nairobi, Kenya',
       city: 'Nairobi',
-      phone: '+254 798 558 285',
-      whatsapp: '+254 798 558 285',
-      email: 'karen@oshocksjunior.co.ke',
+      phone: '+254 715 061 213',
+      whatsapp: '+254 715 061 213',
+      email: 'oshocksstores@gmail.com',
       coordinates: { lat: -1.3197, lng: 36.7076 },
       image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600',
       hours: {
@@ -143,11 +143,11 @@ const StoreLocation = () => {
       ],
       payment: ['Cash', 'M-Pesa', 'Card', 'Bank Transfer'],
       transportation: {
-        matatu: 'Route 111 - Karen stop',
-        uber: 'Set destination to "Karen Shopping Centre"',
+        matatu: 'Route 111 - Hunters Stage',
+        uber: 'Set destination to "Hunters Stage"',
         parking: 'Free parking available'
       },
-      manager: 'David Omondi',
+      manager: 'Bennett Fibonacci',
       rating: 4.9,
       reviews: 156,
       isOpen: true

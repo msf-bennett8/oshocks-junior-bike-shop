@@ -276,8 +276,8 @@ const FAQPage = () => {
                 <p className="text-gray-600 text-sm mb-4">
                   Mon-Sat, 8AM-6PM EAT
                 </p>
-                <a href="tel:+25498558285" className="text-green-600 font-semibold hover:text-green-700">
-                  +254 798 558 285
+                <a href="tel:+254715061213" className="text-green-600 font-semibold hover:text-green-700">
+                  +254 715 061 213
                 </a>
               </div>
 
