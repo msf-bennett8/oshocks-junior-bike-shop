@@ -98,9 +98,18 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-gray-900 text-gray-300 relative">
+  <footer className="bg-gray-900 text-gray-300 relative overflow-hidden">
+  <div className="absolute inset-0 pointer-events-none">
+    <div 
+      className="absolute inset-0 opacity-30"
+      style={{
+        background: 'radial-gradient(circle at 20% 80%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgb(255, 165, 0) 0%, transparent 40%)',
+      }}
+    />
+    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60" />
+  </div>
       {/* Main Footer Content */}
-      <div className="container mx-auto px-4 py-12 pt-16">
+      <div className="container mx-auto px-4 py-12 pt-16 relative z-10">
         {/* Top Section - Brand & Newsletter */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-10 border-b border-gray-800">
           {/* Brand Info */}
@@ -141,7 +150,7 @@ const Footer = () => {
               placeholder="Enter your email address"
               className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(255,140,0)] focus:border-transparent text-white placeholder-gray-500"
             />
-              <button className="px-6 py-3 bg-gradient-to-r from-[rgb(255,69,0)] to-[rgb(255,165,0)] text-white rounded-lg hover:opacity-90 transition-all font-medium whitespace-nowrap">
+              <button className="px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-lg hover:opacity-90 transition-all font-medium whitespace-nowrap">
                 Subscribe Now
               </button>
             </div>
@@ -157,8 +166,8 @@ const Footer = () => {
                 <span>Secure Payments</span>
               </div>
               <div className="flex items-center gap-2 text-xs">
-                
-                <span>24/7 <Clock size={20} className="text-[rgb(255,140,0)]" />Support</span>
+                <Clock size={20} className="text-[rgb(255,140,0)]" />
+                <span>24/7 Support</span>
               </div>
               <div className="flex items-center gap-2 text-xs">
                 <Award size={20} className="text-[rgb(255,140,0)]" />
@@ -297,8 +306,8 @@ const Footer = () => {
             />
             {/* Cash on Delivery */}
             <div className="opacity-80 hover:opacity-100 transition-opacity" title="Cash on Delivery">
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
@@ -307,7 +316,7 @@ const Footer = () => {
         </div>
       </div>
       {/* Bottom Bar */}
-      <div className="border-t border-gray-800 bg-gray-950">
+      <div className="border-t border-gray-800 bg-gray-950 relative z-10">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-gray-400 text-center md:text-left">
