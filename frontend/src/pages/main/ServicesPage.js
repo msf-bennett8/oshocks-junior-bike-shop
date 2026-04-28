@@ -205,8 +205,18 @@ const ServicesPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-20 md:py-28">
-        <div className="container mx-auto px-4">
+      <div className="bg-gray-900 text-white py-20 md:py-28 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+            }}
+          />
+          <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+        </div>
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <Wrench className="w-20 h-20 mx-auto mb-6" />
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
@@ -216,7 +226,7 @@ const ServicesPage = () => {
               Expert maintenance and repair to keep you riding safe and smooth
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="#services" className="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold hover:bg-blue-50 transition-colors text-lg">
+              <a href="#services" className="bg-white text-orange-600 px-8 py-4 rounded-lg font-semibold hover:bg-orange-50 transition-colors text-lg">
                 View Services
               </a>
               <a href="#contact" className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white/10 transition-colors text-lg">
@@ -241,7 +251,7 @@ const ServicesPage = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {whyChooseUs.map((item, index) => (
               <div key={index} className="text-center">
-                <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
+                <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-600">
                   {item.icon}
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{item.title}</h3>
@@ -278,11 +288,11 @@ const ServicesPage = () => {
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full">
-                    <span className="text-blue-600 font-bold">{service.price}</span>
+                    <span className="text-orange-600 font-bold">{service.price}</span>
                   </div>
                 </div>
                 <div className="p-6">
-                  <div className="text-blue-600 mb-4">{service.icon}</div>
+                  <div className="text-orange-600 mb-4">{service.icon}</div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">{service.title}</h3>
                   <p className="text-gray-600 mb-4">{service.subtitle}</p>
                   <p className="text-gray-700 mb-4 line-clamp-2">{service.description}</p>
@@ -291,7 +301,7 @@ const ServicesPage = () => {
                       <Clock className="w-4 h-4" />
                       <span>{service.turnaround}</span>
                     </div>
-                    <button className="text-blue-600 font-semibold hover:text-blue-700">
+                    <button className="text-orange-600 font-semibold hover:text-orange-700">
                       Learn More →
                     </button>
                   </div>
@@ -316,14 +326,14 @@ const ServicesPage = () => {
           <div className="grid md:grid-cols-4 gap-8 max-w-6xl mx-auto">
             {processSteps.map((step, index) => (
               <div key={index} className="text-center relative">
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
+                <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
                   {step.step}
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{step.title}</h3>
                 <p className="text-gray-600">{step.description}</p>
                 {index < processSteps.length - 1 && (
                   <div className="hidden md:block absolute top-8 right-0 transform translate-x-1/2 w-full">
-                    <div className="border-t-2 border-dashed border-blue-300"></div>
+                    <div className="border-t-2 border-dashed border-orange-300"></div>
                   </div>
                 )}
               </div>
@@ -346,7 +356,7 @@ const ServicesPage = () => {
           <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
+                <thead className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
                   <tr>
                     <th className="px-6 py-4 text-left">Service</th>
                     <th className="px-6 py-4 text-left">Starting Price</th>
@@ -392,14 +402,23 @@ const ServicesPage = () => {
       </div>
 
       {/* Contact/Booking Section */}
-      <div id="contact" className="py-16 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-        <div className="container mx-auto px-4">
+      <div id="contact" className="py-16 bg-gray-900 text-white relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+        </div>
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
                 Book Your Service Today
               </h2>
-              <p className="text-xl text-blue-100">
+              <p className="text-xl text-orange-100">
                 Visit our shop or schedule an appointment online
               </p>
             </div>
@@ -411,24 +430,24 @@ const ServicesPage = () => {
                   <MapPin className="w-6 h-6 flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold mb-1">Visit Our Shop</h3>
-                    <p className="text-blue-100">Nairobi, Kenya</p>
-                    <p className="text-blue-100 text-sm">Open Mon-Sat, 8AM-6PM</p>
+                    <p className="text-orange-100">Nairobi, Kenya</p>
+                    <p className="text-orange-100 text-sm">Open Mon-Sat, 8AM-6PM</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
                   <Phone className="w-6 h-6 flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold mb-1">Call Us</h3>
-                    <p className="text-blue-100">+254 715 061 213</p>
-                    <p className="text-blue-100 text-sm">Available during business hours</p>
+                    <p className="text-orange-100">+254 715 061 213</p>
+                    <p className="text-orange-100 text-sm">Available during business hours</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
                   <Mail className="w-6 h-6 flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold mb-1">Email Us</h3>
-                    <p className="text-blue-100">oshocksstores@gmail.com</p>
-                    <p className="text-blue-100 text-sm">We'll respond within 24 hours</p>
+                    <p className="text-orange-100">oshocksstores@gmail.com</p>
+                    <p className="text-orange-100 text-sm">We'll respond within 24 hours</p>
                   </div>
                 </div>
               </div>
@@ -442,14 +461,14 @@ const ServicesPage = () => {
                     value={bookingForm.fullName}
                     onChange={(e) => setBookingForm({...bookingForm, fullName: e.target.value})}
                     placeholder="Your Name"
-                    className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-300"
                   />
                   <input
                     type="tel"
                     value={bookingForm.phone}
                     onChange={(e) => setBookingForm({...bookingForm, phone: e.target.value})}
                     placeholder="Phone Number"
-                    className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-300"
                   />
                   <select 
                         value={bookingForm.service}
@@ -468,9 +487,9 @@ const ServicesPage = () => {
                     onChange={(e) => setBookingForm({...bookingForm, details: e.target.value})}
                     placeholder="Additional Details (Optional)"
                     rows="3"
-                    className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-300"
                   ></textarea>
-                  <button className="w-full bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center justify-center gap-2">
+                  <button className="w-full bg-white text-orange-600 px-6 py-3 rounded-lg font-semibold hover:bg-orange-50 transition-colors flex items-center justify-center gap-2">
                     <Calendar className="w-5 h-5" />
                     Book Appointment
                   </button>
@@ -513,7 +532,7 @@ const ServicesPage = () => {
                   <p className="text-lg text-gray-600">{selectedService.subtitle}</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-3xl font-bold text-blue-600">{selectedService.price}</div>
+                  <div className="text-3xl font-bold text-orange-600">{selectedService.price}</div>
                 </div>
               </div>
               <p className="text-gray-700 mb-6">{selectedService.description}</p>
@@ -547,7 +566,7 @@ const ServicesPage = () => {
                 </div>
               </div>
 
-              <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-4 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all flex items-center justify-center gap-2">
+              <button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-4 rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all flex items-center justify-center gap-2">
                 <Calendar className="w-5 h-5" />
                 Book This Service
               </button>

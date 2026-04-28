@@ -135,9 +135,9 @@ export default function ShippingPolicyPage() {
             This Shipping Policy outlines our delivery methods, timeframes, costs, and what you can expect when ordering from us.
           </p>
 
-          <div className="bg-gradient-to-r from-blue-50 to-green-50 border-l-4 border-blue-500 p-5 rounded-r-lg">
+          <div className="bg-gradient-to-r from-orange-50 to-orange-100 border-l-4 border-orange-500 p-5 rounded-r-lg">
             <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-              <CheckCircle className="w-6 h-6 text-blue-600" />
+              <CheckCircle className="w-6 h-6 text-orange-600" />
               What We Offer
             </h4>
             <div className="grid md:grid-cols-2 gap-3">
@@ -149,7 +149,7 @@ export default function ShippingPolicyPage() {
                 </div>
               </div>
               <div className="bg-white/70 p-3 rounded flex items-start gap-2">
-                <Clock className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <Clock className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-semibold text-gray-900 text-sm">Fast Processing</p>
                   <p className="text-xs text-gray-700">Orders processed within 24 hours on business days</p>
@@ -254,7 +254,7 @@ export default function ShippingPolicyPage() {
             <div className="overflow-x-auto rounded-lg border border-gray-200">
               <table className="w-full border-collapse bg-white text-sm">
                 <thead>
-                  <tr className="bg-gradient-to-r from-blue-600 to-green-600 text-white">
+                  <tr className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
                     <th className="px-4 py-3 text-left font-semibold">Zone</th>
                     <th className="px-4 py-3 text-left font-semibold">Standard (0-5kg)</th>
                     <th className="px-4 py-3 text-left font-semibold">Per Additional Kg</th>
@@ -330,9 +330,9 @@ export default function ShippingPolicyPage() {
       category: 'tools',
       content: (
         <div className="space-y-6">
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-lg border-2 border-blue-200">
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-lg border-2 border-orange-200">
             <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <DollarSign className="w-6 h-6 text-blue-600" />
+              <DollarSign className="w-6 h-6 text-orange-600" />
               Estimate Your Shipping Cost
             </h4>
             
@@ -344,7 +344,7 @@ export default function ShippingPolicyPage() {
                 <select
                   value={selectedZone}
                   onChange={(e) => setSelectedZone(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 >
                   {shippingZones.map(zone => (
                     <option key={zone.id} value={zone.id}>{zone.name}</option>
@@ -361,14 +361,14 @@ export default function ShippingPolicyPage() {
                   value={estimatedWeight}
                   onChange={(e) => setEstimatedWeight(e.target.value)}
                   placeholder="e.g., 8"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 />
               </div>
             </div>
             
             <button
               onClick={calculateShipping}
-              className="w-full bg-gradient-to-r from-blue-600 to-green-600 text-white py-3 rounded-lg font-bold hover:from-blue-700 hover:to-green-700 transition-all shadow-md hover:shadow-lg"
+              className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 rounded-lg font-bold hover:from-orange-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg"
             >
               Calculate Shipping Cost
             </button>
@@ -386,7 +386,7 @@ export default function ShippingPolicyPage() {
                       Shipping Estimate
                     </h5>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-blue-50 p-4 rounded">
+                      <div className="bg-orange-50 p-4 rounded">
                         <p className="text-sm text-gray-600 mb-1">Delivery Zone</p>
                         <p className="text-lg font-bold text-gray-900">{calculatorResult.zone}</p>
                       </div>
@@ -405,7 +405,7 @@ export default function ShippingPolicyPage() {
                     </div>
                     
                     {calculatorResult.freeShippingThreshold && (
-                      <div className="mt-4 bg-gradient-to-r from-green-100 to-blue-100 p-4 rounded-lg border-2 border-green-300">
+                      <div className="mt-4 bg-gradient-to-r from-orange-100 to-orange-200 p-4 rounded-lg border-2 border-orange-300">
                         <p className="text-sm text-gray-700">
                           <strong>💡 Tip:</strong> Orders over <strong>KES {calculatorResult.freeShippingThreshold.toLocaleString()}</strong> qualify for FREE shipping in your zone!
                         </p>
@@ -417,7 +417,7 @@ export default function ShippingPolicyPage() {
             )}
           </div>
           
-          <div className="bg-blue-50 p-4 rounded-lg">
+          <div className="bg-orange-50 p-4 rounded-lg">
             <h5 className="font-semibold text-gray-900 mb-2">Weight Guidelines</h5>
             <ul className="space-y-1 text-sm text-gray-700">
               <li>• <strong>Accessories:</strong> 0.5 - 2 kg</li>
@@ -436,9 +436,9 @@ export default function ShippingPolicyPage() {
       category: 'support',
       content: (
         <div className="space-y-6">
-          <div className="bg-gradient-to-r from-blue-50 to-green-50 border-l-4 border-blue-500 p-5 rounded-r-lg">
+          <div className="bg-gradient-to-r from-orange-50 to-orange-100 border-l-4 border-orange-500 p-5 rounded-r-lg">
             <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
-              <MessageSquare className="w-6 h-6 text-blue-600" />
+              <MessageSquare className="w-6 h-6 text-orange-600" />
               Need Shipping Help?
             </h4>
             <p className="text-sm text-gray-700">
@@ -463,9 +463,9 @@ export default function ShippingPolicyPage() {
               <p className="text-xs text-gray-600">Toll-free within Kenya</p>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-blue-500">
+              <div className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-orange-500">
               <div className="flex items-center gap-3 mb-4">
-                <div className="bg-blue-600 p-3 rounded-lg">
+                <div className="bg-orange-600 p-3 rounded-lg">
                   <Mail className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -473,7 +473,7 @@ export default function ShippingPolicyPage() {
                   <p className="text-xs text-gray-600">Response within 24 hours</p>
                 </div>
               </div>
-              <a href="mailto:oshocksstores@gmail.com" className="text-blue-600 hover:underline font-semibold block mb-2">
+              <a href="mailto:oshocksstores@gmail.com" className="text-orange-600 hover:underline font-semibold block mb-2">
                 oshocksstores@gmail.com
               </a>
               <p className="text-xs text-gray-600">Include order number for faster service</p>
@@ -486,7 +486,7 @@ export default function ShippingPolicyPage() {
               <div>
                 <h5 className="font-semibold text-gray-900 mb-2">Physical Address</h5>
                 <div className="text-sm text-gray-700 space-y-1">
-                  <p className="font-semibold text-blue-600">Oshocks Junior Bike Shop</p>
+                  <p className="font-semibold text-orange-600">Oshocks Junior Bike Shop</p>
                   <p>Nairobi, Kenya</p>
                   <div className="mt-3 pt-3 border-t border-gray-300">
                     <p className="font-semibold mb-1">Store Hours:</p>
@@ -536,14 +536,14 @@ export default function ShippingPolicyPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-green-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header - will scroll under navbar */}
       <div className="bg-white shadow-lg mt-16">
         <div className="max-w-6xl mx-auto px-4 py-6">
         {/* Content Sections */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-br from-blue-600 to-green-600 p-3 rounded-lg shadow-lg">
+              <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-3 rounded-lg shadow-lg">
                 <Truck className="w-8 h-8 text-white" />
               </div>
               <div>
@@ -552,7 +552,7 @@ export default function ShippingPolicyPage() {
               </div>
             </div>
             <div className="hidden md:flex gap-2">
-              <button className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+              <button className="flex items-center gap-2 px-4 py-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors">
                 <Download className="w-4 h-4" />
                 <span className="text-sm">Download</span>
               </button>
@@ -572,7 +572,7 @@ export default function ShippingPolicyPage() {
               <CheckCircle className="w-4 h-4" />
               <span>Free Shipping Over KES 10,000</span>
             </div>
-            <div className="flex items-center gap-2 text-blue-600 font-semibold">
+            <div className="flex items-center gap-2 text-orange-600 font-semibold">
               <Truck className="w-4 h-4" />
               <span>Nationwide Delivery</span>
             </div>
@@ -594,7 +594,7 @@ export default function ShippingPolicyPage() {
                   placeholder="Search shipping policy..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                 />
               </div>
               <div className="flex gap-2">
@@ -625,7 +625,7 @@ export default function ShippingPolicyPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-3 sm:px-4 py-2 rounded-lg font-semibold transition-all text-xs sm:text-sm ${
                     activeTab === tab.id
-                      ? 'bg-gradient-to-r from-blue-600 to-green-600 text-white shadow-md'
+                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
@@ -657,8 +657,8 @@ export default function ShippingPolicyPage() {
                     className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="bg-gradient-to-br from-blue-100 to-green-100 p-3 rounded-lg">
-                        <Icon className="w-6 h-6 text-blue-600" />
+                      <div className="bg-gradient-to-br from-orange-100 to-orange-200 p-3 rounded-lg">
+                        <Icon className="w-6 h-6 text-orange-600" />
                       </div>
                       <h2 className="text-xl font-bold text-gray-900 text-left">
                         {section.title}
@@ -692,7 +692,7 @@ export default function ShippingPolicyPage() {
                 setSearchQuery('');
                 setActiveTab('all');
               }}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors"
             >
               Clear Search
             </button>
@@ -700,68 +700,80 @@ export default function ShippingPolicyPage() {
         )}
 
         {/* CTA Section */}
-        <div className="mt-12 bg-gradient-to-br from-blue-600 to-green-600 p-6 sm:p-8 rounded-lg shadow-xl text-white">
+        <div className="mt-12 bg-gray-900 p-6 sm:p-8 rounded-lg shadow-xl text-white relative overflow-hidden">
+          <div className="absolute inset-0">
+            <div 
+              className="absolute inset-0 opacity-40"
+              style={{
+                background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+              }}
+            />
+            <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+          </div>
+          <div className="relative z-10">
           <div className="text-center">
             <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4">Need Shipping Assistance?</h3>
             <p className="mb-4 sm:mb-6 text-blue-100 max-w-2xl mx-auto text-sm sm:text-base">
               Our shipping support team is ready to help with tracking, delivery questions, or any shipping concerns.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-              <button className="bg-white text-blue-600 px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-blue-50 transition-colors shadow-md flex items-center justify-center gap-2 text-sm sm:text-base">
+              <button className="bg-white text-orange-600 px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-orange-50 transition-colors shadow-md flex items-center justify-center gap-2 text-sm sm:text-base">
                 <Navigation className="w-4 h-4 sm:w-5 sm:h-5" />
                 Track My Order
               </button>
-              <button className="bg-blue-700 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-blue-800 transition-colors shadow-md border-2 border-white flex items-center justify-center gap-2 text-sm sm:text-base">
+              <button className="bg-orange-700 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-orange-800 transition-colors shadow-md border-2 border-white flex items-center justify-center gap-2 text-sm sm:text-base">
                 <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
                 Contact Support
               </button>
             </div>
           </div>
+          </div>
         </div>
 
         {/* Quick Links */}
         <div className="mt-8 grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             <div className="flex items-center gap-3 mb-3">
-              <div className="bg-blue-100 p-2 rounded-lg">
-                <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+              <div className="bg-orange-100 p-2 rounded-lg">
+                <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
               </div>
               <h4 className="font-bold text-gray-900 text-sm sm:text-base">Returns Policy</h4>
             </div>
             <p className="text-xs sm:text-sm text-gray-700 mb-3 sm:mb-4">
               Learn about our return process and refund timelines.
             </p>
-            <a href="/refund-policy" className="text-blue-600 hover:underline font-semibold text-xs sm:text-sm flex items-center gap-1">
+            <a href="/refund-policy" className="text-orange-600 hover:underline font-semibold text-xs sm:text-sm flex items-center gap-1">
               Read More <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
             </a>
           </div>
 
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             <div className="flex items-center gap-3 mb-3">
-              <div className="bg-green-100 p-2 rounded-lg">
-                <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+              <div className="bg-orange-100 p-2 rounded-lg">
+                <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
               </div>
               <h4 className="font-bold text-gray-900 text-sm sm:text-base">Terms & Conditions</h4>
             </div>
             <p className="text-xs sm:text-sm text-gray-700 mb-3 sm:mb-4">
               Review our complete terms of service and policies.
             </p>
-            <a href="/terms-of-service" className="text-green-600 hover:underline font-semibold text-xs sm:text-sm flex items-center gap-1">
+            <a href="/terms-of-service" className="text-orange-600 hover:underline font-semibold text-xs sm:text-sm flex items-center gap-1">
               Read More <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
             </a>
           </div>
 
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             <div className="flex items-center gap-3 mb-3">
-              <div className="bg-purple-100 p-2 rounded-lg">
-                <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+              <div className="bg-orange-100 p-2 rounded-lg">
+                <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
               </div>
               <h4 className="font-bold text-gray-900 text-sm sm:text-base">Contact Support</h4>
             </div>
             <p className="text-xs sm:text-sm text-gray-700 mb-3 sm:mb-4">
               Get help with your orders and shipping questions.
             </p>
-            <a href="/contact-support" className="text-purple-600 hover:underline font-semibold text-xs sm:text-sm flex items-center gap-1">
+            <a href="/contact-support" className="text-orange-600 hover:underline font-semibold text-xs sm:text-sm flex items-center gap-1">
               Contact Us <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
             </a>
           </div>
@@ -771,7 +783,7 @@ export default function ShippingPolicyPage() {
         <div className="mt-8 text-center">
           <a
             href="/"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold hover:underline transition-colors"
+            className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-800 font-semibold hover:underline transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -793,7 +805,7 @@ export default function ShippingPolicyPage() {
 
       {/* Floating Help Button */}
       <div className="fixed bottom-6 right-4 sm:right-6 z-50">
-        <button className="bg-gradient-to-br from-blue-600 to-green-600 text-white p-3 sm:p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group">
+        <button className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-3 sm:p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group">
           <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-12 transition-transform" />
         </button>
       </div>

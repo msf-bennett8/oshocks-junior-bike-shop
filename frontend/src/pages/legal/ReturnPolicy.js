@@ -180,7 +180,7 @@ const ReturnPolicy = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading Return Policy...</p>
         </div>
       </div>
@@ -194,7 +194,7 @@ const ReturnPolicy = () => {
         <div className="max-w-6xl mx-auto px-4 py-3">
           <button
             onClick={() => window.history.back()}
-            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg px-2 py-1"
+            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg px-2 py-1"
             aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
@@ -204,8 +204,18 @@ const ReturnPolicy = () => {
       </div>
 
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16 px-4">
-        <div className="max-w-6xl mx-auto">
+      <header className="bg-gray-900 text-white py-16 px-4 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+            }}
+          />
+          <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+        </div>
+        <div className="max-w-6xl mx-auto relative z-10">
           <div className="flex items-center justify-center mb-4" aria-hidden="true">
             <RotateCcw className="w-16 h-16" />
           </div>
@@ -226,7 +236,7 @@ const ReturnPolicy = () => {
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-6 text-center">
             <div>
-              <div className="text-3xl font-bold text-blue-600">30</div>
+              <div className="text-3xl font-bold text-orange-600">30</div>
               <div className="text-sm text-gray-600 mt-1">Days Return Period</div>
             </div>
             <div>
@@ -249,25 +259,25 @@ const ReturnPolicy = () => {
       <nav className="bg-white border-b border-gray-200 sticky top-[52px] z-40 shadow-sm" aria-label="Page navigation">
         <div className="max-w-6xl mx-auto px-4 py-3 overflow-x-auto">
           <div className="flex space-x-4 min-w-max">
-            <a href="#overview" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#overview" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Overview
             </a>
-            <a href="#eligibility" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#eligibility" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Return Eligibility
             </a>
-            <a href="#process" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#process" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Return Process
             </a>
-            <a href="#non-returnable" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#non-returnable" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Non-Returnable Items
             </a>
-            <a href="#refunds" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#refunds" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Refunds
             </a>
-            <a href="#exchanges" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#exchanges" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Exchanges
             </a>
-            <a href="#contact" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#contact" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Contact
             </a>
           </div>
@@ -292,12 +302,12 @@ const ReturnPolicy = () => {
               a purchase to understand your rights and responsibilities.
             </p>
             
-            <div className="bg-blue-50 border-l-4 border-blue-600 p-4 mt-6" role="note">
+            <div className="bg-orange-50 border-l-4 border-orange-600 p-4 mt-6" role="note">
               <div className="flex">
-                <Shield className="w-5 h-5 text-blue-600 mr-3 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                <Shield className="w-5 h-5 text-orange-600 mr-3 flex-shrink-0 mt-0.5" aria-hidden="true" />
                 <div>
-                  <h3 className="font-semibold text-blue-900 mb-1">Your Satisfaction Guaranteed</h3>
-                  <p className="text-sm text-blue-800">
+                  <h3 className="font-semibold text-orange-900 mb-1">Your Satisfaction Guaranteed</h3>
+                  <p className="text-sm text-orange-800">
                     We stand behind the quality of our products. If you're not satisfied with your purchase for any 
                     reason within the return period, we'll make it right with a full refund, exchange, or store credit.
                   </p>
@@ -384,17 +394,17 @@ const ReturnPolicy = () => {
                   )}
                   
                   <div className="flex items-start">
-                    <div className="flex-shrink-0 w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg z-10">
+                    <div className="flex-shrink-0 w-12 h-12 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-lg z-10">
                       {step.step}
                     </div>
                     
                     <div className="ml-6 flex-1 bg-gray-50 rounded-lg p-6 border border-gray-200">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center">
-                          <Icon className="w-5 h-5 text-blue-600 mr-2" />
+                          <Icon className="w-5 h-5 text-orange-600 mr-2" />
                           <h3 className="text-lg font-semibold text-gray-900">{step.title}</h3>
                         </div>
-                        <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full whitespace-nowrap">
+                        <span className="text-xs bg-orange-100 text-orange-700 px-3 py-1 rounded-full whitespace-nowrap">
                           {step.timeline}
                         </span>
                       </div>
@@ -406,8 +416,8 @@ const ReturnPolicy = () => {
             })}
           </div>
 
-          <div className="mt-8 bg-green-50 border border-green-200 rounded-lg p-6">
-            <h3 className="text-lg font-semibold text-green-900 mb-3 flex items-center">
+          <div className="mt-8 bg-orange-50 border border-orange-200 rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-orange-900 mb-3 flex items-center">
               <Info className="w-5 h-5 mr-2" />
               Need Help with Your Return?
             </h3>
@@ -415,17 +425,17 @@ const ReturnPolicy = () => {
               Our customer service team is available to assist you with the return process. Contact us via:
             </p>
             <div className="grid md:grid-cols-3 gap-3">
-              <div className="bg-white rounded p-3 border border-green-200">
+              <div className="bg-white rounded p-3 border border-orange-200">
                 <div className="font-semibold text-gray-900 text-sm">Email Support</div>
                 <a href="mailto:returns@oshocksjunior.co.ke" className="text-blue-600 hover:underline text-sm">
                   returns@oshocksjunior.co.ke
                 </a>
               </div>
-              <div className="bg-white rounded p-3 border border-green-200">
+              <div className="bg-white rounded p-3 border border-orange-200">
                 <div className="font-semibold text-gray-900 text-sm">Live Chat</div>
                 <div className="text-gray-600 text-sm">Available on website 24/7</div>
               </div>
-              <div className="bg-white rounded p-3 border border-green-200">
+              <div className="bg-white rounded p-3 border border-orange-200">
                 <div className="font-semibold text-gray-900 text-sm">Phone Support</div>
                 <div className="text-gray-600 text-sm">Mon-Sat: 8AM - 8PM</div>
               </div>
@@ -459,8 +469,8 @@ const ReturnPolicy = () => {
             })}
           </div>
 
-          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-semibold text-blue-900 mb-2 flex items-center">
+          <div className="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <h3 className="font-semibold text-orange-900 mb-2 flex items-center">
               <Info className="w-5 h-5 mr-2" />
               Defective Non-Returnable Items
             </h3>
@@ -483,14 +493,14 @@ const ReturnPolicy = () => {
             {refundOptions.map((option, idx) => (
               <div 
                 key={idx} 
-                className={`border rounded-lg p-6 ${option.recommended ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'}`}
+                className={`border rounded-lg p-6 ${option.recommended ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white'}`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center">
                       <h3 className="text-lg font-semibold text-gray-900">{option.option}</h3>
                       {option.recommended && (
-                        <span className="ml-3 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                        <span className="ml-3 bg-orange-600 text-white text-xs px-2 py-1 rounded-full">
                           Recommended
                         </span>
                       )}
@@ -574,23 +584,23 @@ const ReturnPolicy = () => {
               <h3 className="text-xl font-semibold text-gray-900 mb-3">How Exchanges Work</h3>
               <ol className="space-y-3 text-gray-700">
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">1.</span>
+                  <span className="font-semibold text-orange-600 mr-3">1.</span>
                   <span>Initiate a return request and select "Exchange" as your preferred option</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">2.</span>
+                  <span className="font-semibold text-orange-600 mr-3">2.</span>
                   <span>Specify the product you'd like to receive in exchange (size, color, model)</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">3.</span>
+                  <span className="font-semibold text-orange-600 mr-3">3.</span>
                   <span>We'll verify availability and send you an exchange authorization</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">4.</span>
+                  <span className="font-semibold text-orange-600 mr-3">4.</span>
                   <span>Return your original item following our standard return process</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">5.</span>
+                  <span className="font-semibold text-orange-600 mr-3">5.</span>
                   <span>Once we receive and inspect your return, we'll ship your exchange item at no extra cost</span>
                 </li>
               </ol>
@@ -726,26 +736,26 @@ const ReturnPolicy = () => {
             <div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Return Shipping Options</h3>
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="border border-blue-200 rounded-lg p-6 bg-blue-50">
+                <div className="border border-orange-200 rounded-lg p-4 bg-orange-50">
                   <div className="flex items-center mb-3">
-                    <TruckIcon className="w-6 h-6 text-blue-600 mr-2" />
-                    <h4 className="font-semibold text-blue-900">Pickup Service</h4>
+                    <TruckIcon className="w-6 h-6 text-orange-600 mr-2" />
+                    <h4 className="font-semibold text-orange-900">Pickup Service</h4>
                   </div>
                   <ul className="space-y-2 text-sm text-gray-700">
                     <li className="flex items-start">
-                      <CheckCircle className="w-4 h-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                      <CheckCircle className="w-4 h-4 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                       <span>Free within Nairobi and suburbs</span>
                     </li>
                     <li className="flex items-start">
-                      <CheckCircle className="w-4 h-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                      <CheckCircle className="w-4 h-4 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                       <span>Schedule via website or customer service</span>
                     </li>
                     <li className="flex items-start">
-                      <CheckCircle className="w-4 h-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                      <CheckCircle className="w-4 h-4 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                       <span>Available Monday - Saturday, 9AM - 6PM</span>
                     </li>
                     <li className="flex items-start">
-                      <CheckCircle className="w-4 h-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                      <CheckCircle className="w-4 h-4 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                       <span>Pickup within 2-3 business days</span>
                     </li>
                   </ul>
@@ -785,19 +795,19 @@ const ReturnPolicy = () => {
               </p>
               <ul className="space-y-2 ml-6 text-gray-700">
                 <li className="flex items-start">
-                  <Info className="w-5 h-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <Info className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>You can ship the item to our Nairobi address using your preferred courier</span>
                 </li>
                 <li className="flex items-start">
-                  <Info className="w-5 h-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <Info className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>Keep your shipping receipt for reimbursement consideration</span>
                 </li>
                 <li className="flex items-start">
-                  <Info className="w-5 h-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <Info className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>Return shipping costs are reimbursed if return is due to our error</span>
                 </li>
                 <li className="flex items-start">
-                  <Info className="w-5 h-5 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <Info className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>We can arrange courier pickup with costs deducted from refund (if applicable)</span>
                 </li>
               </ul>
@@ -836,23 +846,23 @@ const ReturnPolicy = () => {
               <h3 className="text-xl font-semibold text-gray-900 mb-3">How Multi-Vendor Returns Work</h3>
               <ol className="space-y-3 text-gray-700">
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">1.</span>
+                  <span className="font-semibold text-orange-600 mr-3">1.</span>
                   <span>Initiate return for specific items (you can select items from different sellers)</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">2.</span>
+                  <span className="font-semibold text-orange-600 mr-3">2.</span>
                   <span>Each seller reviews and approves their respective items independently</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">3.</span>
+                  <span className="font-semibold text-orange-600 mr-3">3.</span>
                   <span>You may receive multiple Return Authorization Numbers</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">4.</span>
+                  <span className="font-semibold text-orange-600 mr-3">4.</span>
                   <span>All items can be returned together in one package (label items clearly)</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">5.</span>
+                  <span className="font-semibold text-orange-600 mr-3">5.</span>
                   <span>Refunds are processed separately for each seller's items</span>
                 </li>
               </ol>
@@ -882,7 +892,17 @@ const ReturnPolicy = () => {
         </section>
 
         {/* Important Reminders */}
-        <section className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-lg shadow-md p-8 text-white mb-8">
+        <section className="bg-gray-900 rounded-lg shadow-md p-8 text-white mb-8 relative overflow-hidden">
+          <div className="absolute inset-0">
+            <div 
+              className="absolute inset-0 opacity-40"
+              style={{
+                background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+          </div>
+          <div className="relative z-10">
           <h2 className="text-3xl font-bold mb-6">Important Reminders</h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div className="bg-white bg-opacity-10 rounded-lg p-4">
@@ -925,10 +945,21 @@ const ReturnPolicy = () => {
               </p>
             </div>
           </div>
+          </div>
         </section>
 
         {/* Contact Information */}
-        <section id="contact" className="bg-gradient-to-r from-green-600 to-emerald-700 rounded-lg shadow-md p-8 text-white scroll-mt-32">
+        <section id="contact" className="bg-gray-900 rounded-lg shadow-md p-8 text-white scroll-mt-32 relative overflow-hidden">
+          <div className="absolute inset-0">
+            <div 
+              className="absolute inset-0 opacity-40"
+              style={{
+                background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+          </div>
+          <div className="relative z-10">
           <h2 className="text-3xl font-bold mb-6">Need Help with a Return?</h2>
           <p className="mb-6 text-green-100">
             Our customer service team is ready to assist you with any return or refund questions. We're committed to 
@@ -985,7 +1016,7 @@ const ReturnPolicy = () => {
             </div>
           </div>
 
-          <div className="border-t border-green-500 pt-6">
+          <div className="border-t border-orange-500 pt-6">
             <h3 className="font-semibold mb-3">Return Center Address</h3>
             <address className="text-green-100 not-italic">
               <p className="font-medium text-white">Oshocks Junior Bike Shop</p>
@@ -1001,7 +1032,9 @@ const ReturnPolicy = () => {
               return status in real-time through your account dashboard.
             </p>
           </div>
+          </div>
         </section>
+
 
         {/* Related Policies */}
         <nav className="mt-8 bg-gray-50 rounded-lg p-6" aria-label="Related policies">
@@ -1009,28 +1042,28 @@ const ReturnPolicy = () => {
           <div className="grid md:grid-cols-2 gap-3">
             <a 
               href="/payment-terms" 
-              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-between"
+              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 flex items-center justify-between"
             >
               <span>Payment Terms</span>
               <DollarSign className="w-4 h-4 text-gray-400" />
             </a>
             <a 
               href="/shipping-policy" 
-              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-between"
+              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 flex items-center justify-between"
             >
               <span>Shipping Policy</span>
               <TruckIcon className="w-4 h-4 text-gray-400" />
             </a>
             <a 
               href="/warranty-policy" 
-              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-between"
+              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 flex items-center justify-between"
             >
               <span>Warranty Policy</span>
               <Shield className="w-4 h-4 text-gray-400" />
             </a>
             <a 
               href="/terms-of-service" 
-              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-between"
+              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 flex items-center justify-between"
             >
               <span>Terms of Service</span>
               <CheckCircle className="w-4 h-4 text-gray-400" />
@@ -1040,7 +1073,7 @@ const ReturnPolicy = () => {
 
       </main>
 
-      {/* Footer */}
+      {/* Footer commented out - using global Footer component instead
       <footer className="bg-gray-900 text-gray-400 py-8 px-4 mt-12">
         <div className="max-w-6xl mx-auto text-center">
           <p className="text-sm">
@@ -1054,6 +1087,7 @@ const ReturnPolicy = () => {
           </p>
         </div>
       </footer>
+      */}
     </div>
   );
 };

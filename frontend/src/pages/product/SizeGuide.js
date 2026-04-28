@@ -454,12 +454,12 @@ const SizeGuide = ({ productType = 'bicycle', onClose }) => {
           )}
         </div>
 
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
             <div>
-              <h4 className="font-semibold text-blue-900 mb-2">Important Notes</h4>
-              <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+              <h4 className="font-semibold text-orange-900 mb-2">Important Notes</h4>
+              <ul className="text-sm text-orange-800 space-y-1 list-disc list-inside">
                 <li>All measurements are in centimeters unless otherwise stated</li>
                 <li>If you're between sizes, we recommend sizing up for comfort</li>
                 <li>Different brands may have slight variations in sizing</li>

@@ -223,7 +223,7 @@ export default function PrivacyPolicyPage() {
             We implement robust security measures to protect your personal information from unauthorized access, alteration, disclosure, or destruction:
           </p>
 
-          <div className="bg-blue-50 p-4 rounded-lg">
+          <div className="bg-orange-50 p-4 rounded-lg">
             <h4 className="font-semibold text-gray-900 mb-3">Technical Safeguards:</h4>
             <ul className="list-disc pl-6 space-y-2">
               <li><strong>Encryption:</strong> SSL/TLS encryption for data transmission</li>
@@ -235,7 +235,7 @@ export default function PrivacyPolicyPage() {
             </ul>
           </div>
 
-          <div className="bg-blue-50 p-4 rounded-lg">
+          <div className="bg-orange-50 p-4 rounded-lg">
             <h4 className="font-semibold text-gray-900 mb-3">Organizational Safeguards:</h4>
             <ul className="list-disc pl-6 space-y-2">
               <li>Limited employee access to personal information</li>
@@ -316,51 +316,51 @@ export default function PrivacyPolicyPage() {
           </p>
 
           <div className="space-y-4">
-            <div className="border-l-4 border-blue-500 pl-4">
+            <div className="border-l-4 border-orange-500 pl-4">
               <h4 className="font-semibold text-gray-900">Right to Access</h4>
               <p className="text-gray-700">Request a copy of the personal information we hold about you.</p>
             </div>
 
-            <div className="border-l-4 border-blue-500 pl-4">
+            <div className="border-l-4 border-orange-500 pl-4">
               <h4 className="font-semibold text-gray-900">Right to Rectification</h4>
               <p className="text-gray-700">Request correction of inaccurate or incomplete information.</p>
             </div>
 
-            <div className="border-l-4 border-blue-500 pl-4">
+            <div className="border-l-4 border-orange-500 pl-4">
               <h4 className="font-semibold text-gray-900">Right to Erasure</h4>
               <p className="text-gray-700">Request deletion of your personal information (subject to legal obligations).</p>
             </div>
 
-            <div className="border-l-4 border-blue-500 pl-4">
+            <div className="border-l-4 border-orange-500 pl-4">
               <h4 className="font-semibold text-gray-900">Right to Restriction</h4>
               <p className="text-gray-700">Request limitation on how we process your information.</p>
             </div>
 
-            <div className="border-l-4 border-blue-500 pl-4">
+            <div className="border-l-4 border-orange-500 pl-4">
               <h4 className="font-semibold text-gray-900">Right to Data Portability</h4>
               <p className="text-gray-700">Receive your data in a structured, machine-readable format.</p>
             </div>
 
-            <div className="border-l-4 border-blue-500 pl-4">
+            <div className="border-l-4 border-orange-500 pl-4">
               <h4 className="font-semibold text-gray-900">Right to Object</h4>
               <p className="text-gray-700">Object to processing of your information for marketing purposes.</p>
             </div>
 
-            <div className="border-l-4 border-blue-500 pl-4">
+            <div className="border-l-4 border-orange-500 pl-4">
               <h4 className="font-semibold text-gray-900">Right to Withdraw Consent</h4>
               <p className="text-gray-700">Withdraw consent for data processing at any time.</p>
             </div>
 
-            <div className="border-l-4 border-blue-500 pl-4">
+            <div className="border-l-4 border-orange-500 pl-4">
               <h4 className="font-semibold text-gray-900">Right to Lodge a Complaint</h4>
               <p className="text-gray-700">File a complaint with the Office of the Data Protection Commissioner (ODPC) in Kenya.</p>
             </div>
           </div>
 
-          <div className="bg-green-50 p-4 rounded-lg mt-6">
+          <div className="bg-orange-50 p-4 rounded-lg mt-6">
             <h4 className="font-semibold text-gray-900 mb-2">How to Exercise Your Rights</h4>
             <p>
-              To exercise any of these rights, please contact us at <a href="mailto:oshocksstores@gmail.com" className="text-blue-600 hover:underline">oshocksstores@gmail.com</a> or through your account settings. We will respond within 30 days of receiving your request.
+              To exercise any of these rights, please contact us at <a href="mailto:oshocksstores@gmail.com" className="text-orange-600 hover:underline">oshocksstores@gmail.com</a> or through your account settings. We will respond within 30 days of receiving your request.
             </p>
           </div>
         </div>
@@ -470,29 +470,29 @@ export default function PrivacyPolicyPage() {
             If you have questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us:
           </p>
 
-          <div className="bg-gradient-to-br from-blue-50 to-green-50 p-6 rounded-lg space-y-4">
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-lg space-y-4">
             <div className="flex items-start gap-3">
-              <Mail className="w-5 h-5 text-blue-600 mt-1" />
+              <Mail className="w-5 h-5 text-orange-600 mt-1" />
               <div>
                 <p className="font-semibold text-gray-900">Email</p>
-                <a href="mailto:oshocksstores@gmail.com" className="text-blue-600 hover:underline">
+                <a href="mailto:oshocksstores@gmail.com" className="text-orange-600 hover:underline">
                   oshocksstores@gmail.com
                 </a>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <Phone className="w-5 h-5 text-blue-600 mt-1" />
+              <Phone className="w-5 h-5 text-orange-600 mt-1" />
               <div>
                 <p className="font-semibold text-gray-900">Phone</p>
-                <a href="tel:+254715061213" className="text-blue-600 hover:underline">
+                <a href="tel:+254715061213" className="text-orange-600 hover:underline">
                   +254 715 051 213
                 </a>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-blue-600 mt-1" />
+              <MapPin className="w-5 h-5 text-orange-600 mt-1" />
               <div>
                 <p className="font-semibold text-gray-900">Physical Address</p>
                 <p className="text-gray-700">
@@ -520,8 +520,8 @@ export default function PrivacyPolicyPage() {
               Office of the Data Protection Commissioner (ODPC)<br />
             </p>
             <p className="text-gray-700">
-              Website: <a href="https://www.odpc.go.ke" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">www.odpc.go.ke</a><br />
-              Email: <a href="mailto:info@odpc.go.ke" className="text-blue-600 hover:underline">info@odpc.go.ke</a>
+              Website: <a href="https://www.odpc.go.ke" target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:underline">www.odpc.go.ke</a><br />
+              Email: <a href="mailto:info@odpc.go.ke" className="text-orange-600 hover:underline">info@odpc.go.ke</a>
             </p>
           </div>
         </div>
@@ -530,12 +530,12 @@ export default function PrivacyPolicyPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-md">
         <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="flex items-center gap-4 mb-4">
-            <div className="bg-blue-600 p-3 rounded-lg">
+            <div className="bg-orange-600 p-3 rounded-lg">
               <Shield className="w-8 h-8 text-white" />
             </div>
             <div>
@@ -559,7 +559,7 @@ export default function PrivacyPolicyPage() {
               <a
                 key={section.id}
                 href={`#${section.id}`}
-                className="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                className="flex items-center gap-2 text-orange-600 hover:text-orange-800 hover:underline transition-colors"
                 onClick={(e) => {
                   e.preventDefault();
                   document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth' });
@@ -589,8 +589,8 @@ export default function PrivacyPolicyPage() {
                   className="w-full flex items-center justify-between p-6 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="bg-blue-100 p-3 rounded-lg">
-                      <Icon className="w-6 h-6 text-blue-600" />
+                    <div className="bg-orange-100 p-3 rounded-lg">
+                      <Icon className="w-6 h-6 text-orange-600" />
                     </div>
                     <h2 className="text-xl font-bold text-gray-900 text-left">
                       {section.title}
@@ -614,9 +614,9 @@ export default function PrivacyPolicyPage() {
         </div>
 
         {/* Footer Notice */}
-        <div className="mt-12 bg-green-50 border-l-4 border-green-500 p-6 rounded-lg">
+        <div className="mt-12 bg-orange-50 border-l-4 border-orange-500 p-6 rounded-lg">
           <div className="flex items-start gap-3">
-            <Shield className="w-6 h-6 text-green-600 mt-1" />
+            <Shield className="w-6 h-6 text-orange-600 mt-1" />
             <div>
               <h3 className="font-bold text-gray-900 mb-2">Your Privacy Matters</h3>
               <p className="text-gray-700">
@@ -630,8 +630,8 @@ export default function PrivacyPolicyPage() {
         <div className="mt-8 grid md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             <div className="flex items-center gap-3 mb-3">
-              <div className="bg-purple-100 p-2 rounded">
-                <Eye className="w-5 h-5 text-purple-600" />
+              <div className="bg-orange-100 p-2 rounded">
+                <Eye className="w-5 h-5 text-orange-600" />
               </div>
               <h3 className="font-bold text-gray-900">Access Your Data</h3>
             </div>
@@ -640,7 +640,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <a
               href="/account/privacy"
-              className="text-blue-600 hover:text-blue-800 text-sm font-semibold hover:underline"
+              className="text-orange-600 hover:text-orange-800 text-sm font-semibold hover:underline"
             >
               Request Data →
             </a>
@@ -658,7 +658,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <a
               href="/account/preferences"
-              className="text-blue-600 hover:text-blue-800 text-sm font-semibold hover:underline"
+              className="text-orange-600 hover:text-orange-800 text-sm font-semibold hover:underline"
             >
               Update Preferences →
             </a>
@@ -666,8 +666,8 @@ export default function PrivacyPolicyPage() {
 
           <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             <div className="flex items-center gap-3 mb-3">
-              <div className="bg-red-100 p-2 rounded">
-                <Lock className="w-5 h-5 text-red-600" />
+              <div className="bg-orange-100 p-2 rounded">
+                <Lock className="w-5 h-5 text-orange-600" />
               </div>
               <h3 className="font-bold text-gray-900">Delete Account</h3>
             </div>
@@ -676,7 +676,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <a
               href="/account/delete"
-              className="text-blue-600 hover:text-blue-800 text-sm font-semibold hover:underline"
+              className="text-orange-600 hover:text-orange-800 text-sm font-semibold hover:underline"
             >
               Delete Account →
             </a>
@@ -690,22 +690,22 @@ export default function PrivacyPolicyPage() {
           </h3>
           <div className="grid md:grid-cols-4 gap-6 text-center">
             <div className="space-y-2">
-              <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
-                <Shield className="w-8 h-8 text-green-600" />
+              <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
+                <Shield className="w-8 h-8 text-orange-600" />
               </div>
               <p className="font-semibold text-gray-900">Kenya DPA</p>
               <p className="text-xs text-gray-600">Compliant</p>
             </div>
             <div className="space-y-2">
-              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
-                <Lock className="w-8 h-8 text-blue-600" />
+              <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
+                <Lock className="w-8 h-8 text-orange-600" />
               </div>
               <p className="font-semibold text-gray-900">SSL/TLS</p>
               <p className="text-xs text-gray-600">Encrypted</p>
             </div>
             <div className="space-y-2">
-              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
-                <CreditCard className="w-8 h-8 text-purple-600" />
+              <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
+                <CreditCard className="w-8 h-8 text-orange-600" />
               </div>
               <p className="font-semibold text-gray-900">PCI DSS</p>
               <p className="text-xs text-gray-600">Certified</p>
@@ -722,7 +722,7 @@ export default function PrivacyPolicyPage() {
 
         {/* Download Options */}
         <div className="mt-8 flex justify-center gap-4">
-          <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md">
+          <button className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors shadow-md">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
@@ -740,7 +740,7 @@ export default function PrivacyPolicyPage() {
         <div className="mt-8 text-center">
           <a
             href="/"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold hover:underline"
+            className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-800 font-semibold hover:underline"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -752,7 +752,7 @@ export default function PrivacyPolicyPage() {
 
       {/* Floating Help Button */}
       <div className="fixed bottom-6 right-6">
-        <button className="bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all hover:scale-110">
+        <button className="bg-orange-600 text-white p-4 rounded-full shadow-lg hover:bg-orange-700 transition-all hover:scale-110">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>

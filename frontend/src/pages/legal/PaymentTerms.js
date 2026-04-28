@@ -46,9 +46,9 @@ const PaymentTerms = () => {
       id: 'card',
       name: 'Credit/Debit Card',
       icon: CreditCard,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-200',
       description: 'Visa, Mastercard, and other major cards',
       processingTime: 'Instant',
       fees: 'No additional fees',
@@ -65,9 +65,9 @@ const PaymentTerms = () => {
       id: 'bank',
       name: 'Bank Transfer',
       icon: Wallet,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-      borderColor: 'border-purple-200',
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-200',
       description: 'Direct bank transfer to our account',
       processingTime: '1-3 business days',
       fees: 'Bank charges may apply',
@@ -92,7 +92,7 @@ const PaymentTerms = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading Payment Terms...</p>
         </div>
       </div>
@@ -134,7 +134,7 @@ const PaymentTerms = () => {
         <div className="max-w-6xl mx-auto px-4 py-3">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg px-2 py-1"
+            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg px-2 py-1"
             aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
@@ -144,18 +144,28 @@ const PaymentTerms = () => {
       </div>
 
       {/* Header */}
-      <header className="bg-gradient-to-r from-green-600 to-emerald-700 text-white py-16 px-4">
-        <div className="max-w-6xl mx-auto">
+      <header className="bg-gray-900 text-white py-16 px-4 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+            }}
+          />
+          <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+        </div>
+        <div className="max-w-6xl mx-auto relative z-10">
           <div className="flex items-center justify-center mb-4" aria-hidden="true">
             <DollarSign className="w-16 h-16" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-center mb-4">
             Payment Terms & Conditions
           </h1>
-          <p className="text-xl text-center text-green-100">
+          <p className="text-xl text-center text-orange-100">
             Secure and Convenient Payment Options for Your Cycling Needs
           </p>
-          <p className="text-center text-green-200 mt-4">
+          <p className="text-center text-orange-200 mt-4">
             <time dateTime={lastUpdated}>Last Updated: {lastUpdated}</time>
           </p>
         </div>
@@ -165,22 +175,22 @@ const PaymentTerms = () => {
       <nav className="bg-white border-b border-gray-200 sticky top-[52px] z-40 shadow-sm" aria-label="Page navigation">
         <div className="max-w-6xl mx-auto px-4 py-3 overflow-x-auto">
           <div className="flex space-x-4 min-w-max">
-            <a href="#payment-methods" className="text-sm text-gray-600 hover:text-green-600 whitespace-nowrap transition-colors">
+            <a href="#payment-methods" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Payment Methods
             </a>
-            <a href="#pricing-currency" className="text-sm text-gray-600 hover:text-green-600 whitespace-nowrap transition-colors">
+            <a href="#pricing-currency" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Pricing & Currency
             </a>
-            <a href="#payment-security" className="text-sm text-gray-600 hover:text-green-600 whitespace-nowrap transition-colors">
+            <a href="#payment-security" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Security
             </a>
-            <a href="#refunds" className="text-sm text-gray-600 hover:text-green-600 whitespace-nowrap transition-colors">
+            <a href="#refunds" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Refunds
             </a>
-            <a href="#failed-payments" className="text-sm text-gray-600 hover:text-green-600 whitespace-nowrap transition-colors">
+            <a href="#failed-payments" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Failed Payments
             </a>
-            <a href="#contact" className="text-sm text-gray-600 hover:text-green-600 whitespace-nowrap transition-colors">
+            <a href="#contact" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Contact
             </a>
           </div>
@@ -206,12 +216,12 @@ const PaymentTerms = () => {
               we ensure your transactions are processed safely and efficiently.
             </p>
             
-            <div className="bg-green-50 border-l-4 border-green-600 p-4 mt-6" role="note">
+            <div className="bg-orange-50 border-l-4 border-orange-600 p-4 mt-6" role="note">
               <div className="flex">
-                <Shield className="w-5 h-5 text-green-600 mr-3 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                <Shield className="w-5 h-5 text-orange-600 mr-3 flex-shrink-0 mt-0.5" aria-hidden="true" />
                 <div>
-                  <h3 className="font-semibold text-green-900 mb-1">Secure Payments Guaranteed</h3>
-                  <p className="text-sm text-green-800">
+                  <h3 className="font-semibold text-orange-900 mb-1">Secure Payments Guaranteed</h3>
+                  <p className="text-sm text-orange-800">
                     All payments are processed through industry-leading payment gateways with bank-level encryption. 
                     Your financial information is never stored on our servers.
                   </p>
@@ -269,30 +279,30 @@ const PaymentTerms = () => {
           </div>
 
           {/* M-Pesa Detailed Instructions */}
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6">
+          <div className="bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-6">
             <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-              <Smartphone className="w-6 h-6 text-green-600 mr-2" />
+              <Smartphone className="w-6 h-6 text-orange-600 mr-2" />
               How to Pay with M-Pesa
             </h3>
             <ol className="space-y-3 text-gray-700">
               <li className="flex items-start">
-                <span className="font-semibold text-green-600 mr-3">1.</span>
+                <span className="font-semibold text-orange-600 mr-3">1.</span>
                 <span>Select M-Pesa as your payment method during checkout</span>
               </li>
               <li className="flex items-start">
-                <span className="font-semibold text-green-600 mr-3">2.</span>
+                <span className="font-semibold text-orange-600 mr-3">2.</span>
                 <span>Enter your M-Pesa registered phone number (07XX XXX XXX or 01XX XXX XXX)</span>
               </li>
               <li className="flex items-start">
-                <span className="font-semibold text-green-600 mr-3">3.</span>
+                <span className="font-semibold text-orange-600 mr-3">3.</span>
                 <span>You will receive an STK push notification on your phone</span>
               </li>
               <li className="flex items-start">
-                <span className="font-semibold text-green-600 mr-3">4.</span>
+                <span className="font-semibold text-orange-600 mr-3">4.</span>
                 <span>Enter your M-Pesa PIN to authorize the payment</span>
               </li>
               <li className="flex items-start">
-                <span className="font-semibold text-green-600 mr-3">5.</span>
+                <span className="font-semibold text-orange-600 mr-3">5.</span>
                 <span>You will receive an SMS confirmation from M-Pesa and your order will be confirmed instantly</span>
               </li>
             </ol>
@@ -321,19 +331,19 @@ const PaymentTerms = () => {
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Price Accuracy</h3>
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-start">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>We make every effort to ensure prices are accurate at the time of display</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>Prices are subject to change without notice</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>The price confirmed in your order confirmation email is the final price</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>In case of pricing errors, we will contact you before processing your order</span>
                 </li>
               </ul>
@@ -377,7 +387,7 @@ const PaymentTerms = () => {
         {/* Payment Security */}
         <section id="payment-security" className="bg-white rounded-lg shadow-md p-8 mb-8 scroll-mt-32">
           <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center">
-            <Lock className="w-8 h-8 text-green-600 mr-3" />
+            <Lock className="w-8 h-8 text-orange-600 mr-3" />
             Payment Security
           </h2>
           <div className="prose prose-lg max-w-none text-gray-700 space-y-4">
@@ -387,51 +397,51 @@ const PaymentTerms = () => {
             </p>
 
             <div className="grid md:grid-cols-2 gap-6 mt-6">
-              <div className="border border-blue-200 rounded-lg p-6 bg-blue-50">
-                <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center">
+              <div className="border border-orange-200 rounded-lg p-6 bg-orange-50">
+                <h3 className="text-lg font-semibold text-orange-900 mb-3 flex items-center">
                   <Shield className="w-5 h-5 mr-2" />
                   Encryption & Security
                 </h3>
                 <ul className="space-y-2 text-sm text-gray-700">
                   <li className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                     <span>256-bit SSL encryption for all transactions</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                     <span>PCI DSS Level 1 compliant payment processors</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                     <span>No storage of card details on our servers</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-blue-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                     <span>Secure tokenization of payment information</span>
                   </li>
                 </ul>
               </div>
 
-              <div className="border border-green-200 rounded-lg p-6 bg-green-50">
-                <h3 className="text-lg font-semibold text-green-900 mb-3 flex items-center">
+              <div className="border border-orange-200 rounded-lg p-6 bg-orange-50">
+                <h3 className="text-lg font-semibold text-orange-900 mb-3 flex items-center">
                   <CreditCard className="w-5 h-5 mr-2" />
                   3D Secure Authentication
                 </h3>
                 <ul className="space-y-2 text-sm text-gray-700">
                   <li className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                     <span>Additional authentication for card payments</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                     <span>OTP verification via SMS or email</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                     <span>Protection against unauthorized use</span>
                   </li>
                   <li className="flex items-start">
-                    <CheckCircle className="w-4 h-4 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                     <span>Verified by Visa and Mastercard SecureCode</span>
                   </li>
                 </ul>
@@ -465,19 +475,19 @@ const PaymentTerms = () => {
               </p>
               <ul className="mt-2 space-y-2 ml-6 text-gray-700">
                 <li className="flex items-start">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>An on-screen confirmation message</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>An order confirmation email with your order number and details</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>An SMS notification (for M-Pesa payments)</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>A tax invoice with VAT details</span>
                 </li>
               </ul>
@@ -519,15 +529,15 @@ const PaymentTerms = () => {
                 the original payment method used for the purchase.
               </p>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <h4 className="font-semibold text-blue-900 mb-4">Refund Processing Times</h4>
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+                <h4 className="font-semibold text-orange-900 mb-4">Refund Processing Times</h4>
                 <div className="space-y-3">
                   {refundTimelines.map((item, idx) => {
                     const Icon = item.icon;
                     return (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-white rounded border border-blue-100">
+                      <div key={idx} className="flex items-center justify-between p-3 bg-white rounded border border-orange-100">
                         <div className="flex items-center">
-                          <Icon className="w-5 h-5 text-blue-600 mr-3" />
+                          <Icon className="w-5 h-5 text-orange-600 mr-3" />
                           <span className="font-medium text-gray-900">{item.method}</span>
                         </div>
                         <span className="text-sm text-gray-600">{item.timeline}</span>
@@ -535,7 +545,7 @@ const PaymentTerms = () => {
                     );
                   })}
                 </div>
-                <p className="text-sm text-blue-800 mt-4 flex items-start">
+                <p className="text-sm text-orange-800 mt-4 flex items-start">
                   <Info className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
                   <span>Refund timelines may vary depending on your bank or payment provider. We initiate all approved refunds within 2 business days.</span>
                 </p>
@@ -549,11 +559,11 @@ const PaymentTerms = () => {
               </p>
               <ul className="space-y-2 ml-6 text-gray-700">
                 <li className="flex items-start">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>Before the order has been shipped - full refund</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>After shipping but before delivery - refund minus shipping costs</span>
                 </li>
                 <li className="flex items-start">
@@ -620,35 +630,35 @@ const PaymentTerms = () => {
               <h3 className="text-xl font-semibold text-gray-900 mb-3">What to Do if Payment Fails</h3>
               <ol className="space-y-3 text-gray-700">
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">1.</span>
+                  <span className="font-semibold text-orange-600 mr-3">1.</span>
                   <div>
                     <strong>Check your payment method:</strong> Ensure sufficient balance, correct details, and that 
                     your payment method is active and valid.
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">2.</span>
+                  <span className="font-semibold text-orange-600 mr-3">2.</span>
                   <div>
                     <strong>Try again:</strong> Return to the checkout page and attempt the payment again. Sometimes 
                     temporary network issues can cause failures.
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">3.</span>
+                  <span className="font-semibold text-orange-600 mr-3">3.</span>
                   <div>
                     <strong>Use an alternative payment method:</strong> If one method fails repeatedly, try a different 
                     payment option (e.g., switch from card to M-Pesa).
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">4.</span>
+                  <span className="font-semibold text-orange-600 mr-3">4.</span>
                   <div>
                     <strong>Contact your bank or M-Pesa:</strong> If issues persist, contact your payment provider to 
                     ensure there are no restrictions on your account.
                   </div>
                 </li>
                 <li className="flex items-start">
-                  <span className="font-semibold text-blue-600 mr-3">5.</span>
+                  <span className="font-semibold text-orange-600 mr-3">5.</span>
                   <div>
                     <strong>Contact our support team:</strong> If you continue experiencing issues, reach out to our 
                     customer service at support@oshocksjunior.co.ke with your order details.
@@ -752,19 +762,19 @@ const PaymentTerms = () => {
               </p>
               <ul className="space-y-2 ml-6 text-gray-700">
                 <li className="flex items-start">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>Collect payment from customers on behalf of all sellers</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>Hold funds securely until order fulfillment is confirmed</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>Release payment to sellers after successful delivery</span>
                 </li>
                 <li className="flex items-start">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-orange-600 mr-2 flex-shrink-0 mt-0.5" />
                   <span>Handle all refunds and payment disputes centrally</span>
                 </li>
               </ul>
@@ -844,86 +854,97 @@ const PaymentTerms = () => {
         </section>
 
         {/* Contact Information */}
-        <section id="contact" className="bg-gradient-to-r from-green-600 to-emerald-700 rounded-lg shadow-md p-8 text-white scroll-mt-32">
-          <h2 className="text-3xl font-bold mb-6">Payment Support & Assistance</h2>
-          <p className="mb-6 text-green-100">
-            If you have any questions about our payment terms, need assistance with a transaction, or want to report 
-            a payment issue, our team is here to help.
-          </p>
-          
-          <div className="grid md:grid-cols-3 gap-6 mb-6">
-            <div className="bg-white bg-opacity-10 rounded-lg p-4">
-              <h3 className="font-semibold mb-2 flex items-center">
-                <CreditCard className="w-5 h-5 mr-2" />
-                Payment Issues
-              </h3>
-              <p className="text-green-100 text-sm mb-2">
-                For payment failures, refund queries, or transaction problems
-              </p>
-              <a 
-                href="mailto:oshocksstores@gmail.com" 
-                className="text-white underline hover:text-green-200 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-green-700 rounded"
-              >
-                oshocksstores@gmail.com
-              </a>
-            </div>
-
-            <div className="bg-white bg-opacity-10 rounded-lg p-4">
-              <h3 className="font-semibold mb-2 flex items-center">
-                <Shield className="w-5 h-5 mr-2" />
-                Fraud & Security
-              </h3>
-              <p className="text-green-100 text-sm mb-2">
-                Report suspicious activity or security concerns
-              </p>
-              <a 
-                href="mailto:oshocksstores@gmail.com" 
-                className="text-white underline hover:text-green-200 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-green-700 rounded"
-              >
-                oshocksstores@gmail.com
-              </a>
-            </div>
-
-            <div className="bg-white bg-opacity-10 rounded-lg p-4">
-              <h3 className="font-semibold mb-2 flex items-center">
-                <RefreshCw className="w-5 h-5 mr-2" />
-                General Support
-              </h3>
-              <p className="text-green-100 text-sm mb-2">
-                For all other payment-related questions
-              </p>
-              <a 
-                href="mailto:oshocksstores@gmail.com" 
-                className="text-white underline hover:text-green-200 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-green-700 rounded"
-              >
-                oshocksstores@gmail.com
-              </a>
-            </div>
+        <section id="contact" className="bg-gray-900 rounded-lg shadow-md p-8 text-white scroll-mt-32 relative overflow-hidden">
+          <div className="absolute inset-0">
+            <div 
+              className="absolute inset-0 opacity-40"
+              style={{
+                background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
           </div>
-
-          <div className="border-t border-green-500 pt-6">
-            <h3 className="font-semibold mb-3">Business Hours</h3>
-            <div className="grid md:grid-cols-2 gap-4 text-green-100">
-              <div>
-                <p className="font-medium text-white">Customer Support</p>
-                <p className="text-sm">Monday - Friday: 8:00 AM - 8:00 PM</p>
-                <p className="text-sm">Saturday: 9:00 AM - 6:00 PM</p>
-                <p className="text-sm">Sunday: 10:00 AM - 4:00 PM</p>
-              </div>
-              <div>
-                <p className="font-medium text-white">Payment Processing</p>
-                <p className="text-sm">M-Pesa & Cards: 24/7 automated</p>
-                <p className="text-sm">Bank Transfers: During banking hours</p>
-                <p className="text-sm">Payment Support: Business hours only</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 pt-6 border-t border-green-500">
-            <p className="text-sm text-green-200">
-              Our physical store is located in Nairobi, Kenya. Visit us for in-person payment assistance or walk-in 
-              purchases. For online payment support, please use the contact methods above.
+          <div className="relative z-10">
+            <h2 className="text-3xl font-bold mb-6">Payment Support & Assistance</h2>
+            <p className="mb-6 text-orange-100">
+              If you have any questions about our payment terms, need assistance with a transaction, or want to report 
+              a payment issue, our team is here to help.
             </p>
+            
+            <div className="grid md:grid-cols-3 gap-6 mb-6">
+              <div className="bg-white bg-opacity-10 rounded-lg p-4">
+                <h3 className="font-semibold mb-2 flex items-center">
+                  <CreditCard className="w-5 h-5 mr-2" />
+                  Payment Issues
+                </h3>
+                <p className="text-orange-100 text-sm mb-2">
+                  For payment failures, refund queries, or transaction problems
+                </p>
+                <a 
+                  href="mailto:oshocksstores@gmail.com" 
+                  className="text-white underline hover:text-orange-200 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-orange-700 rounded"
+                >
+                  oshocksstores@gmail.com
+                </a>
+              </div>
+
+              <div className="bg-white bg-opacity-10 rounded-lg p-4">
+                <h3 className="font-semibold mb-2 flex items-center">
+                  <Shield className="w-5 h-5 mr-2" />
+                  Fraud & Security
+                </h3>
+                <p className="text-orange-100 text-sm mb-2">
+                  Report suspicious activity or security concerns
+                </p>
+                <a 
+                  href="mailto:oshocksstores@gmail.com" 
+                  className="text-white underline hover:text-orange-200 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-orange-700 rounded"
+                >
+                  oshocksstores@gmail.com
+                </a>
+              </div>
+
+              <div className="bg-white bg-opacity-10 rounded-lg p-4">
+                <h3 className="font-semibold mb-2 flex items-center">
+                  <RefreshCw className="w-5 h-5 mr-2" />
+                  General Support
+                </h3>
+                <p className="text-orange-100 text-sm mb-2">
+                  For all other payment-related questions
+                </p>
+                <a 
+                  href="mailto:oshocksstores@gmail.com" 
+                  className="text-white underline hover:text-orange-200 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-orange-700 rounded"
+                >
+                  oshocksstores@gmail.com
+                </a>
+              </div>
+            </div>
+
+            <div className="border-t border-orange-500 pt-6">
+              <h3 className="font-semibold mb-3">Business Hours</h3>
+              <div className="grid md:grid-cols-2 gap-4 text-orange-100">
+                <div>
+                  <p className="font-medium text-white">Customer Support</p>
+                  <p className="text-sm">Monday - Friday: 8:00 AM - 8:00 PM</p>
+                  <p className="text-sm">Saturday: 9:00 AM - 6:00 PM</p>
+                  <p className="text-sm">Sunday: 10:00 AM - 4:00 PM</p>
+                </div>
+                <div>
+                  <p className="font-medium text-white">Payment Processing</p>
+                  <p className="text-sm">M-Pesa & Cards: 24/7 automated</p>
+                  <p className="text-sm">Bank Transfers: During banking hours</p>
+                  <p className="text-sm">Payment Support: Business hours only</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-orange-500">
+              <p className="text-sm text-orange-200">
+                Our physical store is located in Nairobi, Kenya. Visit us for in-person payment assistance or walk-in 
+                purchases. For online payment support, please use the contact methods above.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -933,28 +954,28 @@ const PaymentTerms = () => {
           <div className="grid md:grid-cols-2 gap-3">
             <a 
               href="/terms-of-service" 
-              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center justify-between"
+              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 flex items-center justify-between"
             >
               <span>Terms of Service</span>
               <CheckCircle className="w-4 h-4 text-gray-400" />
             </a>
             <a 
               href="/return-policy" 
-              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center justify-between"
+              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 flex items-center justify-between"
             >
               <span>Return & Refund Policy</span>
               <RefreshCw className="w-4 h-4 text-gray-400" />
             </a>
             <a 
               href="/privacy-policy" 
-              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center justify-between"
+              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 flex items-center justify-between"
             >
               <span>Privacy Policy</span>
               <Shield className="w-4 h-4 text-gray-400" />
             </a>
             <a 
               href="/shipping-policy" 
-              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center justify-between"
+              className="px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 flex items-center justify-between"
             >
               <span>Shipping & Delivery</span>
               <Clock className="w-4 h-4 text-gray-400" />
@@ -964,7 +985,7 @@ const PaymentTerms = () => {
 
       </main>
 
-      {/* Footer */}
+      {/* Footer commented out - using global Footer component instead
       <footer className="bg-gray-900 text-gray-400 py-8 px-4 mt-12">
         <div className="max-w-6xl mx-auto text-center">
           <p className="text-sm">
@@ -978,6 +999,7 @@ const PaymentTerms = () => {
           </p>
         </div>
       </footer>
+      */}
     </div>
   );
 };

@@ -92,19 +92,19 @@ const PartnerWithUsPage = () => {
       icon: Users,
       title: 'Access to Thousands of Customers',
       description: 'Reach cycling enthusiasts across Kenya through our growing marketplace with active buyers looking for quality products.',
-      color: 'bg-blue-100 text-blue-600'
+      color: 'bg-orange-100 text-orange-600'
     },
     {
       icon: TrendingUp,
       title: 'Grow Your Business',
       description: 'Expand beyond your local market with our nationwide delivery network and online presence.',
-      color: 'bg-green-100 text-green-600'
+      color: 'bg-orange-100 text-orange-600'
     },
     {
       icon: Shield,
       title: 'Secure & Reliable Platform',
       description: 'Built with enterprise-grade security to protect your business data and customer transactions.',
-      color: 'bg-purple-100 text-purple-600'
+      color: 'bg-orange-100 text-orange-600'
     },
     {
       icon: CreditCard,
@@ -116,13 +116,13 @@ const PartnerWithUsPage = () => {
       icon: BarChart3,
       title: 'Advanced Analytics',
       description: 'Track your sales, monitor inventory, and gain insights with comprehensive dashboard analytics.',
-      color: 'bg-indigo-100 text-indigo-600'
+      color: 'bg-orange-100 text-orange-600'
     },
     {
       icon: Headphones,
       title: '24/7 Seller Support',
       description: 'Dedicated support team to help you succeed with technical assistance and business guidance.',
-      color: 'bg-pink-100 text-pink-600'
+      color: 'bg-orange-100 text-orange-600'
     }
   ];
 
@@ -245,7 +245,7 @@ const PartnerWithUsPage = () => {
       ],
       highlighted: true,
       buttonText: 'Start Free Trial',
-      color: 'border-blue-600'
+      color: 'border-orange-600'
     },
     {
       name: 'Enterprise',
@@ -321,8 +321,18 @@ const PartnerWithUsPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-20">
+      <div className="bg-gray-900 text-white relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+            }}
+          />
+          <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 py-20 relative z-10">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-white bg-opacity-20 px-4 py-2 rounded-full mb-6">
               <Store className="w-5 h-5" />
@@ -341,7 +351,7 @@ const PartnerWithUsPage = () => {
               <a
                 href="#application"
                 onClick={scrollToApplication}
-                className="px-8 py-4 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors inline-flex items-center gap-2"
+                className="px-8 py-4 bg-white text-orange-600 rounded-lg font-semibold hover:bg-orange-50 transition-colors inline-flex items-center gap-2"
               >
                 Start Selling Today
                 <ArrowRight className="w-5 h-5" />
@@ -364,7 +374,7 @@ const PartnerWithUsPage = () => {
                 <div key={index} className="text-center p-6 bg-white bg-opacity-10 rounded-lg backdrop-blur-sm">
                   <Icon className="w-10 h-10 mx-auto mb-3" />
                   <div className="text-3xl font-bold mb-1">{stat.value}</div>
-                  <div className="text-blue-100 text-sm">{stat.label}</div>
+                  <div className="text-orange-100 text-sm">{stat.label}</div>
                 </div>
               );
             })}
@@ -419,7 +429,7 @@ const PartnerWithUsPage = () => {
               return (
                 <div key={index} className="text-center">
                   <div className="relative mb-6">
-                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Icon className="w-10 h-10 text-white" />
                     </div>
                     <div className="absolute top-0 right-0 w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center text-sm font-bold text-gray-900">
@@ -454,7 +464,7 @@ const PartnerWithUsPage = () => {
                 <div key={index} className="bg-white rounded-lg p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-start gap-4">
                     <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                      <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
                         <Icon className="w-6 h-6" />
                       </div>
                     </div>
@@ -491,7 +501,7 @@ const PartnerWithUsPage = () => {
                 }`}
               >
                 {plan.highlighted && (
-                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-full inline-block mb-4">
+                  <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold px-4 py-2 rounded-full inline-block mb-4">
                     Most Popular
                   </div>
                 )}
@@ -504,7 +514,7 @@ const PartnerWithUsPage = () => {
                 <button
                   className={`w-full py-3 rounded-lg font-semibold transition-colors ${
                     plan.highlighted
-                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
+                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700'
                       : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                   }`}
                 >
@@ -525,7 +535,7 @@ const PartnerWithUsPage = () => {
       </div>
 
       {/* Testimonials Section */}
-      <div className="py-20 px-4 bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className="py-20 px-4 bg-gradient-to-br from-orange-50 to-orange-100">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -579,7 +589,7 @@ const PartnerWithUsPage = () => {
               </p>
               <button
                 onClick={() => setSubmitStatus(null)}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                className="px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors"
               >
                 Submit Another Application
               </button>
@@ -611,7 +621,7 @@ const PartnerWithUsPage = () => {
                     value={formData.businessName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholder="Your Bike Shop"
                   />
                 </div>
@@ -625,7 +635,7 @@ const PartnerWithUsPage = () => {
                     value={formData.ownerName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholder="John Doe"
                   />
                 </div>
@@ -642,7 +652,7 @@ const PartnerWithUsPage = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholder="your@email.com"
                   />
                 </div>
@@ -656,7 +666,7 @@ const PartnerWithUsPage = () => {
                     value={formData.phone}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholder="+254 700 000 000"
                   />
                 </div>
@@ -673,7 +683,7 @@ const PartnerWithUsPage = () => {
                     value={formData.location}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholder="Nairobi, Kenya"
                   />
                 </div>
@@ -686,7 +696,7 @@ const PartnerWithUsPage = () => {
                     value={formData.businessType}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   >
                     <option value="">Select type</option>
                     <option value="retail">Retail Shop</option>
@@ -707,7 +717,7 @@ const PartnerWithUsPage = () => {
                     value={formData.productsCount}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   >
                     <option value="">Select range</option>
                     <option value="1-50">1-50 products</option>
@@ -724,7 +734,7 @@ const PartnerWithUsPage = () => {
                     name="monthlyRevenue"
                     value={formData.monthlyRevenue}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   >
                     <option value="">Select range</option>
                     <option value="0-100k">Less than KES 100,000</option>
@@ -745,7 +755,7 @@ const PartnerWithUsPage = () => {
                     value={formData.experience}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   >
                     <option value="">Select experience</option>
                     <option value="0-1">Less than 1 year</option>
@@ -763,7 +773,7 @@ const PartnerWithUsPage = () => {
                     name="website"
                     value={formData.website}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     placeholder="https://yourwebsite.com"
                   />
                 </div>
@@ -789,10 +799,10 @@ const PartnerWithUsPage = () => {
                   <input
                     type="checkbox"
                     required
-                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5"
+                    className="w-5 h-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500 mt-0.5"
                   />
                   <span className="text-sm text-gray-700">
-                    I agree to the <a href="/terms" className="text-blue-600 hover:underline">Terms and Conditions</a> and <a href="/privacy" className="text-blue-600 hover:underline">Privacy Policy</a>. I understand that my application will be reviewed and I'll receive a response within 24-48 hours.
+                    I agree to the <a href="/terms" className="text-orange-600 hover:underline">Terms and Conditions</a> and <a href="/privacy" className="text-orange-600 hover:underline">Privacy Policy</a>. I understand that my application will be reviewed and I'll receive a response within 24-48 hours.
                   </span>
                 </label>
               </div>
@@ -800,7 +810,7 @@ const PartnerWithUsPage = () => {
               <button
                 type="submit"
                 disabled={submitStatus === 'loading'}
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {submitStatus === 'loading' ? (
                   <>
@@ -854,7 +864,7 @@ const PartnerWithUsPage = () => {
             <p className="text-gray-600 mb-4">Still have questions?</p>
             <a
               href="/contact"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors"
             >
               <MessageSquare className="w-5 h-5" />
               Contact Our Team
@@ -876,35 +886,35 @@ const PartnerWithUsPage = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center p-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
-              <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="text-center p-8 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl">
+              <div className="w-16 h-16 bg-orange-600 text-white rounded-full flex items-center justify-center mx-auto mb-4">
                 <Phone className="w-8 h-8" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Phone</h3>
               <p className="text-gray-600 mb-2">Call us Monday - Saturday</p>
-              <a href="tel:+254715061213" className="text-blue-600 font-semibold hover:underline">
+              <a href="tel:+254715061213" className="text-orange-600 font-semibold hover:underline">
                 +254 715 061 213
               </a>
             </div>
 
-            <div className="text-center p-8 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl">
-              <div className="w-16 h-16 bg-green-600 text-white rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="text-center p-8 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl">
+              <div className="w-16 h-16 bg-orange-600 text-white rounded-full flex items-center justify-center mx-auto mb-4">
                 <Mail className="w-8 h-8" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Email</h3>
               <p className="text-gray-600 mb-2">We'll respond within 24 hours</p>
-              <a href="mailto:oshocksstores@gmail.com" className="text-green-600 font-semibold hover:underline">
+              <a href="mailto:oshocksstores@gmail.com" className="text-orange-600 font-semibold hover:underline">
                 oshocksstores@gmail.com
               </a>
             </div>
 
-            <div className="text-center p-8 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl">
-              <div className="w-16 h-16 bg-purple-600 text-white rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="text-center p-8 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl">
+              <div className="w-16 h-16 bg-orange-600 text-white rounded-full flex items-center justify-center mx-auto mb-4">
                 <MapPin className="w-8 h-8" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Visit Us</h3>
               <p className="text-gray-600 mb-2">Come see us in person</p>
-              <p className="text-purple-600 font-semibold">
+              <p className="text-orange-600 font-semibold">
                 Nairobi, Kenya
               </p>
             </div>
@@ -913,12 +923,21 @@ const PartnerWithUsPage = () => {
       </div>
 
       {/* CTA Section */}
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
+      <div className="bg-gray-900 text-white py-20 px-4 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+            }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+        </div>
+        <div className="max-w-4xl mx-auto text-center relative z-10">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
             Ready to Start Your Success Story?
           </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-orange-100 mb-8 max-w-2xl mx-auto">
             Join Kenya's fastest-growing cycling marketplace and reach thousands of customers nationwide. 
             No setup fees, no monthly minimums - just pure growth potential.
           </p>
@@ -926,7 +945,7 @@ const PartnerWithUsPage = () => {
             <a
               href="#application"
               onClick={scrollToApplication}
-              className="px-8 py-4 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors inline-flex items-center gap-2"
+              className="px-8 py-4 bg-white text-orange-600 rounded-lg font-semibold hover:bg-orange-50 transition-colors inline-flex items-center gap-2"
             >
               Apply Now
               <ArrowRight className="w-5 h-5" />
@@ -948,22 +967,22 @@ const PartnerWithUsPage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
-              <Shield className="w-10 h-10 mx-auto mb-3 text-blue-400" />
+              <Shield className="w-10 h-10 mx-auto mb-3 text-orange-400" />
               <div className="text-sm font-semibold mb-1">Secure Platform</div>
               <div className="text-xs text-gray-400">Bank-level security</div>
             </div>
             <div>
-              <Award className="w-10 h-10 mx-auto mb-3 text-green-400" />
+              <Award className="w-10 h-10 mx-auto mb-3 text-orange-400" />
               <div className="text-sm font-semibold mb-1">Trusted by 250+ Sellers</div>
               <div className="text-xs text-gray-400">Growing community</div>
             </div>
             <div>
-              <ThumbsUp className="w-10 h-10 mx-auto mb-3 text-purple-400" />
+              <ThumbsUp className="w-10 h-10 mx-auto mb-3 text-orange-400" />
               <div className="text-sm font-semibold mb-1">95% Satisfaction</div>
               <div className="text-xs text-gray-400">Happy sellers</div>
             </div>
             <div>
-              <Headphones className="w-10 h-10 mx-auto mb-3 text-pink-400" />
+              <Headphones className="w-10 h-10 mx-auto mb-3 text-orange-400" />
               <div className="text-sm font-semibold mb-1">24/7 Support</div>
               <div className="text-xs text-gray-400">Always here to help</div>
             </div>
@@ -971,7 +990,7 @@ const PartnerWithUsPage = () => {
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer commented out - using global Footer component instead
       <footer className="bg-gray-900 text-gray-400 py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
@@ -1027,6 +1046,7 @@ const PartnerWithUsPage = () => {
           </div>
         </div>
       </footer>
+      */}
     </div>
   );
 };

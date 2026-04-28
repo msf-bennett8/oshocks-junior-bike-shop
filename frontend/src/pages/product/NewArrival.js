@@ -369,7 +369,7 @@ const NewArrivalsPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-600 mx-auto mb-4"></div>
           <p className="text-gray-600 text-lg">Loading new arrivals...</p>
         </div>
       </div>
@@ -378,10 +378,16 @@ const NewArrivalsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white py-16 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <Sparkles className="absolute text-9xl top-10 right-10 animate-pulse" />
-          <Sparkles className="absolute text-7xl bottom-10 left-10 animate-pulse" />
+      <div className="bg-gray-900 text-white py-16 px-4 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+            }}
+          />
+          <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
         </div>
         
         <div className="max-w-7xl mx-auto relative z-10">
@@ -422,7 +428,7 @@ const NewArrivalsPage = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div>
-              <div className="text-3xl font-bold text-blue-600 mb-1">
+              <div className="text-3xl font-bold text-orange-600 mb-1">
                 {products.length}
               </div>
               <div className="text-sm text-gray-600">New Products</div>
@@ -460,7 +466,7 @@ const NewArrivalsPage = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search new arrivals..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 />
               </div>
             </div>
@@ -477,7 +483,7 @@ const NewArrivalsPage = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="flex-1 md:flex-initial px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1 md:flex-initial px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               >
                 <option value="newest">Newest First</option>
                 <option value="price-low">Price: Low to High</option>
@@ -490,7 +496,7 @@ const NewArrivalsPage = () => {
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`p-3 rounded-lg transition-colors ${
-                    viewMode === 'grid' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    viewMode === 'grid' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
                   <Grid className="w-5 h-5" />
@@ -498,7 +504,7 @@ const NewArrivalsPage = () => {
                 <button
                   onClick={() => setViewMode('list')}
                   className={`p-3 rounded-lg transition-colors ${
-                    viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    viewMode === 'list' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
                   <List className="w-5 h-5" />
@@ -514,7 +520,7 @@ const NewArrivalsPage = () => {
             {(filters.category !== 'all' || filters.brand !== 'all' || filters.priceRange !== 'all' || filters.availability !== 'all' || searchQuery) && (
               <button
                 onClick={clearFilters}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1"
               >
                 <X className="w-4 h-4" />
                 Clear all filters
@@ -547,7 +553,7 @@ const NewArrivalsPage = () => {
                           name="category"
                           checked={filters.category === category}
                           onChange={() => handleFilterChange('category', category)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                          className="w-4 h-4 text-orange-600 border-gray-300 focus:ring-orange-500"
                         />
                         <span className="text-sm text-gray-700 capitalize">{category}</span>
                       </label>
@@ -565,7 +571,7 @@ const NewArrivalsPage = () => {
                           name="brand"
                           checked={filters.brand === brand}
                           onChange={() => handleFilterChange('brand', brand)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                          className="w-4 h-4 text-orange-600 border-gray-300 focus:ring-orange-500"
                         />
                         <span className="text-sm text-gray-700 capitalize">{brand}</span>
                       </label>
@@ -676,7 +682,7 @@ const NewArrivalsPage = () => {
                 <p className="text-gray-600 mb-4">Try adjusting your filters or search query</p>
                 <button
                   onClick={clearFilters}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  className="px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors"
                 >
                   Clear All Filters
                 </button>
@@ -691,7 +697,7 @@ const NewArrivalsPage = () => {
                     }`}
                   >
                     <div className={`relative ${viewMode === 'list' ? 'w-48' : 'w-full'}`}>
-                      <div className="bg-gradient-to-br from-blue-100 to-indigo-200 aspect-square flex items-center justify-center text-6xl">
+                      <div className="bg-gradient-to-br from-orange-100 to-orange-200 aspect-square flex items-center justify-center text-6xl">
                         {product.image}
                       </div>
                       
@@ -730,10 +736,10 @@ const NewArrivalsPage = () => {
                     <div className="p-4 flex-1">
                       <div className="mb-2">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium text-blue-600 uppercase">{product.brand}</span>
+                          <span className="text-xs font-medium text-orange-600 uppercase">{product.brand}</span>
                           <span className="text-xs text-gray-500">{formatArrivalDate(product.arrivalDate)}</span>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-orange-600 transition-colors">
                           {product.name}
                         </h3>
                         <p className="text-xs text-gray-600 mb-2">{product.category}</p>
@@ -832,7 +838,7 @@ const NewArrivalsPage = () => {
                       <div className="flex gap-2">
                         {product.stock > 0 ? (
                           <>
-                            <button className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                            <button className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2">
                               <ShoppingCart className="w-5 h-5" />
                               Add to Cart
                             </button>
@@ -914,8 +920,18 @@ const NewArrivalsPage = () => {
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center">
+      <div className="bg-gray-900 text-white py-16 px-4 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+            }}
+          />
+          <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+        </div>
+        <div className="max-w-4xl mx-auto text-center relative z-10">
           <Zap className="w-12 h-12 mx-auto mb-4" />
           <h2 className="text-3xl font-bold mb-4">
             Be First to Know About New Arrivals
@@ -929,16 +945,16 @@ const NewArrivalsPage = () => {
               placeholder="Enter your email address"
               className="flex-1 px-6 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-4 focus:ring-white focus:ring-opacity-50"
             />
-            <button className="px-8 py-4 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-colors whitespace-nowrap flex items-center justify-center gap-2">
+            <button className="px-8 py-4 bg-white text-orange-600 rounded-lg font-semibold hover:bg-orange-50 transition-colors whitespace-nowrap flex items-center justify-center gap-2">
               <Bell className="w-5 h-5" />
               Notify Me
             </button>
           </div>
-          <p className="text-sm text-blue-100 mt-4">
+          <p className="text-sm text-orange-100 mt-4">
             Join 15,000+ cyclists getting early access to new products
           </p>
         </div>
-      </div>
+        </div>
 
       <div className="bg-gray-50 py-16 px-4">
         <div className="max-w-7xl mx-auto">
@@ -1039,7 +1055,7 @@ const NewArrivalsPage = () => {
             </button>
             
             <div className="text-center mb-6">
-              <Bell className="w-16 h-16 text-blue-600 mx-auto mb-4" />
+              <Bell className="w-16 h-16 text-orange-600 mx-auto mb-4" />
               <h3 className="text-2xl font-bold text-gray-900 mb-2">
                 Get Notified
               </h3>
@@ -1058,14 +1074,14 @@ const NewArrivalsPage = () => {
                   value={notifyEmail}
                   onChange={(e) => setNotifyEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   placeholder="your@email.com"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center justify-center gap-2"
               >
                 <Bell className="w-5 h-5" />
                 Notify Me When Available
@@ -1075,6 +1091,7 @@ const NewArrivalsPage = () => {
         </div>
       )}
 
+      {/* Footer commented out - using global Footer component instead
       <footer className="bg-gray-900 text-gray-400 py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
@@ -1122,6 +1139,7 @@ const NewArrivalsPage = () => {
           </div>
         </div>
       </footer>
+      */}
     </div>
   );
 };

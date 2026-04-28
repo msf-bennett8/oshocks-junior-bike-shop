@@ -371,7 +371,18 @@ const BikeMaintenance = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-12 px-4">
+      <div className="bg-gray-900 text-white py-12 px-4 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+            }}
+          />
+          <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+        </div>
+        <div className="relative z-10">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
             <Wrench className="w-12 h-12" />
@@ -406,6 +417,7 @@ const BikeMaintenance = () => {
             </div>
           </div>
         </div>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -416,7 +428,7 @@ const BikeMaintenance = () => {
               onClick={() => setActiveTab('schedule')}
               className={`flex-1 py-4 px-6 font-semibold transition-colors ${
                 activeTab === 'schedule'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  ? 'text-orange-600 border-b-2 border-orange-600'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
@@ -427,7 +439,7 @@ const BikeMaintenance = () => {
               onClick={() => setActiveTab('bookmarked')}
               className={`flex-1 py-4 px-6 font-semibold transition-colors ${
                 activeTab === 'bookmarked'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  ? 'text-orange-600 border-b-2 border-orange-600'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
@@ -447,7 +459,7 @@ const BikeMaintenance = () => {
                 placeholder="Search maintenance tasks..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>
             <button
@@ -472,7 +484,7 @@ const BikeMaintenance = () => {
                         onClick={() => setSelectedCategory(cat.id)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                           selectedCategory === cat.id
-                            ? 'bg-blue-600 text-white shadow-md'
+                            ? 'bg-orange-600 text-white shadow-md'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                       >
@@ -492,7 +504,7 @@ const BikeMaintenance = () => {
                         onClick={() => setSelectedDifficulty(diff.id)}
                         className={`px-4 py-2 rounded-lg transition-all ${
                           selectedDifficulty === diff.id
-                            ? 'ring-2 ring-blue-600 shadow-md'
+                            ? 'ring-2 ring-orange-600 shadow-md'
                             : 'hover:shadow'
                         } ${diff.color}`}
                       >
@@ -561,7 +573,7 @@ const BikeMaintenance = () => {
                     <div className="flex gap-2 mb-4">
                       <button
                         onClick={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                       >
                         <FileText className="w-4 h-4" />
                         {expandedTask === task.id ? 'Hide Details' : 'Show Details'}
@@ -603,7 +615,7 @@ const BikeMaintenance = () => {
                           <ol className="space-y-3">
                             {task.steps.map((step, index) => (
                               <li key={index} className="flex gap-3">
-                                <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                                <span className="flex-shrink-0 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
                                   {index + 1}
                                 </span>
                                 <p className="text-gray-700 pt-1">{step}</p>
@@ -639,7 +651,7 @@ const BikeMaintenance = () => {
 
                         {/* Action Buttons */}
                         <div className="flex gap-3 pt-4">
-                          <button className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg">
+                          <button className="flex items-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors shadow-md hover:shadow-lg">
                             <CheckCircle className="w-5 h-5" />
                             Mark as Completed
                           </button>
@@ -657,7 +669,18 @@ const BikeMaintenance = () => {
         </div>
 
         {/* Educational Resources Section */}
-        <div className="mt-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg shadow-xl p-8 text-white">
+        <div className="mt-12 bg-gray-900 rounded-lg shadow-xl p-8 text-white relative overflow-hidden">
+          <div className="absolute inset-0">
+            <div 
+              className="absolute inset-0 opacity-40"
+              style={{
+                background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+              }}
+            />
+            <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+          </div>
+          <div className="relative z-10">
           <h2 className="text-3xl font-bold mb-4">Need Professional Help?</h2>
           <p className="text-blue-100 mb-6">
             While many maintenance tasks can be done at home, some require professional expertise. 
@@ -680,9 +703,10 @@ const BikeMaintenance = () => {
               <p className="text-2xl font-bold">KES 800</p>
             </div>
           </div>
-          <button className="mt-6 px-8 py-4 bg-white text-blue-600 font-bold rounded-lg hover:bg-blue-50 transition-colors shadow-lg">
+          <button className="mt-6 px-8 py-4 bg-white text-orange-600 font-bold rounded-lg hover:bg-orange-50 transition-colors shadow-lg">
             Book Service Appointment
           </button>
+          </div>
         </div>
 
         {/* Maintenance Tips Banner */}
@@ -714,7 +738,7 @@ const BikeMaintenance = () => {
                 <span>Torque wrench (essential for carbon components)</span>
               </li>
             </ul>
-            <button className="mt-6 w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+            <button className="mt-6 w-full py-3 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700 transition-colors">
               Shop Tools & Supplies
             </button>
           </div>
@@ -826,7 +850,18 @@ const BikeMaintenance = () => {
         </div>
 
         {/* Bottom CTA */}
-        <div className="mt-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-xl p-8 text-white text-center">
+        <div className="mt-8 bg-gray-900 rounded-lg shadow-xl p-8 text-white text-center relative overflow-hidden">
+          <div className="absolute inset-0">
+            <div 
+              className="absolute inset-0 opacity-40"
+              style={{
+                background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+              }}
+            />
+            <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+          </div>
+          <div className="relative z-10">
           <h2 className="text-3xl font-bold mb-4">Keep Your Ride in Top Condition</h2>
           <p className="text-green-100 mb-6 max-w-2xl mx-auto">
             Regular maintenance not only extends the life of your bike but also ensures your safety on the road. 
@@ -836,9 +871,10 @@ const BikeMaintenance = () => {
             <button className="px-8 py-4 bg-white text-green-600 font-bold rounded-lg hover:bg-green-50 transition-colors shadow-lg">
               Shop Maintenance Supplies
             </button>
-            <button className="px-8 py-4 bg-green-700 text-white font-bold rounded-lg hover:bg-green-800 transition-colors shadow-lg">
+            <button className="px-8 py-4 bg-orange-700 text-white font-bold rounded-lg hover:bg-orange-800 transition-colors shadow-lg">
               Schedule Professional Service
             </button>
+          </div>
           </div>
         </div>
       </div>

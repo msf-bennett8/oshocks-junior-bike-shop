@@ -74,21 +74,21 @@ const ContactPage = () => {
 
   const contactMethods = [
     {
-      icon: <Phone className="text-blue-600" size={24} />,
+      icon: <Phone className="text-orange-600" size={24} />,
       title: 'Phone',
       details: '+254 715 061 213',
       subDetails: 'Mon-Sat, 8AM-8PM',
       link: 'tel:+254715061213'
     },
     {
-      icon: <Mail className="text-purple-600" size={24} />,
+      icon: <Mail className="text-orange-600" size={24} />,
       title: 'Email',
       details: 'oshocksstores@gmail.com',
       subDetails: 'We reply within 24 hours',
       link: 'mailto:oshocksstores@gmail.com'
     },
     {
-      icon: <Smartphone className="text-green-600" size={24} />,
+      icon: <Smartphone className="text-orange-600" size={24} />,
       title: 'WhatsApp',
       details: '+254 715 061 213',
       subDetails: 'Quick responses',
@@ -148,11 +148,21 @@ const ContactPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-12 md:py-16 lg:py-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="bg-gray-900 text-white py-12 md:py-16 lg:py-20 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+            }}
+          />
+          <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+        </div>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 md:mb-4">Get In Touch</h1>
-            <p className="text-base sm:text-lg md:text-xl text-blue-100 px-4">
+            <p className="text-base sm:text-lg md:text-xl text-orange-100 px-4">
               Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
             </p>
           </div>
@@ -223,7 +233,7 @@ const ContactPage = () => {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-shadow"
                       placeholder="Zablon Bennett"
                     />
                   </div>
@@ -239,7 +249,7 @@ const ContactPage = () => {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-shadow"
                       placeholder="bennett@example.com"
                     />
                   </div>
@@ -256,8 +266,8 @@ const ContactPage = () => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
-                      placeholder="+254 700 000 000"
+
+                                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-shadow"     placeholder="+254 700 000 000"
                     />
                   </div>
 
@@ -271,7 +281,7 @@ const ContactPage = () => {
                       value={formData.category}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-shadow"
                     >
                       <option value="general">General Inquiry</option>
                       <option value="product">Product Question</option>
@@ -320,7 +330,7 @@ const ContactPage = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-medium text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-medium text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <>
@@ -343,8 +353,8 @@ const ContactPage = () => {
             {/* Office Hours */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Clock className="text-blue-600" size={24} />
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <Clock className="text-orange-600" size={24} />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900">Business Hours</h3>
               </div>
@@ -370,7 +380,7 @@ const ContactPage = () => {
               <div className="space-y-4">
                 {departments.map((dept, index) => (
                   <div key={index} className="flex items-start gap-3">
-                    <div className="p-2 bg-purple-100 rounded-lg text-purple-600 flex-shrink-0">
+                    <div className="p-2 bg-orange-100 rounded-lg text-orange-600 flex-shrink-0">
                       {dept.icon}
                     </div>
                     <div>
@@ -387,19 +397,19 @@ const ContactPage = () => {
               <h3 className="text-xl font-bold text-gray-900 mb-4">Follow Us</h3>
               <p className="text-sm text-gray-600 mb-4">Stay connected on social media</p>
               <div className="flex gap-3">
-                <a href="#" className="p-3 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors">
+                <a href="#" className="p-3 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors">
                   <Facebook size={20} />
                 </a>
-                <a href="#" className="p-3 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors">
+                <a href="#" className="p-3 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors">
                   <Twitter size={20} />
                 </a>
-                <a href="#" className="p-3 bg-pink-100 text-pink-600 rounded-lg hover:bg-pink-200 transition-colors">
+                <a href="#" className="p-3 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors">
                   <Instagram size={20} />
                 </a>
-                <a href="#" className="p-3 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors">
+                <a href="#" className="p-3 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors">
                   <Linkedin size={20} />
                 </a>
-                <a href="#" className="p-3 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors">
+                <a href="#" className="p-3 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors">
                   <Youtube size={20} />
                 </a>
               </div>
@@ -418,8 +428,8 @@ const ContactPage = () => {
             {officeLocations.map((location, index) => (
               <div key={index} className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
                 <div className="flex items-start gap-3 mb-4">
-                  <div className="p-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg">
-                    <MapPin className="text-blue-600" size={24} />
+                  <div className="p-2 bg-gradient-to-r from-orange-100 to-orange-200 rounded-lg">
+                    <MapPin className="text-orange-600" size={24} />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-gray-900 mb-1">{location.name}</h3>
@@ -440,7 +450,7 @@ const ContactPage = () => {
                     <span>{location.phone}</span>
                   </div>
                 </div>
-                <button className="mt-4 w-full py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm">
+                <button className="mt-4 w-full py-2 border border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 transition-colors font-medium text-sm">
                   Get Directions
                 </button>
               </div>

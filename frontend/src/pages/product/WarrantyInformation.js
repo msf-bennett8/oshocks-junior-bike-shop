@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, CheckCircle, XCircle, Clock, FileText, AlertCircle, Phone, Mail, MapPin, Download, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { Shield, CheckCircle, XCircle, Clock, FileText, AlertCircle, Phone, Mail, MapPin, Download, Search, ChevronDown, ChevronUp, Bike, Wrench, Settings, Package } from 'lucide-react';
 
 const WarrantyInformation = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -11,28 +11,28 @@ const WarrantyInformation = () => {
     {
       name: 'Complete Bicycles',
       period: '2 Years',
-      icon: '🚴',
+      icon: <Bike className="w-10 h-10 text-orange-600" />,
       coverage: ['Frame defects', 'Fork failures', 'Manufacturing defects'],
       exclusions: ['Normal wear', 'Crash damage', 'Improper maintenance']
     },
     {
       name: 'Bicycle Frames',
       period: '5 Years',
-      icon: '🔧',
+      icon: <Wrench className="w-10 h-10 text-orange-600" />,
       coverage: ['Frame cracks', 'Weld failures', 'Material defects'],
       exclusions: ['Paint chips', 'Cosmetic damage', 'Modifications']
     },
     {
       name: 'Components & Parts',
       period: '1 Year',
-      icon: '⚙️',
+      icon: <Settings className="w-10 h-10 text-orange-600" />,
       coverage: ['Gear systems', 'Brakes', 'Wheels', 'Pedals'],
       exclusions: ['Brake pads', 'Tires', 'Chains', 'Cables']
     },
     {
       name: 'Accessories',
       period: '6 Months',
-      icon: '🎒',
+      icon: <Package className="w-10 h-10 text-orange-600" />,
       coverage: ['Lights', 'Locks', 'Pumps', 'Bottles'],
       exclusions: ['Batteries', 'Cosmetic wear', 'Lost items']
     }
@@ -123,8 +123,18 @@ const WarrantyInformation = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="bg-gray-900 text-white py-16 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+            }}
+          />
+          <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
             <Shield className="w-20 h-20 mx-auto mb-6" />
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Warranty Information</h1>
@@ -148,11 +158,11 @@ const WarrantyInformation = () => {
               value={warrantyLookup}
               onChange={(e) => setWarrantyLookup(e.target.value)}
               placeholder="Enter Order Number or Serial Number"
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
             <button
               type="submit"
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold"
+              className="px-8 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold"
             >
               Check Status
             </button>
@@ -168,13 +178,13 @@ const WarrantyInformation = () => {
                     <p><strong>Purchase Date:</strong> {searchResults.purchaseDate}</p>
                     <p><strong>Warranty Valid Until:</strong> {searchResults.warrantyEnd}</p>
                     <p className="flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                      <strong>Status:</strong> <span className="text-green-600">{searchResults.status}</span>
+                      <CheckCircle className="w-5 h-5 text-orange-600" />
+                      <strong>Status:</strong> <span className="text-orange-600">{searchResults.status}</span>
                     </p>
                     <p><strong>Remaining Coverage:</strong> {searchResults.remainingDays} days</p>
                   </div>
                 </div>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm flex items-center gap-2">
+                <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition text-sm flex items-center gap-2">
                   <Download className="w-4 h-4" />
                   Download Certificate
                 </button>
@@ -193,7 +203,7 @@ const WarrantyInformation = () => {
               onClick={() => setActiveTab(tab)}
               className={`px-6 py-3 rounded-lg font-semibold transition ${
                 activeTab === tab
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-orange-600 text-white'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
@@ -219,18 +229,18 @@ const WarrantyInformation = () => {
               </div>
 
               <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center p-6 bg-blue-50 rounded-lg">
-                  <Clock className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+                <div className="text-center p-6 bg-orange-50 rounded-lg">
+                  <Clock className="w-12 h-12 text-orange-600 mx-auto mb-4" />
                   <h3 className="font-bold text-gray-900 mb-2">Fast Response</h3>
                   <p className="text-gray-600">48-hour claim assessment guaranteed</p>
                 </div>
-                <div className="text-center p-6 bg-green-50 rounded-lg">
-                  <Shield className="w-12 h-12 text-green-600 mx-auto mb-4" />
+                <div className="text-center p-6 bg-orange-50 rounded-lg">
+                  <Shield className="w-12 h-12 text-orange-600 mx-auto mb-4" />
                   <h3 className="font-bold text-gray-900 mb-2">Full Coverage</h3>
                   <p className="text-gray-600">Comprehensive protection against defects</p>
                 </div>
-                <div className="text-center p-6 bg-purple-50 rounded-lg">
-                  <CheckCircle className="w-12 h-12 text-purple-600 mx-auto mb-4" />
+                <div className="text-center p-6 bg-orange-50 rounded-lg">
+                  <CheckCircle className="w-12 h-12 text-orange-600 mx-auto mb-4" />
                   <h3 className="font-bold text-gray-900 mb-2">Easy Process</h3>
                   <p className="text-gray-600">Simple claim submission and tracking</p>
                 </div>
@@ -266,10 +276,10 @@ const WarrantyInformation = () => {
                   <div key={index} className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <span className="text-4xl">{category.icon}</span>
+                        <div className="flex-shrink-0">{category.icon}</div>
                         <div>
                           <h3 className="text-xl font-bold text-gray-900">{category.name}</h3>
-                          <p className="text-blue-600 font-semibold">{category.period} Warranty</p>
+                          <p className="text-orange-600 font-semibold">{category.period} Warranty</p>
                         </div>
                       </div>
                     </div>
@@ -305,14 +315,25 @@ const WarrantyInformation = () => {
             </div>
 
             {/* Extended Warranty Info */}
-            <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-lg shadow-md p-8">
+            <div className="bg-gray-900 text-white rounded-lg shadow-md p-8 relative overflow-hidden">
+              <div className="absolute inset-0">
+                <div 
+                  className="absolute inset-0 opacity-40"
+                  style={{
+                    background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+              </div>
+              <div className="relative z-10">
               <h2 className="text-2xl font-bold mb-4">Extended Warranty Available</h2>
-              <p className="text-purple-100 mb-6">
+              <p className="text-orange-100 mb-6">
                 Protect your investment with our extended warranty plans. Get up to 5 additional years of coverage with enhanced benefits including accidental damage protection, free annual servicing, and priority support.
               </p>
-              <button className="px-6 py-3 bg-white text-purple-600 rounded-lg hover:bg-purple-50 transition font-semibold">
+              <button className="px-6 py-3 bg-white text-orange-600 rounded-lg hover:bg-orange-50 transition font-semibold">
                 Learn More About Extended Protection
               </button>
+              </div>
             </div>
           </div>
         )}
@@ -328,13 +349,13 @@ const WarrantyInformation = () => {
                 return (
                   <div key={index} className="flex gap-6">
                     <div className="flex-shrink-0">
-                      <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold">
+                      <div className="w-16 h-16 bg-orange-600 text-white rounded-full flex items-center justify-center text-2xl font-bold">
                         {step.step}
                       </div>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-3">
-                        <Icon className="w-8 h-8 text-blue-600" />
+                        <Icon className="w-8 h-8 text-orange-600" />
                         <h3 className="text-2xl font-bold text-gray-900">{step.title}</h3>
                       </div>
                       <p className="text-gray-700 text-lg">{step.description}</p>
@@ -344,32 +365,32 @@ const WarrantyInformation = () => {
               })}
             </div>
 
-            <div className="mt-12 p-6 bg-blue-50 rounded-lg">
+            <div className="mt-12 p-6 bg-orange-50 rounded-lg">
               <h3 className="font-bold text-gray-900 mb-4">Required Documentation</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-start gap-3">
-                  <FileText className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
+                  <FileText className="w-5 h-5 text-orange-600 flex-shrink-0 mt-1" />
                   <div>
                     <p className="font-semibold text-gray-900">Proof of Purchase</p>
                     <p className="text-gray-600 text-sm">Original receipt or order confirmation</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <FileText className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
+                  <FileText className="w-5 h-5 text-orange-600 flex-shrink-0 mt-1" />
                   <div>
                     <p className="font-semibold text-gray-900">Product Photos</p>
                     <p className="text-gray-600 text-sm">Clear images showing the defect</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <FileText className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
+                  <FileText className="w-5 h-5 text-orange-600 flex-shrink-0 mt-1" />
                   <div>
                     <p className="font-semibold text-gray-900">Serial Number</p>
                     <p className="text-gray-600 text-sm">Product identification number</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <FileText className="w-5 h-5 text-blue-600 flex-shrink-0 mt-1" />
+                  <FileText className="w-5 h-5 text-orange-600 flex-shrink-0 mt-1" />
                   <div>
                     <p className="font-semibold text-gray-900">Issue Description</p>
                     <p className="text-gray-600 text-sm">Detailed explanation of the problem</p>
@@ -420,28 +441,28 @@ const WarrantyInformation = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center p-6 border border-gray-200 rounded-lg hover:shadow-lg transition">
-                  <Phone className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+                  <Phone className="w-12 h-12 text-orange-600 mx-auto mb-4" />
                   <h3 className="font-bold text-gray-900 mb-2">Phone Support</h3>
                   <p className="text-gray-600 mb-4">Mon-Sat: 8AM - 6PM</p>
-                  <a href="tel:+254715061213" className="text-blue-600 hover:underline font-semibold">
+                  <a href="tel:+254715061213" className="text-orange-600 hover:underline font-semibold">
                     +254 715 061 213
                   </a>
                 </div>
 
                 <div className="text-center p-6 border border-gray-200 rounded-lg hover:shadow-lg transition">
-                  <Mail className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+                  <Mail className="w-12 h-12 text-orange-600 mx-auto mb-4" />
                   <h3 className="font-bold text-gray-900 mb-2">Email Support</h3>
                   <p className="text-gray-600 mb-4">24/7 Response</p>
-                  <a href="mailto:oshocksstores@gmail.com" className="text-blue-600 hover:underline font-semibold">
+                  <a href="mailto:oshocksstores@gmail.com" className="text-orange-600 hover:underline font-semibold">
                     oshocksstores@gmail.com
                   </a>
                 </div>
 
                 <div className="text-center p-6 border border-gray-200 rounded-lg hover:shadow-lg transition">
-                  <MapPin className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+                  <MapPin className="w-12 h-12 text-orange-600 mx-auto mb-4" />
                   <h3 className="font-bold text-gray-900 mb-2">Visit Our Shop</h3>
                   <p className="text-gray-600 mb-4">Walk-in Service</p>
-                  <p className="text-blue-600 font-semibold">Nairobi, Kenya</p>
+                  <p className="text-orange-600 font-semibold">Nairobi, Kenya</p>
                 </div>
               </div>
             </div>
@@ -455,7 +476,7 @@ const WarrantyInformation = () => {
                     <label className="block text-gray-700 font-semibold mb-2">Full Name *</label>
                     <input
                       type="text"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       placeholder="Zablon Bennett"
                     />
                   </div>
@@ -463,7 +484,7 @@ const WarrantyInformation = () => {
                     <label className="block text-gray-700 font-semibold mb-2">Email Address *</label>
                     <input
                       type="email"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       placeholder="bennett@example.com"
                     />
                   </div>
@@ -474,7 +495,7 @@ const WarrantyInformation = () => {
                     <label className="block text-gray-700 font-semibold mb-2">Phone Number *</label>
                     <input
                       type="tel"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                       placeholder="+254 700 000 000"
                     />
                   </div>
@@ -482,8 +503,8 @@ const WarrantyInformation = () => {
                     <label className="block text-gray-700 font-semibold mb-2">Order Number *</label>
                     <input
                       type="text"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="ACTB4THMTX"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      placeholder="ACTBTHM7TX"
                     />
                   </div>
                 </div>
@@ -499,7 +520,7 @@ const WarrantyInformation = () => {
 
                 <div>
                   <label className="block text-gray-700 font-semibold mb-2">Upload Photos (Optional)</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition cursor-pointer">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-orange-500 transition cursor-pointer">
                     <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                     <p className="text-gray-600">Click to upload or drag and drop</p>
                     <p className="text-sm text-gray-500">PNG, JPG up to 10MB</p>
@@ -508,7 +529,7 @@ const WarrantyInformation = () => {
 
                 <button
                   type="submit"
-                  className="w-full px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold text-lg"
+                  className="w-full px-8 py-4 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold text-lg"
                 >
                   Submit Warranty Inquiry
                 </button>

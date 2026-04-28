@@ -152,8 +152,18 @@ const FAQPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16 md:py-20">
-        <div className="container mx-auto px-4">
+      <div className="bg-gray-900 text-white py-16 md:py-20 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+            }}
+          />
+          <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+        </div>
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <HelpCircle className="w-16 h-16 mx-auto mb-4" />
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -171,7 +181,7 @@ const FAQPage = () => {
                 placeholder="Search for answers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full pl-12 pr-4 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300"
               />
             </div>
           </div>
@@ -181,14 +191,14 @@ const FAQPage = () => {
       {/* Category Filter */}
       <div className="bg-white border-b sticky top-0 z-10 shadow-sm">
         <div className="container mx-auto px-4">
-          <div className="flex overflow-x-auto py-4 gap-3 scrollbar-hide">
+          <div className="flex overflow-x-auto py-4 gap-2 scrollbar-hide">
             {categories.map(category => (
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                className={`flex items-center gap-2 px-3 py-2.5 rounded-md whitespace-nowrap transition-all text-sm ${
                   selectedCategory === category.id
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-orange-600 text-white shadow-md'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -226,7 +236,7 @@ const FAQPage = () => {
                       {faq.question}
                     </span>
                     <ChevronDown
-                      className={`w-5 h-5 text-blue-600 flex-shrink-0 transition-transform ${
+                      className={`w-5 h-5 text-orange-600 flex-shrink-0 transition-transform ${
                         openItem === index ? 'transform rotate-180' : ''
                       }`}
                     />
@@ -244,55 +254,66 @@ const FAQPage = () => {
           )}
 
           {/* Still Have Questions Section */}
-          <div className="mt-16 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-8 md:p-12">
+          <div className="mt-16 bg-gray-900 rounded-xl p-8 md:p-12 relative overflow-hidden">
+            <div className="absolute inset-0">
+              <div 
+                className="absolute inset-0 opacity-30"
+                style={{
+                  background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+            </div>
+            <div className="relative z-10">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              <h2 className="text-3xl font-bold text-white mb-4">
                 Still have questions?
               </h2>
-              <p className="text-gray-700 text-lg">
+              <p className="text-gray-200 text-lg">
                 Our support team is here to help you with any inquiries
               </p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
               <div className="bg-white rounded-lg p-6 text-center hover:shadow-md transition-shadow">
-                <div className="bg-blue-100 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageCircle className="w-7 h-7 text-blue-600" />
+                <div className="bg-orange-100 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MessageCircle className="w-7 h-7 text-orange-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Live Chat</h3>
                 <p className="text-gray-600 text-sm mb-4">
                   Chat with our team in real-time
                 </p>
-                <button className="text-blue-600 font-semibold hover:text-blue-700">
+                <button className="text-orange-600 font-semibold hover:text-orange-700">
                   Start Chat
                 </button>
               </div>
 
               <div className="bg-white rounded-lg p-6 text-center hover:shadow-md transition-shadow">
-                <div className="bg-green-100 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Phone className="w-7 h-7 text-green-600" />
+                <div className="bg-orange-100 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Phone className="w-7 h-7 text-orange-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Call Us</h3>
                 <p className="text-gray-600 text-sm mb-4">
                   Mon-Sat, 8AM-6PM EAT
                 </p>
-                <a href="tel:+254715061213" className="text-green-600 font-semibold hover:text-green-700">
+                <a href="tel:+254715061213" className="text-orange-600 font-semibold hover:text-orange-700">
                   +254 715 061 213
                 </a>
               </div>
 
               <div className="bg-white rounded-lg p-6 text-center hover:shadow-md transition-shadow">
-                <div className="bg-purple-100 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <HelpCircle className="w-7 h-7 text-purple-600" />
+                <div className="bg-orange-100 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <HelpCircle className="w-7 h-7 text-orange-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Help Center</h3>
                 <p className="text-gray-600 text-sm mb-4">
                   Browse guides and tutorials
                 </p>
-                <button className="text-purple-600 font-semibold hover:text-purple-700">
+                <button className="text-orange-600 font-semibold hover:text-orange-700">
                   Visit Center
                 </button>
               </div>
+            </div>
             </div>
           </div>
         </div>

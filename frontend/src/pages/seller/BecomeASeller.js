@@ -405,7 +405,7 @@ const BecomeASeller = () => {
           <div key={step} className="flex items-center flex-1">
             <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold ${
               step < currentStep ? 'bg-green-600 text-white' :
-              step === currentStep ? 'bg-blue-600 text-white' :
+              step === currentStep ? 'bg-orange-600 text-white' :
               'bg-gray-200 text-gray-600'
             }`}>
               {step < currentStep ? <Check className="w-6 h-6" /> : step}
@@ -419,10 +419,10 @@ const BecomeASeller = () => {
         ))}
       </div>
       <div className="flex justify-between text-xs text-gray-600 mt-2">
-        <span className={currentStep === 1 ? 'font-semibold text-blue-600' : ''}>Business Info</span>
-        <span className={currentStep === 2 ? 'font-semibold text-blue-600' : ''}>Contact</span>
-        <span className={currentStep === 3 ? 'font-semibold text-blue-600' : ''}>Payment</span>
-        <span className={currentStep === 4 ? 'font-semibold text-blue-600' : ''}>Verification</span>
+        <span className={currentStep === 1 ? 'font-semibold text-orange-600' : ''}>Business Info</span>
+        <span className={currentStep === 2 ? 'font-semibold text-orange-600' : ''}>Contact</span>
+        <span className={currentStep === 3 ? 'font-semibold text-orange-600' : ''}>Payment</span>
+        <span className={currentStep === 4 ? 'font-semibold text-orange-600' : ''}>Verification</span>
       </div>
     </div>
   );
@@ -439,8 +439,8 @@ const BecomeASeller = () => {
           <p className="text-gray-600 mb-6">
             Thank you for applying to become a seller on Oshocks Junior Bike Shop. We'll review your application and get back to you within 24-48 hours.
           </p>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-blue-800">
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-orange-800">
               <strong>What's Next?</strong><br />
               Check your email for application confirmation and next steps. Our team will contact you if additional information is needed.
             </p>
@@ -448,7 +448,7 @@ const BecomeASeller = () => {
           <div className="space-y-3">
             <button
               onClick={() => navigate('/seller-dashboard')}
-              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+              className="w-full px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-semibold"
             >
               Go to Seller Dashboard
             </button>
@@ -467,8 +467,18 @@ const BecomeASeller = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-purple-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="bg-gray-900 text-white relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+            }}
+          />
+          <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-white bg-opacity-20 rounded-full mb-6">
               <Store className="w-10 h-10" />
@@ -483,13 +493,13 @@ const BecomeASeller = () => {
             <div className="flex flex-wrap items-center justify-center gap-4">
               <a
                 href="#application-form"
-                className="px-8 py-4 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-all font-bold text-lg shadow-lg"
+                className="px-8 py-4 bg-white text-orange-600 rounded-lg hover:bg-orange-50 transition-all font-bold text-lg shadow-lg"
               >
                 Apply Now - It's Free
               </a>
               <a
                 href="#how-it-works"
-                className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-lg hover:bg-white hover:text-blue-600 transition-all font-bold text-lg"
+                className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-lg hover:bg-white hover:text-orange-600 transition-all font-bold text-lg"
               >
                 Learn How It Works
               </a>
@@ -506,7 +516,7 @@ const BecomeASeller = () => {
               const Icon = stat.icon;
               return (
                 <div key={index} className="text-center">
-                  <Icon className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                  <Icon className="w-8 h-8 text-orange-600 mx-auto mb-2" />
                   <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
                   <p className="text-sm text-gray-600">{stat.label}</p>
                 </div>
@@ -537,7 +547,7 @@ const BecomeASeller = () => {
                 }}
                 className={`py-4 px-2 border-b-2 font-semibold whitespace-nowrap transition-colors ${
                   activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600'
+                    ? 'border-orange-600 text-orange-600'
                     : 'border-transparent text-gray-600 hover:text-gray-900'
                 }`}
               >
@@ -561,12 +571,12 @@ const BecomeASeller = () => {
             {benefits.map((benefit, index) => {
               const Icon = benefit.icon;
               const colors = {
-                blue: 'bg-blue-100 text-blue-600',
-                green: 'bg-green-100 text-green-600',
-                yellow: 'bg-yellow-100 text-yellow-600',
-                purple: 'bg-purple-100 text-purple-600',
+                blue: 'bg-orange-100 text-orange-600',
+                green: 'bg-orange-100 text-orange-600',
+                yellow: 'bg-orange-100 text-orange-600',
+                purple: 'bg-orange-100 text-orange-600',
                 orange: 'bg-orange-100 text-orange-600',
-                red: 'bg-red-100 text-red-600'
+                red: 'bg-orange-100 text-orange-600'
               };
               return (
                 <div key={index} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
@@ -595,7 +605,7 @@ const BecomeASeller = () => {
               return (
                 <div key={index} className="text-center">
                   <div className="relative inline-block mb-6">
-                    <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center text-white">
+                    <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center text-white">
                       <Icon className="w-10 h-10" />
                     </div>
                     <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-sm font-bold">
@@ -621,7 +631,7 @@ const BecomeASeller = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <div className="border-2 border-blue-200 rounded-lg p-6">
+              <div className="border-2 border-orange-200 rounded-lg p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">What's Free</h3>
                 <ul className="space-y-3">
                   {[
@@ -640,7 +650,7 @@ const BecomeASeller = () => {
                 </ul>
               </div>
 
-              <div className="border-2 border-purple-200 rounded-lg p-6 bg-gradient-to-br from-purple-50 to-blue-50">
+              <div className="border-2 border-orange-200 rounded-lg p-6 bg-gradient-to-br from-orange-50 to-orange-100">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Commission Rates</h3>
                 <div className="space-y-4">
                   {commissionTiers.map((tier, index) => (
@@ -649,7 +659,7 @@ const BecomeASeller = () => {
                         <p className="font-semibold text-gray-900">{tier.category}</p>
                         <p className="text-xs text-gray-600">{tier.volume}</p>
                       </div>
-                      <span className="text-lg font-bold text-blue-600">{tier.commission}</span>
+                      <span className="text-lg font-bold text-orange-600">{tier.commission}</span>
                     </div>
                   ))}
                 </div>
@@ -741,11 +751,11 @@ const BecomeASeller = () => {
                       onClick={() => setFormData(prev => ({ ...prev, businessType: 'individual' }))}
                       className={`p-4 border-2 rounded-lg text-left transition-all ${
                         formData.businessType === 'individual'
-                          ? 'border-blue-600 bg-blue-50'
+                          ? 'border-orange-600 bg-orange-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      <User className="w-6 h-6 text-blue-600 mb-2" />
+                      <User className="w-6 h-6 text-orange-600 mb-2" />
                       <div className="font-semibold text-gray-900">Individual Seller</div>
                       <div className="text-xs text-gray-600 mt-1">Sole proprietor or personal business</div>
                     </button>
@@ -754,11 +764,11 @@ const BecomeASeller = () => {
                       onClick={() => setFormData(prev => ({ ...prev, businessType: 'company' }))}
                       className={`p-4 border-2 rounded-lg text-left transition-all ${
                         formData.businessType === 'company'
-                          ? 'border-blue-600 bg-blue-50'
+                          ? 'border-orange-600 bg-orange-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      <Building className="w-6 h-6 text-blue-600 mb-2" />
+                      <Building className="w-6 h-6 text-orange-600 mb-2" />
                       <div className="font-semibold text-gray-900">Registered Company</div>
                       <div className="text-xs text-gray-600 mt-1">Limited company or partnership</div>
                     </button>
@@ -774,7 +784,7 @@ const BecomeASeller = () => {
                     name="businessName"
                     value={formData.businessName}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                       errors.businessName ? 'border-red-300' : 'border-gray-300'
                     }`}
                     placeholder="Enter your business or store name"
@@ -795,7 +805,7 @@ const BecomeASeller = () => {
                         name="businessRegNumber"
                         value={formData.businessRegNumber}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                           errors.businessRegNumber ? 'border-red-300' : 'border-gray-300'
                         }`}
                         placeholder="e.g., PVT-XXXXXX"
@@ -830,7 +840,7 @@ const BecomeASeller = () => {
                     name="businessCategory"
                     value={formData.businessCategory}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                       errors.businessCategory ? 'border-red-300' : 'border-gray-300'
                     }`}
                   >
@@ -857,7 +867,7 @@ const BecomeASeller = () => {
                     value={formData.businessDescription}
                     onChange={handleInputChange}
                     rows="5"
-                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                       errors.businessDescription ? 'border-red-300' : 'border-gray-300'
                     }`}
                     placeholder="Tell us about your business, the products you sell, and what makes your store unique..."
@@ -876,7 +886,7 @@ const BecomeASeller = () => {
                 <div className="flex justify-end">
                   <button
                     onClick={handleNextStep}
-                    className="flex items-center space-x-2 px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                    className="flex items-center space-x-2 px-8 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-semibold"
                   >
                     <span>Continue</span>
                     <ArrowRight className="w-5 h-5" />
@@ -901,7 +911,7 @@ const BecomeASeller = () => {
                     name="contactPerson"
                     value={formData.contactPerson}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                       errors.contactPerson ? 'border-red-300' : 'border-gray-300'
                     }`}
                     placeholder="Full name of primary contact"
@@ -921,7 +931,7 @@ const BecomeASeller = () => {
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                         errors.email ? 'border-red-300' : 'border-gray-300'
                       }`}
                       placeholder="your@email.com"
@@ -940,7 +950,7 @@ const BecomeASeller = () => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                         errors.phone ? 'border-red-300' : 'border-gray-300'
                       }`}
                       placeholder="+254 712 345 678"
@@ -987,7 +997,7 @@ const BecomeASeller = () => {
                       name="city"
                       value={formData.city}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                         errors.city ? 'border-red-300' : 'border-gray-300'
                       }`}
                     >
@@ -1017,7 +1027,7 @@ const BecomeASeller = () => {
                     name="address"
                     value={formData.address}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                       errors.address ? 'border-red-300' : 'border-gray-300'
                     }`}
                     placeholder="Street address, building, floor"
@@ -1051,7 +1061,7 @@ const BecomeASeller = () => {
                   </button>
                   <button
                     onClick={handleNextStep}
-                    className="flex items-center space-x-2 px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                    className="flex items-center space-x-2 px-8 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-semibold"
                   >
                     <span>Continue</span>
                     <ArrowRight className="w-5 h-5" />
@@ -1078,11 +1088,11 @@ const BecomeASeller = () => {
                       onClick={() => setFormData(prev => ({ ...prev, preferredPaymentMethod: 'mpesa' }))}
                       className={`p-4 border-2 rounded-lg text-left transition-all ${
                         formData.preferredPaymentMethod === 'mpesa'
-                          ? 'border-green-600 bg-green-50'
+                          ? 'border-orange-600 bg-orange-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      <Phone className="w-6 h-6 text-green-600 mb-2" />
+                      <Phone className="w-6 h-6 text-orange-600 mb-2" />
                       <div className="font-semibold text-gray-900">M-Pesa</div>
                       <div className="text-xs text-gray-600 mt-1">Fast and convenient mobile payments</div>
                     </button>
@@ -1091,11 +1101,11 @@ const BecomeASeller = () => {
                       onClick={() => setFormData(prev => ({ ...prev, preferredPaymentMethod: 'bank' }))}
                       className={`p-4 border-2 rounded-lg text-left transition-all ${
                         formData.preferredPaymentMethod === 'bank'
-                          ? 'border-blue-600 bg-blue-50'
+                          ? 'border-orange-600 bg-orange-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      <CreditCard className="w-6 h-6 text-blue-600 mb-2" />
+                      <CreditCard className="w-6 h-6 text-orange-600 mb-2" />
                       <div className="font-semibold text-gray-900">Bank Transfer</div>
                       <div className="text-xs text-gray-600 mt-1">Direct deposit to your bank account</div>
                     </button>
@@ -1103,7 +1113,7 @@ const BecomeASeller = () => {
                 </div>
 
                 {formData.preferredPaymentMethod === 'mpesa' && (
-                  <div className="space-y-6 p-6 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="space-y-6 p-6 bg-orange-50 border border-orange-200 rounded-lg">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         M-Pesa Number *
@@ -1113,7 +1123,7 @@ const BecomeASeller = () => {
                         name="mpesaNumber"
                         value={formData.mpesaNumber}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                           errors.mpesaNumber ? 'border-red-300' : 'border-gray-300'
                         }`}
                         placeholder="+254 712 345 678"
@@ -1132,7 +1142,7 @@ const BecomeASeller = () => {
                         name="mpesaName"
                         value={formData.mpesaName}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                           errors.mpesaName ? 'border-red-300' : 'border-gray-300'
                         }`}
                         placeholder="Name as registered with M-Pesa"
@@ -1145,7 +1155,7 @@ const BecomeASeller = () => {
                 )}
 
                 {formData.preferredPaymentMethod === 'bank' && (
-                  <div className="space-y-6 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="space-y-6 p-6 bg-orange-50 border border-orange-200 rounded-lg">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Bank Name *
@@ -1154,7 +1164,7 @@ const BecomeASeller = () => {
                         name="bankName"
                         value={formData.bankName}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                           errors.bankName ? 'border-red-300' : 'border-gray-300'
                         }`}
                       >
@@ -1184,7 +1194,7 @@ const BecomeASeller = () => {
                         name="accountNumber"
                         value={formData.accountNumber}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                           errors.accountNumber ? 'border-red-300' : 'border-gray-300'
                         }`}
                         placeholder="Your bank account number"
@@ -1203,7 +1213,7 @@ const BecomeASeller = () => {
                         name="accountName"
                         value={formData.accountName}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
                           errors.accountName ? 'border-red-300' : 'border-gray-300'
                         }`}
                         placeholder="Account holder name"
@@ -1238,7 +1248,7 @@ const BecomeASeller = () => {
                   </button>
                   <button
                     onClick={handleNextStep}
-                    className="flex items-center space-x-2 px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                    className="flex items-center space-x-2 px-8 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-semibold"
                   >
                     <span>Continue</span>
                     <ArrowRight className="w-5 h-5" />
@@ -1426,17 +1436,17 @@ const BecomeASeller = () => {
                       type="checkbox"
                       checked={formData.agreeToTerms}
                       onChange={handleInputChange}
-                      className={`h-4 w-4 mt-1 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer ${
+                      className={`h-4 w-4 mt-1 text-orange-600 focus:ring-orange-500 border-gray-300 rounded cursor-pointer ${
                         errors.agreeToTerms ? 'border-red-300' : ''
                       }`}
                     />
                     <label htmlFor="agreeToTerms" className="ml-3 block text-sm text-gray-700 cursor-pointer">
                       I agree to the{' '}
-                      <Link to="/seller-terms" className="text-blue-600 hover:text-blue-700 font-medium">
+                      <Link to="/seller-terms" className="text-orange-600 hover:text-orange-700 font-medium">
                         Seller Terms & Conditions
                       </Link>
                       {' '}and{' '}
-                      <Link to="/privacy-policy" className="text-blue-600 hover:text-blue-700 font-medium">
+                      <Link to="/privacy-policy" className="text-orange-600 hover:text-orange-700 font-medium">
                         Privacy Policy
                       </Link>
                     </label>
@@ -1452,7 +1462,7 @@ const BecomeASeller = () => {
                       type="checkbox"
                       checked={formData.agreeToCommission}
                       onChange={handleInputChange}
-                      className={`h-4 w-4 mt-1 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer ${
+                      className={`h-4 w-4 mt-1 text-orange-600 focus:ring-orange-500 border-gray-300 rounded cursor-pointer ${
                         errors.agreeToCommission ? 'border-red-300' : ''
                       }`}
                     />
@@ -1490,7 +1500,7 @@ const BecomeASeller = () => {
                   <button
                     onClick={handleSubmit}
                     disabled={isSubmitting}
-                    className="flex items-center space-x-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center space-x-2 px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (
                       <>
@@ -1512,7 +1522,17 @@ const BecomeASeller = () => {
 
         {/* Testimonials */}
         <section className="mb-16">
-          <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg shadow-xl p-8 text-white">
+          <div className="bg-gray-900 rounded-lg shadow-xl p-8 text-white relative overflow-hidden">
+            <div className="absolute inset-0">
+              <div 
+                className="absolute inset-0 opacity-40"
+                style={{
+                  background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+            </div>
+            <div className="relative z-10">
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold mb-4">What Our Sellers Say</h2>
               <p className="text-purple-100">Join other successful sellers across Kenya</p>
@@ -1552,13 +1572,14 @@ const BecomeASeller = () => {
                 </div>
               ))}
             </div>
+            </div>
           </div>
         </section>
 
         {/* Support CTA */}
         <section className="text-center">
           <div className="bg-white rounded-lg shadow-md p-8">
-            <MessageSquare className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+            <MessageSquare className="w-12 h-12 text-orange-600 mx-auto mb-4" />
             <h3 className="text-2xl font-bold text-gray-900 mb-4">Need Help?</h3>
             <p className="text-gray-600 mb-6">
               Our seller support team is here to help you succeed. Get in touch with any questions.
@@ -1566,7 +1587,7 @@ const BecomeASeller = () => {
             <div className="flex flex-wrap justify-center gap-4">
               <Link
                 to="/seller-support"
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-semibold"
               >
                 Contact Seller Support
               </Link>

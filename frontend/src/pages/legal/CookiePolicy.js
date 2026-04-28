@@ -113,7 +113,7 @@ const CookiePolicy = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading Cookie Policy...</p>
         </div>
       </div>
@@ -127,7 +127,7 @@ const CookiePolicy = () => {
         <div className="max-w-5xl mx-auto px-4 py-3">
           <button
             onClick={() => window.history.back()}
-            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg px-2 py-1"
+            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 rounded-lg px-2 py-1"
             aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
@@ -137,8 +137,18 @@ const CookiePolicy = () => {
       </div>
 
       {/* Header */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 px-4">
-        <div className="max-w-5xl mx-auto">
+      <header className="bg-gray-900 text-white py-16 px-4 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+            }}
+          />
+          <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+        </div>
+        <div className="max-w-5xl mx-auto relative z-10">
           <div className="flex items-center justify-center mb-4" aria-hidden="true">
             <Cookie className="w-16 h-16" />
           </div>
@@ -158,19 +168,19 @@ const CookiePolicy = () => {
       <nav className="bg-white border-b border-gray-200 sticky top-[52px] z-40 shadow-sm" aria-label="Page navigation">
         <div className="max-w-5xl mx-auto px-4 py-3 overflow-x-auto">
           <div className="flex space-x-4 min-w-max">
-            <a href="#what-are-cookies" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#what-are-cookies" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               What Are Cookies
             </a>
-            <a href="#cookie-types" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#cookie-types" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Cookie Types
             </a>
-            <a href="#why-we-use" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#why-we-use" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Why We Use Them
             </a>
-            <a href="#manage-cookies" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#manage-cookies" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Manage Cookies
             </a>
-            <a href="#contact" className="text-sm text-gray-600 hover:text-blue-600 whitespace-nowrap transition-colors">
+            <a href="#contact" className="text-sm text-gray-600 hover:text-orange-600 whitespace-nowrap transition-colors">
               Contact
             </a>
           </div>
@@ -194,12 +204,12 @@ const CookiePolicy = () => {
               cookies we use, why we use them, and how you can manage your cookie preferences.
             </p>
             
-            <div className="bg-blue-50 border-l-4 border-blue-600 p-4 mt-6" role="note">
+            <div className="bg-orange-50 border-l-4 border-orange-600 p-4 mt-6" role="note">
               <div className="flex">
-                <Info className="w-5 h-5 text-blue-600 mr-3 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                <Info className="w-5 h-5 text-orange-600 mr-3 flex-shrink-0 mt-0.5" aria-hidden="true" />
                 <div>
-                  <h3 className="font-semibold text-blue-900 mb-1">Your Control</h3>
-                  <p className="text-sm text-blue-800">
+                  <h3 className="font-semibold text-orange-900 mb-1">Your Control</h3>
+                  <p className="text-sm text-orange-800">
                     You can control and manage cookies in various ways. Please note that removing or blocking cookies 
                     can impact your user experience and may prevent certain features from working properly.
                   </p>
@@ -226,7 +236,7 @@ const CookiePolicy = () => {
                 <article key={category.id} className="border border-gray-200 rounded-lg overflow-hidden">
                   <button
                     onClick={() => toggleSection(category.id)}
-                    className="w-full flex items-center justify-between p-6 bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+                    className="w-full flex items-center justify-between p-6 bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-inset"
                     aria-expanded={isExpanded}
                     aria-controls={`cookie-category-${category.id}`}
                   >
@@ -282,8 +292,8 @@ const CookiePolicy = () => {
         <section className="bg-white rounded-lg shadow-md p-8 mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">First-Party and Third-Party Cookies</h2>
           <div className="grid md:grid-cols-2 gap-6">
-            <div className="border border-blue-200 rounded-lg p-6 bg-blue-50">
-              <h3 className="text-xl font-semibold text-blue-900 mb-3">First-Party Cookies</h3>
+            <div className="border border-orange-200 rounded-lg p-6 bg-orange-50">
+              <h3 className="text-xl font-semibold text-orange-900 mb-3">First-Party Cookies</h3>
               <p className="text-gray-700 mb-4">
                 These cookies are set directly by Oshocks Junior Bike Shop and are used exclusively by our website. 
                 They help us provide essential functionality like shopping cart management, user authentication, and 
@@ -291,45 +301,45 @@ const CookiePolicy = () => {
               </p>
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">•</span>
+                  <span className="text-orange-600 mr-2">•</span>
                   <span>Shopping cart and checkout functionality</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">•</span>
+                  <span className="text-orange-600 mr-2">•</span>
                   <span>User account and authentication</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">•</span>
+                  <span className="text-orange-600 mr-2">•</span>
                   <span>Your preferences and settings</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">•</span>
+                  <span className="text-orange-600 mr-2">•</span>
                   <span>Security and fraud prevention</span>
                 </li>
               </ul>
             </div>
 
-            <div className="border border-purple-200 rounded-lg p-6 bg-purple-50">
-              <h3 className="text-xl font-semibold text-purple-900 mb-3">Third-Party Cookies</h3>
+            <div className="border border-orange-200 rounded-lg p-6 bg-orange-50">
+              <h3 className="text-xl font-semibold text-orange-900 mb-3">Third-Party Cookies</h3>
               <p className="text-gray-700 mb-4">
                 These cookies are set by external services we use to enhance your experience. These include analytics 
                 tools, payment processors, advertising networks, and customer support services.
               </p>
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-start">
-                  <span className="text-purple-600 mr-2">•</span>
+                  <span className="text-orange-600 mr-2">•</span>
                   <span>Google Analytics for website analytics</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-purple-600 mr-2">•</span>
+                  <span className="text-orange-600 mr-2">•</span>
                   <span>Stripe and Flutterwave for payment processing</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-purple-600 mr-2">•</span>
+                  <span className="text-orange-600 mr-2">•</span>
                   <span>Facebook and Google for advertising</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-purple-600 mr-2">•</span>
+                  <span className="text-orange-600 mr-2">•</span>
                   <span>Tawk.to for live chat support</span>
                 </li>
               </ul>
@@ -343,8 +353,8 @@ const CookiePolicy = () => {
           <div className="grid md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="flex items-start">
-                <div className="bg-green-100 rounded-full p-2 mr-4 mt-1">
-                  <Shield className="w-5 h-5 text-green-600" />
+                <div className="bg-orange-100 rounded-full p-2 mr-4 mt-1">
+                  <Shield className="w-5 h-5 text-orange-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-1">Essential Functionality</h3>
@@ -355,8 +365,8 @@ const CookiePolicy = () => {
               </div>
 
               <div className="flex items-start">
-                <div className="bg-blue-100 rounded-full p-2 mr-4 mt-1">
-                  <Settings className="w-5 h-5 text-blue-600" />
+                <div className="bg-orange-100 rounded-full p-2 mr-4 mt-1">
+                  <Settings className="w-5 h-5 text-orange-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-1">Personalization</h3>
@@ -367,8 +377,8 @@ const CookiePolicy = () => {
               </div>
 
               <div className="flex items-start">
-                <div className="bg-purple-100 rounded-full p-2 mr-4 mt-1">
-                  <BarChart3 className="w-5 h-5 text-purple-600" />
+                <div className="bg-orange-100 rounded-full p-2 mr-4 mt-1">
+                  <BarChart3 className="w-5 h-5 text-orange-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-1">Analytics & Improvement</h3>
@@ -393,8 +403,8 @@ const CookiePolicy = () => {
               </div>
 
               <div className="flex items-start">
-                <div className="bg-emerald-100 rounded-full p-2 mr-4 mt-1">
-                  <CreditCard className="w-5 h-5 text-emerald-600" />
+                <div className="bg-orange-100 rounded-full p-2 mr-4 mt-1">
+                  <CreditCard className="w-5 h-5 text-orange-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-1">Secure Payments</h3>
@@ -405,8 +415,8 @@ const CookiePolicy = () => {
               </div>
 
               <div className="flex items-start">
-                <div className="bg-pink-100 rounded-full p-2 mr-4 mt-1">
-                  <MessageSquare className="w-5 h-5 text-pink-600" />
+                <div className="bg-orange-100 rounded-full p-2 mr-4 mt-1">
+                  <MessageSquare className="w-5 h-5 text-orange-600" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-1">Customer Support</h3>
@@ -521,7 +531,7 @@ const CookiePolicy = () => {
                     href="https://policies.google.com/privacy" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 hover:underline flex items-center"
+                    className="text-orange-600 hover:text-orange-800 hover:underline flex items-center"
                   >
                     Google Analytics
                     <ExternalLink className="w-3 h-3 ml-1" aria-hidden="true" />
@@ -533,7 +543,7 @@ const CookiePolicy = () => {
                     href="https://www.algolia.com/policies/privacy/" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 hover:underline flex items-center"
+                    className="text-orange-600 hover:text-orange-800 hover:underline flex items-center"
                   >
                     Algolia
                     <ExternalLink className="w-3 h-3 ml-1" aria-hidden="true" />
@@ -550,7 +560,7 @@ const CookiePolicy = () => {
                     href="https://stripe.com/privacy" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 hover:underline flex items-center"
+                    className="text-orange-600 hover:text-orange-800 hover:underline flex items-center"
                   >
                     Stripe
                     <ExternalLink className="w-3 h-3 ml-1" aria-hidden="true" />
@@ -562,7 +572,7 @@ const CookiePolicy = () => {
                     href="https://flutterwave.com/privacy" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 hover:underline flex items-center"
+                    className="text-orange-600 hover:text-orange-800 hover:underline flex items-center"
                   >
                     Flutterwave
                     <ExternalLink className="w-3 h-3 ml-1" aria-hidden="true" />
@@ -574,7 +584,7 @@ const CookiePolicy = () => {
                     href="https://www.safaricom.co.ke/privacy-policy" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 hover:underline flex items-center"
+                    className="text-orange-600 hover:text-orange-800 hover:underline flex items-center"
                   >
                     Safaricom M-Pesa
                     <ExternalLink className="w-3 h-3 ml-1" aria-hidden="true" />
@@ -591,7 +601,7 @@ const CookiePolicy = () => {
                     href="https://policies.google.com/privacy" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 hover:underline flex items-center"
+                    className="text-orange-600 hover:text-orange-800 hover:underline flex items-center"
                   >
                     Google Ads
                     <ExternalLink className="w-3 h-3 ml-1" aria-hidden="true" />
@@ -603,7 +613,7 @@ const CookiePolicy = () => {
                     href="https://www.facebook.com/privacy/explanation" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 hover:underline flex items-center"
+                    className="text-orange-600 hover:text-orange-800 hover:underline flex items-center"
                   >
                     Facebook Pixel
                     <ExternalLink className="w-3 h-3 ml-1" aria-hidden="true" />
@@ -620,7 +630,7 @@ const CookiePolicy = () => {
                     href="https://www.tawk.to/privacy-policy/" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 hover:underline flex items-center"
+                    className="text-orange-600 hover:text-orange-800 hover:underline flex items-center"
                   >
                     Tawk.to
                     <ExternalLink className="w-3 h-3 ml-1" aria-hidden="true" />
@@ -632,9 +642,19 @@ const CookiePolicy = () => {
         </section>
 
         {/* Contact Information */}
-        <section id="contact" className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-md p-8 text-white scroll-mt-32">
+        <section id="contact" className="bg-gray-900 rounded-lg shadow-md p-8 text-white scroll-mt-32 relative overflow-hidden">
+          <div className="absolute inset-0">
+            <div 
+              className="absolute inset-0 opacity-40"
+              style={{
+                background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+          </div>
+          <div className="relative z-10">
           <h2 className="text-3xl font-bold mb-6">Questions About Cookies?</h2>
-          <p className="mb-6 text-blue-100">
+          <p className="mb-6 text-orange-100">
             If you have any questions or concerns about our use of cookies or this Cookie Policy, please don't hesitate 
             to contact us. We're here to help and ensure your privacy is protected.
           </p>
@@ -650,11 +670,12 @@ const CookiePolicy = () => {
               <p className="text-blue-100">Nairobi, Kenya</p>
             </div>
           </div>
-          <div className="mt-6 pt-6 border-t border-blue-500">
-            <p className="text-sm text-blue-200">
+          <div className="mt-6 pt-6 border-t border-orange-500">
+            <p className="text-sm text-orange-200">
               For general inquiries about our marketplace, products, or services, please visit our Contact page or use 
               our live chat feature. For privacy-related concerns, please use the privacy email address above.
             </p>
+          </div>
           </div>
         </section>
 
@@ -678,7 +699,7 @@ const CookiePolicy = () => {
         </section>
       </main>
 
-      {/* Footer */}
+      {/* Footer commented out - using global Footer component instead
       <footer className="bg-gray-900 text-gray-400 py-8 px-4 mt-12">
         <div className="max-w-5xl mx-auto text-center">
           <p className="text-sm">
@@ -689,6 +710,7 @@ const CookiePolicy = () => {
           </p>
         </div>
       </footer>
+      */}
     </div>
   );
 };

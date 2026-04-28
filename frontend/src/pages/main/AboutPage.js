@@ -35,8 +35,18 @@ const AboutPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 md:py-24">
-        <div className="container mx-auto px-4">
+      <div className="bg-gray-900 text-white py-16 md:py-24 relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+            }}
+          />
+          <div className="absolute inset-0 bg-[url(https://images.unsplash.com/photo-1485965120184-e224f7a1d7f0?w=1920&q=80)] bg-cover bg-center opacity-20 mix-blend-overlay" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+        </div>
+        <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <Bike className="w-16 h-16 mx-auto mb-6" />
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -66,8 +76,8 @@ const AboutPage = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
             {stats.map((stat, index) => (
               <div key={index} className="bg-white rounded-lg shadow-md p-6 text-center">
-                <div className="text-3xl md:text-4xl font-bold text-blue-600 mb-2">
-                  {stat.number}
+
+                              <div className="text-3xl md:text-4xl font-bold text-orange-600 mb-2">    {stat.number}
                 </div>
                 <div className="text-gray-600 text-sm md:text-base">{stat.label}</div>
               </div>
@@ -81,7 +91,7 @@ const AboutPage = () => {
           <div className="grid md:grid-cols-2 gap-8 mb-16">
             {features.map((feature, index) => (
               <div key={index} className="bg-white rounded-lg shadow-md p-8 hover:shadow-lg transition-shadow">
-                <div className="text-blue-600 mb-4">{feature.icon}</div>
+                <div className="text-orange-600 mb-4">{feature.icon}</div>
                 <h3 className="text-xl font-bold mb-3 text-gray-900">{feature.title}</h3>
                 <p className="text-gray-700 leading-relaxed">{feature.description}</p>
               </div>
@@ -89,7 +99,7 @@ const AboutPage = () => {
           </div>
 
           {/* Story Section */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-8 md:p-12 mb-12">
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-8 md:p-12 mb-12">
             <h2 className="text-3xl font-bold mb-6 text-gray-900">Our Story</h2>
             <div className="space-y-4 text-gray-700 leading-relaxed">
               <p>
@@ -107,7 +117,7 @@ const AboutPage = () => {
           {/* Technology & Innovation */}
           <div className="bg-white rounded-lg shadow-md p-8 md:p-12 mb-12">
             <div className="flex items-center gap-3 mb-6">
-              <Globe className="w-8 h-8 text-blue-600" />
+              <Globe className="w-8 h-8 text-orange-600" />
               <h2 className="text-3xl font-bold text-gray-900">Technology & Innovation</h2>
             </div>
             <p className="text-gray-700 leading-relaxed mb-4">
@@ -119,18 +129,29 @@ const AboutPage = () => {
           </div>
 
           {/* Commitment Section */}
-          <div className="bg-blue-600 text-white rounded-lg p-8 md:p-12 text-center">
+          <div className="bg-gray-900 text-white rounded-lg p-8 md:p-12 text-center relative overflow-hidden">
+            <div className="absolute inset-0">
+              <div 
+                className="absolute inset-0 opacity-40"
+                style={{
+                  background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+            </div>
+            <div className="relative z-10">
             <h2 className="text-3xl font-bold mb-6">Our Commitment to You</h2>
-            <p className="text-lg text-blue-100 leading-relaxed mb-6 max-w-3xl mx-auto">
+            <p className="text-lg text-orange-100 leading-relaxed mb-6 max-w-3xl mx-auto">
               We're committed to providing authentic products, competitive prices, reliable delivery, and exceptional customer service. Whether you're a casual rider or an elite cyclist, we're here to support your cycling journey every step of the way.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="/products" className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors">
+              <a href="/products" className="bg-white text-orange-600 px-8 py-3 rounded-lg font-semibold hover:bg-orange-50 transition-colors">
                 Shop Now
               </a>
-              <a href="/contact" className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+              <a href="/contact" className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors">
                 Contact Us
               </a>
+            </div>
             </div>
           </div>
         </div>

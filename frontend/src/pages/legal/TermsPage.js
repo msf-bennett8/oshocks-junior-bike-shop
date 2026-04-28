@@ -68,26 +68,26 @@ export default function TermsPage() {
             Welcome to Oshocks Junior Bike Shop. These Terms and Conditions constitute a legally binding agreement between you and Oshocks Junior Bike Shop.
           </p>
 
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-500 p-4 sm:p-5 rounded-r-lg">
+          <div className="bg-gradient-to-r from-orange-50 to-orange-100 border-l-4 border-orange-500 p-4 sm:p-5 rounded-r-lg">
             <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2 text-sm sm:text-base">
-              <Info className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+              <Info className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
               By Using Our Platform, You Agree To:
             </h4>
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="bg-white/70 p-3 rounded flex items-start gap-2">
-                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <span className="text-xs sm:text-sm text-gray-700">These Terms and Conditions in their entirety</span>
               </div>
               <div className="bg-white/70 p-3 rounded flex items-start gap-2">
-                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <span className="text-xs sm:text-sm text-gray-700">Our Privacy Policy and Cookie Policy</span>
               </div>
               <div className="bg-white/70 p-3 rounded flex items-start gap-2">
-                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <span className="text-xs sm:text-sm text-gray-700">Our Refund and Returns Policy</span>
               </div>
               <div className="bg-white/70 p-3 rounded flex items-start gap-2">
-                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <span className="text-xs sm:text-sm text-gray-700">All applicable laws and regulations in Kenya</span>
               </div>
             </div>
@@ -115,7 +115,7 @@ export default function TermsPage() {
       category: 'buyers',
       content: (
         <div className="space-y-6">
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-4 sm:p-5 rounded-lg border-2 border-blue-200">
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 sm:p-5 rounded-lg border-2 border-orange-200">
             <p className="text-sm text-gray-700 mb-4">To access certain features, you must create an account by providing:</p>
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm">
@@ -125,19 +125,19 @@ export default function TermsPage() {
                 </p>
                 <ul className="space-y-2 text-xs sm:text-sm text-gray-700">
                   <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                    <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
                     <span>Full legal name</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                    <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
                     <span>Valid email address</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                    <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
                     <span>Phone number</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                    <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
                     <span>Secure password</span>
                   </li>
                 </ul>
@@ -149,15 +149,15 @@ export default function TermsPage() {
                 </p>
                 <ul className="space-y-2 text-xs sm:text-sm text-gray-700">
                   <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
                     <span>Date of birth</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
                     <span>Profile photo</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                    <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
                     <span>Billing address</span>
                   </li>
                 </ul>
@@ -184,13 +184,13 @@ export default function TermsPage() {
             ].map((step) => {
               const Icon = step.icon;
               return (
-                <div key={step.num} className="flex items-start gap-3 sm:gap-4 bg-white p-3 sm:p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
-                  <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 shadow-md text-sm sm:text-base">
+                <div key={step.num} className="flex items-start gap-3 sm:gap-4 bg-white p-3 sm:p-4 rounded-lg shadow-sm border-l-4 border-orange-500">
+                  <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 shadow-md text-sm sm:text-base">
                     {step.num}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                      <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
                       <h5 className="font-semibold text-gray-900 text-sm sm:text-base">{step.title}</h5>
                     </div>
                     <p className="text-xs sm:text-sm text-gray-700">{step.desc}</p>
@@ -210,47 +210,47 @@ export default function TermsPage() {
       content: (
         <div className="space-y-6">
           <div className="grid sm:grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 sm:p-5 rounded-lg border-2 border-green-300">
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 sm:p-5 rounded-lg border-2 border-orange-300">
               <div className="flex items-center gap-3 mb-4">
-                <div className="bg-green-600 p-2 sm:p-3 rounded-lg shadow-md">
+                <div className="bg-orange-600 p-2 sm:p-3 rounded-lg shadow-md">
                   <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <h5 className="font-bold text-gray-900 text-base sm:text-lg">M-Pesa</h5>
               </div>
               <ul className="space-y-2 text-xs sm:text-sm text-gray-700">
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <CheckCircle className="w-4 h-4 text-orange-600" />
                   <span>STK Push payment</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <CheckCircle className="w-4 h-4 text-orange-600" />
                   <span>No additional fees</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <CheckCircle className="w-4 h-4 text-orange-600" />
                   <span>Instant confirmation</span>
                 </li>
               </ul>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-5 rounded-lg border-2 border-blue-300">
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 sm:p-5 rounded-lg border-2 border-orange-300">
               <div className="flex items-center gap-3 mb-4">
-                <div className="bg-blue-600 p-2 sm:p-3 rounded-lg shadow-md">
+                <div className="bg-orange-600 p-2 sm:p-3 rounded-lg shadow-md">
                   <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <h5 className="font-bold text-gray-900 text-base sm:text-lg">Cards</h5>
               </div>
               <ul className="space-y-2 text-xs sm:text-sm text-gray-700">
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-blue-600" />
+                  <CheckCircle className="w-4 h-4 text-orange-600" />
                   <span>Visa, Mastercard</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-blue-600" />
+                  <CheckCircle className="w-4 h-4 text-orange-600" />
                   <span>3D Secure auth</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-blue-600" />
+                  <CheckCircle className="w-4 h-4 text-orange-600" />
                   <span>Save for future</span>
                 </li>
               </ul>
@@ -269,7 +269,7 @@ export default function TermsPage() {
           <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
             <table className="w-full border-collapse bg-white text-xs sm:text-sm">
               <thead>
-                <tr className="bg-gradient-to-r from-blue-600 to-green-600 text-white">
+                <tr className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
                   <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-semibold">Location</th>
                   <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-semibold">Time</th>
                   <th className="px-3 sm:px-4 py-2 sm:py-3 text-left font-semibold">Cost</th>
@@ -279,17 +279,17 @@ export default function TermsPage() {
                 <tr className="border-b hover:bg-gray-50">
                   <td className="px-3 sm:px-4 py-2 sm:py-3 font-semibold">Nairobi CBD</td>
                   <td className="px-3 sm:px-4 py-2 sm:py-3">1-2 days</td>
-                  <td className="px-3 sm:px-4 py-2 sm:py-3 text-green-600 font-semibold">KES 200</td>
+                  <td className="px-3 sm:px-4 py-2 sm:py-3 text-orange-600 font-semibold">KES 200</td>
                 </tr>
                 <tr className="border-b hover:bg-gray-50">
                   <td className="px-3 sm:px-4 py-2 sm:py-3 font-semibold">Suburbs</td>
                   <td className="px-3 sm:px-4 py-2 sm:py-3">2-3 days</td>
-                  <td className="px-3 sm:px-4 py-2 sm:py-3 text-green-600 font-semibold">KES 300</td>
+                  <td className="px-3 sm:px-4 py-2 sm:py-3 text-orange-600 font-semibold">KES 300</td>
                 </tr>
                 <tr className="border-b hover:bg-gray-50">
                   <td className="px-3 sm:px-4 py-2 sm:py-3 font-semibold">Major Cities</td>
                   <td className="px-3 sm:px-4 py-2 sm:py-3">3-5 days</td>
-                  <td className="px-3 sm:px-4 py-2 sm:py-3 text-blue-600 font-semibold">KES 500</td>
+                  <td className="px-3 sm:px-4 py-2 sm:py-3 text-orange-600 font-semibold">KES 500</td>
                 </tr>
                 <tr className="hover:bg-gray-50">
                   <td className="px-3 sm:px-4 py-2 sm:py-3 font-semibold">Rural</td>
@@ -310,9 +310,9 @@ export default function TermsPage() {
       content: (
         <div className="space-y-6">
           <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
-            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg border-l-4 border-green-500">
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg border-l-4 border-orange-500">
               <div className="flex items-center gap-3 mb-4">
-                <div className="bg-green-600 p-2 sm:p-3 rounded-lg">
+                <div className="bg-orange-600 p-2 sm:p-3 rounded-lg">
                   <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div>
@@ -320,14 +320,14 @@ export default function TermsPage() {
                   <p className="text-xs text-gray-600">Mon-Sat: 9 AM - 6 PM</p>
                 </div>
               </div>
-              <a href="tel:+254715061213" className="text-base sm:text-lg font-bold text-green-600 hover:underline block">
+              <a href="tel:+254715061213" className="text-base sm:text-lg font-bold text-orange-600 hover:underline block">
                 +254 715 061 213
               </a>
             </div>
 
-            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg border-l-4 border-blue-500">
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg border-l-4 border-orange-500">
               <div className="flex items-center gap-3 mb-4">
-                <div className="bg-blue-600 p-2 sm:p-3 rounded-lg">
+                <div className="bg-orange-600 p-2 sm:p-3 rounded-lg">
                   <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div>
@@ -335,7 +335,7 @@ export default function TermsPage() {
                   <p className="text-xs text-gray-600">Response within 24 hours</p>
                 </div>
               </div>
-              <a href="mailto:oshocksstores@gmail.com" className="text-sm sm:text-base text-blue-600 hover:underline font-semibold block break-all">
+              <a href="mailto:oshocksstores@gmail.com" className="text-sm sm:text-base text-orange-600 hover:underline font-semibold block break-all">
                 oshocksstores@gmail.com
               </a>
             </div>
@@ -363,13 +363,13 @@ export default function TermsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-green-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-lg mt-16">
         <div className="max-w-6xl mx-auto px-4 py-4 sm:py-6">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
             <div className="flex items-center gap-3 sm:gap-4">
-              <div className="bg-gradient-to-br from-blue-600 to-green-600 p-2 sm:p-3 rounded-lg shadow-lg">
+              <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-2 sm:p-3 rounded-lg shadow-lg">
                 <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
               </div>
               <div>
@@ -378,7 +378,7 @@ export default function TermsPage() {
               </div>
             </div>
             <div className="hidden sm:flex gap-2">
-              <button className="flex items-center gap-2 px-3 sm:px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm">
+              <button className="flex items-center gap-2 px-3 sm:px-4 py-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors text-sm">
                 <Download className="w-4 h-4" />
                 <span className="hidden md:inline">Download</span>
               </button>
@@ -395,7 +395,7 @@ export default function TermsPage() {
               <span className="hidden sm:inline">Last Updated: {lastUpdated}</span>
               <span className="sm:hidden">{lastUpdated}</span>
             </div>
-            <div className="flex items-center gap-2 text-blue-600 font-semibold">
+            <div className="flex items-center gap-2 text-orange-600 font-semibold">
               <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">Legally Binding Agreement</span>
               <span className="sm:hidden">Binding</span>
@@ -418,7 +418,7 @@ export default function TermsPage() {
                   placeholder="Search terms..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                 />
               </div>
               <div className="flex gap-2">
@@ -448,7 +448,7 @@ export default function TermsPage() {
                     onClick={() => setActiveFilter(filter.id)}
                     className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg font-semibold transition-all text-xs sm:text-sm ${
                       activeFilter === filter.id
-                        ? 'bg-gradient-to-r from-blue-600 to-green-600 text-white shadow-md'
+                        ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -496,8 +496,8 @@ export default function TermsPage() {
                     className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-center gap-3 sm:gap-4">
-                      <div className="bg-gradient-to-br from-blue-100 to-green-100 p-2 sm:p-3 rounded-lg">
-                        <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                      <div className="bg-gradient-to-br from-orange-100 to-orange-200 p-2 sm:p-3 rounded-lg">
+                        <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
                       </div>
                       <h2 className="text-base sm:text-xl font-bold text-gray-900 text-left">
                         {section.title}
@@ -531,7 +531,7 @@ export default function TermsPage() {
                 setSearchTerm('');
                 setActiveFilter('all');
               }}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
+              className="bg-orange-600 text-white px-6 py-2 rounded-lg hover:bg-orange-700 transition-colors text-sm sm:text-base"
             >
               Clear Search
             </button>
@@ -539,22 +539,33 @@ export default function TermsPage() {
         )}
 
         {/* Footer CTA */}
-        <div className="mt-12 bg-gradient-to-br from-blue-600 to-green-600 p-6 sm:p-8 rounded-lg shadow-xl text-white">
+        <div className="mt-12 bg-gray-900 p-6 sm:p-8 rounded-lg shadow-xl text-white relative overflow-hidden">
+          <div className="absolute inset-0">
+            <div 
+              className="absolute inset-0 opacity-40"
+              style={{
+                background: 'radial-gradient(circle at 30% 50%, rgb(255, 69, 0) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgb(255, 165, 0) 0%, transparent 40%)',
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
+          </div>
+          <div className="relative z-10">
           <div className="text-center">
             <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-3 sm:mb-4">Have Questions About Our Terms?</h3>
             <p className="mb-4 sm:mb-6 text-blue-100 max-w-2xl mx-auto text-sm sm:text-base">
               Our legal team is here to help clarify any questions you may have about these Terms and Conditions.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-              <button className="bg-white text-blue-600 px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-blue-50 transition-colors shadow-md flex items-center justify-center gap-2 text-sm sm:text-base">
+              <button className="bg-white text-orange-600 px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-orange-50 transition-colors shadow-md flex items-center justify-center gap-2 text-sm sm:text-base">
                 <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
                 Contact Legal Team
               </button>
-              <button className="bg-blue-700 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-blue-800 transition-colors shadow-md border-2 border-white flex items-center justify-center gap-2 text-sm sm:text-base">
+              <button className="bg-orange-700 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg font-bold hover:bg-orange-800 transition-colors shadow-md border-2 border-white flex items-center justify-center gap-2 text-sm sm:text-base">
                 <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
                 Live Chat Support
               </button>
             </div>
+          </div>
           </div>
         </div>
 
@@ -562,45 +573,45 @@ export default function TermsPage() {
         <div className="mt-8 grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             <div className="flex items-center gap-3 mb-3">
-              <div className="bg-blue-100 p-2 rounded-lg">
-                <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+              <div className="bg-orange-100 p-2 rounded-lg">
+                <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
               </div>
               <h4 className="font-bold text-gray-900 text-sm sm:text-base">Shipping Policy</h4>
             </div>
             <p className="text-xs sm:text-sm text-gray-700 mb-3 sm:mb-4">
               Learn about our delivery process and shipping rates.
             </p>
-            <a href="/shipping-policy" className="text-blue-600 hover:underline font-semibold text-xs sm:text-sm flex items-center gap-1">
+            <a href="/shipping-policy" className="text-orange-600 hover:underline font-semibold text-xs sm:text-sm flex items-center gap-1">
               Read More <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
             </a>
           </div>
 
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             <div className="flex items-center gap-3 mb-3">
-              <div className="bg-green-100 p-2 rounded-lg">
-                <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+              <div className="bg-orange-100 p-2 rounded-lg">
+                <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
               </div>
               <h4 className="font-bold text-gray-900 text-sm sm:text-base">Privacy Policy</h4>
             </div>
             <p className="text-xs sm:text-sm text-gray-700 mb-3 sm:mb-4">
               Review how we protect and use your personal data.
             </p>
-            <a href="/privacy-policy" className="text-green-600 hover:underline font-semibold text-xs sm:text-sm flex items-center gap-1">
+            <a href="/privacy-policy" className="text-orange-600 hover:underline font-semibold text-xs sm:text-sm flex items-center gap-1">
               Read More <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
             </a>
           </div>
 
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             <div className="flex items-center gap-3 mb-3">
-              <div className="bg-purple-100 p-2 rounded-lg">
-                <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
+              <div className="bg-orange-100 p-2 rounded-lg">
+                <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
               </div>
               <h4 className="font-bold text-gray-900 text-sm sm:text-base">Contact Support</h4>
             </div>
             <p className="text-xs sm:text-sm text-gray-700 mb-3 sm:mb-4">
               Get help with your orders and account questions.
             </p>
-            <a href="/contact-support" className="text-purple-600 hover:underline font-semibold text-xs sm:text-sm flex items-center gap-1">
+            <a href="/contact-support" className="text-orange-600 hover:underline font-semibold text-xs sm:text-sm flex items-center gap-1">
               Contact Us <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
             </a>
           </div>
@@ -610,7 +621,7 @@ export default function TermsPage() {
         <div className="mt-8 text-center">
           <a
             href="/"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold hover:underline transition-colors text-sm sm:text-base"
+            className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-800 font-semibold hover:underline transition-colors text-sm sm:text-base"
           >
             <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -632,7 +643,7 @@ export default function TermsPage() {
 
       {/* Floating Help Button */}
       <div className="fixed bottom-6 right-4 sm:right-6 z-50">
-        <button className="bg-gradient-to-br from-blue-600 to-green-600 text-white p-3 sm:p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group">
+        <button className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-3 sm:p-4 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-110 group">
           <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-12 transition-transform" />
         </button>
       </div>

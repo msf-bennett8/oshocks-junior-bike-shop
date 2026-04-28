@@ -914,7 +914,7 @@ const ClearanceSalePage = () => {
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer commented out - using global Footer component instead
       <footer className="bg-gray-900 text-gray-400 py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
@@ -969,6 +969,7 @@ const ClearanceSalePage = () => {
           </div>
         </div>
       </footer>
+      */}
     </div>
   );
 };
