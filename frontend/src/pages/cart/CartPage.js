@@ -40,7 +40,6 @@ const CartPage = () => {
   } = useCart();
 
   const { toggleWishlist, isInWishlist } = useWishlist();
-  const [wishlist, setWishlist] = useState([]);
   const [notification, setNotification] = useState(null);
   const [addingRecommendedToCart, setAddingRecommendedToCart] = useState(null);
   const [togglingRecommendedWishlist, setTogglingRecommendedWishlist] = useState(null);
@@ -167,20 +166,69 @@ const countyInfo = {
   };
 
   // Handle remove item
-  const handleRemoveItem = async (id) => {
-    const item = cartItems.find(i => i.id === id);
-    const result = await removeFromCart(id);
-    if (result.success && item) {
-      showNotification(`${item.name} removed from cart`, 'info');
-    } else if (!result.success) {
-      showNotification(result.error, 'error');
-    }
+  const [itemToRemove, setItemToRemove] = useState(null);
+  const [removingItemId, setRemovingItemId] = useState(null);
+
+  const handleRemoveItemClick = (id) => {
+    setItemToRemove(id);
+  };
+
+  const confirmRemoveItem = async () => {
+    if (!itemToRemove) return;
+    setRemovingItemId(itemToRemove);
+    setItemToRemove(null);
+    
+    // Wait for animation before actually removing
+    setTimeout(async () => {
+      const item = cartItems.find(i => i.id === itemToRemove);
+      const result = await removeFromCart(itemToRemove);
+      setRemovingItemId(null);
+      if (result.success && item) {
+        showModal('cart', 'error', `${item.name} removed from cart`, 'hero');
+      } else if (!result.success) {
+        showModal('cart', 'error', result.error, 'hero');
+      }
+    }, 300);
+  };
+
+  const cancelRemoveItem = () => {
+    setItemToRemove(null);
+  };
+
+  // Direct remove without confirmation (used by "Save for Later")
+  const handleDirectRemove = async (id) => {
+    setRemovingItemId(id);
+    setTimeout(async () => {
+      const result = await removeFromCart(id);
+      setRemovingItemId(null);
+      if (!result.success) {
+        showModal('cart', 'error', result.error, 'hero');
+      }
+    }, 300);
   };
 
   // Handle add to wishlist
-  const handleAddToWishlist = (item) => {
-    setWishlist([...wishlist, item]);
-    showNotification(`${item.name} moved to wishlist`);
+  const handleAddToWishlist = async (item) => {
+    const product = {
+      id: item.product_id,
+      name: item.name,
+      price: item.price,
+      image: item.image || item.thumbnail,
+      images: [{ image_url: item.image || item.thumbnail }]
+    };
+    const variant = item.variant || null;
+    
+    try {
+      const result = await toggleWishlist(product, variant);
+      if (result.success) {
+        showModal('wishlist', 'add', item.name, 'hero');
+      } else {
+        showModal('cart', 'error', result.error || 'Failed to save item', 'hero');
+      }
+    } catch (error) {
+      console.error('Error saving to wishlist:', error);
+      showModal('cart', 'error', 'Failed to save item to wishlist', 'hero');
+    }
   };
 
   // Handle clear cart
@@ -190,13 +238,13 @@ const countyInfo = {
     setShowClearCartModal(true);
   };
 
-  const confirmClearCart = async () => {
-    setShowClearCartModal(false);
+    const confirmClearCart = async () => {
     const result = await clearCart();
+    setShowClearCartModal(false);
     if (result.success) {
-      showNotification('Cart cleared', 'info');
+      showModal('cart', 'error', 'Cart cleared successfully', 'hero');
     } else {
-      showNotification(result.error, 'error');
+      showModal('cart', 'error', result.error, 'hero');
     }
   };
 
@@ -351,20 +399,18 @@ const countyInfo = {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
               <Link
                 to="/shop"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg text-sm sm:text-base"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors shadow-md hover:shadow-lg text-sm sm:text-base"
               >
                 <ShoppingCart className="w-5 h-5" />
                 Start Shopping
               </Link>
-              {wishlist.length > 0 && (
-                <Link
-                  to="/wishlist"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors text-sm sm:text-base"
-                >
-                  <Heart className="w-5 h-5" />
-                  View Wishlist ({wishlist.length})
-                </Link>
-              )}
+              <Link
+                to="/wishlist"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-gray-700 border-2 border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition-colors text-sm sm:text-base"
+              >
+                <Heart className="w-5 h-5" />
+                View Wishlist
+              </Link>
             </div>
 
             {/* Popular Categories */}
@@ -375,9 +421,9 @@ const countyInfo = {
                   <Link
                     key={category}
                     to={`/category/${category.toLowerCase().replace(' ', '-')}`}
-                    className="p-3 sm:p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-blue-600 hover:shadow-md transition-all"
+                    className="p-3 sm:p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-orange-600 hover:shadow-md transition-all"
                   >
-                    <Package className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-blue-600" />
+                    <Package className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-orange-600" />
                     <p className="text-xs sm:text-sm font-medium text-gray-800">{category}</p>
                   </Link>
                 ))}
@@ -401,7 +447,7 @@ const countyInfo = {
         {/* Notification Toast */}
         {notification && (
           <div className={`fixed top-4 right-4 z-50 px-4 sm:px-6 py-3 rounded-lg shadow-lg animate-fadeIn ${
-            notification.type === 'success' ? 'bg-green-600' : 'bg-blue-600'
+            notification.type === 'success' ? 'bg-green-600' : 'bg-orange-600'
           } text-white text-sm sm:text-base max-w-xs sm:max-w-sm`}>
             {notification.message}
           </div>
@@ -440,6 +486,36 @@ const countyInfo = {
                     className="flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
                   >
                     Yes, Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Remove Item Confirmation Modal */}
+        {itemToRemove && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={cancelRemoveItem} />
+            <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 transform animate-fadeIn">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Trash2 className="w-8 h-8 text-red-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Remove Item?</h3>
+                <p className="text-gray-600 mb-6">Are you sure you want to remove this item from your cart?</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={cancelRemoveItem}
+                    className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmRemoveItem}
+                    className="flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    Yes, Remove
                   </button>
                 </div>
               </div>
@@ -501,8 +577,10 @@ const countyInfo = {
                   <CartItem
                     key={item.id}
                     item={item}
+                    isRemoving={removingItemId === item.id}
                     onUpdateQuantity={handleUpdateQuantity}
-                    onRemoveItem={handleRemoveItem}
+                    onRemoveItem={handleRemoveItemClick}
+                    onDirectRemove={handleDirectRemove}
                     onAddToWishlist={handleAddToWishlist}
                     showStock={true}
                     editable={true}
@@ -520,7 +598,7 @@ const countyInfo = {
                     <p className="text-xs text-gray-500 hidden sm:block">Orders over KES 5,000</p>
                   </div>
                   <div className="p-2">
-                    <RefreshCw className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-blue-600" />
+                    <RefreshCw className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 text-orange-600" />
                     <p className="text-xs font-medium text-gray-800">30-Day Returns</p>
                     <p className="text-xs text-gray-500 hidden sm:block">Money-back guarantee</p>
                   </div>
@@ -787,14 +865,14 @@ const countyInfo = {
                 />
 
                 {/* Need Help? */}
-                <div className="mt-4 sm:mt-6 bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
-                  <h3 className="text-sm sm:text-base font-bold text-blue-900 mb-2">Need Help?</h3>
-                  <p className="text-xs sm:text-sm text-blue-800 mb-3">
+                <div className="mt-4 sm:mt-6 bg-orange-50 border border-orange-200 rounded-lg p-3 sm:p-4">
+                  <h3 className="text-sm sm:text-base font-bold text-orange-900 mb-2">Need Help?</h3>
+                  <p className="text-xs sm:text-sm text-orange-800 mb-3">
                     Our customer support team is here to assist you.
                   </p>
                   <Link
                     to="/contact-support"
-                    className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                    className="text-xs sm:text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1"
                   >
                     Contact Support
                     <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 rotate-180" />

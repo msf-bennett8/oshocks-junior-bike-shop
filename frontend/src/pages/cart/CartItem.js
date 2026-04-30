@@ -10,13 +10,14 @@ const CartItem = ({
   item, 
   onUpdateQuantity, 
   onRemoveItem, 
+  onDirectRemove,
   onSaveForLater, 
   onAddToWishlist,
   showStock = true,
   compact = false,
-  editable = true 
+  editable = true,
+  isRemoving = false
 }) => {
-  const [isRemoving, setIsRemoving] = useState(false);
   const [quantityError, setQuantityError] = useState('');
 
   // Format price in KES
@@ -68,19 +69,18 @@ const CartItem = ({
     onUpdateQuantity(item.id, newQuantity);
   };
 
-  // Handle remove with animation
+    // Handle remove - opens confirmation modal in parent (CartPage)
   const handleRemove = () => {
-    setIsRemoving(true);
-    setTimeout(() => {
-      onRemoveItem(item.id);
-    }, 300);
+    onRemoveItem(item.id);
   };
 
   // Handle move to wishlist
   const handleMoveToWishlist = () => {
     if (onAddToWishlist) {
       onAddToWishlist(item);
-      handleRemove();
+      if (onDirectRemove) {
+        onDirectRemove(item.id);
+      }
     }
   };
 

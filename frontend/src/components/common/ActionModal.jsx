@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Heart, ShoppingCart, CheckCircle, XCircle, X } from 'lucide-react';
 
 const ActionModal = ({ isOpen, onClose, type, action, productName, section = 'hero' }) => {
+  const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -150,7 +152,8 @@ const ActionModal = ({ isOpen, onClose, type, action, productName, section = 'he
               {type === 'wishlist' && action === 'add' && (
                 <button
                   onClick={() => {
-                    window.location.href = '/wishlist';
+                    navigate('/wishlist');
+                    onClose();
                   }}
                   className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-full border border-white/20 transition-all hover:-translate-y-0.5 text-sm"
                 >
@@ -161,7 +164,8 @@ const ActionModal = ({ isOpen, onClose, type, action, productName, section = 'he
               {type === 'cart' && action === 'add' && (
                 <button
                   onClick={() => {
-                    window.location.href = '/cart';
+                    navigate('/cart');
+                    onClose();
                   }}
                   className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-full border border-white/20 transition-all hover:-translate-y-0.5 text-sm"
                 >
