@@ -4,7 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import authService from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader, User, Phone, MapPin, CheckCircle2, X, FileText, ChevronRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader, User, Phone, MapPin, CheckCircle2, X, FileText, ChevronRight, Shield } from 'lucide-react';
+import Logo from '../../components/common/Logo';
 import LegalDocumentBottomSheet from '../../components/legal/LegalDocumentBottomSheet';
 
 const RegisterPage = () => {
@@ -266,76 +267,189 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
-        {/* Logo and Header */}
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-block">
-            <div className="flex items-center justify-center space-x-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">OS</span>
-              </div>
-              <span className="text-2xl font-bold text-gray-900">Oshocks</span>
-            </div>
-          </Link>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Join Kenya's premier cycling marketplace
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50 flex">
+      {/* LEFT COLUMN - Branding & Expedition (AccellaX 361° Style) */}
+      <div className="hidden lg:flex lg:w-5/12 flex-col items-center justify-center p-12 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <svg width="100%" height="100%">
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
         </div>
 
-        {/* Progress Steps */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center">
-            <div className="flex items-center space-x-4">
-              {/* Step 1 */}
-              <div className="flex items-center">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                  currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-                } font-semibold`}>
-                  {currentStep > 1 ? <CheckCircle2 className="w-6 h-6" /> : '1'}
-                </div>
-                <span className={`ml-2 text-sm font-medium ${
-                  currentStep >= 1 ? 'text-gray-900' : 'text-gray-500'
-                }`}>
-                  Personal Info
-                </span>
+        <div className="relative z-10 w-full max-w-sm space-y-8">
+          {/* Logo and Header */}
+          <div className="text-center">
+            <div className="flex justify-center mb-4">
+              <Logo size="xlarge" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Join Oshocks
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Create your account to get started
+            </p>
+          </div>
+
+          {/* Expedition Card */}
+          <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 rounded-2xl shadow-2xl overflow-hidden">
+            <div className="p-8 relative">
+              {/* Background Pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <svg width="100%" height="100%">
+                  <defs>
+                    <pattern id="diagonal" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                      <line x1="0" y1="0" x2="0" y2="20" stroke="white" strokeWidth="2" />
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#diagonal)" />
+                </svg>
               </div>
-              
-              {/* Divider */}
-              <div className={`w-16 h-1 ${
-                currentStep > 1 ? 'bg-blue-600' : 'bg-gray-200'
-              }`} />
-              
-              {/* Step 2 */}
-              <div className="flex items-center">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                  currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
-                } font-semibold`}>
-                  2
-                </div>
-                <span className={`ml-2 text-sm font-medium ${
-                  currentStep >= 2 ? 'text-gray-900' : 'text-gray-500'
-                }`}>
-                  Account Details
-                </span>
+
+              <div className="relative z-10">
+                <h2 className="text-2xl font-bold text-white mb-3">
+                  Oshocks Expedition
+                </h2>
+                <p className="text-white/90 text-sm mb-6 leading-relaxed">
+                  Expedition is the easiest way to get started on Oshocks
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/expedition')}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-orange-600 font-semibold rounded-lg hover:bg-orange-50 transition-all duration-200 shadow-lg text-sm"
+                >
+                  Learn more »
+                </button>
               </div>
+
+              {/* Robot SVG */}
+              <div className="mt-6 flex justify-center">
+                <svg
+                  viewBox="0 0 200 200"
+                  className="w-40 h-40"
+                  style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))' }}
+                >
+                  {/* Robot Body */}
+                  <rect x="60" y="80" width="80" height="90" rx="10" fill="white" stroke="#333" strokeWidth="3"/>
+                  {/* Robot Head */}
+                  <rect x="70" y="40" width="60" height="50" rx="8" fill="white" stroke="#333" strokeWidth="3"/>
+                  {/* Eyes */}
+                  <circle cx="85" cy="60" r="8" fill="#333"/>
+                  <circle cx="115" cy="60" r="8" fill="#333"/>
+                  <circle cx="87" cy="58" r="3" fill="white"/>
+                  <circle cx="117" cy="58" r="3" fill="white"/>
+                  {/* Smile */}
+                  <path d="M 85 75 Q 100 82 115 75" stroke="#333" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                  {/* Antenna */}
+                  <line x1="100" y1="40" x2="100" y2="25" stroke="#333" strokeWidth="3"/>
+                  <circle cx="100" cy="22" r="5" fill="#ff6b00" stroke="#333" strokeWidth="2"/>
+                  {/* Arms */}
+                  <rect x="35" y="95" width="25" height="50" rx="5" fill="white" stroke="#333" strokeWidth="3"/>
+                  <rect x="140" y="95" width="25" height="50" rx="5" fill="white" stroke="#333" strokeWidth="3"/>
+                  {/* Hands */}
+                  <circle cx="47" cy="150" r="8" fill="white" stroke="#333" strokeWidth="2"/>
+                  <circle cx="152" cy="150" r="8" fill="white" stroke="#333" strokeWidth="2"/>
+                  {/* Legs */}
+                  <rect x="70" y="170" width="25" height="20" rx="3" fill="white" stroke="#333" strokeWidth="3"/>
+                  <rect x="105" y="170" width="25" height="20" rx="3" fill="white" stroke="#333" strokeWidth="3"/>
+                  {/* Control Panel */}
+                  <circle cx="100" cy="110" r="6" fill="#ff6b00" stroke="#333" strokeWidth="2"/>
+                  <rect x="85" y="130" width="10" height="15" rx="2" fill="#4ade80" stroke="#333" strokeWidth="2"/>
+                  <rect x="105" y="130" width="10" height="15" rx="2" fill="#60a5fa" stroke="#333" strokeWidth="2"/>
+                </svg>
+              </div>
+
+              {/* Decorative Bottom Line */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-700 via-orange-600 to-orange-500"></div>
+            </div>
+          </div>
+
+          {/* Trust Badges */}
+          <div className="flex items-center justify-center gap-6 text-xs text-gray-500">
+            <div className="flex items-center gap-1">
+              <Lock className="w-4 h-4" />
+              <span>Secure</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Verified</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Shield className="w-4 h-4" />
+              <span>Protected</span>
             </div>
           </div>
         </div>
+      </div>
+      {/* END LEFT COLUMN */}
 
-        {/* General Error Message */}
-        {validationErrors.general && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-red-800">{validationErrors.general}</p>
+      {/* RIGHT COLUMN - Registration Form */}
+      <div className="w-full lg:w-7/12 flex items-center justify-center p-8 lg:p-12">
+        <div className="w-full max-w-xl">
+          {/* Mobile Header (hidden on desktop) */}
+          <div className="lg:hidden text-center mb-8">
+            <div className="flex justify-center mb-3">
+              <Logo size="large" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Create your account</h2>
+            <p className="text-sm text-gray-600 mt-1">Join Kenya's premier cycling marketplace</p>
           </div>
-        )}
 
-        {/* Registration Form */}
-        <div className="bg-white py-8 px-6 shadow-xl rounded-lg">
+          {/* Progress Steps */}
+          <div className="mb-8">
+            <div className="flex items-center justify-center">
+              <div className="flex items-center space-x-4">
+                {/* Step 1 */}
+                <div className="flex items-center">
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                    currentStep >= 1 ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-600'
+                  } font-semibold`}>
+                    {currentStep > 1 ? <CheckCircle2 className="w-6 h-6" /> : '1'}
+                  </div>
+                  <span className={`ml-2 text-sm font-medium ${
+                    currentStep >= 1 ? 'text-gray-900' : 'text-gray-500'
+                  }`}>
+                    Personal Info
+                  </span>
+                </div>
+                
+                {/* Divider */}
+                <div className={`w-16 h-1 ${
+                  currentStep > 1 ? 'bg-orange-600' : 'bg-gray-200'
+                }`} />
+                
+                {/* Step 2 */}
+                <div className="flex items-center">
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                    currentStep >= 2 ? 'bg-orange-600 text-white' : 'bg-gray-200 text-gray-600'
+                  } font-semibold`}>
+                    2
+                  </div>
+                  <span className={`ml-2 text-sm font-medium ${
+                    currentStep >= 2 ? 'text-gray-900' : 'text-gray-500'
+                  }`}>
+                    Account Details
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* General Error Message */}
+          {validationErrors.general && (
+            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-800">{validationErrors.general}</p>
+            </div>
+          )}
+
+          {/* Registration Form */}
+          <div className="bg-white py-8 px-6 shadow-xl rounded-lg">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Step 1: Personal Information */}
             {currentStep === 1 && (
@@ -351,7 +465,7 @@ const RegisterPage = () => {
                       onClick={() => setFormData(prev => ({ ...prev, userType: 'customer' }))}
                       className={`p-4 border-2 rounded-lg text-left transition-all ${
                         formData.userType === 'customer'
-                          ? 'border-blue-600 bg-blue-50'
+                          ? 'border-orange-600 bg-orange-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
@@ -363,7 +477,7 @@ const RegisterPage = () => {
                       onClick={() => setFormData(prev => ({ ...prev, userType: 'seller' }))}
                       className={`p-4 border-2 rounded-lg text-left transition-all ${
                         formData.userType === 'seller'
-                          ? 'border-blue-600 bg-blue-50'
+                          ? 'border-orange-600 bg-orange-50'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
@@ -391,7 +505,7 @@ const RegisterPage = () => {
                         onChange={handleChange}
                         className={`block w-full pl-10 pr-3 py-2.5 border ${
                           validationErrors.firstName ? 'border-red-300' : 'border-gray-300'
-                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors`}
                         placeholder="Zablon"
                       />
                     </div>
@@ -416,7 +530,7 @@ const RegisterPage = () => {
                         onChange={handleChange}
                         className={`block w-full pl-10 pr-3 py-2.5 border ${
                           validationErrors.lastName ? 'border-red-300' : 'border-gray-300'
-                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors`}
                         placeholder="Bennett"
                       />
                     </div>
@@ -443,7 +557,7 @@ const RegisterPage = () => {
                         onChange={handleChange}
                         className={`block w-full pl-10 pr-3 py-2.5 border ${
                           validationErrors.username ? 'border-red-300' : 'border-gray-300'
-                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors`}
                         placeholder="coolcyclist"
                       />
                     </div>
@@ -471,7 +585,7 @@ const RegisterPage = () => {
                       onChange={handleChange}
                       className={`block w-full pl-10 pr-3 py-2.5 border ${
                         validationErrors.email ? 'border-red-300' : 'border-gray-300'
-                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors`}
                       placeholder="you@example.com"
                     />
                   </div>
@@ -497,7 +611,7 @@ const RegisterPage = () => {
                       onChange={handleChange}
                       className={`block w-full pl-10 pr-3 py-2.5 border ${
                         validationErrors.phone ? 'border-red-300' : 'border-gray-300'
-                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors`}
                       placeholder="+254 712 345 678"
                     />
                   </div>
@@ -511,7 +625,7 @@ const RegisterPage = () => {
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all duration-200"
                 >
                   Continue to Account Details
                 </button>
@@ -537,7 +651,7 @@ const RegisterPage = () => {
                       onChange={handleChange}
                       className={`block w-full pl-10 pr-3 py-2.5 border ${
                         validationErrors.city ? 'border-red-300' : 'border-gray-300'
-                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors`}
                     >
                       <option value="">Select your city</option>
                       <option value="Nairobi">Nairobi</option>
@@ -574,7 +688,7 @@ const RegisterPage = () => {
                       onChange={handleChange}
                       className={`block w-full pl-10 pr-10 py-2.5 border ${
                         validationErrors.password ? 'border-red-300' : 'border-gray-300'
-                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors`}
                       placeholder="Create a strong password"
                     />
                     <button
@@ -633,7 +747,7 @@ const RegisterPage = () => {
                       onChange={handleChange}
                       className={`block w-full pl-10 pr-10 py-2.5 border ${
                         validationErrors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors`}
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors`}
                       placeholder="Confirm your password"
                     />
                     <button
@@ -674,7 +788,7 @@ const RegisterPage = () => {
                     >
                       <div className="flex items-center gap-3">
                         <FileText className={`w-6 h-6 ${
-                          termsRead && privacyRead && cookieRead ? 'text-success-600' : 'text-primary-600'
+                          termsRead && privacyRead && cookieRead ? 'text-orange-600' : 'text-orange-600'
                         }`} />
                         <div className="text-left">
                           <div className="text-sm font-semibold text-gray-900">
@@ -690,7 +804,7 @@ const RegisterPage = () => {
                       <ChevronRight className="w-5 h-5 text-gray-400" />
                     </button>
                     {validationErrors.agreeToTerms && (
-                      <p className="mt-2 text-xs text-danger-600">{validationErrors.agreeToTerms}</p>
+                      <p className="mt-2 text-xs text-red-600">{validationErrors.agreeToTerms}</p>
                     )}
                   </div>
 
@@ -702,7 +816,7 @@ const RegisterPage = () => {
                       type="checkbox"
                       checked={termsRead && privacyRead && cookieRead}
                       readOnly
-                      className="h-4 w-4 mt-0.5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded pointer-events-none"
+                      className="h-4 w-4 mt-0.5 text-orange-600 focus:ring-orange-500 border-gray-300 rounded pointer-events-none"
                     />
                     <label htmlFor="agreeToTerms" className="ml-2 block text-sm text-gray-700">
                       I have read and agree to the{' '}
@@ -712,7 +826,7 @@ const RegisterPage = () => {
                           setShowLegalModal(true);
                           // The modal opens on terms by default, but we could track which was clicked
                         }}
-                        className="text-primary-600 hover:text-primary-700 font-medium underline cursor-pointer bg-transparent border-none p-0"
+                        className="text-orange-600 hover:text-orange-700 font-medium underline cursor-pointer bg-transparent border-none p-0"
                       >
                         Terms of Service
                       </button>,{' '}
@@ -721,7 +835,7 @@ const RegisterPage = () => {
                         onClick={() => {
                           setShowLegalModal(true);
                         }}
-                        className="text-primary-600 hover:text-primary-700 font-medium underline cursor-pointer bg-transparent border-none p-0"
+                        className="text-orange-600 hover:text-orange-700 font-medium underline cursor-pointer bg-transparent border-none p-0"
                       >
                         Privacy Policy
                       </button>, and{' '}
@@ -730,7 +844,7 @@ const RegisterPage = () => {
                         onClick={() => {
                           setShowLegalModal(true);
                         }}
-                        className="text-primary-600 hover:text-primary-700 font-medium underline cursor-pointer bg-transparent border-none p-0"
+                        className="text-orange-600 hover:text-orange-700 font-medium underline cursor-pointer bg-transparent border-none p-0"
                       >
                         Cookie Policy
                       </button>
@@ -745,7 +859,7 @@ const RegisterPage = () => {
                       type="checkbox"
                       checked={formData.subscribeNewsletter}
                       onChange={handleChange}
-                      className="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                      className="h-4 w-4 mt-0.5 text-orange-600 focus:ring-orange-500 border-gray-300 rounded cursor-pointer"
                     />
                     <label htmlFor="subscribeNewsletter" className="ml-2 block text-sm text-gray-700 cursor-pointer">
                       Send me updates about new products, deals, and cycling tips
@@ -758,14 +872,14 @@ const RegisterPage = () => {
                   <button
                     type="button"
                     onClick={handlePrevStep}
-                    className="flex-1 py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                    className="flex-1 py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
                   >
                     Back
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    className="flex-1 flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                   >
                     {isSubmitting ? (
                       <>
@@ -840,43 +954,34 @@ const RegisterPage = () => {
           setCookieRead={setCookieRead}
         />
 
-        {/* Sign In Link */}
-        <p className="mt-6 text-center text-sm text-gray-600">
-          Already have an account?{' '}
-          <Link
-            to="/login"
-            className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
-          >
-            Sign in instead
-          </Link>
-        </p>
+          {/* Sign In Link */}
+          <p className="mt-6 text-center text-sm text-gray-600">
+            Already have an account?{' '}
+            <Link
+              to="/login"
+              className="font-medium text-orange-600 hover:text-orange-500 transition-colors"
+            >
+              Sign in instead
+            </Link>
+          </p>
 
-        {/* Additional Info for Sellers */}
-        {formData.userType === 'seller' && currentStep === 1 && (
-          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-blue-900 mb-2">Seller Benefits</h3>
-            <ul className="text-xs text-blue-800 space-y-1">
-              <li>• Reach thousands of cycling enthusiasts across Kenya</li>
-              <li>• Easy-to-use dashboard for inventory management</li>
-              <li>• Integrated M-Pesa and card payment processing</li>
-              <li>• Low commission rates for sellers</li>
-              <li>• Marketing support and promotional opportunities</li>
-            </ul>
-          </div>
-        )}
-
-        {/* Trust Indicators */}
-        <div className="mt-6 flex items-center justify-center space-x-6 text-xs text-gray-500">
-          <div className="flex items-center space-x-1">
-            <Lock className="w-4 h-4" />
-            <span>Secure & Encrypted</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Verified Platform</span>
-          </div>
+          {/* Additional Info for Sellers */}
+          {formData.userType === 'seller' && currentStep === 1 && (
+            <div className="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-orange-900 mb-2">Seller Benefits</h3>
+              <ul className="text-xs text-orange-800 space-y-1">
+                <li>• Reach thousands of cycling enthusiasts across Kenya</li>
+                <li>• Easy-to-use dashboard for inventory management</li>
+                <li>• Integrated M-Pesa and card payment processing</li>
+                <li>• Low commission rates for sellers</li>
+                <li>• Marketing support and promotional opportunities</li>
+              </ul>
+            </div>
+          )}
         </div>
+        {/* END Registration Form */}
       </div>
+      {/* END RIGHT COLUMN */}
     </div>
   );
 };
