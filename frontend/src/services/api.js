@@ -7,11 +7,11 @@ import axios from 'axios';
 import { logIntegrationError, logApiRetry, recordServiceSuccess, determineServiceName } from '../utils/auditUtils';
 
 // Base API URL - Railway backend
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://oshocks-backend-production.up.railway.app/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://oshocks-backend-production.up.railway.app/api/v1';
 
 console.log('🌐 API Service Initialized');
 console.log('📍 Base URL:', API_BASE_URL);
-console.log('🔧 Environment:', process.env.NODE_ENV);
+console.log('🔧 Environment:', import.meta.env.MODE);
 
 // Create axios instance with default config
 const api = axios.create({
@@ -320,5 +320,57 @@ export const cartAPI = {
   },
 };
 
-// Export default api instance
+// ============================================================================
+// MESSAGING & CALLS API ENDPOINTS
+// ============================================================================
+
+export const messagingAPI = {
+  getConversations: () => {
+    console.log('💬 Fetching conversations');
+    return api.get('/conversations');
+  },
+
+  createConversation: (data) => {
+    console.log('💬 Creating conversation:', data);
+    return api.post('/conversations', data);
+  },
+
+  getConversation: (id) => {
+    console.log('💬 Fetching conversation:', id);
+    return api.get(`/conversations/${id}`);
+  },
+
+  markAsRead: (id) => {
+    console.log('💬 Marking conversation as read:', id);
+    return api.post(`/conversations/${id}/read`);
+  },
+
+  getMessages: (conversationId, cursor = null) => {
+    const url = cursor 
+      ? `/conversations/${conversationId}/messages?cursor=${cursor}`
+      : `/conversations/${conversationId}/messages`;
+    return api.get(url);
+  },
+
+  sendMessage: (conversationId, data) => {
+    return api.post(`/conversations/${conversationId}/messages`, data);
+  },
+};
+
+export const callAPI = {
+  initiate: (data) => {
+    console.log('📞 Initiating call:', data);
+    return api.post('/calls/initiate', data);
+  },
+
+  sendSignal: (data) => {
+    return api.post('/calls/signal', data);
+  },
+
+  getHistory: () => {
+    return api.get('/calls/history');
+  },
+};
+
+// Export default api instance — MUST BE LAST
 export default api;

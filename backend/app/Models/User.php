@@ -226,4 +226,36 @@ class User extends Authenticatable
             $this->save();
         }
     }
+
+    // ============================================================================
+    // MESSAGING & CALLS RELATIONSHIPS
+    // ============================================================================
+
+    public function conversations()
+    {
+        return $this->belongsToMany(Conversation::class, 'conversation_participants')
+            ->withPivot('joined_at', 'last_read_at', 'is_admin')
+            ->withTimestamps();
+    }
+
+    public function messages()
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    public function callSessionsAsCaller()
+    {
+        return $this->hasMany(CallSession::class, 'caller_id');
+    }
+
+    public function callSessionsAsCallee()
+    {
+        return $this->hasMany(CallSession::class, 'callee_id');
+    }
+
+    public function allCallSessions()
+    {
+        return $this->callSessionsAsCaller->merge($this->callSessionsAsCallee);
+    }
+
 }

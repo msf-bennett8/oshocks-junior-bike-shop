@@ -527,6 +527,33 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
 
 }); // End of protected routes group
 
+// ============================================================================
+// MESSAGING & CALLS ROUTES
+// ============================================================================
+Route::middleware(['auth:sanctum', 'audit'])->prefix('v1')->group(function () {
+
+    // Conversations
+    Route::get('/conversations', [\App\Http\Controllers\Api\ConversationController::class, 'index']);
+    Route::post('/conversations', [\App\Http\Controllers\Api\ConversationController::class, 'store']);
+    Route::get('/conversations/{conversation}', [\App\Http\Controllers\Api\ConversationController::class, 'show']);
+    Route::post('/conversations/{conversation}/read', [\App\Http\Controllers\Api\ConversationController::class, 'markAsRead']);
+
+    // Messages
+    Route::get('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\MessageController::class, 'index']);
+    Route::post('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\MessageController::class, 'store']);
+
+    // Call Signaling (WebRTC)
+    Route::post('/calls/initiate', [\App\Http\Controllers\Api\CallSignalingController::class, 'initiate']);
+    Route::post('/calls/signal', [\App\Http\Controllers\Api\CallSignalingController::class, 'signal']);
+    Route::get('/calls/history', [\App\Http\Controllers\Api\CallSignalingController::class, 'history']);
+
+    // Broadcasting auth for Reverb private channels
+    Route::post('/broadcasting/auth', function (Request $request) {
+        return Broadcast::auth($request);
+    });
+
+});
+
 // Public callback routes (outside protected group)
 Route::post('/v1/payments/mpesa/callback', [PaymentController::class, 'mpesaCallback']);
 Route::get('/v1/payments/card/callback', [CardPaymentController::class, 'callback']);

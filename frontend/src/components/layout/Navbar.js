@@ -7,7 +7,11 @@ import { useWishlist } from '../../context/WishlistContext';
 import authService from '../../services/authService';
 import NotificationCenter from '../notifications/NotificationCenter';
 import SuperAdminNotificationCenter from '../notifications/SuperAdminNotificationCenter';
-import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowRight, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, Users, Package2, BarChart3, FolderTree, Heart, Bell } from 'lucide-react';
+import ChatDrawer from '../messaging/ChatDrawer';
+import CallOverlay from '../messaging/CallOverlay';
+import { useWebRTC } from '../../hooks/useWebRTC';
+import { useMessaging } from '../../hooks/useMessaging';
+import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowRight, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, Users, Package2, BarChart3, FolderTree, Heart, Bell, MessageCircle } from 'lucide-react';
 import SearchBar from '../common/SearchBar';
 
 const Navbar = () => {
@@ -37,8 +41,26 @@ const Navbar = () => {
   const navigate = useNavigate();
   const sidebarRef = useRef(null);
 
+
   const cartItemCount = cartItems?.length || 0;
 
+  // Messaging & Calls state
+  const [chatOpen, setChatOpen] = useState(false);
+  const { incomingCall, dismissIncomingCall, echo } = useMessaging(user?.id);
+  const {
+    localStream,
+    remoteStream,
+    callState,
+    callType,
+    currentCall,
+    callDuration,
+    callError,
+    formattedDuration,
+    initiateCall,
+    answerCall,
+    declineCall,
+    endCall,
+  } = useWebRTC(user?.id, echo);
   // Close profile menu when clicking outside (desktop only - mobile uses fixed positioning)
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -688,6 +710,17 @@ const Navbar = () => {
                 </div>
               )}
 
+              {/* Messages Button */}
+              {isAuthenticated && (
+                <button
+                  onClick={() => setChatOpen(true)}
+                  className="relative p-2 sm:p-2.5 rounded-full hover:bg-orange-50 transition-colors group"
+                  title="Messages"
+                >
+                  <MessageCircle className="w-5 h-5 text-gray-700 group-hover:text-orange-500 transition-colors" />
+                </button>
+              )}
+
               {/* SuperAdmin Notification Center - Only for admins - Always render for mobile event handling */}
               {isAuthenticated && (user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'owner') && (
                 <SuperAdminNotificationCenter />
@@ -939,6 +972,38 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+
+      {/* Chat Drawer */}
+      <ChatDrawer 
+        isOpen={chatOpen} 
+        onClose={() => setChatOpen(false)}
+        onStartCall={(convId, calleeId, type) => {
+          setChatOpen(false);
+          initiateCall(convId, calleeId, type);
+        }}
+      />
+
+      {/* Call Overlay */}
+      <CallOverlay
+        callState={callState}
+        callType={callType}
+        incomingCall={incomingCall}
+        currentCall={currentCall}
+        localStream={localStream}
+        remoteStream={remoteStream}
+        callDuration={formattedDuration}
+        callError={callError}
+        onAnswer={(call) => {
+          dismissIncomingCall();
+          answerCall(call);
+        }}
+        onDecline={() => {
+          declineCall(incomingCall?.sessionId);
+          dismissIncomingCall();
+        }}
+        onEndCall={endCall}
+        onDismissError={() => {}}
+      />
     </>
   );
 };
