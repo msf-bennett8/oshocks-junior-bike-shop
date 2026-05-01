@@ -62,3 +62,15 @@ Schedule::call(function () {
         'duration_ms' => round((microtime(true) - $start) * 1000),
     ]);
 })->everyThirtyMinutes()->between('06:00', '22:00');
+
+// Guest conversation cleanup - daily at 4 AM (after other cleanups)
+Schedule::command('guest:cleanup --days=30')
+    ->daily()
+    ->at('04:00')
+    ->withoutOverlapping()
+    ->onSuccess(function () {
+        \Log::info('✅ Guest conversation cleanup completed');
+    })
+    ->onFailure(function () {
+        \Log::error('❌ Guest conversation cleanup failed');
+    });

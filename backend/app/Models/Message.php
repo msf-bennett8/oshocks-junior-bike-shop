@@ -17,6 +17,9 @@ class Message extends Model
         'type',
         'metadata',
         'read_at',
+        'guest_session_id',
+        'sender_name',
+        'sender_email',
     ];
 
     protected $casts = [
@@ -31,7 +34,10 @@ class Message extends Model
 
     public function sender(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'sender_id');
+        return $this->belongsTo(User::class, 'sender_id')->withDefault([
+            'name' => 'Guest',
+            'email' => null,
+        ]);
     }
 
     public function isRead(): bool
@@ -44,5 +50,18 @@ class Message extends Model
         if (!$this->read_at) {
             $this->update(['read_at' => now()]);
         }
+    }
+
+    public function getSenderDisplayName(): string
+    {
+        if ($this->sender) {
+            return $this->sender->name;
+        }
+        return $this->sender_name ?? 'Guest';
+    }
+
+    public function getSenderAvatar(): ?string
+    {
+        return $this->sender?->avatar ?? null;
     }
 }

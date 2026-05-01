@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         \App\Console\Commands\NotificationCleanupCommand::class,
+        \App\Console\Commands\CleanupGuestConversations::class,
     ];
 
     /**

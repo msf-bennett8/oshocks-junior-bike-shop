@@ -1,10 +1,11 @@
 // ============================================================================
-// MESSAGING HOOK — Conversations, messages, real-time inbox (FIXED)
+// MESSAGING HOOK — Conversations, messages, real-time inbox (GUEST SUPPORT)
 // ============================================================================
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../services/api';
 import { useWebSocket } from './useWebSocket';
+import { getGuestSessionId, getGuestProfile, setGuestProfile, linkGuestSessionOnLogin } from '../utils/guestSession';
 
 export const useMessaging = (userId) => {
   const { isConnected, subscribeToConversation, subscribeToUser, echo } = useWebSocket(userId);
@@ -16,8 +17,30 @@ export const useMessaging = (userId) => {
   const [sending, setSending] = useState(false);
   const [unreadTotal, setUnreadTotal] = useState(0);
   const [incomingCall, setIncomingCall] = useState(null);
+  const [guestProfile, setGuestProfileState] = useState(getGuestProfile());
   
   const messagesEndRef = useRef(null);
+
+  // Generate anonymous display name for guests (anonXXXX where X = random 4 digits)
+  const generateAnonName = useCallback(() => {
+    const digits = Math.floor(1000 + Math.random() * 9000); // 1000-9999
+    return `anon${digits}`;
+  }, []);
+
+  // Ensure guest session exists and has anon name
+  useEffect(() => {
+    if (!userId) {
+      const sessionId = getGuestSessionId(); // Initialize if not exists
+      const profile = getGuestProfile();
+      
+      // Auto-generate anon name if guest hasn't set one
+      if (!profile.name) {
+        const anonName = generateAnonName();
+        setGuestProfile(anonName, profile.email || null);
+        setGuestProfileState(getGuestProfile());
+      }
+    }
+  }, [userId, generateAnonName]);
 
   const fetchConversations = useCallback(async () => {
     setLoading(true);
@@ -54,11 +77,20 @@ export const useMessaging = (userId) => {
     
     setSending(true);
     try {
-      const res = await api.post(`/conversations/${conversationId}/messages`, {
+      const payload = {
         body,
         type,
         metadata,
-      });
+      };
+
+      // Add guest profile info if not authenticated
+      if (!userId) {
+        const profile = getGuestProfile();
+        if (profile.name) payload.sender_name = profile.name;
+        if (profile.email) payload.sender_email = profile.email;
+      }
+
+      const res = await api.post(`/conversations/${conversationId}/messages`, payload);
       
       setMessages(prev => [...prev, res.data.data]);
       scrollToBottom();
@@ -73,15 +105,24 @@ export const useMessaging = (userId) => {
     } finally {
       setSending(false);
     }
-  }, []);
+  }, [userId]);
 
-  const startConversation = useCallback(async (participantId, type = 'direct', title = null) => {
+  const startConversation = useCallback(async (participantId, type = 'direct', title = null, guestName = null, guestEmail = null) => {
     try {
-      const res = await api.post('/conversations', {
+      const payload = {
         participant_id: participantId,
         type,
         title,
-      });
+      };
+
+      // Add guest info for anonymous users
+      if (!userId) {
+        const profile = getGuestProfile();
+        payload.guest_name = guestName || profile.name || 'Guest';
+        payload.guest_email = guestEmail || profile.email || null;
+      }
+
+      const res = await api.post('/conversations', payload);
       const conversation = res.data.data;
       setConversations(prev => [conversation, ...prev]);
       return conversation;
@@ -89,7 +130,20 @@ export const useMessaging = (userId) => {
       console.error('Failed to start conversation:', err);
       return null;
     }
-  }, []);
+  }, [userId]);
+
+  const startSupportChat = useCallback(async (supportUserId, guestName = null, guestEmail = null) => {
+    // Ensure guest has anon name before starting chat
+    const profile = getGuestProfile();
+    const effectiveName = guestName || profile.name || generateAnonName();
+    const effectiveEmail = guestEmail || profile.email || null;
+    
+    // Save guest profile
+    setGuestProfile(effectiveName, effectiveEmail);
+    setGuestProfileState(getGuestProfile());
+
+    return startConversation(supportUserId, 'support', 'Oshocks Support', effectiveName, effectiveEmail);
+  }, [startConversation, generateAnonName]);
 
   const markAsRead = useCallback(async (conversationId) => {
     try {
@@ -106,6 +160,18 @@ export const useMessaging = (userId) => {
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
+
+  // Link guest sessions when user logs in
+  useEffect(() => {
+    if (userId) {
+      linkGuestSessionOnLogin(api).then(() => {
+        // Refresh conversations after linking
+        fetchConversations();
+      }).catch(err => {
+        console.log('Guest session link skipped or failed:', err.message);
+      });
+    }
+  }, [userId]); // Removed fetchConversations from deps to prevent loop
 
   // Subscribe to real-time messages
   useEffect(() => {
@@ -153,8 +219,13 @@ export const useMessaging = (userId) => {
   }, []);
 
   useEffect(() => {
-    if (userId) fetchConversations();
-  }, [userId, fetchConversations]);
+    // Only fetch conversations when we have auth OR guest session is ready
+    // This prevents 401 spam when component mounts before guest session init
+    if (userId || getGuestSessionId()) {
+      fetchConversations();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only fetch on mount
 
   return {
     conversations,
@@ -165,12 +236,18 @@ export const useMessaging = (userId) => {
     unreadTotal,
     incomingCall,
     messagesEndRef,
-    echo, // <-- EXPOSED for useWebRTC
+    echo,
+    guestProfile,
+    setGuestProfile: (name, email) => {
+      setGuestProfile(name, email);
+      setGuestProfileState(getGuestProfile());
+    },
     setActiveConversation,
     fetchConversations,
     fetchMessages,
     sendMessage,
     startConversation,
+    startSupportChat,
     markAsRead,
     scrollToBottom,
     dismissIncomingCall,

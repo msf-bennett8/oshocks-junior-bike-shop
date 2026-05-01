@@ -14,10 +14,10 @@ const MessageBubble = ({ message, isOwn, showAvatar = true }) => {
 
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-3`}>
-      {!isOwn && showAvatar && message.sender && (
+      {!isOwn && showAvatar && (
         <img
-          src={message.sender.avatar || '/default-avatar.png'}
-          alt={message.sender.name}
+          src={message.sender?.avatar || '/default-avatar.png'}
+          alt={message.sender?.name || message.sender_name || 'Guest'}
           className="w-8 h-8 rounded-full mr-2 self-end bg-gray-200"
         />
       )}

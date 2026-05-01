@@ -1,6 +1,7 @@
 // frontend/src/context/AuthContext.js
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../services/authService';
+import api from '../services/api';
 import { useDeviceFingerprint } from '../hooks/useDeviceFingerprint';
 
 const AuthContext = createContext();
@@ -60,7 +61,10 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.error('Auth check failed:', err);
-      logout(); // Clear invalid token
+      // Don't call logout() here — it causes infinite loop if token is invalid
+      authService.removeToken();
+      setUser(null);
+      setIsAuthenticated(false);
     } finally {
       setLoading(false);
     }
@@ -76,6 +80,10 @@ export const AuthProvider = ({ children }) => {
       
       // Store token
       authService.setToken(data.token);
+
+      // Link guest chat sessions if any
+      const { linkGuestSessionOnLogin } = await import('../utils/guestSession');
+      linkGuestSessionOnLogin(api).catch(console.error);
 
       // Update state
       setUser(data.user);
@@ -115,6 +123,10 @@ const login = async (credentials) => {
     // Trigger merge events for cart and wishlist
     window.dispatchEvent(new StorageEvent('storage', { key: 'authToken' }));
     
+    // Link guest chat sessions
+    const { linkGuestSessionOnLogin } = await import('../utils/guestSession');
+    linkGuestSessionOnLogin(api).catch(console.error);
+
     // Dispatch login event immediately for contexts to handle sync
     window.dispatchEvent(new CustomEvent('userLoggedIn', { 
       detail: { user: data.user, timestamp: Date.now() } 
@@ -260,9 +272,16 @@ const login = async (credentials) => {
 
       const data = await authService.googleLogin(code);
 
+      // Store token FIRST (required for authenticated API calls)
+      authService.setToken(data.token);
+
       // Update state
       setUser(data.user);
       setIsAuthenticated(true);
+
+      // Link guest chat sessions (needs token to be set first)
+      const { linkGuestSessionOnLogin } = await import('../utils/guestSession');
+      linkGuestSessionOnLogin(api).catch(console.error);
 
       // Log Google login success
       try {
@@ -298,9 +317,16 @@ const login = async (credentials) => {
 
       const data = await authService.stravaLogin(code);
 
+      // Store token FIRST (required for authenticated API calls)
+      authService.setToken(data.token);
+
       // Update state
       setUser(data.user);
       setIsAuthenticated(true);
+
+      // Link guest chat sessions (needs token to be set first)
+      const { linkGuestSessionOnLogin } = await import('../utils/guestSession');
+      linkGuestSessionOnLogin(api).catch(console.error);
 
       // Log Strava login success
       try {

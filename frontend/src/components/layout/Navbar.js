@@ -710,16 +710,14 @@ const Navbar = () => {
                 </div>
               )}
 
-              {/* Messages Button */}
-              {isAuthenticated && (
-                <button
-                  onClick={() => setChatOpen(true)}
-                  className="relative p-2 sm:p-2.5 rounded-full hover:bg-orange-50 transition-colors group"
-                  title="Messages"
-                >
-                  <MessageCircle className="w-5 h-5 text-gray-700 group-hover:text-orange-500 transition-colors" />
-                </button>
-              )}
+              {/* Messages Button — Available for guests too */}
+              <button
+                onClick={() => setChatOpen(true)}
+                className="relative p-2 sm:p-2.5 rounded-full hover:bg-orange-50 transition-colors group"
+                title="Messages"
+              >
+                <MessageCircle className="w-5 h-5 text-gray-700 group-hover:text-orange-500 transition-colors" />
+              </button>
 
               {/* SuperAdmin Notification Center - Only for admins - Always render for mobile event handling */}
               {isAuthenticated && (user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'owner') && (

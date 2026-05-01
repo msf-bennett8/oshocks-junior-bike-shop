@@ -41,6 +41,7 @@ return [
         'X-Canvas-Fingerprint',
         'x-device-fingerprint',
         'Access-Control-Allow-Origin',
+        'x-guest-session-id',
     ],
     
     'exposed_headers' => ['Authorization'],

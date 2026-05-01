@@ -95,14 +95,14 @@ Route::middleware(['api', 'audit'])->prefix('v1')->group(function () {
     Route::get('/payment-recorders', [\App\Http\Controllers\PaymentRecorderController::class, 'index']);
     Route::get('/payment-recorders/{id}', [\App\Http\Controllers\PaymentRecorderController::class, 'show']);
 
-    // Support user — returns the super_admin/owner for in-app chat/calls
+    // Public support user endpoint (for guest chat - returns generic support info)
     Route::get('/support-user', function () {
         $supportUser = \App\Models\User::whereIn('role', ['super_admin', 'owner', 'admin'])
             ->orderByRaw("FIELD(role, 'super_admin', 'owner', 'admin')")
             ->first();
 
         if (!$supportUser) {
-            return response()->json(['error' => 'No support user available'], 404);
+            return response()->json(['data' => null, 'message' => 'No support agent available'], 404);
         }
 
         return response()->json([
@@ -538,6 +538,37 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
     Route::get('/legal/status', [\App\Http\Controllers\Api\LegalController::class, 'getStatus']);
 
     // ============================================================================
+    // MESSAGING & CALLS ROUTES (Protected - for authenticated users)
+    // ============================================================================
+    // Link guest sessions on login
+    Route::post('/conversations/link-guest', [\App\Http\Controllers\Api\ConversationController::class, 'linkGuestSessions']);
+
+    // Conversations (also accessible via X-Guest-Session-ID header)
+    Route::get('/conversations', [\App\Http\Controllers\Api\ConversationController::class, 'index']);
+    Route::post('/conversations', [\App\Http\Controllers\Api\ConversationController::class, 'store']);
+    Route::get('/conversations/{conversation}', [\App\Http\Controllers\Api\ConversationController::class, 'show']);
+    Route::post('/conversations/{conversation}/read', [\App\Http\Controllers\Api\ConversationController::class, 'markAsRead']);
+
+    // Messages
+    Route::get('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\MessageController::class, 'index']);
+    Route::post('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\MessageController::class, 'store']);
+
+    // Call Signaling (WebRTC) - requires auth
+    Route::post('/calls/initiate', [\App\Http\Controllers\Api\CallSignalingController::class, 'initiate']);
+    Route::post('/calls/signal', [\App\Http\Controllers\Api\CallSignalingController::class, 'signal']);
+    Route::get('/calls/history', [\App\Http\Controllers\Api\CallSignalingController::class, 'history']);
+
+    // Call Signaling (WebRTC)
+    Route::post('/calls/initiate', [\App\Http\Controllers\Api\CallSignalingController::class, 'initiate']);
+    Route::post('/calls/signal', [\App\Http\Controllers\Api\CallSignalingController::class, 'signal']);
+    Route::get('/calls/history', [\App\Http\Controllers\Api\CallSignalingController::class, 'history']);
+
+    // Broadcasting auth for Reverb private channels
+    Route::post('/broadcasting/auth', function (Request $request) {
+        return Broadcast::auth($request);
+    });
+
+    // ============================================================================
     // DYNAMIC PUBLIC ROUTES - MUST COME LAST (Inside protected group but public access)
     // ============================================================================
     // These routes use dynamic parameters and MUST be defined after all specific routes
@@ -550,11 +581,17 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
 }); // End of protected routes group
 
 // ============================================================================
-// MESSAGING & CALLS ROUTES
+// MESSAGING ROUTES — OPTIONAL AUTH (Guest + Authenticated)
 // ============================================================================
-Route::middleware(['auth:sanctum', 'audit'])->prefix('v1')->group(function () {
+// These routes are OUTSIDE auth:sanctum to allow guest access via X-Guest-Session-ID.
+// Controllers handle both auth and guest sessions.
+Route::prefix('v1')->middleware(['api', 'optional', 'audit'])->group(function () {
 
-    // Conversations
+    // Link guest sessions on login (requires auth, handled by controller)
+    Route::post('/conversations/link-guest', [\App\Http\Controllers\Api\ConversationController::class, 'linkGuestSessions'])
+        ->middleware('auth:sanctum');
+
+    // Conversations — accessible to guests and authenticated users
     Route::get('/conversations', [\App\Http\Controllers\Api\ConversationController::class, 'index']);
     Route::post('/conversations', [\App\Http\Controllers\Api\ConversationController::class, 'store']);
     Route::get('/conversations/{conversation}', [\App\Http\Controllers\Api\ConversationController::class, 'show']);
@@ -563,17 +600,6 @@ Route::middleware(['auth:sanctum', 'audit'])->prefix('v1')->group(function () {
     // Messages
     Route::get('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\MessageController::class, 'index']);
     Route::post('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\MessageController::class, 'store']);
-
-    // Call Signaling (WebRTC)
-    Route::post('/calls/initiate', [\App\Http\Controllers\Api\CallSignalingController::class, 'initiate']);
-    Route::post('/calls/signal', [\App\Http\Controllers\Api\CallSignalingController::class, 'signal']);
-    Route::get('/calls/history', [\App\Http\Controllers\Api\CallSignalingController::class, 'history']);
-
-    // Broadcasting auth for Reverb private channels
-    Route::post('/broadcasting/auth', function (Request $request) {
-        return Broadcast::auth($request);
-    });
-
 });
 
 // Public callback routes (outside protected group)

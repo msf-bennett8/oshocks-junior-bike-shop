@@ -8,16 +8,21 @@ import CallOverlay from '../messaging/CallOverlay';
 import { useMessaging } from '../../hooks/useMessaging';
 import { useWebRTC } from '../../hooks/useWebRTC';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
+import { getGuestSessionId, getGuestProfile, setGuestProfile } from '../../utils/guestSession';
 
 const FloatingSupportWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [showGuestForm, setShowGuestForm] = useState(false);
+  const [guestName, setGuestName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
   
   // In-app messaging & calls
   const [chatOpen, setChatOpen] = useState(false);
   const [supportUser, setSupportUser] = useState(null);
   const { user } = useAuth();
-  const { incomingCall, dismissIncomingCall, startConversation } = useMessaging(user?.id);
+  const { incomingCall, dismissIncomingCall, startSupportChat } = useMessaging(user?.id);
   const {
     localStream,
     remoteStream,
@@ -44,26 +49,24 @@ const FloatingSupportWidget = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Fetch support user (super_admin or owner) on mount
+  // Fetch support user (super_admin or owner) on mount — works for guests too
   useEffect(() => {
     const fetchSupportUser = async () => {
       try {
-        const res = await fetch(`${process.env.REACT_APP_API_URL?.replace('/api/v1', '')}/support-user`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.data) {
-            setSupportUser(data.data);
-            return;
-          }
+        const { data } = await api.get('/support-user');
+        if (data.data) {
+          setSupportUser(data.data);
+          return;
         }
       } catch (err) {
-        console.log('Could not fetch support user, using fallback');
+        console.log('Could not fetch support user:', err.message);
       }
+      // Fallback support user
       setSupportUser({ id: 1, name: 'Oshocks Support', role: 'super_admin' });
     };
 
-    if (user?.id) fetchSupportUser();
-  }, [user?.id]);
+    fetchSupportUser();
+  }, []);
 
   const toggleWidget = () => {
     setIsOpen(!isOpen);
@@ -73,14 +76,21 @@ const FloatingSupportWidget = () => {
     window.location.href = '/contact-support';
   };
 
-  // Start in-app call to support (dynamically finds super_admin/owner)
+  // Start in-app call to support (requires auth)
   const handleCallSupport = async () => {
-    const supportId = supportUser?.id || 1;
+    if (!user?.id) {
+      alert('Please log in to make calls');
+      return;
+    }
+    if (!supportUser?.id) {
+      alert('No support agent is currently available. Please try again later or use WhatsApp/Email.');
+      return;
+    }
     try {
       setIsOpen(false);
-      const supportConv = await startConversation(supportId, 'support', 'Oshocks Support');
+      const supportConv = await startSupportChat(supportUser.id);
       if (supportConv?.id) {
-        initiateCall(supportConv.id, supportId, 'voice');
+        initiateCall(supportConv.id, supportUser.id, 'voice');
       }
     } catch (err) {
       console.error('In-app call failed, falling back to phone:', err);
@@ -90,14 +100,107 @@ const FloatingSupportWidget = () => {
 
   // Open chat with support
   const handleChatSupport = async () => {
-    const supportId = supportUser?.id || 1;
+    if (!supportUser?.id) {
+      alert('No support agent is currently available. Please try again later or use WhatsApp/Email.');
+      return;
+    }
+    
+    // For guests, show form first if no profile exists
+    if (!user?.id) {
+      const existingProfile = getGuestProfile();
+      if (!existingProfile.name) {
+        setShowGuestForm(true);
+        setIsOpen(false);
+        return;
+      }
+    }
+    
     setIsOpen(false);
     setChatOpen(true);
-    await startConversation(supportId, 'support', 'Oshocks Support');
+    await startSupportChat(supportUser.id);
+  };
+
+  // Handle guest form submission
+  const handleGuestFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!guestName.trim()) return;
+    
+    setGuestProfile(guestName.trim(), guestEmail.trim() || null);
+    setShowGuestForm(false);
+    setChatOpen(true);
+    
+    await startSupportChat(supportUser?.id, guestName.trim(), guestEmail.trim() || null);
   };
 
   return (
     <>
+      {/* Guest Info Modal */}
+      {showGuestForm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-900 text-lg">Start Chat</h3>
+              <button
+                onClick={() => setShowGuestForm(false)}
+                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-4">
+              Enter your details so our support team can assist you better.
+            </p>
+            
+            <form onSubmit={handleGuestFormSubmit} className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  placeholder="Your name"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email (optional)</label>
+                <input
+                  type="email"
+                  value={guestEmail}
+                  onChange={(e) => setGuestEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+              
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowGuestForm(false)}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Start Chat
+                </button>
+              </div>
+              
+              <p className="text-xs text-gray-500 text-center">
+                Already have an account?{' '}
+                <a href="/login" className="text-blue-600 hover:underline">Log in</a>
+              </p>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Floating Action Button */}
       {isVisible && (
         <button
@@ -207,10 +310,13 @@ const FloatingSupportWidget = () => {
                   onClick={async () => {
                     // Try in-app chat first (if user is logged in)
                     if (user?.id) {
+                      if (!supportUser?.id) {
+                        alert('No support agent is currently available.');
+                        return;
+                      }
                       setIsOpen(false);
                       setChatOpen(true);
-                      const supportId = supportUser?.id || 1;
-                      await startConversation(supportId, 'support', 'Oshocks Support');
+                      await startSupportChat(supportUser.id);
                     } else if (window.Tawk_API) {
                       // Fallback to Tawk.to for guests
                       window.Tawk_API.maximize();
@@ -223,7 +329,7 @@ const FloatingSupportWidget = () => {
                   className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg hover:shadow-md transition-all"
                 >
                   <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Headphones className="w-6 h-6 text-white" />
+    A                <Headphones className="w-6 h-6 text-white" />
                   </div>
                   <div className="text-left">
                     <p className="font-semibold text-gray-900 text-sm">Live Chat</p>

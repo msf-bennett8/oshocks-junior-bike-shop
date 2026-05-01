@@ -9,6 +9,8 @@ import CallOverlay from '../../components/messaging/CallOverlay';
 import { useMessaging } from '../../hooks/useMessaging';
 import { useWebRTC } from '../../hooks/useWebRTC';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
+import { getGuestSessionId, getGuestProfile, setGuestProfile } from '../../utils/guestSession';
 
 const ContactSupportPage = () => {
   const [formData, setFormData] = useState({
@@ -27,11 +29,14 @@ const ContactSupportPage = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [showFAB, setShowFAB] = useState(false);
   const [isFABOpen, setIsFABOpen] = useState(false);
+  const [showGuestForm, setShowGuestForm] = useState(false);
+  const [guestName, setGuestName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
   
   // In-app messaging & calls
   const [chatOpen, setChatOpen] = useState(false);
   const { user } = useAuth();
-  const { incomingCall, dismissIncomingCall, startConversation } = useMessaging(user?.id);
+  const { incomingCall, dismissIncomingCall, startSupportChat } = useMessaging(user?.id);
   const {
     localStream,
     remoteStream,
@@ -210,56 +215,150 @@ const ContactSupportPage = () => {
   // Support user config — fetches super_admin/owner dynamically
   const [supportUser, setSupportUser] = useState(null);
 
-  // Fetch support user (super_admin or owner) on mount
+  // Fetch support user (super_admin or owner) on mount — works for guests too
   useEffect(() => {
     const fetchSupportUser = async () => {
       try {
-        const res = await fetch(`${process.env.REACT_APP_API_URL?.replace('/api/v1', '')}/support-user`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.data) {
-            setSupportUser(data.data);
-            return;
-          }
+        const { data } = await api.get('/support-user');
+        if (data.data) {
+          setSupportUser(data.data);
+          return;
         }
       } catch (err) {
-        console.log('Could not fetch support user, using fallback');
+        console.log('Could not fetch support user:', err.message);
       }
-      // Fallback: use seller ID 1 (main shop owner)
       setSupportUser({ id: 1, name: 'Oshocks Support', role: 'super_admin' });
     };
 
-    if (user?.id) fetchSupportUser();
-  }, [user?.id]);
+    fetchSupportUser();
+  }, []);
 
-  // Start in-app call to support (dynamically finds super_admin/owner)
+  // Start in-app call to support (requires auth)
   const handleCallSupport = async () => {
-    const supportId = supportUser?.id || 1;
+    if (!user?.id) {
+      alert('Please log in to make calls');
+      return;
+    }
+    if (!supportUser?.id) {
+      alert('No support agent is currently available. Please try WhatsApp or Email instead.');
+      return;
+    }
     try {
       setIsFABOpen(false);
-      // Try in-app WebRTC call first
-      const supportConv = await startConversation(supportId, 'support', 'Oshocks Support');
+      const supportConv = await startSupportChat(supportUser.id);
       if (supportConv?.id) {
-        initiateCall(supportConv.id, supportId, 'voice');
+        initiateCall(supportConv.id, supportUser.id, 'voice');
       }
     } catch (err) {
       console.error('In-app call failed, falling back to phone:', err);
-      // Fallback to external phone dialer
       window.location.href = 'tel:+254798558285';
     }
   };
 
   // Open chat with support
   const handleChatSupport = async () => {
-    const supportId = supportUser?.id || 1;
+    if (!supportUser?.id) {
+      alert('No support agent is currently available. Please try WhatsApp or Email instead.');
+      return;
+    }
+    
+    // For guests, show form first if no profile exists
+    if (!user?.id) {
+      const existingProfile = getGuestProfile();
+      if (!existingProfile.name) {
+        setShowGuestForm(true);
+        setIsFABOpen(false);
+        return;
+      }
+    }
+    
     setIsFABOpen(false);
     setChatOpen(true);
-    // Auto-start conversation with support (super_admin/owner)
-    await startConversation(supportId, 'support', 'Oshocks Support');
+    await startSupportChat(supportUser.id);
+  };
+
+  // Handle guest form submission
+  const handleGuestFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!guestName.trim()) return;
+    
+    setGuestProfile(guestName.trim(), guestEmail.trim() || null);
+    setShowGuestForm(false);
+    setChatOpen(true);
+    
+    await startSupportChat(supportUser?.id, guestName.trim(), guestEmail.trim() || null);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
+    <>
+      {/* Guest Info Modal */}
+      {showGuestForm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-900 text-lg">Start Chat</h3>
+              <button
+                onClick={() => setShowGuestForm(false)}
+                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-4">
+              Enter your details so our support team can assist you better.
+            </p>
+            
+            <form onSubmit={handleGuestFormSubmit} className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  placeholder="Your name"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email (optional)</label>
+                <input
+                  type="email"
+                  value={guestEmail}
+                  onChange={(e) => setGuestEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+              
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowGuestForm(false)}
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Start Chat
+                </button>
+              </div>
+              
+              <p className="text-xs text-gray-500 text-center">
+                Already have an account?{' '}
+                <a href="/login" className="text-blue-600 hover:underline">Log in</a>
+              </p>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
@@ -928,7 +1027,8 @@ const ContactSupportPage = () => {
         onEndCall={endCall}
         onDismissError={() => {}}
       />
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -86,6 +86,13 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
       console.log('🔐 Auth token added to request');
     }
+
+    // Guest session for anonymous chat
+    const guestSessionId = localStorage.getItem('oshocks_guest_session_id');
+    if (guestSessionId && !token) {
+      config.headers['X-Guest-Session-ID'] = guestSessionId;
+      console.log('👤 Guest session ID added:', guestSessionId.slice(0, 8) + '...');
+    }
     
     // ============================================================================
     // AUDIT HEADERS - Added for backend audit log correlation
@@ -184,8 +191,19 @@ api.interceptors.response.use(
       
       if (error.response.status === 401) {
         console.warn('🔒 Unauthorized - clearing token');
-        localStorage.removeItem('authToken');
-        window.location.href = '/login';
+        // Only redirect to login if NOT on explicitly public endpoints
+        // Messaging routes now support guests via X-Guest-Session-ID, so 401 here
+        // means the backend rejected a bad token (expired/invalid), not missing auth
+        const isPublicEndpoint = config.url?.includes('/support-user') || 
+                                config.url?.includes('/products') ||
+                                config.url?.includes('/categories') ||
+                                config.url?.includes('/search') ||
+                                config.url?.includes('/auth/login') ||
+                                config.url?.includes('/auth/register');
+        if (!isPublicEndpoint) {
+          localStorage.removeItem('authToken');
+          window.location.href = '/login';
+        }
       }
     } else if (error.request) {
       console.error('🔴 Network Error:', {

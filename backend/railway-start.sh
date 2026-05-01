@@ -7,7 +7,6 @@ echo "=== Setup ==="
 # Create .env file with APP_KEY from environment variable
 if [ -n "$APP_KEY" ]; then
     echo "Creating .env file with APP_KEY from environment..."
-    # Ensure proper base64: prefix
     if [[ "$APP_KEY" == base64:* ]]; then
         echo "APP_KEY=${APP_KEY}" > .env
     else
@@ -19,7 +18,7 @@ else
 fi
 
 # Add other essential environment variables to .env
-printenv | grep -E '^(APP_|DB_|CACHE_|SESSION_|QUEUE_|REDIS_|MAIL_|AWS_|PUSHER_|VITE_|RAILWAY_|FRONTEND_|CORS_|MPESA_|PAYSTACK_|FLW_|GOOGLE_|STRAVA_|CLOUDINARY_|DATABASE_URL|FORCE_HTTPS|AUDIT_|MAXMIND_)' >> .env
+printenv | grep -E '^(APP_|DB_|CACHE_|SESSION_|QUEUE_|REDIS_|MAIL_|AWS_|PUSHER_|VITE_|RAILWAY_|FRONTEND_|CORS_|MPESA_|PAYSTACK_|FLW_|GOOGLE_|STRAVA_|CLOUDINARY_|DATABASE_URL|FORCE_HTTPS|AUDIT_|MAXMIND_|REVERB_)' >> .env
 
 # Create storage directories in writable /tmp
 mkdir -p /tmp/storage/framework/cache/data
@@ -34,7 +33,6 @@ chmod -R 775 /tmp/storage
 php artisan storage:link --force 2>/dev/null || true
 
 echo "=== MaxMind Geolocation Setup ==="
-# Download MaxMind DB if not present (runtime fallback for Railway)
 if [ ! -f /tmp/GeoLite2-City.mmdb ] && [ -n "$MAXMIND_LICENSE_KEY" ]; then
     echo "MaxMind DB not found, downloading..."
     wget -qO /tmp/maxmind.tar.gz "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MAXMIND_LICENSE_KEY}&suffix=tar.gz" && \
@@ -50,11 +48,27 @@ else
 fi
 
 echo "=== Generating Key ==="
-# Only generate if key is empty/invalid
 php artisan key:generate --force 2>/dev/null || echo "Using existing APP_KEY"
 
 echo "=== Running Migrations ==="
 php artisan migrate --force --no-interaction || echo "Migrations completed with warnings"
 
-echo "=== Starting Server ==="
-exec php -S 0.0.0.0:${PORT:-8080} server.php
+echo "=== Starting Reverb Server (background) ==="
+# Use a dedicated internal port, NOT Railway's $PORT
+REVERB_INTERNAL_PORT=${REVERB_SERVER_PORT:-6001}
+php artisan reverb:start --host=${REVERB_SERVER_HOST:-0.0.0.0} --port=${REVERB_INTERNAL_PORT} &
+REVERB_PID=$!
+echo "✓ Reverb started on ${REVERB_SERVER_HOST:-0.0.0.0}:${REVERB_INTERNAL_PORT} (PID: $REVERB_PID)"
+
+# Wait for Reverb to actually bind to the port (more reliable than sleep)
+for i in {1..30}; do
+    if nc -z ${REVERB_SERVER_HOST:-0.0.0.0} ${REVERB_INTERNAL_PORT} 2>/dev/null; then
+        echo "✓ Reverb is accepting connections"
+        break
+    fi
+    sleep 1
+done
+
+echo "=== Starting HTTP Server ==="
+# Railway's $PORT is for public HTTP traffic
+exec php -S 0.0.0.0:${PORT:-8000} server.php
