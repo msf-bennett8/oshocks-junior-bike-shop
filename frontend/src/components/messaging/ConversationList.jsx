@@ -1,14 +1,15 @@
 // ============================================================================
-// CONVERSATION LIST — Sidebar with search, unread badges, previews, filters, new chat
+// CONVERSATION LIST — Sidebar with search, unread badges, previews, archive, pin
 // ============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { Search, Archive, Pin, MoreVertical, Phone, Video, Inbox } from 'lucide-react';
 
 const FILTERS = [
   { key: 'all', label: 'All' },
   { key: 'unread', label: 'Unread' },
-  { key: 'favourites', label: 'Favourites' },
-  { key: 'groups', label: 'Groups' },
+  { key: 'pinned', label: 'Pinned' },
+  { key: 'archived', label: 'Archived' },
 ];
 
 const ConversationList = ({
@@ -17,225 +18,205 @@ const ConversationList = ({
   onSelect,
   unreadTotal,
   onClose,
-  onStartNewConversation,
+  compact = false,
+  entryPoint = 'support',
 }) => {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
-  const [showNewChatModal, setShowNewChatModal] = useState(false);
-  const [newChatForm, setNewChatForm] = useState({ name: '', identifier: '' });
+  const [contextMenu, setContextMenu] = useState(null); // { convId, x, y }
 
-  const filtered = conversations.filter(c => {
-    const name = c.title || c.other_participant?.name || '';
-    const matchesSearch = name.toLowerCase().includes(search.toLowerCase());
-    
-    if (!matchesSearch) return false;
-    
-    switch (activeFilter) {
-      case 'unread': return c.unread_count > 0;
-      case 'favourites': return c.is_favourite;
-      case 'groups': return c.is_group;
-      default: return true;
-    }
-  });
+  const filtered = useMemo(() => {
+    let result = conversations.filter(c => {
+      const name = c.title || c.other_participant?.name || '';
+      const matchesSearch = name.toLowerCase().includes(search.toLowerCase());
+      if (!matchesSearch) return false;
+      
+      switch (activeFilter) {
+        case 'unread': return c.unread_count > 0;
+        case 'pinned': return c.is_pinned;
+        case 'archived': return c.is_archived;
+        default: return !c.is_archived; // Hide archived in 'all' unless explicitly filtered
+      }
+    });
+
+    // Sort: pinned first, then by last_message_at desc
+    return result.sort((a, b) => {
+      if (a.is_pinned && !b.is_pinned) return -1;
+      if (!a.is_pinned && b.is_pinned) return 1;
+      return new Date(b.last_message_at || 0) - new Date(a.last_message_at || 0);
+    });
+  }, [conversations, search, activeFilter]);
 
   const formatTime = (iso) => {
     if (!iso) return '';
     const date = new Date(iso);
     const now = new Date();
     const isToday = date.toDateString() === now.toDateString();
+    const isYesterday = new Date(now - 86400000).toDateString() === date.toDateString();
     
-    if (isToday) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
+    if (isToday) return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (isYesterday) return 'Yesterday';
+    if (now - date < 7 * 86400000) return date.toLocaleDateString([], { weekday: 'short' });
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   };
 
-  const handleStartNewChat = () => {
-    if (!newChatForm.name.trim() || !newChatForm.identifier.trim()) return;
-    onStartNewConversation?.(newChatForm);
-    setNewChatForm({ name: '', identifier: '' });
-    setShowNewChatModal(false);
+  const handleContextMenu = (e, conv) => {
+    e.preventDefault();
+    setContextMenu({ convId: conv.id, x: e.clientX, y: e.clientY });
   };
 
+  const closeContextMenu = () => setContextMenu(null);
+
   return (
-    <div className="flex flex-col h-full bg-gray-50 border-r border-gray-200 w-80 relative">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200 bg-white">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <h2 className="font-semibold text-gray-900">Messages</h2>
-            {unreadTotal > 0 && (
-              <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {unreadTotal}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-1">
-            <button 
-              onClick={() => setShowNewChatModal(true)}
-              className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
-              title="New conversation"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-            <button className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-              </svg>
-            </button>
-            <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-        
-        <div className="relative mb-3">
+    <div className="flex flex-col h-full bg-gray-50">
+      {/* Search Bar */}
+      <div className="px-3 py-2 border-b border-gray-200 bg-white">
+        <div className="relative">
+          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search conversations..."
-            className="w-full pl-9 pr-3 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Search messages..."
+            className="w-full pl-9 pr-3 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
           />
-          <svg className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
         </div>
+      </div>
 
-        {/* Filter Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+      {/* Filter Tabs */}
+      {!compact && (
+        <div className="flex items-center gap-1 px-3 py-2 overflow-x-auto scrollbar-hide bg-white border-b border-gray-100">
           {FILTERS.map(filter => (
             <button
               key={filter.key}
               onClick={() => setActiveFilter(filter.key)}
-              className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                 activeFilter === filter.key
-                  ? 'bg-green-100 text-green-700'
+                  ? 'bg-blue-600 text-white'
                   : 'text-gray-500 hover:bg-gray-100'
               }`}
             >
               {filter.label}
+              {filter.key === 'unread' && unreadTotal > 0 && (
+                <span className="ml-1 bg-white text-blue-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {unreadTotal}
+                </span>
+              )}
             </button>
           ))}
-          <button className="p-1 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-          </button>
         </div>
-      </div>
+      )}
 
-      {/* List */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Conversation List */}
+      <div className="flex-1 overflow-y-auto" onClick={closeContextMenu}>
         {filtered.length === 0 ? (
-          <div className="text-center py-8 text-gray-400 text-sm">
-            {search ? 'No conversations found' : 'No conversations yet'}
+          <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+            <Inbox className="w-12 h-12 mb-3 opacity-30" />
+            <p className="text-sm">{search ? 'No conversations found' : 'No conversations yet'}</p>
           </div>
         ) : (
           filtered.map(conv => {
             const isActive = conv.id === activeId;
             const hasUnread = conv.unread_count > 0;
+            const isPinned = conv.is_pinned;
+            const isArchived = conv.is_archived;
             
             return (
               <button
                 key={conv.id}
                 onClick={() => onSelect(conv)}
-                className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-100 transition-colors text-left ${
-                  isActive ? 'bg-blue-50 border-l-3 border-blue-600' : 'border-l-3 border-transparent'
-                }`}
+                onContextMenu={(e) => handleContextMenu(e, conv)}
+                className={`w-full flex items-start gap-3 px-3 py-3 hover:bg-gray-100 transition-colors text-left relative group ${
+                  isActive ? 'bg-blue-50 border-l-4 border-blue-600' : 'border-l-4 border-transparent'
+                } ${isArchived ? 'opacity-60' : ''}`}
               >
-                <img
-                  src={conv.avatar || conv.other_participant?.avatar || '/default-avatar.png'}
-                  alt=""
-                  className="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0"
-                />
+                {/* Avatar with online indicator */}
+                <div className="relative flex-shrink-0">
+                  <img
+                    src={conv.avatar || conv.other_participant?.avatar || '/default-avatar.png'}
+                    alt=""
+                    className="w-12 h-12 rounded-full bg-gray-200 object-cover"
+                    onError={(e) => { e.target.src = '/default-avatar.png'; }}
+                  />
+                  {conv.other_participant?.is_online && (
+                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
+                  )}
+                  {isPinned && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                      <Pin className="w-2.5 h-2.5 text-white" />
+                    </span>
+                  )}
+                </div>
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
                     <h4 className={`text-sm font-medium truncate ${
                       hasUnread ? 'text-gray-900 font-semibold' : 'text-gray-700'
                     }`}>
-                      {conv.title || conv.other_participant?.name || 'Unknown'}
+                      {conv.title || conv.other_participant?.name || 'Support'}
                     </h4>
-                    <span className="text-[11px] text-gray-400 flex-shrink-0">
+                    <span className={`text-[11px] flex-shrink-0 ${hasUnread ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>
                       {formatTime(conv.last_message_at)}
                     </span>
                   </div>
                   
-                  <p className={`text-sm truncate ${
-                    hasUnread ? 'text-gray-900 font-medium' : 'text-gray-500'
-                  }`}>
-                    {conv.last_message || 'Start a conversation...'}
-                  </p>
+                  <div className="flex items-center gap-1">
+                    {conv.last_message_sender_id === conv.other_participant?.id && hasUnread && (
+                      <span className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />
+                    )}
+                    <p className={`text-sm truncate flex-1 ${
+                      hasUnread ? 'text-gray-800 font-medium' : 'text-gray-500'
+                    }`}>
+                      {conv.is_typing ? (
+                        <span className="text-blue-600 italic">typing...</span>
+                      ) : (
+                        conv.last_message || 'Start a conversation...'
+                      )}
+                    </p>
+                    {hasUnread && (
+                      <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ml-1">
+                        {conv.unread_count}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                
-                {hasUnread && (
-                  <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 mt-1">
-                    {conv.unread_count}
-                  </span>
-                )}
+
+                {/* Hover actions */}
+                <div className="hidden group-hover:flex items-center gap-1 absolute right-2 top-1/2 -translate-y-1/2 bg-white shadow-md rounded-lg p-1">
+                  <button 
+                    className="p-1 hover:bg-gray-100 rounded"
+                    onClick={(e) => { e.stopPropagation(); /* TODO: pin toggle */ }}
+                  >
+                    <Pin className="w-3.5 h-3.5 text-gray-500" />
+                  </button>
+                  <button 
+                    className="p-1 hover:bg-gray-100 rounded"
+                    onClick={(e) => { e.stopPropagation(); /* TODO: archive toggle */ }}
+                  >
+                    <Archive className="w-3.5 h-3.5 text-gray-500" />
+                  </button>
+                </div>
               </button>
             );
           })
         )}
       </div>
 
-      {/* New Chat Modal */}
-      {showNewChatModal && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">New Conversation</h3>
-              <button 
-                onClick={() => setShowNewChatModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <div className="p-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  value={newChatForm.name}
-                  onChange={(e) => setNewChatForm(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Enter contact name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone / Email / Username
-                </label>
-                <input
-                  type="text"
-                  value={newChatForm.identifier}
-                  onChange={(e) => setNewChatForm(prev => ({ ...prev, identifier: e.target.value }))}
-                  placeholder="Enter phone, email or username"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <button
-                onClick={handleStartNewChat}
-                disabled={!newChatForm.name.trim() || !newChatForm.identifier.trim()}
-                className="w-full py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-              >
-                Start Conversation
-              </button>
-            </div>
-          </div>
+      {/* Context Menu */}
+      {contextMenu && (
+        <div 
+          className="fixed bg-white shadow-xl rounded-lg py-1 z-50 border border-gray-200 w-48"
+          style={{ top: contextMenu.y, left: Math.min(contextMenu.x, window.innerWidth - 200) }}
+        >
+          <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2">
+            <Pin className="w-4 h-4" /> {conversations.find(c => c.id === contextMenu.convId)?.is_pinned ? 'Unpin' : 'Pin'}
+          </button>
+          <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2">
+            <Archive className="w-4 h-4" /> {conversations.find(c => c.id === contextMenu.convId)?.is_archived ? 'Unarchive' : 'Archive'}
+          </button>
+          <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-red-600 flex items-center gap-2">
+            <MoreVertical className="w-4 h-4" /> Delete
+          </button>
         </div>
       )}
     </div>

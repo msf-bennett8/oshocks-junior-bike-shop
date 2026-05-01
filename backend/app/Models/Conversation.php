@@ -58,6 +58,16 @@ class Conversation extends Model
         return $this->hasMany(Message::class)->latest()->limit(1);
     }
 
+    public function settings(): HasMany
+    {
+        return $this->hasMany(ConversationSetting::class);
+    }
+
+    public function pinnedMessages(): HasMany
+    {
+        return $this->hasMany(PinnedMessage::class);
+    }
+
     public function callSessions(): HasMany
     {
         return $this->hasMany(CallSession::class);
