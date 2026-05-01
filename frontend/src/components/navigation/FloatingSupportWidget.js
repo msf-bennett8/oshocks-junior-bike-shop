@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   MessageCircle, X, Mail, Phone, Clock, ChevronRight, 
-  Headphones, ExternalLink
+  Headphones, ExternalLink, Wifi, WifiOff
 } from 'lucide-react';
 import ChatDrawer from '../messaging/ChatDrawer';
 import CallOverlay from '../messaging/CallOverlay';
@@ -37,6 +37,8 @@ const FloatingSupportWidget = () => {
     declineCall,
     endCall,
   } = useWebRTC(user?.id);
+
+  const { connectionStatus } = useMessaging(user?.id);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -211,6 +213,11 @@ const FloatingSupportWidget = () => {
           aria-label="Open support panel"
         >
           <ChevronRight className="w-6 h-6" />
+          {/* Connection status dot */}
+          <span className={`absolute top-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-white ${
+            connectionStatus === 'connected' ? 'bg-green-400' : 
+            connectionStatus === 'connecting' ? 'bg-yellow-400 animate-pulse' : 'bg-red-400'
+          }`} />
         </button>
       )}
 
@@ -405,7 +412,7 @@ const FloatingSupportWidget = () => {
         </>
       )}
 
-      {/* In-app Chat Drawer */}
+      {/* In-app Chat Drawer — Enhanced with split-pane/desktop support */}
       <ChatDrawer 
         isOpen={chatOpen} 
         onClose={() => setChatOpen(false)}
@@ -413,6 +420,7 @@ const FloatingSupportWidget = () => {
           setChatOpen(false);
           initiateCall(convId, calleeId, type);
         }}
+        entryPoint="support"
       />
 
       {/* In-app Call Overlay */}

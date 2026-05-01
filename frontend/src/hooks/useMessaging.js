@@ -1,5 +1,5 @@
 // ============================================================================
-// MESSAGING HOOK — Conversations, messages, real-time inbox (GUEST SUPPORT)
+// MESSAGING HOOK — Conversations, messages, real-time, optimistic UI, retry queue
 // ============================================================================
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -7,8 +7,57 @@ import api from '../services/api';
 import { useWebSocket } from './useWebSocket';
 import { getGuestSessionId, getGuestProfile, setGuestProfile, linkGuestSessionOnLogin } from '../utils/guestSession';
 
+// Message retry queue
+class MessageQueue {
+  constructor() {
+    this.queue = [];
+    this.processing = false;
+  }
+  
+  add(message) {
+    this.queue.push({ ...message, retryCount: 0, maxRetries: 3 });
+    this.process();
+  }
+  
+  async process() {
+    if (this.processing || this.queue.length === 0) return;
+    this.processing = true;
+    
+    while (this.queue.length > 0) {
+      const msg = this.queue[0];
+      try {
+        // Attempt send
+        const res = await api.post(`/conversations/${msg.conversationId}/messages`, {
+          body: msg.body,
+          type: msg.type,
+          metadata: msg.metadata,
+          reply_to: msg.replyTo,
+          sender_name: msg.senderName,
+          sender_email: msg.senderEmail,
+        });
+        
+        msg.onSuccess?.(res.data.data);
+        this.queue.shift(); // Remove on success
+      } catch (err) {
+        msg.retryCount++;
+        if (msg.retryCount >= msg.maxRetries) {
+          msg.onFail?.(err);
+          this.queue.shift(); // Remove after max retries
+        } else {
+          // Wait before retry (exponential backoff)
+          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, msg.retryCount - 1)));
+        }
+      }
+    }
+    
+    this.processing = false;
+  }
+}
+
+const messageQueue = new MessageQueue();
+
 export const useMessaging = (userId) => {
-  const { isConnected, subscribeToConversation, subscribeToUser, echo } = useWebSocket(userId);
+  const { isConnected, subscribeToConversation, subscribeToUser, echo, reconnect } = useWebSocket(userId);
   
   const [conversations, setConversations] = useState([]);
   const [activeConversation, setActiveConversation] = useState(null);
@@ -17,23 +66,25 @@ export const useMessaging = (userId) => {
   const [sending, setSending] = useState(false);
   const [unreadTotal, setUnreadTotal] = useState(0);
   const [incomingCall, setIncomingCall] = useState(null);
+  const [typingUsers, setTypingUsers] = useState([]);
   const [guestProfile, setGuestProfileState] = useState(getGuestProfile());
+  const [connectionStatus, setConnectionStatus] = useState('connecting'); // connecting, connected, disconnected
   
   const messagesEndRef = useRef(null);
+  const typingTimeoutsRef = useRef(new Map());
+  const optimisticIdRef = useRef(0);
 
-  // Generate anonymous display name for guests (anonXXXX where X = random 4 digits)
+  // Generate anonymous display name for guests
   const generateAnonName = useCallback(() => {
-    const digits = Math.floor(1000 + Math.random() * 9000); // 1000-9999
+    const digits = Math.floor(1000 + Math.random() * 9000);
     return `anon${digits}`;
   }, []);
 
-  // Ensure guest session exists and has anon name
+  // Ensure guest session exists
   useEffect(() => {
     if (!userId) {
-      const sessionId = getGuestSessionId(); // Initialize if not exists
+      getGuestSessionId();
       const profile = getGuestProfile();
-      
-      // Auto-generate anon name if guest hasn't set one
       if (!profile.name) {
         const anonName = generateAnonName();
         setGuestProfile(anonName, profile.email || null);
@@ -41,6 +92,11 @@ export const useMessaging = (userId) => {
       }
     }
   }, [userId, generateAnonName]);
+
+  // Connection status
+  useEffect(() => {
+    setConnectionStatus(isConnected ? 'connected' : 'disconnected');
+  }, [isConnected]);
 
   const fetchConversations = useCallback(async () => {
     setLoading(true);
@@ -72,40 +128,99 @@ export const useMessaging = (userId) => {
     }
   }, []);
 
-  const sendMessage = useCallback(async (conversationId, body, type = 'text', metadata = null) => {
+  // Optimistic send with retry queue
+  const sendMessage = useCallback(async (conversationId, body, type = 'text', metadata = null, replyTo = null, attachments = []) => {
     if (!body.trim() || !conversationId) return;
     
+    const optimisticId = `opt-${++optimisticIdRef.current}`;
+    const profile = getGuestProfile();
+    const now = new Date().toISOString();
+    
+    // Optimistic UI — add immediately
+    const optimisticMessage = {
+      id: optimisticId,
+      conversation_id: conversationId,
+      sender_id: userId || null,
+      body: body.trim(),
+      type,
+      metadata,
+      reply_to: replyTo,
+      created_at: now,
+      read_at: null,
+      delivered_at: null,
+      is_edited: false,
+      is_deleted: false,
+      sender: userId ? null : { name: profile.name || 'Guest', avatar: null },
+      sender_name: profile.name,
+      _optimistic: true,
+      _pending: true,
+    };
+    
+    setMessages(prev => [...prev, optimisticMessage]);
     setSending(true);
-    try {
-      const payload = {
-        body,
-        type,
-        metadata,
-      };
+    scrollToBottom();
 
-      // Add guest profile info if not authenticated
-      if (!userId) {
-        const profile = getGuestProfile();
-        if (profile.name) payload.sender_name = profile.name;
-        if (profile.email) payload.sender_email = profile.email;
-      }
+    // Update conversation preview
+    setConversations(prev => prev.map(c => 
+      c.id === conversationId 
+        ? { ...c, last_message: body.trim(), last_message_at: now }
+        : c
+    ));
 
-      const res = await api.post(`/conversations/${conversationId}/messages`, payload);
-      
-      setMessages(prev => [...prev, res.data.data]);
-      scrollToBottom();
-      
-      setConversations(prev => prev.map(c => 
-        c.id === conversationId 
-          ? { ...c, last_message: body, last_message_at: new Date().toISOString() }
-          : c
-      ));
-    } catch (err) {
-      console.error('Failed to send message:', err);
-    } finally {
-      setSending(false);
-    }
+    // Queue for actual send with retry
+    messageQueue.add({
+      conversationId,
+      body: body.trim(),
+      type,
+      metadata,
+      replyTo,
+      senderName: profile.name,
+      senderEmail: profile.email,
+      onSuccess: (serverMessage) => {
+        // Replace optimistic with real message
+        setMessages(prev => prev.map(m => 
+          m.id === optimisticId ? { ...serverMessage, _pending: false } : m
+        ));
+        setSending(false);
+      },
+      onFail: (err) => {
+        // Mark as failed
+        setMessages(prev => prev.map(m => 
+          m.id === optimisticId ? { ...m, _failed: true, _pending: false } : m
+        ));
+        setSending(false);
+        console.error('Message failed after retries:', err);
+      },
+    });
   }, [userId]);
+
+  const retryMessage = useCallback((optimisticId) => {
+    // Find failed message and re-queue
+    const failedMsg = messages.find(m => m.id === optimisticId);
+    if (failedMsg && failedMsg._failed) {
+      setMessages(prev => prev.map(m => 
+        m.id === optimisticId ? { ...m, _failed: false, _pending: true } : m
+      ));
+      messageQueue.add({
+        conversationId: failedMsg.conversation_id,
+        body: failedMsg.body,
+        type: failedMsg.type,
+        metadata: failedMsg.metadata,
+        replyTo: failedMsg.reply_to,
+        senderName: failedMsg.sender_name,
+        onSuccess: (serverMessage) => {
+          setMessages(prev => prev.map(m => 
+            m.id === optimisticId ? { ...serverMessage, _pending: false } : m
+          ));
+        },
+        onFail: () => {
+          setMessages(prev => prev.map(m => 
+            m.id === optimisticId ? { ...m, _failed: true, _pending: false } : m
+          ));
+        },
+      });
+    }
+  }, [messages]);
 
   const startConversation = useCallback(async (participantId, type = 'direct', title = null, guestName = null, guestEmail = null) => {
     try {
@@ -115,7 +230,6 @@ export const useMessaging = (userId) => {
         title,
       };
 
-      // Add guest info for anonymous users
       if (!userId) {
         const profile = getGuestProfile();
         payload.guest_name = guestName || profile.name || 'Guest';
@@ -133,12 +247,10 @@ export const useMessaging = (userId) => {
   }, [userId]);
 
   const startSupportChat = useCallback(async (supportUserId, guestName = null, guestEmail = null) => {
-    // Ensure guest has anon name before starting chat
     const profile = getGuestProfile();
     const effectiveName = guestName || profile.name || generateAnonName();
     const effectiveEmail = guestEmail || profile.email || null;
     
-    // Save guest profile
     setGuestProfile(effectiveName, effectiveEmail);
     setGuestProfileState(getGuestProfile());
 
@@ -157,21 +269,51 @@ export const useMessaging = (userId) => {
     }
   }, [conversations]);
 
+  const sendTypingIndicator = useCallback((conversationId, isTyping) => {
+    if (!echo) return;
+    
+    // Debounce: clear existing timeout for this conversation
+    const key = `${conversationId}`;
+    if (typingTimeoutsRef.current.has(key)) {
+      clearTimeout(typingTimeoutsRef.current.get(key));
+    }
+    
+    // Send via WebSocket
+    try {
+      echo.private(`conversation.${conversationId}`)
+        .whisper('typing', {
+          user_id: userId,
+          guest_session_id: !userId ? getGuestSessionId() : null,
+          name: getGuestProfile().name || 'Guest',
+          is_typing: isTyping,
+        });
+    } catch (err) {
+      console.error('Failed to send typing indicator:', err);
+    }
+    
+    // Auto-clear after 5s
+    if (isTyping) {
+      const timeout = setTimeout(() => {
+        sendTypingIndicator(conversationId, false);
+      }, 5000);
+      typingTimeoutsRef.current.set(key, timeout);
+    }
+  }, [echo, userId]);
+
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
-  // Link guest sessions when user logs in
+  // Link guest sessions on login
   useEffect(() => {
     if (userId) {
       linkGuestSessionOnLogin(api).then(() => {
-        // Refresh conversations after linking
         fetchConversations();
       }).catch(err => {
         console.log('Guest session link skipped or failed:', err.message);
       });
     }
-  }, [userId]); // Removed fetchConversations from deps to prevent loop
+  }, [userId]);
 
   // Subscribe to real-time messages
   useEffect(() => {
@@ -196,6 +338,33 @@ export const useMessaging = (userId) => {
     return unsubscribe;
   }, [activeConversation?.id, isConnected, subscribeToConversation, scrollToBottom]);
 
+  // Subscribe to typing indicators
+  useEffect(() => {
+    if (!activeConversation?.id || !echo) return;
+
+    const channel = echo.private(`conversation.${activeConversation.id}`);
+    
+    channel.listenForWhisper('typing', (event) => {
+      if (event.user_id === userId) return; // Ignore self
+      
+      setTypingUsers(prev => {
+        const filtered = prev.filter(u => u.user_id !== event.user_id && u.guest_session_id !== event.guest_session_id);
+        if (event.is_typing) {
+          return [...filtered, {
+            user_id: event.user_id,
+            guest_session_id: event.guest_session_id,
+            name: event.name,
+          }];
+        }
+        return filtered;
+      });
+    });
+
+    return () => {
+      channel.stopListeningForWhisper('typing');
+    };
+  }, [activeConversation?.id, echo, userId]);
+
   // Subscribe to incoming calls
   useEffect(() => {
     if (!userId || !isConnected) return;
@@ -218,14 +387,13 @@ export const useMessaging = (userId) => {
     setIncomingCall(null);
   }, []);
 
+  // Initial fetch
   useEffect(() => {
-    // Only fetch conversations when we have auth OR guest session is ready
-    // This prevents 401 spam when component mounts before guest session init
     if (userId || getGuestSessionId()) {
       fetchConversations();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only fetch on mount
+  }, []);
 
   return {
     conversations,
@@ -235,9 +403,11 @@ export const useMessaging = (userId) => {
     sending,
     unreadTotal,
     incomingCall,
+    typingUsers,
     messagesEndRef,
     echo,
     guestProfile,
+    connectionStatus,
     setGuestProfile: (name, email) => {
       setGuestProfile(name, email);
       setGuestProfileState(getGuestProfile());
@@ -246,12 +416,15 @@ export const useMessaging = (userId) => {
     fetchConversations,
     fetchMessages,
     sendMessage,
+    retryMessage,
     startConversation,
     startSupportChat,
     markAsRead,
     scrollToBottom,
     dismissIncomingCall,
+    sendTypingIndicator,
     isConnected,
+    reconnect,
   };
 };
 

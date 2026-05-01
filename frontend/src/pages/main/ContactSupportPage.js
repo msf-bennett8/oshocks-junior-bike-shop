@@ -996,7 +996,7 @@ const ContactSupportPage = () => {
         </button>
       )}
 
-      {/* In-app Chat Drawer */}
+      {/* In-app Chat Drawer — Enhanced with split-pane/desktop support */}
       <ChatDrawer 
         isOpen={chatOpen} 
         onClose={() => setChatOpen(false)}
@@ -1004,6 +1004,7 @@ const ContactSupportPage = () => {
           setChatOpen(false);
           initiateCall(convId, calleeId, type);
         }}
+        entryPoint="support"
       />
 
       {/* In-app Call Overlay */}

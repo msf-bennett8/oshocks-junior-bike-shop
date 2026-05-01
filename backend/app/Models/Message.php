@@ -17,6 +17,13 @@ class Message extends Model
         'type',
         'metadata',
         'read_at',
+        'delivered_at',
+        'reply_to',
+        'edited_at',
+        'is_edited',
+        'deleted_at',
+        'is_deleted',
+        'deleted_by',
         'guest_session_id',
         'sender_name',
         'sender_email',
@@ -25,6 +32,11 @@ class Message extends Model
     protected $casts = [
         'metadata' => 'array',
         'read_at' => 'datetime',
+        'delivered_at' => 'datetime',
+        'edited_at' => 'datetime',
+        'deleted_at' => 'datetime',
+        'is_edited' => 'boolean',
+        'is_deleted' => 'boolean',
     ];
 
     public function conversation(): BelongsTo
@@ -45,6 +57,11 @@ class Message extends Model
         return $this->read_at !== null;
     }
 
+    public function isDelivered(): bool
+    {
+        return $this->delivered_at !== null;
+    }
+
     public function markAsRead(): void
     {
         if (!$this->read_at) {
@@ -52,8 +69,55 @@ class Message extends Model
         }
     }
 
+    public function markAsDelivered(): void
+    {
+        if (!$this->delivered_at) {
+            $this->update(['delivered_at' => now()]);
+        }
+    }
+
+    public function markAsEdited(string $newBody): void
+    {
+        $this->update([
+            'body' => $newBody,
+            'edited_at' => now(),
+            'is_edited' => true,
+        ]);
+    }
+
+    public function softDelete(string $deletedBy = 'sender'): void
+    {
+        $this->update([
+            'deleted_at' => now(),
+            'is_deleted' => true,
+            'deleted_by' => $deletedBy,
+            'body' => 'This message was deleted',
+        ]);
+    }
+
+    public function reactions()
+    {
+        return $this->hasMany(MessageReaction::class);
+    }
+
+    public function attachments()
+    {
+        return $this->hasMany(MessageAttachment::class);
+    }
+
+    public function replyToMessage()
+    {
+        return $this->belongsTo(Message::class, 'reply_to');
+    }
+
+    public function replies()
+    {
+        return $this->hasMany(Message::class, 'reply_to');
+    }
+
     public function getSenderDisplayName(): string
     {
+        if ($this->is_deleted) return 'Deleted message';
         if ($this->sender) {
             return $this->sender->name;
         }
@@ -63,5 +127,13 @@ class Message extends Model
     public function getSenderAvatar(): ?string
     {
         return $this->sender?->avatar ?? null;
+    }
+
+    public function getStatusFor(?User $user): string
+    {
+        if ($this->is_deleted) return 'deleted';
+        if ($this->read_at) return 'read';
+        if ($this->delivered_at) return 'delivered';
+        return 'sent';
     }
 }

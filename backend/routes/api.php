@@ -543,22 +543,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
     // Link guest sessions on login
     Route::post('/conversations/link-guest', [\App\Http\Controllers\Api\ConversationController::class, 'linkGuestSessions']);
 
-    // Conversations (also accessible via X-Guest-Session-ID header)
-    Route::get('/conversations', [\App\Http\Controllers\Api\ConversationController::class, 'index']);
-    Route::post('/conversations', [\App\Http\Controllers\Api\ConversationController::class, 'store']);
-    Route::get('/conversations/{conversation}', [\App\Http\Controllers\Api\ConversationController::class, 'show']);
-    Route::post('/conversations/{conversation}/read', [\App\Http\Controllers\Api\ConversationController::class, 'markAsRead']);
-
-    // Messages
-    Route::get('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\MessageController::class, 'index']);
-    Route::post('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\MessageController::class, 'store']);
-
     // Call Signaling (WebRTC) - requires auth
-    Route::post('/calls/initiate', [\App\Http\Controllers\Api\CallSignalingController::class, 'initiate']);
-    Route::post('/calls/signal', [\App\Http\Controllers\Api\CallSignalingController::class, 'signal']);
-    Route::get('/calls/history', [\App\Http\Controllers\Api\CallSignalingController::class, 'history']);
-
-    // Call Signaling (WebRTC)
     Route::post('/calls/initiate', [\App\Http\Controllers\Api\CallSignalingController::class, 'initiate']);
     Route::post('/calls/signal', [\App\Http\Controllers\Api\CallSignalingController::class, 'signal']);
     Route::get('/calls/history', [\App\Http\Controllers\Api\CallSignalingController::class, 'history']);
@@ -596,10 +581,16 @@ Route::prefix('v1')->middleware(['api', 'optional', 'audit'])->group(function ()
     Route::post('/conversations', [\App\Http\Controllers\Api\ConversationController::class, 'store']);
     Route::get('/conversations/{conversation}', [\App\Http\Controllers\Api\ConversationController::class, 'show']);
     Route::post('/conversations/{conversation}/read', [\App\Http\Controllers\Api\ConversationController::class, 'markAsRead']);
-
-    // Messages
-    Route::get('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\MessageController::class, 'index']);
-    Route::post('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\MessageController::class, 'store']);
+    
+    // Enhanced messaging features
+    Route::get('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\ConversationController::class, 'messages']);
+    Route::post('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\ConversationController::class, 'sendMessage']);
+    Route::post('/conversations/{conversation}/typing', [\App\Http\Controllers\Api\ConversationController::class, 'typing']);
+    Route::post('/conversations/{conversation}/messages/{message}/react', [\App\Http\Controllers\Api\ConversationController::class, 'react']);
+    
+    // Message search (auth only)
+    Route::get('/conversations/search/messages', [\App\Http\Controllers\Api\ConversationController::class, 'search'])
+        ->middleware('auth:sanctum');
 });
 
 // Public callback routes (outside protected group)

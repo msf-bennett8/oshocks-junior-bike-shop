@@ -353,9 +353,10 @@ export const messagingAPI = {
     return api.post('/conversations', data);
   },
 
-  getConversation: (id) => {
+  getConversation: (id, cursor = null) => {
     console.log('💬 Fetching conversation:', id);
-    return api.get(`/conversations/${id}`);
+    const url = cursor ? `/conversations/${id}?cursor=${cursor}` : `/conversations/${id}`;
+    return api.get(url);
   },
 
   markAsRead: (id) => {
@@ -372,6 +373,18 @@ export const messagingAPI = {
 
   sendMessage: (conversationId, data) => {
     return api.post(`/conversations/${conversationId}/messages`, data);
+  },
+
+  sendTyping: (conversationId, isTyping = true) => {
+    return api.post(`/conversations/${conversationId}/typing`, { is_typing: isTyping });
+  },
+
+  reactToMessage: (conversationId, messageId, reaction) => {
+    return api.post(`/conversations/${conversationId}/messages/${messageId}/react`, { reaction });
+  },
+
+  searchMessages: (query) => {
+    return api.get('/conversations/search/messages', { params: { q: query } });
   },
 };
 

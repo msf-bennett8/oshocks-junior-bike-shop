@@ -46,7 +46,7 @@ const Navbar = () => {
 
   // Messaging & Calls state
   const [chatOpen, setChatOpen] = useState(false);
-  const { incomingCall, dismissIncomingCall, echo } = useMessaging(user?.id);
+  const { incomingCall, dismissIncomingCall, echo, connectionStatus, unreadTotal } = useMessaging(user?.id);
   const {
     localStream,
     remoteStream,
@@ -717,6 +717,17 @@ const Navbar = () => {
                 title="Messages"
               >
                 <MessageCircle className="w-5 h-5 text-gray-700 group-hover:text-orange-500 transition-colors" />
+                {/* Unread indicator dot */}
+                {unreadTotal > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                    {unreadTotal > 9 ? '9+' : unreadTotal}
+                  </span>
+                )}
+                {/* Connection status dot */}
+                <span className={`absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full border border-white ${
+                  connectionStatus === 'connected' ? 'bg-green-400' : 
+                  connectionStatus === 'connecting' ? 'bg-yellow-400 animate-pulse' : 'bg-red-400'
+                }`} />
               </button>
 
               {/* SuperAdmin Notification Center - Only for admins - Always render for mobile event handling */}
@@ -971,7 +982,7 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Chat Drawer */}
+      {/* Chat Drawer — Enhanced with split-pane/desktop support */}
       <ChatDrawer 
         isOpen={chatOpen} 
         onClose={() => setChatOpen(false)}
@@ -979,6 +990,7 @@ const Navbar = () => {
           setChatOpen(false);
           initiateCall(convId, calleeId, type);
         }}
+        entryPoint="navbar"
       />
 
       {/* Call Overlay */}
