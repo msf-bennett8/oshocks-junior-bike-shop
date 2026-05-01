@@ -2,8 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { 
   Mail, Phone, MessageCircle, MapPin, Clock, Send, Loader, CheckCircle, 
   AlertCircle, User, HelpCircle, Package, CreditCard, Truck, Shield,
-  ChevronRight, X, Headphones, FileText, ExternalLink
+  ChevronRight, X, Headphones, FileText, ExternalLink, Video
 } from 'lucide-react';
+import ChatDrawer from '../../components/messaging/ChatDrawer';
+import CallOverlay from '../../components/messaging/CallOverlay';
+import { useMessaging } from '../../hooks/useMessaging';
+import { useWebRTC } from '../../hooks/useWebRTC';
+import { useAuth } from '../../context/AuthContext';
 
 const ContactSupportPage = () => {
   const [formData, setFormData] = useState({
@@ -22,6 +27,25 @@ const ContactSupportPage = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [showFAB, setShowFAB] = useState(false);
   const [isFABOpen, setIsFABOpen] = useState(false);
+  
+  // In-app messaging & calls
+  const [chatOpen, setChatOpen] = useState(false);
+  const { user } = useAuth();
+  const { incomingCall, dismissIncomingCall, startConversation } = useMessaging(user?.id);
+  const {
+    localStream,
+    remoteStream,
+    callState,
+    callType,
+    currentCall,
+    callDuration,
+    callError,
+    formattedDuration,
+    initiateCall,
+    answerCall,
+    declineCall,
+    endCall,
+  } = useWebRTC(user?.id);
 
   const categories = [
     { value: 'order', label: 'Order Issues', icon: Package },
@@ -181,6 +205,57 @@ const ContactSupportPage = () => {
 
   const toggleFAB = () => {
     setIsFABOpen(!isFABOpen);
+  };
+
+  // Support user config — fetches super_admin/owner dynamically
+  const [supportUser, setSupportUser] = useState(null);
+
+  // Fetch support user (super_admin or owner) on mount
+  useEffect(() => {
+    const fetchSupportUser = async () => {
+      try {
+        const res = await fetch(`${process.env.REACT_APP_API_URL?.replace('/api/v1', '')}/support-user`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.data) {
+            setSupportUser(data.data);
+            return;
+          }
+        }
+      } catch (err) {
+        console.log('Could not fetch support user, using fallback');
+      }
+      // Fallback: use seller ID 1 (main shop owner)
+      setSupportUser({ id: 1, name: 'Oshocks Support', role: 'super_admin' });
+    };
+
+    if (user?.id) fetchSupportUser();
+  }, [user?.id]);
+
+  // Start in-app call to support (dynamically finds super_admin/owner)
+  const handleCallSupport = async () => {
+    const supportId = supportUser?.id || 1;
+    try {
+      setIsFABOpen(false);
+      // Try in-app WebRTC call first
+      const supportConv = await startConversation(supportId, 'support', 'Oshocks Support');
+      if (supportConv?.id) {
+        initiateCall(supportConv.id, supportId, 'voice');
+      }
+    } catch (err) {
+      console.error('In-app call failed, falling back to phone:', err);
+      // Fallback to external phone dialer
+      window.location.href = 'tel:+254798558285';
+    }
+  };
+
+  // Open chat with support
+  const handleChatSupport = async () => {
+    const supportId = supportUser?.id || 1;
+    setIsFABOpen(false);
+    setChatOpen(true);
+    // Auto-start conversation with support (super_admin/owner)
+    await startConversation(supportId, 'support', 'Oshocks Support');
   };
 
   return (
@@ -599,6 +674,18 @@ const ContactSupportPage = () => {
             <h3 className="font-bold text-gray-900 mb-3">Need Help?</h3>
             <p className="text-sm text-gray-600 mb-4">Contact our support team</p>
             <div className="space-y-2">
+              {/* Chat with Us — In-app messaging */}
+              <button
+                onClick={handleChatSupport}
+                className="w-full flex items-center space-x-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-left"
+              >
+                <MessageCircle className="w-5 h-5 text-blue-600" />
+                <div>
+                  <span className="text-sm font-medium text-gray-900">Chat with Us</span>
+                  <span className="block text-[10px] text-green-600">● In-app messaging</span>
+                </div>
+              </button>
+
               <a
                 href="mailto:support@oshocks.co.ke"
                 className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
@@ -606,22 +693,28 @@ const ContactSupportPage = () => {
                 <Mail className="w-5 h-5 text-blue-600" />
                 <span className="text-sm font-medium text-gray-900">Email Us</span>
               </a>
+
               <a
-                href="https://wa.me/254712345678"
+                href="https://wa.me/254798558285"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                <MessageCircle className="w-5 h-5 text-blue-600" />
+                <MessageCircle className="w-5 h-5 text-green-600" />
                 <span className="text-sm font-medium text-gray-900">WhatsApp</span>
               </a>
-              <a
-                href="tel:+254712345678"
-                className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+
+              {/* Call Us — WebRTC first, fallback to phone */}
+              <button
+                onClick={handleCallSupport}
+                className="w-full flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-left"
               >
                 <Phone className="w-5 h-5 text-blue-600" />
-                <span className="text-sm font-medium text-gray-900">Call Us</span>
-              </a>
+                <div>
+                  <span className="text-sm font-medium text-gray-900">Call Us</span>
+                  <span className="block text-[10px] text-gray-500">Free in-app call or dial</span>
+                </div>
+              </button>
             </div>
           </div>
         )}
@@ -659,18 +752,33 @@ const ContactSupportPage = () => {
 
               <div className="p-4 space-y-4 overflow-y-auto h-[calc(100vh-100px)]">
                 <div className="space-y-3">
-                  <a
-                    href="tel:+254712345678"
-                    className="flex items-center space-x-3 p-4 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg hover:shadow-md transition-all"
+                  {/* Chat with Us — In-app */}
+                  <button
+                    onClick={handleChatSupport}
+                    className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg hover:shadow-md transition-all text-left"
+                  >
+                    <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      <MessageCircle className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">Chat with Us</p>
+                      <p className="text-xs text-gray-600">In-app messaging</p>
+                    </div>
+                  </button>
+
+                  {/* Call Us — WebRTC first, fallback to phone */}
+                  <button
+                    onClick={handleCallSupport}
+                    className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg hover:shadow-md transition-all text-left"
                   >
                     <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
                       <Phone className="w-6 h-6 text-white" />
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900 text-sm">Call Us Now</p>
-                      <p className="text-xs text-gray-600">+254 798 558  285</p>
+                      <p className="text-xs text-gray-600">Free in-app or +254 798 558 285</p>
                     </div>
-                  </a>
+                  </button>
 
                   <a
                     href="https://wa.me/254798558285"
@@ -788,6 +896,38 @@ const ContactSupportPage = () => {
           <ChevronRight className="w-6 h-6 mx-auto transform -rotate-90" />
         </button>
       )}
+
+      {/* In-app Chat Drawer */}
+      <ChatDrawer 
+        isOpen={chatOpen} 
+        onClose={() => setChatOpen(false)}
+        onStartCall={(convId, calleeId, type) => {
+          setChatOpen(false);
+          initiateCall(convId, calleeId, type);
+        }}
+      />
+
+      {/* In-app Call Overlay */}
+      <CallOverlay
+        callState={callState}
+        callType={callType}
+        incomingCall={incomingCall}
+        currentCall={currentCall}
+        localStream={localStream}
+        remoteStream={remoteStream}
+        callDuration={formattedDuration}
+        callError={callError}
+        onAnswer={(call) => {
+          dismissIncomingCall();
+          answerCall(call);
+        }}
+        onDecline={() => {
+          declineCall(incomingCall?.sessionId);
+          dismissIncomingCall();
+        }}
+        onEndCall={endCall}
+        onDismissError={() => {}}
+      />
     </div>
   );
 };

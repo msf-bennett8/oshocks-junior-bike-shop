@@ -29,11 +29,11 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "https://oshocks-backend-production.up.railway.app/api/v1",
-    "VITE_REVERB_HOST": "oshocks-backend-production.up.railway.app",
-    "VITE_REVERB_PORT": "443",
-    "VITE_REVERB_SCHEME": "https",
-    "VITE_REVERB_APP_KEY": "oshocks-prod",
-    "VITE_PAYSTACK_PUBLIC_KEY": "pk_test_86651a777c8e46ac67f37b02ecf3ec310e4dec08"
+    "REACT_APP_API_URL": "https://oshocks-backend-production.up.railway.app/api/v1",
+    "REACT_APP_REVERB_HOST": "oshocks-backend-production.up.railway.app",
+    "REACT_APP_REVERB_PORT": "443",
+    "REACT_APP_REVERB_SCHEME": "https",
+    "REACT_APP_REVERB_APP_KEY": "oshocks-prod-key-cea0630445322dca",
+    "REACT_APP_PAYSTACK_PUBLIC_KEY": "pk_test_86651a777c8e46ac67f37b02ecf3ec310e4dec08"
   }
 }

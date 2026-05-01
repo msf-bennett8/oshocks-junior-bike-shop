@@ -35,7 +35,7 @@ export const useWebSocket = (userId) => {
           Authorization: `Bearer ${token}`,
         },
       },
-      authEndpoint: `${import.meta.env.VITE_API_URL?.replace('/api/v1', '')}/broadcasting/auth`,
+      authEndpoint: `${process.env.REACT_APP_API_URL?.replace('/api/v1', '')}/broadcasting/auth`,
     });
 
     echo.connector.pusher.connection.bind('connected', () => {

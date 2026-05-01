@@ -94,6 +94,28 @@ Route::middleware(['api', 'audit'])->prefix('v1')->group(function () {
     // Payment Recorders (public view)
     Route::get('/payment-recorders', [\App\Http\Controllers\PaymentRecorderController::class, 'index']);
     Route::get('/payment-recorders/{id}', [\App\Http\Controllers\PaymentRecorderController::class, 'show']);
+
+    // Support user — returns the super_admin/owner for in-app chat/calls
+    Route::get('/support-user', function () {
+        $supportUser = \App\Models\User::whereIn('role', ['super_admin', 'owner', 'admin'])
+            ->orderByRaw("FIELD(role, 'super_admin', 'owner', 'admin')")
+            ->first();
+
+        if (!$supportUser) {
+            return response()->json(['error' => 'No support user available'], 404);
+        }
+
+        return response()->json([
+            'data' => [
+                'id' => $supportUser->id,
+                'name' => $supportUser->name,
+                'email' => $supportUser->email,
+                'role' => $supportUser->role,
+                'avatar' => $supportUser->avatar,
+                'phone' => $supportUser->phone,
+            ]
+        ]);
+    });
     
     // ============================================================================
     // ORDER ROUTES - PUBLIC (Guest checkout allowed)

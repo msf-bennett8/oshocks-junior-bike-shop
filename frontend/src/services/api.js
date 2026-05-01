@@ -7,11 +7,11 @@ import axios from 'axios';
 import { logIntegrationError, logApiRetry, recordServiceSuccess, determineServiceName } from '../utils/auditUtils';
 
 // Base API URL - Railway backend
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://oshocks-backend-production.up.railway.app/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://oshocks-backend-production.up.railway.app/api/v1';
 
 console.log('🌐 API Service Initialized');
 console.log('📍 Base URL:', API_BASE_URL);
-console.log('🔧 Environment:', import.meta.env.MODE);
+console.log('🔧 Environment:', process.env.NODE_ENV);
 
 // Create axios instance with default config
 const api = axios.create({
