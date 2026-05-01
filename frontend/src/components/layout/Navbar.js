@@ -47,6 +47,8 @@ const Navbar = () => {
   // Messaging & Calls state
   const [chatOpen, setChatOpen] = useState(false);
   const { incomingCall, dismissIncomingCall, echo, connectionStatus, unreadTotal } = useMessaging(user?.id);
+
+  // Body class is managed by ChatDrawer.jsx — Navbar just reads it
   const {
     localStream,
     remoteStream,
@@ -87,6 +89,12 @@ const Navbar = () => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
+      // Don't hide navbar when chat is open (split-pane mode)
+      if (chatOpen) {
+        setIsVisible(true);
+        return;
+      }
+      
       if (currentScrollY < lastScrollY || currentScrollY < 10) {
         setIsVisible(true);
       } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
@@ -100,7 +108,7 @@ const Navbar = () => {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  }, [lastScrollY, chatOpen]);
 
   // Close sidebar when clicking outside
   useEffect(() => {
@@ -362,8 +370,10 @@ const Navbar = () => {
         html { scroll-behavior: smooth; }
       `}</style>
 
-      {/* Modern Glassmorphism Navbar */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      {/* Modern Glassmorphism Navbar — sticky when split-pane, fixed otherwise */}
+      <nav className={`transition-all duration-500 ${
+        chatOpen ? 'sticky top-0 z-40' : 'fixed top-0 left-0 right-0 z-50'
+      } ${
         lastScrollY > 50 
           ? 'bg-white/90 backdrop-blur-xl shadow-lg border-b border-orange-100/50' 
           : 'bg-white'
@@ -465,7 +475,7 @@ const Navbar = () => {
 
                   {/* Mobile Profile Dropdown - Fixed positioning to avoid click outside issues */}
                   {showProfileMenu && (
-                    <div className="fixed right-4 top-16 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-[60] animate-fade-in">
+                    <div className={`fixed right-4 top-16 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 animate-fade-in ${chatOpen ? 'z-[70]' : 'z-[60]'}`}>
                       <button 
                         onClick={(e) => { e.stopPropagation(); navigate('/dashboard'); setShowProfileMenu(false); }}
                         className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors w-full text-left"
@@ -771,7 +781,7 @@ const Navbar = () => {
 
       {/* Elevation Password Modal */}
       {showElevationModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 ${chatOpen ? 'z-[70]' : 'z-50'}`}>
           <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6 animate-fade-in">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-900">Admin Access</h2>
@@ -821,21 +831,23 @@ const Navbar = () => {
 
       {/* Search Overlay */}
       {isSearchOpen && (
-        <SearchBar onClose={() => setIsSearchOpen(false)} variant="overlay" />
+        <div className={chatOpen ? 'relative z-[70]' : ''}>
+          <SearchBar onClose={() => setIsSearchOpen(false)} variant="overlay" />
+        </div>
       )}
 
       {/* Right Sidebar - Desktop & Mobile */}
       <div
-        className={`fixed inset-0 bg-black z-50 transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black transition-opacity duration-300 ${
           isSidebarOpen ? 'bg-opacity-50' : 'bg-opacity-0 pointer-events-none'
-        }`}
+        } ${chatOpen ? 'z-[60]' : 'z-50'}`}
         onClick={() => setIsSidebarOpen(false)}
       >
         <div
           ref={sidebarRef}
-          className={`fixed top-0 right-0 h-full w-80 max-w-[85%] bg-white shadow-2xl transform transition-transform duration-300 overflow-y-auto z-50 ${
+          className={`fixed top-0 right-0 h-full w-80 max-w-[85%] bg-white shadow-2xl transform transition-transform duration-300 overflow-y-auto ${
             isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}
+          } ${chatOpen ? 'z-[60]' : 'z-50'}`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Sidebar Header */}
@@ -987,7 +999,9 @@ const Navbar = () => {
         isOpen={chatOpen} 
         onClose={() => setChatOpen(false)}
         onStartCall={(convId, calleeId, type) => {
-          setChatOpen(false);
+          // On desktop split-pane, don't close chat when starting call
+          const isMobile = window.innerWidth < 1024;
+          if (isMobile) setChatOpen(false);
           initiateCall(convId, calleeId, type);
         }}
         entryPoint="navbar"

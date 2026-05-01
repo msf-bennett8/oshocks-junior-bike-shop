@@ -498,7 +498,7 @@ function App() {
   <CartProvider>
     <WishlistProvider>
       <ErrorBoundary>
-        <div className="App min-h-screen flex flex-col">
+        <div className="App flex flex-col min-h-screen">
         {/* Global SEO */}
         <Helmet>
           <title>Oshocks Junior Bike Shop - Kenya's Premier Cycling Marketplace</title>
@@ -521,12 +521,14 @@ function App() {
         {/* Scroll to Top Button */}
         <ScrollToTop />
 
-        {/* Navigation */}
-        <Navbar />
+        {/* Split Pane Wrapper: Navbar + Main + Footer all inside left pane */}
+        <div id="app-main-content" className="flex-1 flex flex-col bg-gray-50 overflow-auto min-w-0">
+          {/* Navigation — sticky within left pane, not fixed to viewport */}
+          <Navbar />
 
-        {/* Main Content */}
-        <main className="flex-1 bg-gray-50">
-          <Suspense fallback={<SuspenseFallback />}>
+          {/* Main Content */}
+          <main className="flex-1">
+            <Suspense fallback={<SuspenseFallback />}>
             <PageTransition>
               <Routes>
                 {/* ============================================
@@ -1024,8 +1026,9 @@ function App() {
           </Suspense>
         </main>
 
-        {/* Footer */}
+        {/* Footer — stays at bottom of left pane */}
         <Footer />
+      </div>
 
         {/* ADD THIS: Floating Support Widget - Persists across all pages */}
         <FloatingSupportWidget 

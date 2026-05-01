@@ -122,13 +122,16 @@ const ConversationList = ({
             const isArchived = conv.is_archived;
             
             return (
-              <button
+              <div
                 key={conv.id}
                 onClick={() => onSelect(conv)}
                 onContextMenu={(e) => handleContextMenu(e, conv)}
-                className={`w-full flex items-start gap-3 px-3 py-3 hover:bg-gray-100 transition-colors text-left relative group ${
+                className={`w-full flex items-start gap-3 px-3 py-3 hover:bg-gray-100 active:bg-blue-50 transition-colors cursor-pointer text-left relative group select-none ${
                   isActive ? 'bg-blue-50 border-l-4 border-blue-600' : 'border-l-4 border-transparent'
                 } ${isArchived ? 'opacity-60' : ''}`}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect(conv); }}
               >
                 {/* Avatar with online indicator */}
                 <div className="relative flex-shrink-0">
@@ -182,21 +185,21 @@ const ConversationList = ({
                 </div>
 
                 {/* Hover actions */}
-                <div className="hidden group-hover:flex items-center gap-1 absolute right-2 top-1/2 -translate-y-1/2 bg-white shadow-md rounded-lg p-1">
+                <div className="hidden group-hover:flex items-center gap-1 absolute right-2 top-1/2 -translate-y-1/2 bg-white shadow-md rounded-lg p-1 z-10">
                   <button 
-                    className="p-1 hover:bg-gray-100 rounded"
-                    onClick={(e) => { e.stopPropagation(); /* TODO: pin toggle */ }}
+                    className="p-1 hover:bg-gray-100 rounded pointer-events-auto"
+                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); /* TODO: pin toggle */ }}
                   >
                     <Pin className="w-3.5 h-3.5 text-gray-500" />
                   </button>
                   <button 
-                    className="p-1 hover:bg-gray-100 rounded"
-                    onClick={(e) => { e.stopPropagation(); /* TODO: archive toggle */ }}
+                    className="p-1 hover:bg-gray-100 rounded pointer-events-auto"
+                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); /* TODO: archive toggle */ }}
                   >
                     <Archive className="w-3.5 h-3.5 text-gray-500" />
                   </button>
                 </div>
-              </button>
+               </div>
             );
           })
         )}

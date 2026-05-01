@@ -336,7 +336,7 @@ const FloatingSupportWidget = () => {
                   className="w-full flex items-center space-x-3 p-4 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg hover:shadow-md transition-all"
                 >
                   <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-    A                <Headphones className="w-6 h-6 text-white" />
+                  <Headphones className="w-6 h-6 text-white" />
                   </div>
                   <div className="text-left">
                     <p className="font-semibold text-gray-900 text-sm">Live Chat</p>
@@ -402,13 +402,13 @@ const FloatingSupportWidget = () => {
             </div>
           </div>
 
-          {/* Overlay */}
-          {isOpen && (
-            <div
-              className="fixed inset-0 bg-black bg-opacity-50 z-40"
-              onClick={toggleWidget}
-            />
-          )}
+        {/* Overlay — hidden when chat is open to allow split-pane interaction */}
+        {isOpen && !chatOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={toggleWidget}
+          />
+        )}
         </>
       )}
 
