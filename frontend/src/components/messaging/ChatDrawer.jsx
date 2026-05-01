@@ -76,6 +76,10 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall }) => {
           onSelect={setActiveConversation}
           unreadTotal={unreadTotal}
           onClose={onClose}
+          onStartNewConversation={(formData) => {
+            console.log('Start new conversation:', formData);
+            // TODO: Implement createConversation(formData.name, formData.identifier)
+          }}
         />
         
         <div className="flex-1">
