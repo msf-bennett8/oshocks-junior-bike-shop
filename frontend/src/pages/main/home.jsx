@@ -1,4 +1,4 @@
-//duplicate for testing
+//duplicate for testing to be deleted later
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   ShoppingCart, 
