@@ -4,6 +4,7 @@
 
 import React, { useState } from 'react';
 import { Reply, Pencil, Trash2, Check, CheckCheck } from 'lucide-react';
+import Avatar from '../common/Avatar';
 
 const MessageBubble = ({ 
   message, 
@@ -38,11 +39,11 @@ const MessageBubble = ({
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-1 group`}>
       {/* Avatar for others */}
       {!isOwn && showAvatar && (
-        <img
-          src={message.sender?.avatar || '/default-avatar.png'}
-          alt={message.sender?.name || message.sender_name || 'Guest'}
-          className="w-8 h-8 rounded-full mr-2 self-end bg-gray-200 object-cover flex-shrink-0"
-          onError={(e) => { e.target.src = '/default-avatar.png'; }}
+        <Avatar
+          src={message.sender?.avatar}
+          name={message.sender?.name || message.sender_name || 'Guest'}
+          size={32}
+          className="mr-2 self-end"
         />
       )}
       

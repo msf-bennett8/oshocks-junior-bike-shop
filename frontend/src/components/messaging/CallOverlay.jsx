@@ -3,6 +3,7 @@
 // ============================================================================
 
 import React, { useEffect, useRef } from 'react';
+import Avatar from '../common/Avatar';
 
 const CallOverlay = ({
   callState,
@@ -39,12 +40,8 @@ const CallOverlay = ({
     return (
       <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div className="bg-white rounded-3xl p-8 text-center shadow-2xl max-w-sm w-full mx-4 animate-bounce-in">
-          <div className="w-24 h-24 rounded-full bg-gray-200 mx-auto mb-4 overflow-hidden">
-            <img
-              src={incomingCall.caller?.avatar || '/default-avatar.png'}
-              alt=""
-              className="w-full h-full object-cover"
-            />
+          <div className="w-24 h-24 mx-auto mb-4">
+            <Avatar src={incomingCall.caller?.avatar} name={incomingCall.caller?.name} size={96} />
           </div>
           
           <h3 className="text-xl font-semibold text-gray-900 mb-1">
@@ -115,12 +112,8 @@ const CallOverlay = ({
         ) : (
           /* Voice call - avatar + wave animation */
           <div className="flex-1 flex flex-col items-center justify-center">
-            <div className="w-32 h-32 rounded-full bg-gray-700 mb-6 overflow-hidden ring-4 ring-blue-500/30 animate-pulse">
-              <img
-                src={currentCall?.caller?.avatar || currentCall?.callee?.avatar || '/default-avatar.png'}
-                alt=""
-                className="w-full h-full object-cover"
-              />
+            <div className="w-32 h-32 rounded-full bg-gray-700 mb-6 ring-4 ring-blue-500/30 animate-pulse">
+              <Avatar src={currentCall?.caller?.avatar || currentCall?.callee?.avatar} name={currentCall?.caller?.name || currentCall?.callee?.name} size={128} />
             </div>
             <h3 className="text-2xl font-semibold text-white mb-2">
               {currentCall?.caller?.name || currentCall?.callee?.name || 'Unknown'}

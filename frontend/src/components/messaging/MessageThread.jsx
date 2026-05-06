@@ -7,10 +7,11 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import MessageBubble from './MessageBubble';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  ArrowLeft, Phone, Video, MoreVertical, Send, Paperclip, 
+import {
+  ArrowLeft, Phone, Video, MoreVertical, Send, Paperclip,
   Smile, X, Reply, Pencil, Trash2, CheckCheck, Check
 } from 'lucide-react';
+import Avatar from '../common/Avatar';
 
 const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🎉'];
 
@@ -76,6 +77,7 @@ const MessageThread = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!input.trim() || sending) return;
     
     if (editingMessage) {
@@ -93,6 +95,7 @@ const MessageThread = ({
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      e.stopPropagation();
       handleSubmit(e);
     }
   };
@@ -171,11 +174,10 @@ const MessageThread = ({
           )}
           
           <div className="relative flex-shrink-0">
-            <img
-              src={otherParticipant?.avatar || '/default-avatar.png'}
-              alt={otherParticipant?.name}
-              className="w-10 h-10 rounded-full bg-gray-200 object-cover"
-              onError={(e) => { e.target.src = '/default-avatar.png'; }}
+            <Avatar
+              src={otherParticipant?.avatar}
+              name={otherParticipant?.name}
+              size={40}
             />
             {isOnline && (
               <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />

@@ -73,6 +73,7 @@ export const useMessaging = (userId) => {
   const messagesEndRef = useRef(null);
   const typingTimeoutsRef = useRef(new Map());
   const optimisticIdRef = useRef(0);
+  const sendingLockRef = useRef(new Set()); // Track in-flight message bodies to prevent duplicates
 
   // Generate anonymous display name for guests
   const generateAnonName = useCallback(() => {
@@ -134,6 +135,15 @@ export const useMessaging = (userId) => {
   const sendMessage = useCallback(async (conversationId, body, type = 'text', metadata = null, replyTo = null, attachments = []) => {
     if (!body.trim() || !conversationId) return;
     
+    // Prevent duplicate sends of the same message within 2 seconds
+    const lockKey = `${conversationId}:${body.trim()}`;
+    if (sendingLockRef.current.has(lockKey)) {
+      console.warn('Duplicate send blocked:', lockKey);
+      return;
+    }
+    sendingLockRef.current.add(lockKey);
+    setTimeout(() => sendingLockRef.current.delete(lockKey), 2000);
+    
     const optimisticId = `opt-${++optimisticIdRef.current}`;
     const profile = getGuestProfile();
     const now = new Date().toISOString();
@@ -182,7 +192,7 @@ export const useMessaging = (userId) => {
           onSuccess: (serverMessage) => {
         // Replace optimistic with real message
         setMessages(prev => prev.map(m => 
-          m.id === optimisticId ? { ...serverMessage, _pending: false } : m
+          m.id === optimisticId ? { ...serverMessage, _pending: false, _optimistic: false } : m
         ));
         setSending(false);
       },
@@ -213,7 +223,7 @@ export const useMessaging = (userId) => {
         senderName: failedMsg.sender_name,
         onSuccess: (serverMessage) => {
           setMessages(prev => prev.map(m => 
-            m.id === optimisticId ? { ...serverMessage, _pending: false } : m
+            m.id === optimisticId ? { ...serverMessage, _pending: false, _optimistic: false } : m
           ));
         },
         onFail: () => {
@@ -358,42 +368,53 @@ export const useMessaging = (userId) => {
   useEffect(() => {
     if (!activeConversation?.id || !isConnected) return;
 
-    const unsubscribe = subscribeToConversation(activeConversation.id, (event) => {
-      // event is the broadcast payload from MessageSent::broadcastWith()
+    // Prevent duplicate subscriptions for same conversation
+    const convId = activeConversation.id;
+    const unsubscribe = subscribeToConversation(convId, (event) => {
       const messageData = event.message || event;
+      console.log('📥 Broadcast received:', { id: messageData.id, body: messageData.body, sender_id: messageData.sender_id });
 
       setMessages(prev => {
-        // Skip if this is our own message (already handled by API response)
-        // or if it already exists in the list
-        const isOwnMessage = messageData.sender_id === userId;
-        const exists = prev.some(m => m.id === messageData.id || (m._optimistic && m.body === messageData.body && m.sender_id === messageData.sender_id));
+        // Deduplication: check by real ID or by optimistic match
+        const hasById = prev.some(m => m.id === messageData.id);
+        if (hasById) return prev;
 
-        if (exists) {
-          // Replace optimistic with real message if needed
-          if (prev.some(m => m._optimistic && m.body === messageData.body)) {
-            return prev.map(m =>
-              m._optimistic && m.body === messageData.body && m.sender_id === messageData.sender_id
-                ? { ...messageData, _pending: false, _optimistic: false }
-                : m
-            );
-          }
-          return prev;
+        // Check if there's a pending optimistic message from same sender with same body
+        const optimisticIndex = prev.findIndex(m => 
+          m._optimistic && 
+          m.body === messageData.body && 
+          m.sender_id === messageData.sender_id &&
+          m._pending === true
+        );
+
+        if (optimisticIndex !== -1) {
+          // Replace the optimistic message with the real one
+          const next = [...prev];
+          next[optimisticIndex] = { ...messageData, _pending: false, _optimistic: false };
+          return next;
         }
 
-        return [...prev, messageData];
+        // New message from other user — append it
+        return [...prev, { ...messageData, _pending: false, _optimistic: false }];
       });
 
-      scrollToBottom();
+      // Only scroll if message is from someone else (sender already scrolled on send)
+      if (messageData.sender_id !== userId) {
+        scrollToBottom();
+      }
 
       setConversations(prev => prev.map(c =>
-        c.id === activeConversation.id
+        c.id === convId
           ? { ...c, last_message: messageData.body, last_message_at: messageData.created_at }
           : c
       ));
     });
 
-    return unsubscribe;
-  }, [activeConversation?.id, isConnected, subscribeToConversation, scrollToBottom, userId]);
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeConversation?.id, isConnected]);
 
   // Subscribe to typing indicators
   useEffect(() => {

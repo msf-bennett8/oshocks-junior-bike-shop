@@ -4,6 +4,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Search, Archive, Pin, MoreVertical, Trash2, Phone, Video, Inbox } from 'lucide-react';
+import Avatar from '../common/Avatar';
 
 const FILTERS = [
   { key: 'all', label: 'All' },
@@ -174,11 +175,10 @@ const ConversationList = ({
               >
                 {/* Avatar with online indicator */}
                 <div className="relative flex-shrink-0">
-                  <img
-                    src={conv.avatar || conv.other_participant?.avatar || '/default-avatar.png'}
-                    alt=""
-                    className="w-12 h-12 rounded-full bg-gray-200 object-cover"
-                    onError={(e) => { e.target.src = '/default-avatar.png'; }}
+                  <Avatar
+                    src={conv.avatar || conv.other_participant?.avatar}
+                    name={conv.title || conv.other_participant?.name || 'Support'}
+                    size={48}
                   />
                   {conv.other_participant?.is_online && (
                     <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />

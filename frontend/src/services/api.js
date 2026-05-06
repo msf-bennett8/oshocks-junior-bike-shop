@@ -24,20 +24,30 @@ const api = axios.create({
   },
 });
 
-// Add auth token and guest session to all requests
+// Add X-Socket-ID header for Laravel Echo toOthers() support
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken');
   const guestSessionId = localStorage.getItem('oshocks_guest_session_id');
-
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   if (guestSessionId) {
     config.headers['X-Guest-Session-ID'] = guestSessionId;
   }
-
+  
+  // Critical: send socket ID so Laravel knows who to exclude with toOthers()
+  // Pusher socket ID is accessed via connector.pusher.connection.socket_id
+  const socketId = window.Echo?.connector?.pusher?.connection?.socket_id;
+  if (socketId) {
+    config.headers['X-Socket-ID'] = socketId;
+  }
+  
   return config;
 });
+
+// NOTE: Auth headers are already set by the interceptor above (including X-Socket-ID)
+// This second interceptor is REMOVED to prevent overwriting
 
 // ============================================================================
 // RETRY CONFIGURATION with audit logging

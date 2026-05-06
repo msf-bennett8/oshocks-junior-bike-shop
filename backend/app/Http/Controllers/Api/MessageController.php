@@ -53,6 +53,27 @@ class MessageController extends Controller
         $moderationService = app(MessageModerationService::class);
         $moderationResult = $moderationService->analyze($validated['body']);
 
+        // Prevent duplicate messages within 5 seconds (same sender, same body, same conversation)
+        $recentDuplicate = Message::where('conversation_id', $conversation->id)
+            ->where('body', $validated['body'])
+            ->where(function ($q) use ($user, $guestSessionId) {
+                if ($user) {
+                    $q->where('sender_id', $user->id);
+                } else {
+                    $q->where('guest_session_id', $guestSessionId);
+                }
+            })
+            ->where('created_at', '>', now()->subSeconds(5))
+            ->first();
+
+        if ($recentDuplicate) {
+            \Log::warning('Duplicate message blocked', ['original_id' => $recentDuplicate->id]);
+            return response()->json([
+                'data' => $recentDuplicate->load('sender'),
+                'warning' => 'Duplicate message detected',
+            ], 200);
+        }
+
         $message = Message::create([
             'conversation_id' => $conversation->id,
             'sender_id' => $user?->id,
@@ -80,6 +101,12 @@ class MessageController extends Controller
         $conversation->update(['last_message_at' => now()]);
 
         // Broadcast to all participants on private channel
+        $socketId = request()->header('X-Socket-ID');
+        \Log::info('Broadcasting message', [
+            'message_id' => $message->id,
+            'socket_id' => $socketId,
+            'to_others' => $socketId ? 'yes' : 'no (sender will receive own broadcast)',
+        ]);
         broadcast(new MessageSent($message))->toOthers();
 
         $response = [

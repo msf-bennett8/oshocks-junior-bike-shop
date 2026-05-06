@@ -18,6 +18,14 @@ class MessageSent implements ShouldBroadcastNow
     {
     }
 
+    /**
+     * The name of the queue on which to place the broadcasting job.
+     */
+    public function broadcastQueue(): string
+    {
+        return 'default';
+    }
+
     public function broadcastOn(): array
     {
         return [

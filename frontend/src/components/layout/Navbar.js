@@ -14,6 +14,7 @@ import { useWebRTC } from '../../hooks/useWebRTC';
 import { useMessaging } from '../../hooks/useMessaging';
 import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowRight, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, Users, Package2, BarChart3, FolderTree, Heart, Bell, MessageCircle } from 'lucide-react';
 import SearchBar from '../common/SearchBar';
+import Avatar from '../common/Avatar';
 
 const Navbar = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -470,9 +471,13 @@ const Navbar = () => {
                 <div className="md:hidden relative">
                   <button
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
-                    className="p-2 sm:p-2.5 rounded-full hover:bg-orange-50 transition-colors relative"
+                    className="p-1 rounded-full hover:bg-orange-50 transition-colors relative"
                   >
-                    <User className="w-5 h-5 text-gray-700" />
+                    {user?.avatar ? (
+                      <Avatar src={user.avatar} name={user.name} size={32} />
+                    ) : (
+                      <User className="w-5 h-5 text-gray-700" />
+                    )}
                   </button>
 
                   {/* Mobile Profile Dropdown - Fixed positioning to avoid click outside issues */}
@@ -598,7 +603,11 @@ const Navbar = () => {
                     onClick={handleUserIconClick}
                     className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                   >
-                    <User className="w-5 h-5 text-gray-700" />
+                    {user?.avatar ? (
+                      <Avatar src={user.avatar} name={user.name} size={32} />
+                    ) : (
+                      <User className="w-5 h-5 text-gray-700" />
+                    )}
                     <div className="flex flex-col items-start leading-tight">
                       <span className="text-xs text-gray-500">
                         Hello, {user?.name?.split(' ')[0] || 'User'}

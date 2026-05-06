@@ -34,7 +34,12 @@ Broadcast::channel('conversation.{conversationId}', function ($user, $conversati
     $guestSessionId = request()->header('X-Guest-Session-ID');
     if ($guestSessionId) {
         return Conversation::where('id', $conversationId)
-            ->where('guest_session_id', $guestSessionId)
+            ->where(function ($q) use ($guestSessionId) {
+                $q->where('guest_session_id', $guestSessionId)
+                  ->orWhereHas('participants', function ($pq) use ($guestSessionId) {
+                      $pq->where('guest_session_id', $guestSessionId);
+                  });
+            })
             ->exists();
     }
 

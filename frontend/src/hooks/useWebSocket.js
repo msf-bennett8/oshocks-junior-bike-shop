@@ -54,6 +54,9 @@ export const useWebSocket = (userId) => {
       setIsConnected(true);
       setConnectionError(null);
       setReconnectAttempt(0);
+      
+      // Expose Echo globally so api.js can access socketId
+      window.Echo = echo;
     });
 
     echo.connector.pusher.connection.bind('disconnected', () => {
@@ -110,8 +113,20 @@ export const useWebSocket = (userId) => {
     connect();
   }, [connect]);
 
-    const subscribeToChannel = useCallback((channelName, eventName, callback) => {
+    // Track active subscriptions to prevent duplicates
+  const listenersRef = useRef(new Map());
+
+  const subscribeToChannel = useCallback((channelName, eventName, callback) => {
     if (!echoRef.current) return null;
+
+    const key = `${channelName}:${eventName}`;
+    
+    // Remove any existing listener for this key to prevent duplicates
+    const existing = listenersRef.current.get(key);
+    if (existing) {
+      existing.channel.stopListening(eventName, existing.callback);
+      listenersRef.current.delete(key);
+    }
 
     let channel;
     if (channelName.startsWith('private-')) {
@@ -124,11 +139,18 @@ export const useWebSocket = (userId) => {
       channel = echoRef.current.channel(channelName);
     }
 
-    channel.listen(eventName, callback);
+    // Wrap callback to ensure stable reference for cleanup
+    const wrappedCallback = (data) => callback(data);
+    channel.listen(eventName, wrappedCallback);
+    listenersRef.current.set(key, { channel, callback: wrappedCallback, eventName });
     console.log(`📡 Subscribed to ${channelName}:${eventName}`);
 
     return () => {
-      channel.stopListening(eventName);
+      const stored = listenersRef.current.get(key);
+      if (stored) {
+        stored.channel.stopListening(eventName, stored.callback);
+        listenersRef.current.delete(key);
+      }
       console.log(`📡 Unsubscribed from ${channelName}:${eventName}`);
     };
   }, []);
