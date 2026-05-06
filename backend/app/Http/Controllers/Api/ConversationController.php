@@ -46,17 +46,17 @@ class ConversationController extends Controller
 
         // Add computed fields
         $conversations->transform(function ($conv) use ($user) {
-            $conv->unread_count = $user 
+            $conv->unread_count = $user
                 ? Message::where('conversation_id', $conv->id)
                     ->whereNull('read_at')
                     ->where('sender_id', '!=', $user->id)
                     ->count()
                 : 0;
-            
+
             $conv->other_participant = $conv->participants
                 ->where('user_id', '!=', $user?->id)
                 ->first();
-            
+
             $conv->last_message = $conv->messages->first()?->body;
             $conv->last_message_at = $conv->messages->first()?->created_at;
 
@@ -85,7 +85,7 @@ class ConversationController extends Controller
         // For support tickets, find or create with support user
         if ($validated['type'] === 'support' || $validated['type'] === 'order_support') {
             $supportUser = User::whereIn('role', ['admin', 'super_admin'])->first();
-            
+
             if (!$supportUser) {
                 return response()->json(['error' => 'No support agent available'], 503);
             }
@@ -122,7 +122,7 @@ class ConversationController extends Controller
 
         try {
             $conversation = Conversation::create([
-                'user_id' => $user?->id,
+                'created_by' => $user?->id,
                 'guest_session_id' => $user ? null : $guestSessionId,
                 'type' => $validated['type'] ?? 'direct',
                 'title' => $validated['title'] ?? null,
@@ -190,7 +190,7 @@ class ConversationController extends Controller
     public function markAsRead(Request $request, Conversation $conversation)
     {
         $user = $request->user();
-        
+
         if (!$user) {
             return response()->json(['error' => 'Authentication required'], 401);
         }
@@ -240,7 +240,7 @@ class ConversationController extends Controller
     public function getOrderSupport(Request $request, Order $order)
     {
         $user = $request->user();
-        
+
         if (!$user) {
             return response()->json(['error' => 'Authentication required'], 401);
         }
@@ -266,7 +266,7 @@ class ConversationController extends Controller
 
         // Create new
         $supportUser = User::whereIn('role', ['admin', 'super_admin'])->first();
-        
+
         if (!$supportUser) {
             return response()->json(['error' => 'No support agent available'], 503);
         }
@@ -275,7 +275,7 @@ class ConversationController extends Controller
 
         try {
             $conversation = Conversation::create([
-                'user_id' => $user->id,
+                'created_by' => $user->id,
                 'type' => 'order_support',
                 'title' => "Order Support: {$order->order_number}",
                 'order_id' => $order->id,
@@ -336,6 +336,129 @@ class ConversationController extends Controller
         ]);
     }
 
+    public function messages(Request $request, Conversation $conversation)
+    {
+        $user = $request->user();
+        $guestSessionId = $request->header('X-Guest-Session-ID');
+
+        if (!$this->canAccess($user, $guestSessionId, $conversation)) {
+            abort(403, 'Not a participant in this conversation');
+        }
+
+        $perPage = $request->get('per_page', 50);
+        $messages = $conversation->messages()
+            ->with('sender')
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+
+        return response()->json([
+            'data' => $messages->items(),
+            'meta' => [
+                'current_page' => $messages->currentPage(),
+                'last_page' => $messages->lastPage(),
+                'per_page' => $messages->perPage(),
+                'total' => $messages->total(),
+            ],
+        ]);
+    }
+
+    public function sendMessage(Request $request, Conversation $conversation)
+    {
+        $user = $request->user();
+        $guestSessionId = $request->header('X-Guest-Session-ID');
+
+        if (!$this->canAccess($user, $guestSessionId, $conversation)) {
+            abort(403, 'Not a participant in this conversation');
+        }
+
+        $validated = $request->validate([
+            'body' => 'required|string|max:5000',
+            'type' => 'in:text,image,file,system',
+            'attachment_url' => 'nullable|url|max:2048',
+        ]);
+
+        $message = Message::create([
+            'conversation_id' => $conversation->id,
+            'sender_id' => $user?->id,
+            'guest_session_id' => $user ? null : $guestSessionId,
+            'body' => $validated['body'],
+            'type' => $validated['type'] ?? 'text',
+            'attachment_url' => $validated['attachment_url'] ?? null,
+        ]);
+
+        // Update conversation last message timestamp
+        $conversation->update(['last_message_at' => now()]);
+
+        // Broadcast event (silently fail if Reverb not configured)
+        try {
+            broadcast(new MessageSent($message))->toOthers();
+        } catch (\Exception $e) {
+            \Log::warning('Broadcast failed: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'data' => $message->load('sender'),
+        ], 201);
+    }
+
+    public function typing(Request $request, Conversation $conversation)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Authentication required'], 401);
+        }
+
+        if (!$this->canAccess($user, null, $conversation)) {
+            abort(403, 'Not a participant in this conversation');
+        }
+
+        try {
+            broadcast(new \App\Events\UserTyping($conversation->id, $user->id, $user->name))->toOthers();
+        } catch (\Exception $e) {
+            \Log::warning('Typing broadcast failed: ' . $e->getMessage());
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function react(Request $request, Conversation $conversation, Message $message)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Authentication required'], 401);
+        }
+
+        if ($message->conversation_id !== $conversation->id) {
+            abort(403, 'Message does not belong to this conversation');
+        }
+
+        $validated = $request->validate([
+            'reaction' => 'required|string|max:50',
+        ]);
+
+        $messageReaction = \App\Models\MessageReaction::updateOrCreate(
+            [
+                'message_id' => $message->id,
+                'user_id' => $user->id,
+            ],
+            [
+                'reaction' => $validated['reaction'],
+            ]
+        );
+
+        try {
+            broadcast(new \App\Events\MessageReaction($message, $user, $validated['reaction']))->toOthers();
+        } catch (\Exception $e) {
+            \Log::warning('Reaction broadcast failed: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'data' => $messageReaction,
+        ]);
+    }
+
     private function canAccess(?User $user, ?string $guestSessionId, Conversation $conversation): bool
     {
         // Admin/superadmin can access ALL conversations for monitoring
@@ -347,7 +470,7 @@ class ConversationController extends Controller
             $isParticipant = $conversation->participants()
                 ->where('user_id', $user->id)
                 ->exists();
-            $isOwner = $conversation->user_id === $user->id;
+            $isOwner = $conversation->created_by === $user->id;
             return $isParticipant || $isOwner;
         }
 

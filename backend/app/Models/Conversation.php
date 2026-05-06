@@ -19,7 +19,6 @@ class Conversation extends Model
         'order_number',
         'last_message_at',
         'guest_session_id',
-        'user_id',
         'guest_name',
         'guest_email',
         'order_id',
@@ -50,11 +49,6 @@ class Conversation extends Model
             'name' => 'Guest',
             'email' => null,
         ]);
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
     }
 
     public function participants(): BelongsToMany
@@ -155,13 +149,13 @@ class Conversation extends Model
 
         // Find all guest conversations for this session that are support chats
         $conversations = self::where('guest_session_id', $guestSessionId)
-            ->whereNull('user_id')
+            ->whereNull('created_by')
             ->get();
 
         foreach ($conversations as $conversation) {
             // Update conversation ownership
             $conversation->update([
-                'user_id' => $user->id,
+                'created_by' => $user->id,
                 'guest_session_id' => null,
             ]);
 
