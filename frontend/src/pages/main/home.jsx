@@ -1,3 +1,4 @@
+//duplicate for testing
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   ShoppingCart, 

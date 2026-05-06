@@ -1,3 +1,4 @@
+//  This file contains the FAQPage component which displays frequently asked questions and answers about the Oshocks Junior Bike Shop. It includes a search bar, category filters, and an accordion-style layout for the FAQs. The page also has a hero section and a "Still Have Questions?" section with contact options.
 import React, { useState } from 'react';
 import { Search, ChevronDown, ShoppingCart, CreditCard, Truck, RefreshCw, HelpCircle, Phone, MessageCircle, Shield } from 'lucide-react';
 
