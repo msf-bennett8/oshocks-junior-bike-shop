@@ -44,7 +44,7 @@ class SecurityMonitoringMiddleware
             'api/v1/wishlist',
             'api/v1/auth/me',
         ];
-        
+
         foreach ($pollingEndpoints as $endpoint) {
             if (str_contains($path, $endpoint) || $path === $endpoint) {
                 return $next($request);
@@ -80,7 +80,7 @@ class SecurityMonitoringMiddleware
         if ($mismatchCheck['is_new']) {
             // First time seeing this device
             DeviceFingerprintService::store($user->id, $fingerprint);
-            
+
             AuditService::logDeviceFingerprintCreated($user, [
                 'fingerprint_hash' => $fingerprint,
                 'device_characteristics' => $fingerprintData['components'],
@@ -191,7 +191,7 @@ class SecurityMonitoringMiddleware
         // Check for bulk export patterns
         if ($request->has('export') && $request->has('all')) {
             $recordsAttempted = $request->input('limit', 1000);
-            
+
             if ($recordsAttempted > 100) {
                 AuditService::logDataExfiltrationAttempt($user, [
                     'data_type' => $this->extractResourceType($request) ?? 'unknown',
@@ -229,23 +229,30 @@ class SecurityMonitoringMiddleware
         if (str_contains($path, 'login')) return 'login';
         if (str_contains($path, 'payment')) return 'payment';
         if (str_contains($path, 'order')) return 'order';
-        
+
         return 'api_request';
     }
 
     /**
-     * Extract resource type from request path
+     * Extract resource type from request path.
+     * Uses exact segment matching to avoid false positives
+     * (e.g., /conversations/search-users must NOT match 'users').
      */
     private function extractResourceType(Request $request): ?string
     {
         $path = $request->path();
-        
-        if (str_contains($path, 'orders')) return 'orders';
-        if (str_contains($path, 'users')) return 'users';
-        if (str_contains($path, 'payments')) return 'payments';
-        if (str_contains($path, 'products')) return 'products';
-        
-        return null;
+        $segments = explode('/', trim($path, '/'));
+
+        // Resource name is the segment after api/v1/ (index 2)
+        $resourceSegment = $segments[2] ?? null;
+
+        return match($resourceSegment) {
+            'orders' => 'orders',
+            'users' => 'users',
+            'payments' => 'payments',
+            'products' => 'products',
+            default => null,
+        };
     }
 
     /**

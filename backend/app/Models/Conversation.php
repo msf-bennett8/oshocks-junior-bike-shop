@@ -22,10 +22,26 @@ class Conversation extends Model
         'user_id',
         'guest_name',
         'guest_email',
+        'order_id',
+        'assigned_to',
+        'status',
+        'priority',
+        'escalated_at',
+        'escalation_reason',
+        'flagged_for_review',
+        'moderation_notes',
+        'detected_keywords',
+        'resolved_at',
+        'closed_at',
     ];
 
     protected $casts = [
         'last_message_at' => 'datetime',
+        'escalated_at' => 'datetime',
+        'resolved_at' => 'datetime',
+        'closed_at' => 'datetime',
+        'detected_keywords' => 'array',
+        'flagged_for_review' => 'boolean',
     ];
 
     public function creator(): BelongsTo
@@ -71,6 +87,16 @@ class Conversation extends Model
     public function callSessions(): HasMany
     {
         return $this->hasMany(CallSession::class);
+    }
+
+    public function assignedTo(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
     }
 
     public function unreadCountFor(?User $user, ?string $guestSessionId = null): int

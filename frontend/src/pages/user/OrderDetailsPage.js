@@ -2,6 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Package, Truck, CheckCircle, Clock, MapPin, Phone, Mail, Download, MessageSquare, AlertCircle, ChevronRight, Calendar, CreditCard, User, Home, Star, ArrowLeft, RefreshCw, XCircle, Copy } from 'lucide-react';
+import { useMessaging } from '../../hooks/useMessaging';
+import ChatDrawer from '../../components/messaging/ChatDrawer';
+import CreateChatModal from '../../components/messaging/CreateChatModal';
 import toast from 'react-hot-toast';
 
 const OrderDetails = () => {
@@ -12,6 +15,10 @@ const OrderDetails = () => {
   const [loading, setLoading] = useState(true);
   const [trackingExpanded, setTrackingExpanded] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [showCreateChat, setShowCreateChat] = useState(false);
+  
+  const { setActiveConversation } = useMessaging();
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -249,6 +256,10 @@ const OrderDetails = () => {
     navigate('/contact-support');
   };
 
+    const handleMessageAboutOrder = () => {
+    setShowCreateChat(true);
+  };
+
   const handleCancelOrder = async () => {
     setShowCancelModal(false);
     
@@ -396,11 +407,11 @@ const OrderDetails = () => {
                 Track
               </button>
               <button
-                onClick={handleContactSupport}
+                onClick={handleMessageAboutOrder}
                 className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors"
               >
                 <MessageSquare className="w-5 h-5 mr-2" />
-                Support
+                Message About Order
               </button>
             </div>
           </div>
@@ -790,6 +801,23 @@ const OrderDetails = () => {
           </div>
         </div>
       </div>
+
+      {/* Chat Modal for Order Support */}
+      <CreateChatModal
+        isOpen={showCreateChat}
+        onClose={() => setShowCreateChat(false)}
+        onConversationCreated={(conversation) => {
+          setActiveConversation(conversation);
+          setChatOpen(true);
+        }}
+        orderContext={order ? { id: order.id, orderNumber: order.orderNumber } : null}
+      />
+
+      <ChatDrawer
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        entryPoint="order_details"
+      />
 
       {/* Cancel Order Modal */}
       {showCancelModal && (

@@ -30,6 +30,8 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\Dashboard\PayoutController;
 use App\Http\Controllers\CardPaymentController;
 use App\Http\Controllers\Admin;
+use App\Http\Controllers\Api\SupportInboxController;
+use App\Http\Controllers\Api\ConversationController;
 
 // ============================================================================
 // OAUTH ROUTES - STATELESS (No CSRF, No Session)
@@ -41,11 +43,11 @@ Route::prefix('v1/auth')->group(function () {
 
 // Public routes
 Route::middleware(['api', 'audit'])->prefix('v1')->group(function () {
-    
+
     // Public authentication routes
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
-    
+
     // Public product browsing
     Route::get('/products/search', [ProductController::class, 'search']);
     Route::get('/products', [ProductController::class, 'index']);
@@ -55,19 +57,19 @@ Route::middleware(['api', 'audit'])->prefix('v1')->group(function () {
     Route::get('/products/slug/{slug}', [ProductController::class, 'showBySlug']);
     Route::get('/products/{id}/variants', [ProductVariantController::class, 'getByProduct']);
     Route::get('/products/{id}/reviews', [\App\Http\Controllers\Api\ReviewController::class, 'getByProduct']);
-    
+
     // Categories
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/categories/{id}', [CategoryController::class, 'show']);
     Route::get('/categories/{id}/products', [CategoryController::class, 'getProducts']);
-    
+
    // Cart routes - Public but checks for authentication if token provided
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart/add', [CartController::class, 'addItem']);
     Route::put('/cart/items/{itemId}', [CartController::class, 'updateItem']);
     Route::delete('/cart/items/{itemId}', [CartController::class, 'removeItem']);
     Route::delete('/cart/clear', [CartController::class, 'clearCart']);
-    
+
     // Wishlist routes - Public but checks for authentication if token provided
     Route::get('/wishlist', [WishlistController::class, 'index']);
     Route::post('/wishlist/add', [WishlistController::class, 'addItem']);
@@ -75,7 +77,7 @@ Route::middleware(['api', 'audit'])->prefix('v1')->group(function () {
     Route::delete('/wishlist/items/{itemId}', [WishlistController::class, 'removeItem']);
     Route::delete('/wishlist/remove-by-product', [WishlistController::class, 'removeByProduct']);
     Route::delete('/wishlist/clear', [WishlistController::class, 'clearWishlist']);
-    
+
     // Guest cart/wishlist merge endpoints (public but auth-aware)
     Route::post('/cart/merge', [CartController::class, 'mergeGuestCart']);
     Route::post('/wishlist/merge', [WishlistController::class, 'mergeGuestWishlist']);
@@ -84,13 +86,13 @@ Route::middleware(['api', 'audit'])->prefix('v1')->group(function () {
     Route::get('/search', [SearchController::class, 'search']);
     Route::get('/search/suggestions', [SearchController::class, 'suggestions']);
     Route::get('/search/trending', [SearchController::class, 'trending']);
-    
+
     // Seller profiles (public view)
     Route::get('/sellers', [SellerProfileController::class, 'index']);
     Route::get('/sellers/{id}', [SellerProfileController::class, 'show']);
     Route::get('/sellers/{id}/products', [SellerProfileController::class, 'getProducts']);
     Route::get('/sellers/{id}/reviews', [SellerReviewController::class, 'getBySeller']);
-    
+
     // Payment Recorders (public view)
     Route::get('/payment-recorders', [\App\Http\Controllers\PaymentRecorderController::class, 'index']);
     Route::get('/payment-recorders/{id}', [\App\Http\Controllers\PaymentRecorderController::class, 'show']);
@@ -116,7 +118,7 @@ Route::middleware(['api', 'audit'])->prefix('v1')->group(function () {
             ]
         ]);
     });
-    
+
     // ============================================================================
     // ORDER ROUTES - PUBLIC (Guest checkout allowed)
     // ============================================================================
@@ -125,26 +127,26 @@ Route::middleware(['api', 'audit'])->prefix('v1')->group(function () {
 
     // Public order tracking (no auth required)
     Route::get('/orders/search', [OrderController::class, 'searchByOrderNumber']);
-    
+
     // ⚠️ NOTE: Dynamic route /orders/{orderNumber} moved to END of file
     // to prevent it from catching specific routes like /orders/pending-payments
 });
 
 // Protected routes (require authentication + effective role checking)
 Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \App\Http\Middleware\CheckEffectiveRole::class])->group(function () {
-    
+
     // Protected authentication routes
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
-    
+
     // Secret elevation endpoint (works for any authenticated user)
     Route::post('/auth/secret-elevate', [AuthController::class, 'secretElevate']);
-    
+
     // Admin/Super Admin privilege revocation
     Route::post('/auth/revoke-privileges', [AuthController::class, 'revokePrivileges']);
-    
+
     // ============================================================================
     // AUDIT LOG ROUTES (Admin/Super Admin only) - SPECIFIC ROUTES FIRST
     // ============================================================================
@@ -155,7 +157,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
     Route::get('/audit-logs/user/{userId}', [\App\Http\Controllers\Api\AuditLogController::class, 'userLogs']);
     Route::get('/audit-logs/retention/stats', [App\Http\Controllers\Api\AuditLogController::class, 'retentionStats']);
     Route::post('/audit-logs/retention/cleanup', [App\Http\Controllers\Api\AuditLogController::class, 'runCleanup']);
-    
+
     // Archive routes - SPECIFIC ROUTES MUST COME FIRST!
     Route::get('/audit-logs/archives/stats', [App\Http\Controllers\Api\AuditLogController::class, 'archiveStats']);
     Route::get('/audit-logs/archives/export', [App\Http\Controllers\Api\AuditLogController::class, 'exportArchives']);
@@ -169,33 +171,33 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
 
     // General list route comes last
     Route::get('/audit-logs/archives', [App\Http\Controllers\Api\AuditLogController::class, 'archives']);
-    
+
     // Batch audit logging for frontend
     Route::post('/audit-logs/batch', [App\Http\Controllers\Api\AuditLogController::class, 'batchStore']);
 
         // General audit logs routes
     Route::get('/audit-logs', [\App\Http\Controllers\Api\AuditLogController::class, 'index']);
     Route::get('/audit-logs/{id}', [\App\Http\Controllers\Api\AuditLogController::class, 'show']);
-    
+
     // ============================================================================
     // ORDER MANAGEMENT ROUTES
     // ============================================================================
     // Order status management
     Route::put('/orders/{orderNumber}/status', [App\Http\Controllers\Api\OrderController::class, 'updateStatus']);
     Route::post('/orders/{orderNumber}/cancel', [App\Http\Controllers\Api\OrderController::class, 'cancelOrder']);
-    
+
     // Payment Recorder Routes - MUST COME BEFORE GENERAL ORDER ROUTES
     Route::get('/orders/pending-payments', [OrderController::class, 'getPendingPayments']);
     Route::post('/orders/{orderNumber}/record-payment', [OrderController::class, 'recordPayment']);
-    
+
     // Orders (Protected - User's own orders)
     Route::get('/orders', [OrderController::class, 'index']);
-    
+
     // Auth user
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-    
+
     // User Profile Routes - ADD THESE NEW ROUTES
     Route::get('/user/stats', [\App\Http\Controllers\Api\UserController::class, 'stats']);
     Route::get('/user/dashboard-stats', [\App\Http\Controllers\Api\UserController::class, 'dashboardStats']);
@@ -207,21 +209,21 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
     Route::get('/user/login-activity', [\App\Http\Controllers\Api\UserController::class, 'loginActivity']);
     Route::get('/user/preferences', [\App\Http\Controllers\Api\UserPreferenceController::class, 'show']);
     Route::put('/user/preferences', [\App\Http\Controllers\Api\UserPreferenceController::class, 'update']);
-    
+
     // Phase 4: User Data & Compliance Routes
     // Data Export (GDPR Article 15/20)
     Route::post('/user/data-export', [\App\Http\Controllers\Api\DataExportController::class, 'requestExport']);
     Route::get('/user/data-export/{requestId}/download', [\App\Http\Controllers\Api\DataExportController::class, 'downloadExport']);
-    
+
     // Account Management
     Route::post('/user/account/deactivate', [\App\Http\Controllers\Api\DataExportController::class, 'deactivateAccount']);
     Route::post('/user/account/reactivate', [\App\Http\Controllers\Api\DataExportController::class, 'reactivateAccount']);
     Route::delete('/user/account', [\App\Http\Controllers\Api\DataExportController::class, 'deleteAccount']);
-    
+
     // Consent Management
     Route::post('/user/consent', [\App\Http\Controllers\Api\ConsentController::class, 'recordConsent']);
     Route::get('/user/consent/export', [\App\Http\Controllers\Api\ConsentController::class, 'exportConsent']);
-    
+
     // Privacy Requests (GDPR Articles 15-22)
     Route::post('/user/privacy-request', [\App\Http\Controllers\Api\ConsentController::class, 'submitPrivacyRequest']);
 
@@ -238,36 +240,36 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
     Route::post('/api-keys', [\App\Http\Controllers\Api\ApiKeyController::class, 'store']);
     Route::post('/api-keys/{keyId}/rotate', [\App\Http\Controllers\Api\ApiKeyController::class, 'rotate']);
     Route::delete('/api-keys/{keyId}', [\App\Http\Controllers\Api\ApiKeyController::class, 'revoke']);
-        
+
     // Webhook Management
     Route::get('/webhooks', [\App\Http\Controllers\Api\WebhookController::class, 'index']);
     Route::post('/webhooks', [\App\Http\Controllers\Api\WebhookController::class, 'store']);
     Route::delete('/webhooks/{subscriptionId}', [\App\Http\Controllers\Api\WebhookController::class, 'destroy']);
-    
+
     // Get user's last delivery location for checkout auto-fill
     Route::get('/user/last-delivery-location', [OrderController::class, 'getLastDeliveryLocation']);
-    
+
     // Wishlist protected features (move to cart)
     Route::prefix('wishlist')->group(function () {
         Route::post('/move-to-cart/{itemId}', [WishlistController::class, 'moveToCart']);
         Route::post('/move-all-to-cart', [WishlistController::class, 'moveAllToCart']);
     });
-    
+
     // Addresses
     Route::get('/addresses', [AddressController::class, 'index']);
     Route::post('/addresses', [AddressController::class, 'store']);
     Route::put('/addresses/{id}', [AddressController::class, 'update']);
     Route::delete('/addresses/{id}', [AddressController::class, 'destroy']);
     Route::put('/addresses/{id}/set-default', [AddressController::class, 'setDefault']);
-    
-        
+
+
     // Payment Methods
     Route::get('/payment-methods', [\App\Http\Controllers\Api\PaymentMethodController::class, 'index']);
     Route::post('/payment-methods', [\App\Http\Controllers\Api\PaymentMethodController::class, 'store']);
     Route::put('/payment-methods/{id}', [\App\Http\Controllers\Api\PaymentMethodController::class, 'update']);
     Route::delete('/payment-methods/{id}', [\App\Http\Controllers\Api\PaymentMethodController::class, 'destroy']);
     Route::put('/payment-methods/{id}/set-default', [\App\Http\Controllers\Api\PaymentMethodController::class, 'setDefault']);
-    
+
     // Payments
     Route::post('/payments/mpesa/initiate', [PaymentController::class, 'initiateMpesa']);
     //Route::post('/payments/card/initiate', [PaymentController::class, 'initiateCard']);
@@ -284,14 +286,14 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
     Route::post('/reviews', [\App\Http\Controllers\Api\ReviewController::class, 'store']);
     Route::put('/reviews/{id}', [\App\Http\Controllers\Api\ReviewController::class, 'update']);
     Route::delete('/reviews/{id}', [\App\Http\Controllers\Api\ReviewController::class, 'destroy']);
-    
+
     // Seller reviews
     Route::post('/seller-reviews', [SellerReviewController::class, 'store']);
-    
+
     // Coupons
     Route::post('/coupons/validate', [CouponController::class, 'validate']);
     Route::post('/coupons/apply', [CouponUsageController::class, 'apply']);
-    
+
     // Phase 9: Notifications with Rate Limiting
     Route::prefix('notifications')->middleware(['notification.rate'])->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
@@ -328,11 +330,11 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
         Route::post('/{id}/duplicate', [\App\Http\Controllers\Admin\NotificationTemplateController::class, 'duplicate']);
         Route::post('/{id}/preview', [\App\Http\Controllers\Admin\NotificationTemplateController::class, 'preview']);
     });
-    
+
     // Notification preferences
     Route::get('/user/notification-preferences', [\App\Http\Controllers\Api\NotificationPreferenceController::class, 'show']);
     Route::put('/user/notification-preferences', [\App\Http\Controllers\Api\NotificationPreferenceController::class, 'update']);
-    
+
     // Push Subscriptions (Phase 4)
     Route::prefix('push-subscriptions')->group(function () {
         Route::get('/', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'index']);
@@ -340,17 +342,17 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
         Route::delete('/{id}', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'destroy']);
         Route::post('/test', [\App\Http\Controllers\Api\PushSubscriptionController::class, 'test']);
     });
-    
+
     // ============================================================================
     // SELLER ROUTES WITH CLOUDINARY SUPPORT
     // ============================================================================
     Route::prefix('seller')->group(function () {
-        
+
         // Seller profile
         Route::get('/profile', [SellerProfileController::class, 'myProfile']);
         Route::post('/profile', [SellerProfileController::class, 'createProfile']);
         Route::put('/profile', [SellerProfileController::class, 'updateProfile']);
-        
+
         // Seller products (NEW - Cloudinary enabled)
         Route::get('/products', [SellerProductController::class, 'index']);
         Route::post('/products', [SellerProductController::class, 'store']);
@@ -358,29 +360,29 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
         Route::put('/products/{id}', [SellerProductController::class, 'update']);
         Route::post('/products/{id}', [SellerProductController::class, 'update']); // For FormData with _method=PUT
         Route::delete('/products/{id}', [SellerProductController::class, 'destroy']);
-        
+
         // Product duplication
         Route::post('/products/{id}/duplicate', [SellerProductController::class, 'duplicate']);
-        
+
         // Product variants (keep existing)
         Route::post('/products/{id}/variants', [ProductVariantController::class, 'store']);
         Route::put('/variants/{id}', [ProductVariantController::class, 'update']);
         Route::delete('/variants/{id}', [ProductVariantController::class, 'destroy']);
-        
+
         // Product images (keep existing for backward compatibility)
         Route::post('/products/{id}/images', [ProductImageController::class, 'store']);
         Route::delete('/images/{id}', [ProductImageController::class, 'destroy']);
         Route::put('/images/{id}/set-primary', [ProductImageController::class, 'setPrimary']);
-        
+
         // Seller orders
         Route::get('/orders', [OrderController::class, 'sellerOrders']);
         Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
-        
+
         // Analytics
         Route::get('/analytics/sales', [OrderController::class, 'salesAnalytics']);
         Route::get('/analytics/products', [ProductController::class, 'productAnalytics']);
     });
-    
+
     // ============================================================================
     // PLATFORM OWNER DASHBOARD (Super Admin Only)
     // ============================================================================
@@ -413,23 +415,23 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
         Route::get('/commission-breakdown', [\App\Http\Controllers\Dashboard\SellerDashboardController::class, 'commissionBreakdown']);
         Route::get('/payouts', [\App\Http\Controllers\Dashboard\SellerDashboardController::class, 'payouts']);
     });
-    
+
     // Transactions (Super Admin Only)
     Route::prefix('transactions')->middleware('role:super_admin')->group(function () {
         Route::get('/', [TransactionController::class, 'index']);
         Route::get('/{id}', [TransactionController::class, 'show']);
     });
-    
+
     // ============================================================================
     // ADMIN ROUTES
     // ============================================================================
     Route::prefix('admin')->group(function () {
-        
+
         // User management
         Route::get('/users', [AuthController::class, 'getAllUsers']);
         Route::put('/users/{id}/status', [AuthController::class, 'updateUserStatus']);
         Route::delete('/users/{id}', [AuthController::class, 'deleteUser']);
-        
+
         // ⭐ NEW: Advanced User Management
         Route::prefix('users')->group(function () {
             Route::get('/{id}', [\App\Http\Controllers\Admin\UserManagementController::class, 'show']);
@@ -445,31 +447,31 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
         Route::put('/sellers/{id}/approve', [SellerProfileController::class, 'approve']);
         Route::put('/sellers/{id}/reject', [SellerProfileController::class, 'reject']);
         Route::put('/sellers/{id}/suspend', [SellerProfileController::class, 'suspend']);
-        
+
         // Category management
         Route::post('/categories', [CategoryController::class, 'store']);
         Route::put('/categories/{id}', [CategoryController::class, 'update']);
         Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
-        
+
         // Product management
         Route::get('/products/all', [ProductController::class, 'allProducts']);
         Route::put('/products/{id}/feature', [ProductController::class, 'toggleFeatured']);
         Route::delete('/products/{id}/force', [ProductController::class, 'forceDelete']);
-        
+
         // Order management
         Route::get('/orders/all', [OrderController::class, 'allOrders']);
         Route::get('/orders/stats', [OrderController::class, 'orderStats']);
-        
+
         // Coupon management
         Route::get('/coupons', [CouponController::class, 'index']);
         Route::post('/coupons', [CouponController::class, 'store']);
         Route::put('/coupons/{id}', [CouponController::class, 'update']);
         Route::delete('/coupons/{id}', [CouponController::class, 'destroy']);
-        
+
         // Settings
         Route::get('/settings', [SettingController::class, 'index']);
         Route::put('/settings', [SettingController::class, 'update']);
-        
+
         // Activity logs
         Route::get('/activity-logs', [ActivityLogController::class, 'index']);
         Route::get('/activity-logs/{id}', [ActivityLogController::class, 'show']);
@@ -485,25 +487,25 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
 
         // Admin review moderation (Phase 10)
         Route::post('/reviews/{id}/moderate', [\App\Http\Controllers\Api\ReviewController::class, 'moderate']);
-        
+
     }); // End of admin group
 
     // ============================================================================
     // SUPER ADMIN ROUTES (With Phase 3 Audit Logging)
     // ============================================================================
     Route::prefix('super-admin')->middleware(['role:super_admin'])->group(function () {
-        
+
         // Pending seller management
         Route::get('/pending-sellers', [AuthController::class, 'getPendingSellers']);
         Route::put('/sellers/{id}/approve', [AuthController::class, 'approveSeller']);
         Route::put('/sellers/{id}/reject', [AuthController::class, 'rejectSeller']);
-        
+
         // User role management with audit
         Route::put('/users/{id}/role', [\App\Http\Controllers\Api\SuperAdminController::class, 'changeUserRole']);
         Route::post('/users/{id}/permissions', [\App\Http\Controllers\Api\SuperAdminController::class, 'updatePermissions']);
         Route::get('/users', [\App\Http\Controllers\Api\SuperAdminController::class, 'listUsers']);
         Route::post('/users/{id}/toggle-status', [\App\Http\Controllers\Api\SuperAdminController::class, 'toggleUserStatus']);
-        
+
         // Impersonation for support
         Route::post('/impersonate/{userId}', [\App\Http\Controllers\Api\SuperAdminController::class, 'startImpersonation']);
         Route::post('/impersonate/stop', [\App\Http\Controllers\Api\SuperAdminController::class, 'stopImpersonation']);
@@ -512,7 +514,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
     // ============================================================================
     // PHASE 10: BUSINESS OPERATIONS (Main Protected Group)
     // ============================================================================
-    
+
     // Service Bookings
     Route::prefix('service-bookings')->group(function () {
         Route::post('/', [\App\Http\Controllers\Api\ServiceBookingController::class, 'store']);
@@ -520,10 +522,10 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
         Route::post('/{id}/cancel', [\App\Http\Controllers\Api\ServiceBookingController::class, 'cancel']);
         Route::post('/{id}/no-show', [\App\Http\Controllers\Api\ServiceBookingController::class, 'markNoShow']);
     });
-    
+
     // Reviews (User actions - already defined above, but helpful votes here)
     Route::post('/reviews/{id}/helpful', [\App\Http\Controllers\Api\ReviewController::class, 'markHelpful']);
-    
+
     // Referrals
     Route::prefix('referrals')->group(function () {
         Route::get('/code', [\App\Http\Controllers\Api\ReferralController::class, 'getCode']);
@@ -543,6 +545,26 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
     // Link guest sessions on login
     Route::post('/conversations/link-guest', [\App\Http\Controllers\Api\ConversationController::class, 'linkGuestSessions']);
 
+    // ============================================================================
+    // ENHANCED MESSAGING ROUTES (Auth Required)
+    // ============================================================================
+    Route::get('/conversations/search-users', [ConversationController::class, 'searchUsers']);
+    Route::get('/orders/{order}/support', [ConversationController::class, 'getOrderSupport']);
+
+    // Conversation show — moved from optional group to prevent route collision
+    Route::get('/conversations/{conversation}', [\App\Http\Controllers\Api\ConversationController::class, 'show']);
+
+    // Support Inbox (Admin/SuperAdmin only)
+    Route::prefix('support-inbox')->middleware(['role:admin,super_admin'])->group(function () {
+        Route::get('/', [SupportInboxController::class, 'index']);
+        Route::get('/stats', [SupportInboxController::class, 'stats']);
+        Route::post('/{conversation}/assign', [SupportInboxController::class, 'assign']);
+        Route::post('/{conversation}/escalate', [SupportInboxController::class, 'escalate']);
+        Route::post('/{conversation}/resolve', [SupportInboxController::class, 'resolve']);
+        Route::get('/monitor', [SupportInboxController::class, 'monitor']);
+        Route::post('/{conversation}/join', [SupportInboxController::class, 'join']);
+    });
+
     // Call Signaling (WebRTC) - requires auth
     Route::post('/calls/initiate', [\App\Http\Controllers\Api\CallSignalingController::class, 'initiate']);
     Route::post('/calls/signal', [\App\Http\Controllers\Api\CallSignalingController::class, 'signal']);
@@ -558,7 +580,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
     // ============================================================================
     // These routes use dynamic parameters and MUST be defined after all specific routes
     // to prevent them from catching specific route patterns
-    
+
     // Get order by order number or order_display (public for tracking)
     // This MUST come after /orders/pending-payments and other specific routes
     Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
@@ -579,15 +601,18 @@ Route::prefix('v1')->middleware(['api', 'optional', 'audit'])->group(function ()
     // Conversations — accessible to guests and authenticated users
     Route::get('/conversations', [\App\Http\Controllers\Api\ConversationController::class, 'index']);
     Route::post('/conversations', [\App\Http\Controllers\Api\ConversationController::class, 'store']);
-    Route::get('/conversations/{conversation}', [\App\Http\Controllers\Api\ConversationController::class, 'show']);
     Route::post('/conversations/{conversation}/read', [\App\Http\Controllers\Api\ConversationController::class, 'markAsRead']);
-    
+
+    // NOTE: Route::get('/conversations/{conversation}') is intentionally REMOVED from here
+    // because it would catch /conversations/search-users. The show() method is now
+    // ONLY available in the protected group above.
+
     // Enhanced messaging features
     Route::get('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\ConversationController::class, 'messages']);
     Route::post('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\ConversationController::class, 'sendMessage']);
     Route::post('/conversations/{conversation}/typing', [\App\Http\Controllers\Api\ConversationController::class, 'typing']);
     Route::post('/conversations/{conversation}/messages/{message}/react', [\App\Http\Controllers\Api\ConversationController::class, 'react']);
-    
+
     // Message search (auth only)
     Route::get('/conversations/search/messages', [\App\Http\Controllers\Api\ConversationController::class, 'search'])
         ->middleware('auth:sanctum');

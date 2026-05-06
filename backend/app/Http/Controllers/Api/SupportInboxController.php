@@ -46,17 +46,17 @@ class ConversationController extends Controller
 
         // Add computed fields
         $conversations->transform(function ($conv) use ($user) {
-            $conv->unread_count = $user 
+            $conv->unread_count = $user
                 ? Message::where('conversation_id', $conv->id)
                     ->whereNull('read_at')
                     ->where('sender_id', '!=', $user->id)
                     ->count()
                 : 0;
-            
+
             $conv->other_participant = $conv->participants
                 ->where('user_id', '!=', $user?->id)
                 ->first();
-            
+
             $conv->last_message = $conv->messages->first()?->body;
             $conv->last_message_at = $conv->messages->first()?->created_at;
 
@@ -85,7 +85,7 @@ class ConversationController extends Controller
         // For support tickets, find or create with support user
         if ($validated['type'] === 'support' || $validated['type'] === 'order_support') {
             $supportUser = User::whereIn('role', ['admin', 'super_admin'])->first();
-            
+
             if (!$supportUser) {
                 return response()->json(['error' => 'No support agent available'], 503);
             }
@@ -190,7 +190,7 @@ class ConversationController extends Controller
     public function markAsRead(Request $request, Conversation $conversation)
     {
         $user = $request->user();
-        
+
         if (!$user) {
             return response()->json(['error' => 'Authentication required'], 401);
         }
@@ -240,7 +240,7 @@ class ConversationController extends Controller
     public function getOrderSupport(Request $request, Order $order)
     {
         $user = $request->user();
-        
+
         if (!$user) {
             return response()->json(['error' => 'Authentication required'], 401);
         }
@@ -266,7 +266,7 @@ class ConversationController extends Controller
 
         // Create new
         $supportUser = User::whereIn('role', ['admin', 'super_admin'])->first();
-        
+
         if (!$supportUser) {
             return response()->json(['error' => 'No support agent available'], 503);
         }

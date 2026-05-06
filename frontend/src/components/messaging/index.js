@@ -7,3 +7,4 @@ export { default as MessageThread } from './MessageThread';
 export { default as MessageBubble } from './MessageBubble';
 export { default as ConversationList } from './ConversationList';
 export { default as CallOverlay } from './CallOverlay';
+export { default as CreateChatModal } from './CreateChatModal';

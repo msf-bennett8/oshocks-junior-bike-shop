@@ -42,11 +42,15 @@ class MessageController extends Controller
 
         $validated = $request->validate([
             'body' => 'required|string|max:5000',
-            'type' => 'in:text,image,file,call_invite',
+            'type' => 'in:text,image,file,call_invite,system',
             'metadata' => 'nullable|array',
             'sender_name' => 'nullable|string|max:100',
             'sender_email' => 'nullable|email|max:255',
         ]);
+
+        // Run moderation check
+        $moderationService = app(MessageModerationService::class);
+        $moderationResult = $moderationService->analyze($validated['body']);
 
         $message = Message::create([
             'conversation_id' => $conversation->id,
@@ -56,17 +60,37 @@ class MessageController extends Controller
             'sender_email' => $validated['sender_email'] ?? null,
             'body' => $validated['body'],
             'type' => $validated['type'] ?? 'text',
-            'metadata' => $validated['metadata'] ?? null,
+            'metadata' => array_merge(
+                $validated['metadata'] ?? [],
+                ['moderation' => $moderationResult]
+            ),
         ]);
+
+        // Flag conversation if violations detected
+        if ($moderationResult['requires_review']) {
+            $conversation->update([
+                'flagged_for_review' => true,
+                'detected_keywords' => $moderationResult['detected_keywords'],
+                'moderation_notes' => 'Auto-flagged: ' . implode(', ', $moderationResult['violations']),
+            ]);
+        }
 
         $conversation->update(['last_message_at' => now()]);
 
         // Broadcast to all participants
         broadcast(new MessageSent($message))->toOthers();
 
-        return response()->json([
+        $response = [
             'data' => $message->load('sender'),
-        ], 201);
+        ];
+
+        // Include warning if violations found
+        if ($moderationResult['has_violations']) {
+            $response['warning'] = $moderationService->getWarningMessage($moderationResult['violations']);
+            $response['moderation'] = $moderationResult;
+        }
+
+        return response()->json($response, 201);
     }
 
     private function canAccess(?User $user, ?string $guestSessionId, Conversation $conversation): bool

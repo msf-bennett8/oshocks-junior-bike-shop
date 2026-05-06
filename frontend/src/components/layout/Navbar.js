@@ -9,6 +9,7 @@ import NotificationCenter from '../notifications/NotificationCenter';
 import SuperAdminNotificationCenter from '../notifications/SuperAdminNotificationCenter';
 import ChatDrawer from '../messaging/ChatDrawer';
 import CallOverlay from '../messaging/CallOverlay';
+import CreateChatModal from '../messaging/CreateChatModal';
 import { useWebRTC } from '../../hooks/useWebRTC';
 import { useMessaging } from '../../hooks/useMessaging';
 import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowRight, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, Users, Package2, BarChart3, FolderTree, Heart, Bell, MessageCircle } from 'lucide-react';
@@ -46,7 +47,8 @@ const Navbar = () => {
 
   // Messaging & Calls state
   const [chatOpen, setChatOpen] = useState(false);
-  const { incomingCall, dismissIncomingCall, echo, connectionStatus, unreadTotal } = useMessaging(user?.id);
+  const [showCreateChat, setShowCreateChat] = useState(false);
+  const { incomingCall, dismissIncomingCall, echo, connectionStatus, unreadTotal, setActiveConversation } = useMessaging(user?.id);
 
   // Body class is managed by ChatDrawer.jsx — Navbar just reads it
   const {
@@ -720,6 +722,17 @@ const Navbar = () => {
                 </div>
               )}
 
+              {/* Create Chat "+" Button */}
+              <button
+                onClick={() => setShowCreateChat(true)}
+                className="relative p-2 sm:p-2.5 rounded-full hover:bg-blue-50 transition-colors group"
+                title="New Conversation"
+              >
+                <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">+</span>
+                </div>
+              </button>
+
               {/* Messages Button — Available for guests too */}
               <button
                 onClick={() => setChatOpen(true)}
@@ -735,7 +748,7 @@ const Navbar = () => {
                 )}
                 {/* Connection status dot */}
                 <span className={`absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full border border-white ${
-                  connectionStatus === 'connected' ? 'bg-green-400' : 
+                  connectionStatus === 'connected' ? 'bg-green-400' :
                   connectionStatus === 'connecting' ? 'bg-yellow-400 animate-pulse' : 'bg-red-400'
                 }`} />
               </button>
@@ -993,6 +1006,16 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+
+      {/* Create Chat Modal */}
+      <CreateChatModal
+        isOpen={showCreateChat}
+        onClose={() => setShowCreateChat(false)}
+        onConversationCreated={(conversation) => {
+          setActiveConversation(conversation);
+          setChatOpen(true);
+        }}
+      />
 
       {/* Chat Drawer — Enhanced with split-pane/desktop support */}
       <ChatDrawer 
