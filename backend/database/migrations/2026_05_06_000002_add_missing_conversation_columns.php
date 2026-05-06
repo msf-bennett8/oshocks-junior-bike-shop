@@ -9,17 +9,27 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('conversations', function (Blueprint $table) {
-            // Add user_id (nullable, for conversation ownership)
-            $table->foreignId('user_id')->nullable()->after('id');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
+            // Add user_id (nullable, for conversation ownership) — only if not exists
+            if (!Schema::hasColumn('conversations', 'user_id')) {
+                $table->foreignId('user_id')->nullable()->after('id');
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
+            }
 
-            // Guest support columns
-            $table->string('guest_session_id')->nullable()->after('user_id');
-            $table->string('guest_name')->nullable()->after('guest_session_id');
-            $table->string('guest_email')->nullable()->after('guest_name');
+            // Guest support columns — only if not exists
+            if (!Schema::hasColumn('conversations', 'guest_session_id')) {
+                $table->string('guest_session_id')->nullable()->after('user_id');
+            }
+            if (!Schema::hasColumn('conversations', 'guest_name')) {
+                $table->string('guest_name')->nullable()->after('guest_session_id');
+            }
+            if (!Schema::hasColumn('conversations', 'guest_email')) {
+                $table->string('guest_email')->nullable()->after('guest_name');
+            }
 
-            // Index for guest lookups
-            $table->index('guest_session_id');
+            // Index for guest lookups — only if not exists
+            if (!Schema::hasIndex('conversations', 'conversations_guest_session_id_index')) {
+                $table->index('guest_session_id');
+            }
         });
     }
 

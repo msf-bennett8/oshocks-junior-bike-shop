@@ -130,7 +130,7 @@ class Conversation extends Model
     public function otherParticipant(User $user): ?User
     {
         return $this->participants()
-            ->where('user_id', '!=', $user->id)
+            ->where('users.id', '!=', $user->id)
             ->first();
     }
 

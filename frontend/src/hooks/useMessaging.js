@@ -363,8 +363,23 @@ export const useMessaging = (userId) => {
       const messageData = event.message || event;
 
       setMessages(prev => {
-        const exists = prev.some(m => m.id === messageData.id);
-        if (exists) return prev;
+        // Skip if this is our own message (already handled by API response)
+        // or if it already exists in the list
+        const isOwnMessage = messageData.sender_id === userId;
+        const exists = prev.some(m => m.id === messageData.id || (m._optimistic && m.body === messageData.body && m.sender_id === messageData.sender_id));
+
+        if (exists) {
+          // Replace optimistic with real message if needed
+          if (prev.some(m => m._optimistic && m.body === messageData.body)) {
+            return prev.map(m =>
+              m._optimistic && m.body === messageData.body && m.sender_id === messageData.sender_id
+                ? { ...messageData, _pending: false, _optimistic: false }
+                : m
+            );
+          }
+          return prev;
+        }
+
         return [...prev, messageData];
       });
 
@@ -378,7 +393,7 @@ export const useMessaging = (userId) => {
     });
 
     return unsubscribe;
-  }, [activeConversation?.id, isConnected, subscribeToConversation, scrollToBottom]);
+  }, [activeConversation?.id, isConnected, subscribeToConversation, scrollToBottom, userId]);
 
   // Subscribe to typing indicators
   useEffect(() => {

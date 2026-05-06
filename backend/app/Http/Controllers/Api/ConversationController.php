@@ -54,7 +54,7 @@ class ConversationController extends Controller
                 : 0;
 
             $conv->other_participant = $conv->participants
-                ->where('user_id', '!=', $user?->id)
+                ->where('id', '!=', $user?->id)
                 ->first();
 
             $conv->last_message = $conv->messages->first()?->body;
