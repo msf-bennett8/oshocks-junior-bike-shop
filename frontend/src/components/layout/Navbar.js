@@ -1011,9 +1011,16 @@ const Navbar = () => {
       <CreateChatModal
         isOpen={showCreateChat}
         onClose={() => setShowCreateChat(false)}
-        onConversationCreated={(conversation) => {
+        onConversationCreated={(conversation, isExisting = false) => {
+          // Set active conversation in messaging hook
           setActiveConversation(conversation);
+          
+          // Open chat drawer
           setChatOpen(true);
+          
+          // If it's an existing conversation, we should refresh messages
+          // The ChatDrawer will handle fetching via its own useEffect
+          console.log('[Navbar] Conversation created/resumed:', conversation.id, isExisting ? '(existing)' : '(new)');
         }}
       />
 

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\MessageModerationService;
 use Illuminate\Http\Request;
 
 class MessageController extends Controller
@@ -75,9 +76,10 @@ class MessageController extends Controller
             ]);
         }
 
+        // Update conversation timestamp — critical for sorting
         $conversation->update(['last_message_at' => now()]);
 
-        // Broadcast to all participants
+        // Broadcast to all participants on private channel
         broadcast(new MessageSent($message))->toOthers();
 
         $response = [
@@ -95,11 +97,17 @@ class MessageController extends Controller
 
     private function canAccess(?User $user, ?string $guestSessionId, Conversation $conversation): bool
     {
+        // Admin/superadmin can access ALL conversations for monitoring
+        if ($user && in_array($user->role, ['admin', 'super_admin'])) {
+            return true;
+        }
+
         if ($user) {
             $isParticipant = $conversation->participants()
                 ->where('user_id', $user->id)
                 ->exists();
-            $isOwner = $conversation->user_id === $user->id;
+            // Standardize: use created_by (not user_id) for ownership check
+            $isOwner = $conversation->created_by === $user->id;
             return $isParticipant || $isOwner;
         }
 

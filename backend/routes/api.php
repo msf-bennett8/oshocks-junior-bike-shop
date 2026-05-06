@@ -32,6 +32,7 @@ use App\Http\Controllers\CardPaymentController;
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\Api\SupportInboxController;
 use App\Http\Controllers\Api\ConversationController;
+use App\Http\Controllers\Api\MessageController;
 
 // ============================================================================
 // OAUTH ROUTES - STATELESS (No CSRF, No Session)
@@ -594,24 +595,26 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
 // Controllers handle both auth and guest sessions.
 Route::prefix('v1')->middleware(['api', 'optional', 'audit'])->group(function () {
 
-    // Link guest sessions on login (requires auth, handled by controller)
-    Route::post('/conversations/link-guest', [\App\Http\Controllers\Api\ConversationController::class, 'linkGuestSessions'])
-        ->middleware('auth:sanctum');
+    // (link-guest moved to protected routes above — guests don't need to link themselves)
 
     // Conversations — accessible to guests and authenticated users
     Route::get('/conversations', [\App\Http\Controllers\Api\ConversationController::class, 'index']);
     Route::post('/conversations', [\App\Http\Controllers\Api\ConversationController::class, 'store']);
     Route::post('/conversations/{conversation}/read', [\App\Http\Controllers\Api\ConversationController::class, 'markAsRead']);
 
-    // NOTE: Route::get('/conversations/{conversation}') is intentionally REMOVED from here
-    // because it would catch /conversations/search-users. The show() method is now
-    // ONLY available in the protected group above.
+    // Show conversation — MUST come AFTER /conversations/search-users to avoid collision
+    Route::get('/conversations/{conversation}', [\App\Http\Controllers\Api\ConversationController::class, 'show']);
 
-    // Enhanced messaging features
-    Route::get('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\ConversationController::class, 'messages']);
-    Route::post('/conversations/{conversation}/messages', [\App\Http\Controllers\Api\ConversationController::class, 'sendMessage']);
-    Route::post('/conversations/{conversation}/typing', [\App\Http\Controllers\Api\ConversationController::class, 'typing']);
-    Route::post('/conversations/{conversation}/messages/{message}/react', [\App\Http\Controllers\Api\ConversationController::class, 'react']);
+    // Enhanced messaging features — routed to correct controllers
+    Route::get('/conversations/{conversation}/messages', [MessageController::class, 'index']);
+    Route::post('/conversations/{conversation}/messages', [MessageController::class, 'store']);
+    Route::post('/conversations/{conversation}/typing', [ConversationController::class, 'typing']);
+    Route::post('/conversations/{conversation}/messages/{message}/react', [ConversationController::class, 'react']);
+
+    // Conversation management (pin, archive, delete)
+    Route::post('/conversations/{conversation}/pin', [\App\Http\Controllers\Api\ConversationController::class, 'pin']);
+    Route::post('/conversations/{conversation}/archive', [\App\Http\Controllers\Api\ConversationController::class, 'archive']);
+    Route::delete('/conversations/{conversation}', [\App\Http\Controllers\Api\ConversationController::class, 'destroy']);
 
     // Message search (auth only)
     Route::get('/conversations/search/messages', [\App\Http\Controllers\Api\ConversationController::class, 'search'])

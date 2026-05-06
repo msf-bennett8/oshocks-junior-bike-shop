@@ -18,12 +18,21 @@ export const useWebSocket = (userId) => {
   const maxReconnectAttempts = 10;
 
   const connect = useCallback(() => {
-    if (!userId) return;
-
+    // Allow guests: use guest session ID if no user/token
     const token = localStorage.getItem('authToken');
-    if (!token) return;
+    const guestSessionId = localStorage.getItem('oshocks_guest_session_id');
+
+    if (!userId && !guestSessionId) return;
 
     const config = getReverbConfig();
+
+    const authHeaders = {};
+    if (token) {
+      authHeaders.Authorization = `Bearer ${token}`;
+    }
+    if (guestSessionId) {
+      authHeaders['X-Guest-Session-ID'] = guestSessionId;
+    }
 
     const echo = new Echo({
       broadcaster: 'reverb',
@@ -34,9 +43,7 @@ export const useWebSocket = (userId) => {
       forceTLS: config.scheme === 'https',
       enabledTransports: config.scheme === 'https' ? ['wss'] : ['ws', 'wss'],
       auth: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: authHeaders,
       },
       authEndpoint: `${process.env.REACT_APP_API_URL?.replace('/api/v1', '')}/broadcasting/auth`,
     });
@@ -103,12 +110,19 @@ export const useWebSocket = (userId) => {
     connect();
   }, [connect]);
 
-  const subscribeToChannel = useCallback((channelName, eventName, callback) => {
+    const subscribeToChannel = useCallback((channelName, eventName, callback) => {
     if (!echoRef.current) return null;
 
-    const channel = channelName.startsWith('private-') 
-      ? echoRef.current.private(channelName.replace('private-', ''))
-      : echoRef.current.channel(channelName);
+    let channel;
+    if (channelName.startsWith('private-')) {
+      const privateName = channelName.replace('private-', '');
+      channel = echoRef.current.private(privateName);
+    } else if (channelName.startsWith('presence-')) {
+      const presenceName = channelName.replace('presence-', '');
+      channel = echoRef.current.join(presenceName);
+    } else {
+      channel = echoRef.current.channel(channelName);
+    }
 
     channel.listen(eventName, callback);
     console.log(`📡 Subscribed to ${channelName}:${eventName}`);
@@ -126,7 +140,8 @@ export const useWebSocket = (userId) => {
 
   const subscribeToConversation = useCallback((conversationId, callback) => {
     if (!echoRef.current) return null;
-    return subscribeToChannel(`conversation.${conversationId}`, '.message.sent', callback);
+    // MUST use private- prefix for Laravel private channels
+    return subscribeToChannel(`private-conversation.${conversationId}`, '.message.sent', callback);
   }, [subscribeToChannel]);
 
   return {

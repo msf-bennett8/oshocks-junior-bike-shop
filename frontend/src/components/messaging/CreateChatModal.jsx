@@ -15,6 +15,7 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [creatingForUserId, setCreatingForUserId] = useState(null); // Track who we're creating for
   const [activeTab, setActiveTab] = useState('users'); // 'users' | 'support'
   const [recentConversations, setRecentConversations] = useState([]);
   const searchInputRef = useRef(null);
@@ -78,8 +79,18 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
     }
   };
 
+    // ─── ATOMIC CREATION GUARD ───
+  const isCreatingRef = useRef(false);
+
   const handleStartDirectChat = async (targetUser) => {
+    // Prevent double-clicks and concurrent creation
+    if (isCreatingRef.current) return;
+    if (creatingForUserId === targetUser.id) return;
+    
+    isCreatingRef.current = true;
+    setCreatingForUserId(targetUser.id);
     setLoading(true);
+
     try {
       const payload = {
         participant_id: targetUser.id,
@@ -88,14 +99,23 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
 
       const res = await api.post('/conversations', payload);
       const conversation = res.data.data;
-      
-      onConversationCreated?.(conversation);
+      const isExisting = res.data.existing === true;
+
+      // CRITICAL: Pass both conversation AND whether it existed
+      // This lets parent decide to fetch messages or not
+      onConversationCreated?.(conversation, isExisting);
       onClose();
     } catch (err) {
       console.error('Failed to start conversation:', err);
-      alert('Failed to start conversation. Please try again.');
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Failed to start conversation. Please try again.';
+      alert(errorMsg);
     } finally {
       setLoading(false);
+      setCreatingForUserId(null);
+      // Delay reset to prevent rapid-fire clicks
+      setTimeout(() => {
+        isCreatingRef.current = false;
+      }, 500);
     }
   };
 
@@ -209,7 +229,8 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
                     <button
                       key={result.id}
                       onClick={() => handleStartDirectChat(result)}
-                      className="w-full flex items-center gap-3 px-3 py-3 hover:bg-gray-50 rounded-xl transition-colors text-left group"
+                      disabled={creatingForUserId === result.id || isCreatingRef.current}
+                      className="w-full flex items-center gap-3 px-3 py-3 hover:bg-gray-50 rounded-xl transition-colors text-left group disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                         {result.name?.charAt(0)?.toUpperCase() || '?'}
@@ -226,7 +247,11 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
                         }`}>
                           {result.role}
                         </span>
-                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                        {creatingForUserId === result.id ? (
+                          <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                        )}
                       </div>
                     </button>
                   ))}

@@ -20,11 +20,25 @@ Broadcast::channel('user.{id}', function ($user, $id) {
 });
 
 // Private conversation channel: conversation.{conversationId} — for group chat
+// Supports BOTH authenticated users (via $user) and guests (via request header)
 Broadcast::channel('conversation.{conversationId}', function ($user, $conversationId) {
-    return Conversation::where('id', $conversationId)
-        ->whereHas('participants', function ($q) use ($user) {
-            $q->where('user_id', $user->id);
-        })->exists();
+    // Authenticated user check
+    if ($user) {
+        return Conversation::where('id', $conversationId)
+            ->whereHas('participants', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })->exists();
+    }
+
+    // Guest check: verify guest_session_id from request header matches conversation
+    $guestSessionId = request()->header('X-Guest-Session-ID');
+    if ($guestSessionId) {
+        return Conversation::where('id', $conversationId)
+            ->where('guest_session_id', $guestSessionId)
+            ->exists();
+    }
+
+    return false;
 });
 
 // Presence channel for online status: presence.users

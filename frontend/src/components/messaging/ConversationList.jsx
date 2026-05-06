@@ -3,7 +3,7 @@
 // ============================================================================
 
 import React, { useState, useMemo } from 'react';
-import { Search, Archive, Pin, MoreVertical, Phone, Video, Inbox } from 'lucide-react';
+import { Search, Archive, Pin, MoreVertical, Trash2, Phone, Video, Inbox } from 'lucide-react';
 
 const FILTERS = [
   { key: 'all', label: 'All' },
@@ -18,12 +18,18 @@ const ConversationList = ({
   onSelect,
   unreadTotal,
   onClose,
+  onPinToggle,
+  onArchiveToggle,
+  onDelete,
   compact = false,
   entryPoint = 'support',
 }) => {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [contextMenu, setContextMenu] = useState(null); // { convId, x, y }
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedConv, setSelectedConv] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const filtered = useMemo(() => {
     let result = conversations.filter(c => {
@@ -66,6 +72,39 @@ const ConversationList = ({
   };
 
   const closeContextMenu = () => setContextMenu(null);
+
+  const openOptionsModal = (e, conv) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setSelectedConv(conv);
+    setModalOpen(true);
+    setConfirmDelete(false);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setSelectedConv(null);
+    setConfirmDelete(false);
+  };
+
+  const handlePin = () => {
+    if (selectedConv && onPinToggle) onPinToggle(selectedConv.id);
+    closeModal();
+  };
+
+  const handleArchive = () => {
+    if (selectedConv && onArchiveToggle) onArchiveToggle(selectedConv.id);
+    closeModal();
+  };
+
+  const handleDelete = () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    if (selectedConv && onDelete) onDelete(selectedConv.id);
+    closeModal();
+  };
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -184,42 +223,122 @@ const ConversationList = ({
                   </div>
                 </div>
 
-                {/* Hover actions */}
-                <div className="hidden group-hover:flex items-center gap-1 absolute right-2 top-1/2 -translate-y-1/2 bg-white shadow-md rounded-lg p-1 z-10">
-                  <button 
-                    className="p-1 hover:bg-gray-100 rounded pointer-events-auto"
-                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); /* TODO: pin toggle */ }}
-                  >
-                    <Pin className="w-3.5 h-3.5 text-gray-500" />
-                  </button>
-                  <button 
-                    className="p-1 hover:bg-gray-100 rounded pointer-events-auto"
-                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); /* TODO: archive toggle */ }}
-                  >
-                    <Archive className="w-3.5 h-3.5 text-gray-500" />
-                  </button>
-                </div>
+                {/* More options button */}
+                <button
+                  className="hidden group-hover:flex items-center justify-center w-8 h-8 absolute right-2 top-1/2 -translate-y-1/2 bg-white shadow-md rounded-full hover:bg-gray-100 z-10"
+                  onClick={(e) => openOptionsModal(e, conv)}
+                >
+                  <MoreVertical className="w-4 h-4 text-gray-500" />
+                </button>
                </div>
             );
           })
         )}
       </div>
 
-      {/* Context Menu */}
-      {contextMenu && (
-        <div 
-          className="fixed bg-white shadow-xl rounded-lg py-1 z-50 border border-gray-200 w-48"
-          style={{ top: contextMenu.y, left: Math.min(contextMenu.x, window.innerWidth - 200) }}
+            {/* Options Modal */}
+      {modalOpen && selectedConv && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center"
+          onClick={closeModal}
         >
-          <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2">
-            <Pin className="w-4 h-4" /> {conversations.find(c => c.id === contextMenu.convId)?.is_pinned ? 'Unpin' : 'Pin'}
-          </button>
-          <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2">
-            <Archive className="w-4 h-4" /> {conversations.find(c => c.id === contextMenu.convId)?.is_archived ? 'Unarchive' : 'Archive'}
-          </button>
-          <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 text-red-600 flex items-center gap-2">
-            <MoreVertical className="w-4 h-4" /> Delete
-          </button>
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-80 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h3 className="text-base font-semibold text-gray-900">
+                {selectedConv.title || selectedConv.other_participant?.name || 'Chat Options'}
+              </h3>
+              <p className="text-xs text-gray-500 mt-0.5">Choose an action for this conversation</p>
+            </div>
+
+            {/* Options */}
+            <div className="py-1">
+              <button
+                onClick={handlePin}
+                className="w-full text-left px-5 py-3 text-sm hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+                  <Pin className={`w-4 h-4 ${selectedConv.is_pinned ? 'text-blue-600 fill-blue-600' : 'text-blue-500'}`} />
+                </div>
+                <div>
+                  <span className="font-medium text-gray-900">
+                    {selectedConv.is_pinned ? 'Unpin Chat' : 'Pin Chat'}
+                  </span>
+                  <p className="text-xs text-gray-500">
+                    {selectedConv.is_pinned ? 'Remove from top of list' : 'Keep at top of list'}
+                  </p>
+                </div>
+              </button>
+
+              <button
+                onClick={handleArchive}
+                className="w-full text-left px-5 py-3 text-sm hover:bg-gray-50 flex items-center gap-3 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
+                  <Archive className={`w-4 h-4 ${selectedConv.is_archived ? 'text-amber-600 fill-amber-600' : 'text-amber-500'}`} />
+                </div>
+                <div>
+                  <span className="font-medium text-gray-900">
+                    {selectedConv.is_archived ? 'Unarchive Chat' : 'Archive Chat'}
+                  </span>
+                  <p className="text-xs text-gray-500">
+                    {selectedConv.is_archived ? 'Move back to inbox' : 'Hide from main list'}
+                  </p>
+                </div>
+              </button>
+
+              <div className="mx-5 my-1 h-px bg-gray-100" />
+
+              {!confirmDelete ? (
+                <button
+                  onClick={handleDelete}
+                  className="w-full text-left px-5 py-3 text-sm hover:bg-red-50 flex items-center gap-3 transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center">
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </div>
+                  <div>
+                    <span className="font-medium text-red-600">Delete Chat</span>
+                    <p className="text-xs text-red-400">Permanently remove this conversation</p>
+                  </div>
+                </button>
+              ) : (
+                <div className="px-5 py-3">
+                  <p className="text-sm text-red-600 font-medium mb-2">Are you sure?</p>
+                  <p className="text-xs text-gray-500 mb-3">This will permanently delete all messages. This cannot be undone.</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={closeModal}
+                      className="flex-1 px-3 py-2 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="flex-1 px-3 py-2 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Yes, Delete
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Cancel */}
+            {!confirmDelete && (
+              <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50">
+                <button
+                  onClick={closeModal}
+                  className="w-full py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

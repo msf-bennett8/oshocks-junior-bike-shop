@@ -1,10 +1,30 @@
 // ============================================================================
 // GUEST SESSION — Anonymous user chat persistence
+// Generates anonXXXX IDs, persists across sessions, links on login
 // ============================================================================
 
 const GUEST_SESSION_KEY = 'oshocks_guest_session_id';
 const GUEST_NAME_KEY = 'oshocks_guest_name';
 const GUEST_EMAIL_KEY = 'oshocks_guest_email';
+
+/**
+ * Generate a cryptographically random 4-digit number
+ */
+const generateRandomDigits = () => {
+  const array = new Uint32Array(1);
+  if (window.crypto && window.crypto.getRandomValues) {
+    window.crypto.getRandomValues(array);
+  }
+  return 1000 + (array[0] % 9000);
+};
+
+/**
+ * Generate anonymous display name: anonXXXX
+ */
+export const generateAnonName = () => {
+  const digits = generateRandomDigits();
+  return `anon${digits}`;
+};
 
 const generateUUID = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -76,4 +96,43 @@ export const linkGuestSessionOnLogin = async (api) => {
     console.error('Failed to link guest sessions:', err);
     // Don't clear - retry on next login
   }
+};
+
+/**
+ * Initialize guest session with anon name if needed
+ */
+export const initializeGuestSession = () => {
+  const sessionId = getGuestSessionId();
+  const profile = getGuestProfile();
+  
+  if (!profile.name) {
+    const anonName = generateAnonName();
+    setGuestProfile(anonName, profile.email);
+  }
+  
+  return {
+    sessionId,
+    profile: getGuestProfile(),
+  };
+};
+
+/**
+ * Get guest name for display (falls back to anonXXXX)
+ */
+export const getGuestDisplayName = () => {
+  const profile = getGuestProfile();
+  return profile.name || generateAnonName();
+};
+
+export default {
+  generateAnonName,
+  getGuestSessionId,
+  getGuestProfile,
+  setGuestProfile,
+  clearGuestSession,
+  linkGuestSessionOnLogin,
+  isGuest,
+  hasGuestSession,
+  getGuestDisplayName,
+  initializeGuestSession,
 };

@@ -26,7 +26,7 @@ class MessageQueue {
     while (this.queue.length > 0) {
       const msg = this.queue[0];
       try {
-        // Attempt send
+        // Attempt send — api interceptor handles auth headers automatically
         const res = await api.post(`/conversations/${msg.conversationId}/messages`, {
           body: msg.body,
           type: msg.type,
@@ -119,7 +119,9 @@ export const useMessaging = (userId) => {
     try {
       const url = `/conversations/${conversationId}/messages${cursor ? `?cursor=${cursor}` : ''}`;
       const res = await api.get(url);
-      const newMessages = res.data.data || [];
+      // Handle both paginated and direct array responses
+      const responseData = res.data.data || res.data || [];
+      const newMessages = Array.isArray(responseData) ? responseData : responseData.data || [];
       setMessages(prev => cursor ? [...newMessages, ...prev] : newMessages);
     } catch (err) {
       console.error('Failed to fetch messages:', err);
@@ -167,16 +169,17 @@ export const useMessaging = (userId) => {
         : c
     ));
 
-    // Queue for actual send with retry
-    messageQueue.add({
-      conversationId,
-      body: body.trim(),
-      type,
-      metadata,
-      replyTo,
-      senderName: profile.name,
-      senderEmail: profile.email,
-      onSuccess: (serverMessage) => {
+        // Queue for actual send with retry
+        messageQueue.add({
+          conversationId,
+          body: body.trim(),
+          type,
+          metadata,
+          replyTo,
+          senderName: profile.name,
+          senderEmail: profile.email,
+          guestSessionId: getGuestSessionId(), // Include for guest auth
+          onSuccess: (serverMessage) => {
         // Replace optimistic with real message
         setMessages(prev => prev.map(m => 
           m.id === optimisticId ? { ...serverMessage, _pending: false } : m
@@ -257,10 +260,10 @@ export const useMessaging = (userId) => {
     return startConversation(supportUserId, 'support', 'Oshocks Support', effectiveName, effectiveEmail);
   }, [startConversation, generateAnonName]);
 
-  const markAsRead = useCallback(async (conversationId) => {
+    const markAsRead = useCallback(async (conversationId) => {
     try {
       await api.post(`/conversations/${conversationId}/read`);
-      setConversations(prev => prev.map(c => 
+      setConversations(prev => prev.map(c =>
         c.id === conversationId ? { ...c, unread_count: 0 } : c
       ));
       setUnreadTotal(prev => Math.max(0, prev - (conversations.find(c => c.id === conversationId)?.unread_count || 0)));
@@ -268,6 +271,42 @@ export const useMessaging = (userId) => {
       console.error('Failed to mark as read:', err);
     }
   }, [conversations]);
+
+  const pinConversation = useCallback(async (conversationId) => {
+    try {
+      await api.post(`/conversations/${conversationId}/pin`);
+      setConversations(prev => prev.map(c =>
+        c.id === conversationId ? { ...c, is_pinned: !c.is_pinned } : c
+      ));
+    } catch (err) {
+      console.error('Failed to pin conversation:', err);
+    }
+  }, []);
+
+  const archiveConversation = useCallback(async (conversationId) => {
+    try {
+      await api.post(`/conversations/${conversationId}/archive`);
+      setConversations(prev => prev.map(c =>
+        c.id === conversationId ? { ...c, is_archived: !c.is_archived } : c
+      ));
+    } catch (err) {
+      console.error('Failed to archive conversation:', err);
+    }
+  }, []);
+
+  const deleteConversation = useCallback(async (conversationId) => {
+    try {
+      await api.delete(`/conversations/${conversationId}`);
+      setConversations(prev => prev.filter(c => c.id !== conversationId));
+      if (activeConversation?.id === conversationId) {
+        setActiveConversation(null);
+      }
+      setUnreadTotal(prev => Math.max(0, prev - (conversations.find(c => c.id === conversationId)?.unread_count || 0)));
+    } catch (err) {
+      console.error('Failed to delete conversation:', err);
+      throw err;
+    }
+  }, [activeConversation, conversations]);
 
   const sendTypingIndicator = useCallback((conversationId, isTyping) => {
     if (!echo) return;
@@ -315,22 +354,25 @@ export const useMessaging = (userId) => {
     }
   }, [userId]);
 
-  // Subscribe to real-time messages
+      // Subscribe to real-time messages
   useEffect(() => {
     if (!activeConversation?.id || !isConnected) return;
 
     const unsubscribe = subscribeToConversation(activeConversation.id, (event) => {
+      // event is the broadcast payload from MessageSent::broadcastWith()
+      const messageData = event.message || event;
+
       setMessages(prev => {
-        const exists = prev.some(m => m.id === event.id);
+        const exists = prev.some(m => m.id === messageData.id);
         if (exists) return prev;
-        return [...prev, event];
+        return [...prev, messageData];
       });
-      
+
       scrollToBottom();
-      
-      setConversations(prev => prev.map(c => 
+
+      setConversations(prev => prev.map(c =>
         c.id === activeConversation.id
-          ? { ...c, last_message: event.body, last_message_at: event.created_at }
+          ? { ...c, last_message: messageData.body, last_message_at: messageData.created_at }
           : c
       ));
     });
@@ -387,13 +429,14 @@ export const useMessaging = (userId) => {
     setIncomingCall(null);
   }, []);
 
-  // Initial fetch
+  // Initial fetch — for both auth users and guests
   useEffect(() => {
-    if (userId || getGuestSessionId()) {
+    const shouldFetch = userId || getGuestSessionId();
+    if (shouldFetch) {
       fetchConversations();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [userId]);
 
   return {
     conversations,
@@ -420,6 +463,9 @@ export const useMessaging = (userId) => {
     startConversation,
     startSupportChat,
     markAsRead,
+    pinConversation,
+    archiveConversation,
+    deleteConversation,
     scrollToBottom,
     dismissIncomingCall,
     sendTypingIndicator,

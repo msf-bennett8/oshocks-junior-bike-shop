@@ -33,6 +33,9 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
     fetchMessages,
     sendMessage,
     markAsRead,
+    pinConversation: onPinToggle,
+    archiveConversation: onArchiveToggle,
+    deleteConversation: onDelete,
     sendTypingIndicator,
   } = useMessaging(user?.id);
 
@@ -294,6 +297,25 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
     }
   }, [isOpen, user?.id, fetchConversations]);
 
+  // ─── AUTO-SELECT CONVERSATION WHEN SET FROM OUTSIDE ───
+  // When activeConversation is set (e.g., from CreateChatModal via Navbar),
+  // ensure we fetch messages and mark as read
+  useEffect(() => {
+    if (activeConversation?.id && isOpen) {
+      // Only fetch if we haven't loaded messages for this conversation
+      const hasMessagesForConv = messages.some(m => m.conversation_id === activeConversation.id);
+      if (!hasMessagesForConv || messages.length === 0) {
+        fetchMessages(activeConversation.id);
+      }
+      markAsRead(activeConversation.id);
+      
+      // On mobile, ensure we're in thread view
+      if (isMobile) {
+        setView('thread');
+      }
+    }
+  }, [activeConversation?.id, isOpen, isMobile]);
+
   // Load messages when conversation selected (mobile only — desktop handles in click)
   useEffect(() => {
     if (activeConversation?.id && isMobile) {
@@ -435,6 +457,9 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
                 onSelect={handleSelectConv}
                 unreadTotal={unreadTotal}
                 onClose={onClose}
+                onPinToggle={onPinToggle}
+                onArchiveToggle={onArchiveToggle}
+                onDelete={onDelete}
                 compact={false}
                 entryPoint={entryPoint}
               />
@@ -474,6 +499,9 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
               onSelect={handleSelectConversation}
               unreadTotal={unreadTotal}
               onClose={onClose}
+              onPinToggle={onPinToggle}
+              onArchiveToggle={onArchiveToggle}
+              onDelete={onDelete}
               compact={true}
               entryPoint={entryPoint}
               key={`conv-list-${activeConversation?.id || 'none'}`}
@@ -537,6 +565,9 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
               onSelect={handleSelectConversation}
               unreadTotal={unreadTotal}
               onClose={onClose}
+              onPinToggle={onPinToggle}
+              onArchiveToggle={onArchiveToggle}
+              onDelete={onDelete}
               compact={false}
               entryPoint={entryPoint}
             />

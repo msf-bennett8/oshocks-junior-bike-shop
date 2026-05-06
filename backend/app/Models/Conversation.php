@@ -32,6 +32,8 @@ class Conversation extends Model
         'detected_keywords',
         'resolved_at',
         'closed_at',
+        'is_pinned',
+        'is_archived',
     ];
 
     protected $casts = [
@@ -41,6 +43,8 @@ class Conversation extends Model
         'closed_at' => 'datetime',
         'detected_keywords' => 'array',
         'flagged_for_review' => 'boolean',
+        'is_pinned' => 'boolean',
+        'is_archived' => 'boolean',
     ];
 
     public function creator(): BelongsTo

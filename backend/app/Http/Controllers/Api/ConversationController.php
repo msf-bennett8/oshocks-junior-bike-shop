@@ -82,8 +82,33 @@ class ConversationController extends Controller
             'guest_email' => 'nullable|email|max:255',
         ]);
 
+        // ─── DUPLICATE PREVENTION: Check for existing direct conversation ───
+        if (($validated['type'] ?? 'direct') === 'direct' && !empty($validated['participant_id'])) {
+            $existingQuery = Conversation::where('type', 'direct')
+                ->whereHas('participants', function ($q) use ($user, $validated) {
+                    $q->where('user_id', $user ? $user->id : $validated['participant_id']);
+                })
+                ->whereHas('participants', function ($q) use ($validated) {
+                    $q->where('user_id', $validated['participant_id']);
+                });
+
+            // Only 2 participants = direct 1-on-1
+            $existing = $existingQuery->get()->filter(function ($conv) {
+                return $conv->participants()->count() === 2;
+            })->first();
+
+            if ($existing) {
+                return response()->json([
+                    'data' => $existing->load(['participants', 'messages' => function ($q) {
+                        $q->latest()->limit(1);
+                    }]),
+                    'existing' => true,
+                ]);
+            }
+        }
+
         // For support tickets, find or create with support user
-        if ($validated['type'] === 'support' || $validated['type'] === 'order_support') {
+        if (($validated['type'] ?? 'direct') === 'support' || ($validated['type'] ?? 'direct') === 'order_support') {
             $supportUser = User::whereIn('role', ['admin', 'super_admin'])->first();
 
             if (!$supportUser) {
@@ -95,8 +120,10 @@ class ConversationController extends Controller
                 ->where('status', '!=', 'resolved');
 
             if ($user) {
-                $existingQuery->whereHas('participants', function ($q) use ($user) {
-                    $q->where('user_id', $user->id);
+                $existingQuery->where(function ($q) use ($user) {
+                    $q->whereHas('participants', function ($pq) use ($user) {
+                        $pq->where('user_id', $user->id);
+                    })->orWhere('created_by', $user->id);
                 });
             } elseif ($guestSessionId) {
                 $existingQuery->where('guest_session_id', $guestSessionId);
@@ -110,7 +137,7 @@ class ConversationController extends Controller
 
             if ($existing) {
                 return response()->json([
-                    'data' => $existing->load('participants'),
+                    'data' => $existing->load(['participants', 'latestMessage']),
                     'existing' => true,
                 ]);
             }
@@ -181,9 +208,12 @@ class ConversationController extends Controller
         }
 
         return response()->json([
-            'data' => $conversation->load(['participants', 'messages' => function ($q) {
-                $q->with('sender')->orderBy('created_at', 'desc')->limit(50);
-            }]),
+            'data' => $conversation->load([
+                'participants',
+                'messages' => function ($q) {
+                    $q->with(['sender', 'reactions'])->orderBy('created_at', 'desc')->limit(50);
+                }
+            ]),
         ]);
     }
 
@@ -336,6 +366,113 @@ class ConversationController extends Controller
         ]);
     }
 
+    public function pin(Request $request, Conversation $conversation)
+    {
+        $user = $request->user();
+        $guestSessionId = $request->header('X-Guest-Session-ID');
+
+        if (!$this->canAccess($user, $guestSessionId, $conversation)) {
+            abort(403, 'Not a participant in this conversation');
+        }
+
+        $participant = $conversation->participants()
+            ->where('user_id', $user?->id)
+            ->first();
+
+        if ($participant) {
+            $isPinned = $participant->pivot->is_pinned ?? false;
+            $conversation->participants()->updateExistingPivot($user->id, [
+                'is_pinned' => !$isPinned,
+            ]);
+        } else {
+            // For guest sessions or simple toggle, use conversation-level flag
+            $conversation->update(['is_pinned' => !$conversation->is_pinned]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'is_pinned' => !$conversation->is_pinned,
+        ]);
+    }
+
+    public function archive(Request $request, Conversation $conversation)
+    {
+        $user = $request->user();
+        $guestSessionId = $request->header('X-Guest-Session-ID');
+
+        if (!$this->canAccess($user, $guestSessionId, $conversation)) {
+            abort(403, 'Not a participant in this conversation');
+        }
+
+        $conversation->update(['is_archived' => !$conversation->is_archived]);
+
+        return response()->json([
+            'success' => true,
+            'is_archived' => $conversation->is_archived,
+        ]);
+    }
+
+    public function destroy(Request $request, Conversation $conversation)
+    {
+        $user = $request->user();
+        $guestSessionId = $request->header('X-Guest-Session-ID');
+
+        if (!$this->canAccess($user, $guestSessionId, $conversation)) {
+            abort(403, 'Not a participant in this conversation');
+        }
+
+        // Only allow deletion by creator, admin, or super_admin
+        $isCreator = $user && $conversation->created_by === $user->id;
+        $isAdmin = $user && in_array($user->role, ['admin', 'super_admin']);
+
+        if (!$isCreator && !$isAdmin) {
+            abort(403, 'Only the conversation creator or an admin can delete this conversation');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Delete related records in order (respecting foreign keys)
+            // 1. Delete message reactions
+            \App\Models\MessageReaction::whereIn('message_id', $conversation->messages()->pluck('id'))->delete();
+
+            // 2. Delete message attachments
+            \App\Models\MessageAttachment::whereIn('message_id', $conversation->messages()->pluck('id'))->delete();
+
+            // 3. Delete pinned messages
+            $conversation->pinnedMessages()->delete();
+
+            // 4. Delete conversation settings
+            $conversation->settings()->delete();
+
+            // 5. Delete call sessions
+            $conversation->callSessions()->delete();
+
+            // 6. Delete messages
+            $conversation->messages()->delete();
+
+            // 7. Detach participants
+            $conversation->participants()->detach();
+
+            // 8. Delete the conversation itself
+            $conversation->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Conversation permanently deleted',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Failed to delete conversation: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Failed to delete conversation',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function messages(Request $request, Conversation $conversation)
     {
         $user = $request->user();
@@ -470,6 +607,7 @@ class ConversationController extends Controller
             $isParticipant = $conversation->participants()
                 ->where('user_id', $user->id)
                 ->exists();
+            // Standardize: use created_by (not user_id) for ownership check
             $isOwner = $conversation->created_by === $user->id;
             return $isParticipant || $isOwner;
         }

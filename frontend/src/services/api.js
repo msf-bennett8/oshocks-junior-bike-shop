@@ -24,6 +24,21 @@ const api = axios.create({
   },
 });
 
+// Add auth token and guest session to all requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('authToken');
+  const guestSessionId = localStorage.getItem('oshocks_guest_session_id');
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  if (guestSessionId) {
+    config.headers['X-Guest-Session-ID'] = guestSessionId;
+  }
+
+  return config;
+});
+
 // ============================================================================
 // RETRY CONFIGURATION with audit logging
 // ============================================================================
@@ -381,6 +396,18 @@ export const messagingAPI = {
 
   reactToMessage: (conversationId, messageId, reaction) => {
     return api.post(`/conversations/${conversationId}/messages/${messageId}/react`, { reaction });
+  },
+
+  pinConversation: (conversationId) => {
+    return api.post(`/conversations/${conversationId}/pin`);
+  },
+
+  archiveConversation: (conversationId) => {
+    return api.post(`/conversations/${conversationId}/archive`);
+  },
+
+  deleteConversation: (conversationId) => {
+    return api.delete(`/conversations/${conversationId}`);
   },
 
   searchMessages: (query) => {
