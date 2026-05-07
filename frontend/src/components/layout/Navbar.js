@@ -408,6 +408,7 @@ const Navbar = () => {
           : 'bg-white'
       } ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="container mx-auto px-4">
+          {/* Top Row: Logo + Actions */}
           <div className="flex items-center justify-between h-16 md:h-20 gap-4">
             
             {/* Desktop Logo (OS + Oshocks) / Mobile Logo (Oshocks only) */}
@@ -428,7 +429,7 @@ const Navbar = () => {
               </div>
               {/* Oshocks Text - Always visible */}
               <span 
-                className="text-2xl font-bold bg-clip-text text-transparent"
+                className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent whitespace-nowrap"
                 style={{
                   fontFamily: '"Pacifico", cursive',
                   backgroundImage: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)',
@@ -440,13 +441,13 @@ const Navbar = () => {
 
             {/* Desktop Search Bar - Opens Modal on Click */}
             <div 
-              className="hidden lg:flex flex-1 max-w-xl mx-4 cursor-pointer"
+              className="hidden lg:flex flex-1 max-w-md xl:max-w-xl mx-2 xl:mx-4 cursor-pointer"
               onClick={() => setIsSearchOpen(true)}
             >
               <div className={`relative w-full transition-all duration-300 ${searchFocused ? 'scale-105' : ''}`}>
-                <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors ${searchFocused ? 'text-orange-500' : 'text-gray-400'}`} />
+                <Search className={`absolute left-3 xl:left-4 top-1/2 -translate-y-1/2 w-4 h-4 xl:w-5 xl:h-5 transition-colors ${searchFocused ? 'text-orange-500' : 'text-gray-400'}`} />
                 <div
-                  className="w-full pl-12 pr-4 py-2.5 bg-gray-100/80 rounded-full border-2 border-transparent hover:border-orange-300 hover:bg-white transition-all text-sm text-gray-500 flex items-center"
+                  className="w-full pl-9 xl:pl-12 pr-3 xl:pr-4 py-2 xl:py-2.5 bg-gray-100/80 rounded-full border-2 border-transparent hover:border-orange-300 hover:bg-white transition-all text-xs xl:text-sm text-gray-500 flex items-center truncate"
                 >
                   Search bikes, parts, accessories...
                 </div>
@@ -454,32 +455,23 @@ const Navbar = () => {
             </div>
 
             {/* Right Side Actions */}
-            <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
+            <div className="flex items-center justify-end gap-1 sm:gap-2 md:gap-3 flex-1 lg:flex-none">
               
-              {/* Search - Mobile/Tablet only (when search bar hidden), opens modal */}
-              <button
-                onClick={() => setIsSearchOpen(true)}
-                className="lg:hidden p-2 sm:p-2.5 rounded-full hover:bg-orange-50 transition-colors relative group"
-                aria-label="Search"
-              >
-                <Search className="w-5 h-5 text-gray-700 group-hover:text-orange-500 transition-colors" />
-              </button>
-
               {/* Wishlist - All screens */}
-              <Link to="/wishlist" className="relative p-2 sm:p-2.5 rounded-full hover:bg-orange-50 transition-colors group">
-                <Heart className={`w-5 h-5 transition-colors ${wishlistCount > 0 ? 'text-red-500 fill-red-500' : 'text-gray-700 group-hover:text-orange-500'}`} />
+              <Link to="/wishlist" className="relative p-1.5 sm:p-2 rounded-full hover:bg-orange-50 transition-colors group flex-shrink-0">
+                <Heart className={`w-[18px] h-[18px] sm:w-5 sm:h-5 transition-colors ${wishlistCount > 0 ? 'text-red-500 fill-red-500' : 'text-gray-700 group-hover:text-orange-500'}`} />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full flex items-center justify-center font-bold animate-bounce-in">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-[10px] sm:text-xs rounded-full flex items-center justify-center font-bold animate-bounce-in">
                     {wishlistCount > 99 ? '99+' : wishlistCount}
                   </span>
                 )}
               </Link>
 
               {/* Cart */}
-              <Link to="/cart" className="relative p-2 sm:p-2.5 rounded-full hover:bg-orange-50 transition-colors group">
-                <ShoppingCart className="w-5 h-5 text-gray-700 group-hover:text-orange-500 transition-colors" />
+              <Link to="/cart" className="relative p-1.5 sm:p-2 rounded-full hover:bg-orange-50 transition-colors group flex-shrink-0">
+                <ShoppingCart className="w-[18px] h-[18px] sm:w-5 sm:h-5 text-gray-700 group-hover:text-orange-500 transition-colors" />
                 {cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold animate-bounce-in">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-r from-orange-500 to-red-500 text-white text-[10px] sm:text-xs rounded-full flex items-center justify-center font-bold animate-bounce-in">
                     {cartItemCount > 99 ? '99+' : cartItemCount}
                   </span>
                 )}
@@ -494,18 +486,266 @@ const Navbar = () => {
 
               */}
 
-              {/* Account - Mobile/Tablet */}
+              {/* Account - Desktop */}
+              {isAuthenticated ? (
+                <div className="relative hidden md:block" ref={profileMenuRef}>
+                  <div
+                    onClick={handleUserIconClick}
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <Avatar src={user?.avatar} name={user?.name} size={32} />
+                    <div className="flex flex-col items-start leading-tight">
+                      <span className="text-xs text-gray-500">
+                        Hello, {user?.name?.split(' ')[0] || 'User'}
+                      </span>
+                      {switchedRole && (
+                        <span className="text-[10px] text-orange-500 font-medium uppercase tracking-wide">
+                          Viewing as: {switchedRole.replace(/_/g, ' ')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+        
+                  {/* Profile Dropdown */}
+                  {showProfileMenu && (
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-fade-in">
+                      <Link to="/dashboard" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
+                        <LayoutDashboard size={18} className="text-gray-600" />
+                        <span className="text-gray-900">Dashboard</span>
+                      </Link>
+                      <Link to="/profile" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
+                        <User size={18} className="text-gray-600" />
+                        <span className="text-gray-900">Profile</span>
+                      </Link>
+                      
+                      {/* Switch Role - Super Admin Only */}
+                      {isSuperAdmin() && (
+                        <div className="relative">
+                          <button
+                            onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
+                            className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Settings size={18} className="text-gray-600" />
+                              <span className="text-gray-900">Switch Role</span>
+                            </div>
+                            <ChevronDown size={16} className={`text-gray-400 transition-transform ${showRoleSwitcher ? 'rotate-180' : ''}`} />
+                          </button>
+                          
+                          {/* Role Switcher Submenu */}
+                          {showRoleSwitcher && (
+                            <div className="bg-gray-50 border-t border-b border-gray-100 py-1">
+                              {Object.entries(availableRoles).map(([key, role]) => (
+                                <button
+                                  key={role}
+                                  onClick={() => handleRoleSwitch(role)}
+                                  className={`flex items-center justify-between w-full px-4 py-2 hover:bg-white transition-colors ${
+                                    (switchedRole || user?.role) === role ? 'bg-white' : ''
+                                  }`}
+                                >
+                                  <span className={`text-sm capitalize ${
+                                    (switchedRole || user?.role) === role ? 'text-orange-600 font-medium' : 'text-gray-700'
+                                  }`}>
+                                    {role.replace(/_/g, ' ')}
+                                  </span>
+                                  {(switchedRole || user?.role) === role && (
+                                    <div className="w-2 h-2 bg-orange-500 rounded-full" />
+                                  )}
+                                </button>
+                              ))}
+                              {switchedRole && (
+                                <button
+                                  onClick={handleResetRole}
+                                  className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-white transition-colors border-t border-gray-200 mt-1"
+                                >
+                                  Reset to Original Role
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      <Link to="/orders" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
+                        <Package size={18} className="text-gray-600" />
+                        <span className="text-gray-900">Orders</span>
+                      </Link>
+                      <Link
+                        to="/settings"
+                        onClick={() => setShowProfileMenu(false)}
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors"
+                      >
+                        <Settings size={18} className="text-gray-600" />
+                        <span className="text-gray-900">Settings</span>
+                      </Link>
+                      <hr className="my-2" />
+                      <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors w-full text-left text-red-600">
+                        <LogOut size={18} />
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link to="/login" className="hidden md:flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <Avatar src={null} name="Guest" size={32} />
+                  <div className="flex flex-col items-start">
+                    <span className="text-xs text-gray-500">Hello, Sign in</span>
+                  </div>
+                </Link>
+              )}
+
+              {/* Sign Up Button - Desktop only */}
+              {!isAuthenticated && (
+                <Link
+                  to="/register"
+                  className="hidden md:flex items-center gap-2 px-4 py-2.5 text-white font-medium text-sm shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
+                  style={{
+                    background: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)',
+                    borderRadius: '5px',
+                  }}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Sign Up
+                </Link>
+              )}
+
+              {/* Notification Center - mounted with hidden trigger, modal still works */}
+              {isAuthenticated && (
+                <NotificationCenter hideTrigger />
+              )}
+
+              {/* SuperAdmin Notification Center - mounted with hidden trigger, modal still works */}
+              {isAuthenticated && (user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'owner') && (
+                <SuperAdminNotificationCenter hideTrigger />
+              )}
+
+              {/* Quick Actions Dropdown */}
+              <div className="relative flex-shrink-0">
+                {/* Desktop: Quick Actions button - Image 6 style */}
+                <button
+                  onClick={() => setShowQuickActions(!showQuickActions)}
+                  className="quick-actions-button hidden md:flex items-center gap-1.5 px-3 py-2 text-white font-medium text-sm shadow-md transition-all hover:shadow-lg rounded-md"
+                  style={{
+                    background: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)',
+                  }}
+                >
+                  <Plus className="w-4 h-4" />
+                  <span className="hidden lg:inline">Quick Actions</span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showQuickActions ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Mobile: Compact Quick Actions button - Image 6 orange pill */}
+                <button
+                  onClick={() => setShowQuickActions(!showQuickActions)}
+                  className="quick-actions-button md:hidden flex items-center gap-1 px-2.5 py-1.5 text-white text-xs font-medium shadow-md transition-all hover:shadow-lg active:scale-95 rounded-md"
+                  style={{
+                    background: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)',
+                  }}
+                  title="Quick Actions"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <ChevronDown className={`w-3 h-3 transition-transform ${showQuickActions ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Dropdown Menu */}
+                {showQuickActions && (
+                  <div className={`quick-actions-dropdown absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-fade-in`}>
+                    {/* Messages */}
+                    <button
+                      onClick={() => { setChatOpen(true); setShowQuickActions(false); }}
+                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-orange-50 transition-colors w-full text-left"
+                    >
+                      <div className="relative">
+                        <MessageCircle className="w-5 h-5 text-gray-600" />
+                        {unreadTotal > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
+                            {unreadTotal > 9 ? '9+' : unreadTotal}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <span className="text-gray-900 font-medium">Messages</span>
+                        <p className="text-xs text-gray-500">View conversations</p>
+                      </div>
+                      <span className={`w-2 h-2 rounded-full ${
+                        connectionStatus === 'connected' ? 'bg-green-400' :
+                        connectionStatus === 'connecting' ? 'bg-yellow-400' : 'bg-red-400'
+                      }`} />
+                    </button>
+
+                    {/* New Chat */}
+                    {isAuthenticated && (
+                      <button
+                        onClick={() => { setShowCreateChat(true); setShowQuickActions(false); }}
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 transition-colors w-full text-left"
+                      >
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
+                          <Plus className="w-3 h-3 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <span className="text-gray-900 font-medium">New Chat</span>
+                          <p className="text-xs text-gray-500">Start a conversation</p>
+                        </div>
+                      </button>
+                    )}
+
+                    <hr className="my-1 border-gray-100" />
+
+                    {/* Notifications */}
+                    {isAuthenticated && (
+                      <button
+                        onClick={() => { 
+                          setShowQuickActions(false);
+                          window.dispatchEvent(new CustomEvent('open-notification-center'));
+                        }}
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-orange-50 transition-colors w-full text-left"
+                      >
+                        <Bell className="w-5 h-5 text-gray-600" />
+                        <div className="flex-1">
+                          <span className="text-gray-900 font-medium">Notifications</span>
+                          <p className="text-xs text-gray-500">View alerts & updates</p>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Admin Alerts */}
+                    {isAuthenticated && (user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'owner') && (
+                      <button
+                        onClick={() => {
+                          setShowQuickActions(false);
+                          window.dispatchEvent(new CustomEvent('open-admin-alerts'));
+                        }}
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 transition-colors w-full text-left"
+                      >
+                        <Shield className="w-5 h-5 text-red-600" />
+                        <div className="flex-1">
+                          <span className="text-gray-900 font-medium">Admin Alerts</span>
+                          <p className="text-xs text-gray-500">System notifications</p>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Shop Now Button - Desktop only */}
+              <Link
+                to="/shop"
+                className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white font-medium text-sm rounded-full hover:bg-gray-800 transition-all hover:shadow-lg hover:-translate-y-0.5"
+              >
+                Shop Now
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+
+              {/* Account - Mobile/Tablet — positioned between Quick Actions and Hamburger */}
               {isAuthenticated ? (
                 <div className="md:hidden relative">
                   <button
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
-                    className="p-1 rounded-full hover:bg-orange-50 transition-colors relative"
+                    className="rounded-full hover:bg-orange-50 transition-colors relative flex items-center justify-center"
                   >
-                    {user?.avatar ? (
-                      <Avatar src={user.avatar} name={user.name} size={32} />
-                    ) : (
-                      <User className="w-5 h-5 text-gray-700" />
-                    )}
+                    <Avatar src={user?.avatar} name={user?.name} size={32} />
                   </button>
 
                   {/* Mobile Profile Dropdown - Fixed positioning to avoid click outside issues */}
@@ -618,269 +858,11 @@ const Navbar = () => {
               ) : (
                 <Link
                   to="/login"
-                  className="md:hidden p-2 sm:p-2.5 rounded-full hover:bg-orange-50 transition-colors"
+                  className="md:hidden flex items-center justify-center rounded-full hover:bg-orange-50 transition-colors"
                 >
-                  <User className="w-5 h-5 text-gray-700" />
+                  <Avatar src={null} name="Guest" size={32} />
                 </Link>
               )}
-
-              {/* Account - Desktop */}
-              {isAuthenticated ? (
-                <div className="relative hidden md:block" ref={profileMenuRef}>
-                  <div
-                    onClick={handleUserIconClick}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-                  >
-                    {user?.avatar ? (
-                      <Avatar src={user.avatar} name={user.name} size={32} />
-                    ) : (
-                      <User className="w-5 h-5 text-gray-700" />
-                    )}
-                    <div className="flex flex-col items-start leading-tight">
-                      <span className="text-xs text-gray-500">
-                        Hello, {user?.name?.split(' ')[0] || 'User'}
-                      </span>
-                      {switchedRole && (
-                        <span className="text-[10px] text-orange-500 font-medium uppercase tracking-wide">
-                          Viewing as: {switchedRole.replace(/_/g, ' ')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-        
-                  {/* Profile Dropdown */}
-                  {showProfileMenu && (
-                    <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-fade-in">
-                      <Link to="/dashboard" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
-                        <LayoutDashboard size={18} className="text-gray-600" />
-                        <span className="text-gray-900">Dashboard</span>
-                      </Link>
-                      <Link to="/profile" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
-                        <User size={18} className="text-gray-600" />
-                        <span className="text-gray-900">Profile</span>
-                      </Link>
-                      
-                      {/* Switch Role - Super Admin Only */}
-                      {isSuperAdmin() && (
-                        <div className="relative">
-                          <button
-                            onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
-                            className="flex items-center justify-between w-full px-4 py-2 hover:bg-gray-50 transition-colors"
-                          >
-                            <div className="flex items-center gap-3">
-                              <Settings size={18} className="text-gray-600" />
-                              <span className="text-gray-900">Switch Role</span>
-                            </div>
-                            <ChevronDown size={16} className={`text-gray-400 transition-transform ${showRoleSwitcher ? 'rotate-180' : ''}`} />
-                          </button>
-                          
-                          {/* Role Switcher Submenu */}
-                          {showRoleSwitcher && (
-                            <div className="bg-gray-50 border-t border-b border-gray-100 py-1">
-                              {Object.entries(availableRoles).map(([key, role]) => (
-                                <button
-                                  key={role}
-                                  onClick={() => handleRoleSwitch(role)}
-                                  className={`flex items-center justify-between w-full px-4 py-2 hover:bg-white transition-colors ${
-                                    (switchedRole || user?.role) === role ? 'bg-white' : ''
-                                  }`}
-                                >
-                                  <span className={`text-sm capitalize ${
-                                    (switchedRole || user?.role) === role ? 'text-orange-600 font-medium' : 'text-gray-700'
-                                  }`}>
-                                    {role.replace(/_/g, ' ')}
-                                  </span>
-                                  {(switchedRole || user?.role) === role && (
-                                    <div className="w-2 h-2 bg-orange-500 rounded-full" />
-                                  )}
-                                </button>
-                              ))}
-                              {switchedRole && (
-                                <button
-                                  onClick={handleResetRole}
-                                  className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-white transition-colors border-t border-gray-200 mt-1"
-                                >
-                                  Reset to Original Role
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      
-                      <Link to="/orders" onClick={() => setShowProfileMenu(false)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors">
-                        <Package size={18} className="text-gray-600" />
-                        <span className="text-gray-900">Orders</span>
-                      </Link>
-                      <Link
-                        to="/settings"
-                        onClick={() => setShowProfileMenu(false)}
-                        className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors"
-                      >
-                        <Settings size={18} className="text-gray-600" />
-                        <span className="text-gray-900">Settings</span>
-                      </Link>
-                      <hr className="my-2" />
-                      <button onClick={() => { handleLogout(); setShowProfileMenu(false); }} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors w-full text-left text-red-600">
-                        <LogOut size={18} />
-                        <span>Logout</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <Link to="/login" className="hidden md:flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <User className="w-5 h-5 text-gray-700" />
-                  <div className="flex flex-col items-start">
-                    <span className="text-xs text-gray-500">Hello, Sign in</span>
-                  </div>
-                </Link>
-              )}
-
-              {/* Sign Up Button - Desktop only */}
-              {!isAuthenticated && (
-                <Link
-                  to="/register"
-                  className="hidden md:flex items-center gap-2 px-4 py-2.5 text-white font-medium text-sm shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5"
-                  style={{
-                    background: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)',
-                    borderRadius: '5px',
-                  }}
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Sign Up
-                </Link>
-              )}
-
-              {/* Notification Center - mounted with hidden trigger, modal still works */}
-              {isAuthenticated && (
-                <NotificationCenter hideTrigger />
-              )}
-
-              {/* SuperAdmin Notification Center - mounted with hidden trigger, modal still works */}
-              {isAuthenticated && (user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'owner') && (
-                <SuperAdminNotificationCenter hideTrigger />
-              )}
-
-              {/* Quick Actions Dropdown */}
-              <div className="relative">
-                {/* Desktop: Quick Actions button */}
-                <button
-                  onClick={() => setShowQuickActions(!showQuickActions)}
-                  className="quick-actions-button hidden md:flex items-center gap-2 px-4 py-2 text-white font-medium text-sm shadow-md transition-all hover:shadow-lg"
-                  style={{
-                    background: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)',
-                    borderRadius: '5px',
-                  }}
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Quick Actions</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${showQuickActions ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Mobile: Compact Quick Actions button */}
-                <button
-                  onClick={() => setShowQuickActions(!showQuickActions)}
-                  className="quick-actions-button md:hidden flex items-center gap-1 px-2.5 py-1.5 text-white text-xs font-medium shadow-md transition-all hover:shadow-lg active:scale-95"
-                  style={{
-                    background: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)',
-                    borderRadius: '6px',
-                  }}
-                  title="Quick Actions"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <ChevronDown className={`w-3 h-3 transition-transform ${showQuickActions ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Dropdown Menu */}
-                {showQuickActions && (
-                  <div className={`quick-actions-dropdown absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-fade-in`}>
-                    {/* Messages */}
-                    <button
-                      onClick={() => { setChatOpen(true); setShowQuickActions(false); }}
-                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-orange-50 transition-colors w-full text-left"
-                    >
-                      <div className="relative">
-                        <MessageCircle className="w-5 h-5 text-gray-600" />
-                        {unreadTotal > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
-                            {unreadTotal > 9 ? '9+' : unreadTotal}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <span className="text-gray-900 font-medium">Messages</span>
-                        <p className="text-xs text-gray-500">View conversations</p>
-                      </div>
-                      <span className={`w-2 h-2 rounded-full ${
-                        connectionStatus === 'connected' ? 'bg-green-400' :
-                        connectionStatus === 'connecting' ? 'bg-yellow-400' : 'bg-red-400'
-                      }`} />
-                    </button>
-
-                    {/* New Chat */}
-                    {isAuthenticated && (
-                      <button
-                        onClick={() => { setShowCreateChat(true); setShowQuickActions(false); }}
-                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 transition-colors w-full text-left"
-                      >
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
-                          <Plus className="w-3 h-3 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <span className="text-gray-900 font-medium">New Chat</span>
-                          <p className="text-xs text-gray-500">Start a conversation</p>
-                        </div>
-                      </button>
-                    )}
-
-                    <hr className="my-1 border-gray-100" />
-
-                    {/* Notifications */}
-                    {isAuthenticated && (
-                      <button
-                        onClick={() => { 
-                          setShowQuickActions(false);
-                          window.dispatchEvent(new CustomEvent('open-notification-center'));
-                        }}
-                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-orange-50 transition-colors w-full text-left"
-                      >
-                        <Bell className="w-5 h-5 text-gray-600" />
-                        <div className="flex-1">
-                          <span className="text-gray-900 font-medium">Notifications</span>
-                          <p className="text-xs text-gray-500">View alerts & updates</p>
-                        </div>
-                      </button>
-                    )}
-
-                    {/* Admin Alerts */}
-                    {isAuthenticated && (user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'owner') && (
-                      <button
-                        onClick={() => {
-                          setShowQuickActions(false);
-                          window.dispatchEvent(new CustomEvent('open-admin-alerts'));
-                        }}
-                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 transition-colors w-full text-left"
-                      >
-                        <Shield className="w-5 h-5 text-red-600" />
-                        <div className="flex-1">
-                          <span className="text-gray-900 font-medium">Admin Alerts</span>
-                          <p className="text-xs text-gray-500">System notifications</p>
-                        </div>
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Shop Now Button - Desktop only */}
-              <Link
-                to="/shop"
-                className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white font-medium text-sm rounded-full hover:bg-gray-800 transition-all hover:shadow-lg hover:-translate-y-0.5"
-              >
-                Shop Now
-                <ArrowRight className="w-4 h-4" />
-              </Link>
 
               {/* Hamburger - Opens Right Sidebar - Moved after Shop Now */}
               <button
@@ -892,11 +874,27 @@ const Navbar = () => {
               </button>
             </div>
           </div>
+
+          {/* Mobile Search Bar - Second row inside navbar (AccellaX style) */}
+          <div 
+            className="lg:hidden pb-3 pt-1"
+            onClick={() => setIsSearchOpen(true)}
+          >
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <div
+                tabIndex={0}
+                className="w-full pl-9 pr-3 py-2 bg-gray-900 rounded-lg border-2 border-gray-700 hover:border-orange-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/50 active:border-orange-500 transition-all text-sm text-gray-400 flex items-center cursor-pointer outline-none"
+              >
+                <span className="truncate">Search...</span>
+              </div>
+            </div>
+          </div>
         </div>
       </nav>
 
-      {/* Spacer for fixed navbar */}
-      <div className="h-16 md:h-20" />
+      {/* Spacer for fixed navbar - taller on mobile for search row */}
+      <div className="h-[110px] md:h-20" />
 
       {/* Elevation Countdown Message */}
       {elevationMessage && (

@@ -87,6 +87,7 @@ export const AuthProvider = ({ children }) => {
 
       // Update state
       setUser(data.user);
+      setOriginalRole(data.user.role);
       setIsAuthenticated(true);
 
       return { success: true, user: data.user };
@@ -118,6 +119,7 @@ const login = async (credentials) => {
 
     // Update state
     setUser(data.user);
+    setOriginalRole(data.user.role);
     setIsAuthenticated(true);
 
     // Trigger merge events for cart and wishlist
@@ -277,6 +279,7 @@ const login = async (credentials) => {
 
       // Update state
       setUser(data.user);
+      setOriginalRole(data.user.role);
       setIsAuthenticated(true);
 
       // Link guest chat sessions (needs token to be set first)
@@ -322,6 +325,7 @@ const login = async (credentials) => {
 
       // Update state
       setUser(data.user);
+      setOriginalRole(data.user.role);
       setIsAuthenticated(true);
 
       // Link guest chat sessions (needs token to be set first)
