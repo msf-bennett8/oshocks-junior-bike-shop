@@ -168,10 +168,10 @@ class ConversationController extends Controller
                 $conversation->participants()->attach($user->id, ['joined_at' => now()]);
             }
 
-            // Add support user for support conversations
+            // Add support user for support conversations (skip if user IS the support user)
             if (in_array($validated['type'], ['support', 'order_support'])) {
                 $supportUser = User::whereIn('role', ['admin', 'super_admin'])->first();
-                if ($supportUser) {
+                if ($supportUser && $supportUser->id !== $user?->id) {
                     $conversation->participants()->attach($supportUser->id, ['joined_at' => now()]);
                 }
             }
@@ -365,7 +365,9 @@ class ConversationController extends Controller
             ]);
 
             $conversation->participants()->attach($user->id, ['joined_at' => now()]);
-            $conversation->participants()->attach($supportUser->id, ['joined_at' => now()]);
+            if ($supportUser->id !== $user->id) {
+                $conversation->participants()->attach($supportUser->id, ['joined_at' => now()]);
+            }
 
             Message::create([
                 'conversation_id' => $conversation->id,

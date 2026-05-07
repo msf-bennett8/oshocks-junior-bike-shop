@@ -7,7 +7,7 @@ export const useSupportCases = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState(null);
-  const { subscribe } = useWebSocket();
+  const { subscribeToChannel } = useWebSocket();
 
   // Fetch user's support cases
   const fetchMyCases = useCallback(async (params = {}) => {
@@ -96,13 +96,18 @@ export const useSupportCases = () => {
 
   // Real-time updates
   useEffect(() => {
-    const unsub = subscribe('support-case-updated', (payload) => {
-      setCases(prev => prev.map(c => 
+    if (typeof subscribeToChannel !== 'function') return;
+    
+    const unsub = subscribeToChannel('support-queue', 'support-case.updated', (payload) => {
+      setCases(prev => prev.map(c =>
         c.case_id === payload.case_id ? { ...c, ...payload } : c
       ));
     });
-    return () => unsub?.();
-  }, [subscribe]);
+    
+    return () => {
+      if (typeof unsub === 'function') unsub();
+    };
+  }, [subscribeToChannel]);
 
   return {
     cases,

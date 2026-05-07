@@ -11,24 +11,26 @@ return new class extends Migration
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('conversation_id')->constrained('conversations')->onDelete('cascade');
-            $table->foreignId('sender_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('sender_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('guest_session_id', 64)->nullable()->index();
+            $table->string('sender_name', 100)->nullable(); // For guest display names
             $table->text('body');
             $table->string('type')->default('text'); // text, image, file, call_invite
             $table->json('metadata')->nullable(); // for call invites: {call_type, call_session_id}
             // ─── READ RECEIPTS ───
             $table->timestamp('read_at')->nullable();
             $table->timestamp('delivered_at')->nullable();
-            
+
             // ─── REPLY TO ───
             $table->foreignId('reply_to')->nullable()->constrained('messages')->nullOnDelete();
-            
+
             // ─── EDIT / DELETE ───
             $table->timestamp('edited_at')->nullable();
             $table->boolean('is_edited')->default(false);
             $table->timestamp('deleted_at')->nullable();
             $table->boolean('is_deleted')->default(false);
             $table->string('deleted_by')->nullable(); // 'sender', 'admin', 'system'
-            
+
             $table->timestamps();
 
             $table->index(['conversation_id', 'created_at']);

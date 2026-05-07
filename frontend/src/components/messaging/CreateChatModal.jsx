@@ -5,6 +5,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import supportCaseService from '../../services/supportCaseService';
 import { 
   Search, X, MessageCircle, Headphones, User, Mail, 
   ShoppingBag, Clock, AlertCircle, ChevronRight, Loader2 
@@ -172,7 +173,7 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
     if (!orderNumber?.trim()) return;
     setValidatingOrder(true);
     try {
-      const res = await api.post('/v1/support-cases/validate-order', { order_number: orderNumber.trim() });
+      const res = await supportCaseService.validateOrder(orderNumber.trim());
       setOrderValid(true);
       setOrderData(res.data);
       setError(null);
