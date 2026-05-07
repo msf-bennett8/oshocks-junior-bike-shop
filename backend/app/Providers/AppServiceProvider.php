@@ -4,13 +4,13 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Laravel\Socialite\Contracts\Factory as SocialiteFactory;
-use App\Models\User;  
-use App\Models\Order;  
-use App\Models\Product;  
-use App\Observers\UserObserver;  
-use App\Observers\OrderObserver;  
-use App\Observers\ProductObserver;  
-use App\Services\CloudinaryService;  
+use App\Models\User;
+use App\Models\Order;
+use App\Models\Product;
+use App\Observers\UserObserver;
+use App\Observers\OrderObserver;
+use App\Observers\ProductObserver;
+use App\Services\CloudinaryService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -39,7 +39,8 @@ class AppServiceProvider extends ServiceProvider
         User::observe(UserObserver::class);
         Order::observe(OrderObserver::class);
         Product::observe(ProductObserver::class);
-        
+        \App\Models\SupportCase::observe(\App\Observers\SupportCaseObserver::class);
+
         // Register Strava Socialite Provider
         $this->app->make(SocialiteFactory::class)->extend('strava', function ($app) {
             $config = $app['config']['services.strava'];
@@ -50,13 +51,13 @@ class AppServiceProvider extends ServiceProvider
                 $config['redirect']
             );
         });
-        
+
         // Initialize audit context for console commands
         if ($this->app->runningInConsole()) {
             \App\Services\AuditContextService::set('correlation_id', 'console-' . uniqid());
             \App\Services\AuditContextService::set('actor_type', 'SYSTEM');
         }
-        
+
         // Force HTTPS in production
         if (config('app.env') === 'production') {
             \URL::forceScheme('https');

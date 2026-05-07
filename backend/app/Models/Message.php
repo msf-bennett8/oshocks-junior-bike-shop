@@ -136,4 +136,12 @@ class Message extends Model
         if ($this->delivered_at) return 'delivered';
         return 'sent';
     }
+
+    /**
+     * Support case note associated with this message (if any)
+     */
+    public function supportCaseNote()
+    {
+        return $this->hasOne(\App\Models\SupportCaseNote::class, 'message_id');
+    }
 }

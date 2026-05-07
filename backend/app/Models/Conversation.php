@@ -145,6 +145,30 @@ class Conversation extends Model
     }
 
     /**
+     * The support case associated with this conversation (if any)
+     */
+    public function supportCase()
+    {
+        return $this->hasOne(\App\Models\SupportCase::class, 'conversation_id');
+    }
+
+    /**
+     * Check if this conversation is a support case
+     */
+    public function isSupportCase(): bool
+    {
+        return $this->type === 'support' || $this->type === 'order_support';
+    }
+
+    /**
+     * Scope: only support case conversations
+     */
+    public function scopeSupportCases($query)
+    {
+        return $query->whereIn('type', ['support', 'order_support']);
+    }
+
+    /**
      * Link guest session conversations to a user account
      */
     public static function linkGuestSessions(string $guestSessionId, User $user): int

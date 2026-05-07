@@ -16,16 +16,46 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [creatingForUserId, setCreatingForUserId] = useState(null); // Track who we're creating for
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('users'); // 'users' | 'support'
+  const [supportStep, setSupportStep] = useState('select'); // 'select' | 'form'
+  const [selectedCaseType, setSelectedCaseType] = useState(null);
+  const [caseForm, setCaseForm] = useState({
+    subject: '',
+    description: '',
+    order_number: '',
+    priority: 'medium',
+  });
+  const [validatingOrder, setValidatingOrder] = useState(false);
+  const [orderValid, setOrderValid] = useState(null);
+  const [orderData, setOrderData] = useState(null);
   const [recentConversations, setRecentConversations] = useState([]);
   const searchInputRef = useRef(null);
   const searchTimeoutRef = useRef(null);
+
+    const resetForm = () => {
+      setSearchQuery('');
+      setSearchResults([]);
+      setCreatingForUserId(null);
+      setSupportStep('select');
+      setSelectedCaseType(null);
+      setCaseForm({ subject: '', description: '', order_number: '', priority: 'medium' });
+      setOrderValid(null);
+      setOrderData(null);
+      setError(null);
+    };
 
   // Focus input on open
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => searchInputRef.current?.focus(), 100);
       fetchRecentConversations();
+      setSupportStep('select');
+      setSelectedCaseType(null);
+      setCaseForm({ subject: '', description: '', order_number: '', priority: 'medium' });
+      setOrderValid(null);
+      setOrderData(null);
+      setError(null);
     }
   }, [isOpen]);
 
@@ -119,26 +149,72 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
     }
   };
 
-  const handleStartSupportChat = async () => {
+  const handleSelectCaseType = (type) => {
+    setSelectedCaseType(type);
+    setSupportStep('form');
+    const labels = {
+      order_issue: 'Order Issue',
+      account_help: 'Account Help',
+      report_problem: 'Report a Problem',
+      delivery_question: 'Delivery Question',
+    };
+    setCaseForm(prev => ({
+      ...prev,
+      subject: orderContext ? `${labels[type]}: ${orderContext.orderNumber}` : labels[type],
+      order_number: orderContext?.orderNumber || '',
+    }));
+    if (orderContext?.orderNumber) {
+      validateOrder(orderContext.orderNumber);
+    }
+  };
+
+  const validateOrder = async (orderNumber) => {
+    if (!orderNumber?.trim()) return;
+    setValidatingOrder(true);
+    try {
+      const res = await api.post('/v1/support-cases/validate-order', { order_number: orderNumber.trim() });
+      setOrderValid(true);
+      setOrderData(res.data);
+      setError(null);
+    } catch (err) {
+      setOrderValid(false);
+      setOrderData(null);
+      setError(err.response?.data?.message || 'Invalid order number');
+    } finally {
+      setValidatingOrder(false);
+    }
+  };
+
+  const handleCreateSupportCase = async () => {
+    if (!caseForm.subject.trim()) {
+      setError('Subject is required');
+      return;
+    }
+
     setLoading(true);
+    setError(null);
+
     try {
       const payload = {
-        type: orderContext ? 'order_support' : 'support',
-        title: orderContext ? `Order Support: ${orderContext.orderNumber}` : 'New Support Case',
+        type: selectedCaseType === 'order_issue' ? 'order_support' : 'support',
+        case_type: selectedCaseType,
+        subject: caseForm.subject,
+        description: caseForm.description,
+        priority: caseForm.priority,
+        ...(selectedCaseType === 'order_issue' && caseForm.order_number && {
+          order_number: caseForm.order_number,
+        }),
       };
-
-      if (orderContext?.id) {
-        payload.order_id = orderContext.id;
-      }
 
       const res = await api.post('/conversations', payload);
       const conversation = res.data.data;
-      
-      onConversationCreated?.(conversation);
+      const supportCase = res.data.support_case;
+
+      onConversationCreated?.(conversation, false, supportCase);
       onClose();
     } catch (err) {
-      console.error('Failed to start support chat:', err);
-      alert('Failed to start support chat. Please try again.');
+      console.error('Failed to create support case:', err);
+      setError(err.response?.data?.message || 'Failed to create support case');
     } finally {
       setLoading(false);
     }
@@ -308,6 +384,14 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
           {/* SUPPORT TAB */}
           {activeTab === 'support' && (
             <div className="space-y-4">
+              {/* Error Display */}
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                  <span className="text-sm text-red-700">{error}</span>
+                </div>
+              )}
+
               {/* Order Context Banner */}
               {orderContext && (
                 <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
@@ -323,51 +407,181 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
                 </div>
               )}
 
-              {/* Support Options */}
-              <div className="space-y-3">
-                <button
-                  onClick={handleStartSupportChat}
-                  disabled={loading}
-                  className="w-full flex items-center gap-4 p-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50"
-                >
-                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                    <Headphones className="w-6 h-6" />
-                  </div>
-                  <div className="text-left flex-1">
-                    <p className="font-bold text-lg">New Support Case</p>
-                    <p className="text-sm text-white/80">
-                      {orderContext 
-                        ? 'Get help with this order' 
-                        : 'Contact platform support team'}
-                    </p>
-                  </div>
-                  <ChevronRight className="w-5 h-5" />
-                </button>
+              {/* Step 1: Select Case Type */}
+              {supportStep === 'select' && (
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-1">
+                    What do you need help with?
+                  </p>
+                  
+                  {[
+                    { id: 'order_issue', icon: ShoppingBag, label: 'Order Issue', desc: 'Problem with an existing order', color: 'from-orange-500 to-red-500', bg: 'bg-orange-50', border: 'border-orange-200', hover: 'hover:border-orange-400' },
+                    { id: 'account_help', icon: Mail, label: 'Account Help', desc: 'Login, profile, or account issues', color: 'from-indigo-500 to-purple-500', bg: 'bg-indigo-50', border: 'border-indigo-200', hover: 'hover:border-indigo-400' },
+                    { id: 'report_problem', icon: AlertCircle, label: 'Report a Problem', desc: 'Bugs, abuse, or platform issues', color: 'from-red-500 to-rose-500', bg: 'bg-red-50', border: 'border-red-200', hover: 'hover:border-red-400' },
+                    { id: 'delivery_question', icon: Clock, label: 'Delivery Question', desc: 'Shipping, tracking, or delivery', color: 'from-cyan-500 to-blue-500', bg: 'bg-cyan-50', border: 'border-cyan-200', hover: 'hover:border-cyan-400' },
+                  ].map((topic) => (
+                    <button
+                      key={topic.id}
+                      onClick={() => handleSelectCaseType(topic.id)}
+                      className={`w-full flex items-center gap-4 p-4 ${topic.bg} border-2 ${topic.border} ${topic.hover} rounded-xl transition-all text-left group`}
+                    >
+                      <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${topic.color} flex items-center justify-center text-white flex-shrink-0 shadow-sm`}>
+                        <topic.icon className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900">{topic.label}</p>
+                        <p className="text-sm text-gray-600">{topic.desc}</p>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                    </button>
+                  ))}
+                </div>
+              )}
 
-                {/* Quick Support Topics */}
-                {!orderContext && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      { icon: ShoppingBag, label: 'Order Issue', desc: 'Problem with an order' },
-                      { icon: Mail, label: 'Account Help', desc: 'Login or profile' },
-                      { icon: AlertCircle, label: 'Report Problem', desc: 'Bug or complaint' },
-                      { icon: Clock, label: 'Delivery Question', desc: 'Shipping status' },
-                    ].map((topic) => (
-                      <button
-                        key={topic.label}
-                        onClick={handleStartSupportChat}
-                        className="flex flex-col items-start gap-2 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors text-left"
-                      >
-                        <topic.icon className="w-5 h-5 text-gray-600" />
-                        <div>
-                          <p className="font-medium text-sm text-gray-900">{topic.label}</p>
-                          <p className="text-xs text-gray-500">{topic.desc}</p>
-                        </div>
-                      </button>
-                    ))}
+              {/* Step 2: Case Details Form */}
+              {supportStep === 'form' && (
+                <div className="space-y-4">
+                  {/* Back button */}
+                  <button
+                    onClick={() => setSupportStep('select')}
+                    className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4 rotate-180" />
+                    Back to case types
+                  </button>
+
+                  {/* Selected case type badge */}
+                  <div className="flex items-center gap-2">
+                    {selectedCaseType === 'order_issue' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold"><ShoppingBag className="w-3.5 h-3.5" /> Order Issue</div>}
+                    {selectedCaseType === 'account_help' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold"><Mail className="w-3.5 h-3.5" /> Account Help</div>}
+                    {selectedCaseType === 'report_problem' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-xs font-semibold"><AlertCircle className="w-3.5 h-3.5" /> Report Problem</div>}
+                    {selectedCaseType === 'delivery_question' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-100 text-cyan-700 rounded-full text-xs font-semibold"><Clock className="w-3.5 h-3.5" /> Delivery Question</div>}
                   </div>
-                )}
-              </div>
+
+                  {/* Subject */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Subject *</label>
+                    <input
+                      type="text"
+                      value={caseForm.subject}
+                      onChange={(e) => setCaseForm(prev => ({ ...prev, subject: e.target.value }))}
+                      placeholder="Brief summary of your issue"
+                      className="w-full px-4 py-3 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                    />
+                  </div>
+
+                  {/* Order Number (only for order_issue) */}
+                  {selectedCaseType === 'order_issue' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Order Number *</label>
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <ShoppingBag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input
+                            type="text"
+                            value={caseForm.order_number}
+                            onChange={(e) => {
+                              setCaseForm(prev => ({ ...prev, order_number: e.target.value }));
+                              setOrderValid(null);
+                              setOrderData(null);
+                            }}
+                            onBlur={(e) => {
+                              if (e.target.value.trim().length >= 3) validateOrder(e.target.value.trim());
+                            }}
+                            placeholder="e.g. ORD-2026-0001"
+                            className={`w-full pl-9 pr-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
+                              orderValid === true ? 'bg-green-50 border-2 border-green-300 focus:ring-green-500' :
+                              orderValid === false ? 'bg-red-50 border-2 border-red-300 focus:ring-red-500' :
+                              'bg-gray-100 focus:ring-orange-500'
+                            }`}
+                          />
+                        </div>
+                        <button
+                          onClick={() => caseForm.order_number && validateOrder(caseForm.order_number)}
+                          disabled={validatingOrder || !caseForm.order_number.trim()}
+                          className="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
+                        >
+                          {validatingOrder ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                          Verify
+                        </button>
+                      </div>
+                      {orderValid === true && orderData && (
+                        <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-xl">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-green-500" />
+                            <span className="text-sm font-medium text-green-800">Order validated</span>
+                          </div>
+                          <p className="text-xs text-green-700 mt-1">
+                            Order #{orderData.data?.order_number || orderData.order_number} • {orderData.data?.status || orderData.status} • ${orderData.data?.total || orderData.total}
+                          </p>
+                        </div>
+                      )}
+                      {orderValid === false && (
+                        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4 text-red-500" />
+                          <span className="text-sm text-red-700">Order not found. Please check the number.</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                    <textarea
+                      value={caseForm.description}
+                      onChange={(e) => setCaseForm(prev => ({ ...prev, description: e.target.value }))}
+                      rows={4}
+                      placeholder="Describe your issue in detail..."
+                      className="w-full px-4 py-3 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all resize-none"
+                    />
+                  </div>
+
+                  {/* Priority */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Priority</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        { value: 'low', label: 'Low', color: 'bg-green-100 text-green-700 border-green-200' },
+                        { value: 'medium', label: 'Medium', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+                        { value: 'high', label: 'High', color: 'bg-orange-100 text-orange-700 border-orange-200' },
+                        { value: 'urgent', label: 'Urgent', color: 'bg-red-100 text-red-700 border-red-200' },
+                      ].map((p) => (
+                        <button
+                          key={p.value}
+                          onClick={() => setCaseForm(prev => ({ ...prev, priority: p.value }))}
+                          className={`py-2.5 rounded-xl text-xs font-semibold border-2 transition-all ${
+                            caseForm.priority === p.value 
+                              ? `${p.color} ring-2 ring-offset-1 ring-gray-300` 
+                              : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Submit */}
+                  <button
+                    onClick={handleCreateSupportCase}
+                    disabled={loading || !caseForm.subject.trim() || (selectedCaseType === 'order_issue' && orderValid !== true)}
+                    className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold text-sm hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Creating Support Case...
+                      </>
+                    ) : (
+                      <>
+                        <Headphones className="w-5 h-5" />
+                        Create Support Case
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
 
               {/* Info */}
               <div className="bg-blue-50 rounded-xl p-4">

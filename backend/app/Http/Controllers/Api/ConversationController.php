@@ -8,17 +8,21 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Models\Order;
+use App\Models\SupportCase;
 use App\Services\MessageModerationService;
+use App\Services\SupportCaseIdService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ConversationController extends Controller
 {
     protected MessageModerationService $moderationService;
+    protected SupportCaseIdService $caseIdService;
 
-    public function __construct(MessageModerationService $moderationService)
+    public function __construct(MessageModerationService $moderationService, SupportCaseIdService $caseIdService)
     {
         $this->moderationService = $moderationService;
+        $this->caseIdService = $caseIdService;
     }
 
     public function index(Request $request)
@@ -59,6 +63,7 @@ class ConversationController extends Controller
 
             $conv->last_message = $conv->messages->first()?->body;
             $conv->last_message_at = $conv->messages->first()?->created_at;
+            $conv->support_case = $conv->supportCase;
 
             return $conv;
         });
@@ -186,11 +191,57 @@ class ConversationController extends Controller
                 ]);
             }
 
+            // Create support case for support conversations
+            $supportCase = null;
+            if (in_array($validated['type'], ['support', 'order_support'])) {
+                $caseType = $request->input('case_type', 'report_problem');
+                $orderId = $validated['order_id'] ?? null;
+
+                // Validate order if order_number provided
+                if ($request->has('order_number') && !$orderId) {
+                    $order = Order::where('order_number', $request->order_number)
+                                  ->orWhere('order_code', $request->order_number)
+                                  ->first();
+                    if ($order) {
+                        $orderId = $order->id;
+                        $conversation->update(['order_id' => $orderId]);
+                    }
+                }
+
+                $supportCase = SupportCase::create([
+                    'conversation_id' => $conversation->id,
+                    'user_id' => $user?->id,
+                    'guest_session_id' => $user ? null : $guestSessionId,
+                    'case_type' => $caseType,
+                    'status' => 'new',
+                    'priority' => $request->input('priority', 'medium'),
+                    'order_id' => $orderId,
+                    'subject' => $request->input('subject', $validated['title'] ?? 'Support Request'),
+                    'description' => $request->input('description'),
+                    'source' => $user ? 'web' : 'chat',
+                    'metadata' => [
+                        'ip' => $request->ip(),
+                        'user_agent' => $request->userAgent(),
+                        'referrer' => $request->header('referer'),
+                    ],
+                ]);
+
+                // Link conversation to case
+                $conversation->update(['support_case_id' => $supportCase->case_id]);
+            }
+
             DB::commit();
 
-            return response()->json([
+            $response = [
                 'data' => $conversation->load('participants'),
-            ], 201);
+            ];
+
+            if ($supportCase) {
+                $response['support_case'] = $supportCase->fresh();
+                $response['case_id'] = $supportCase->case_id;
+            }
+
+            return response()->json($response, 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -323,10 +374,32 @@ class ConversationController extends Controller
                 'type' => 'system',
             ]);
 
+            // Create support case for order support
+            $supportCase = SupportCase::create([
+                'conversation_id' => $conversation->id,
+                'user_id' => $user->id,
+                'case_type' => 'order_issue',
+                'status' => 'new',
+                'priority' => 'medium',
+                'order_id' => $order->id,
+                'subject' => "Order Issue: {$order->order_number}",
+                'description' => "Support case created from order page for Order #{$order->order_number}",
+                'source' => 'web',
+                'metadata' => [
+                    'order_number' => $order->order_number,
+                    'order_total' => $order->total,
+                    'ip' => $request->ip(),
+                ],
+            ]);
+
+            $conversation->update(['support_case_id' => $supportCase->case_id]);
+
             DB::commit();
 
             return response()->json([
                 'data' => $conversation->load('participants'),
+                'support_case' => $supportCase->fresh(),
+                'case_id' => $supportCase->case_id,
             ], 201);
 
         } catch (\Exception $e) {

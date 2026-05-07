@@ -100,6 +100,15 @@ class MessageController extends Controller
         // Update conversation timestamp — critical for sorting
         $conversation->update(['last_message_at' => now()]);
 
+        // Auto-track first response for support cases
+        if ($conversation->supportCase && !$conversation->supportCase->first_response_at) {
+            $isAgent = $user?->canHandleSupportCases() ?? false;
+            $isNotCreator = $conversation->supportCase->user_id !== $user?->id;
+            if ($isAgent && $isNotCreator) {
+                $conversation->supportCase->update(['first_response_at' => now()]);
+            }
+        }
+
         // Broadcast to all participants on private channel
         $socketId = request()->header('X-Socket-ID');
         \Log::info('Broadcasting message', [

@@ -57,6 +57,14 @@ class Order extends Model
         'email_sent_refunded',
     ];
 
+    /**
+     * Support cases related to this order
+     */
+    public function supportCases()
+    {
+        return $this->hasMany(\App\Models\SupportCase::class, 'order_id');
+    }
+
     protected $casts = [
         'subtotal' => 'decimal:2',
         'shipping_fee' => 'decimal:2',

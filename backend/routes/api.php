@@ -619,6 +619,42 @@ Route::prefix('v1')->middleware(['api', 'optional', 'audit'])->group(function ()
     // Message search (auth only)
     Route::get('/conversations/search/messages', [\App\Http\Controllers\Api\ConversationController::class, 'search'])
         ->middleware('auth:sanctum');
+}); // End of optional auth messaging group
+
+// ============================================================================
+// SUPPORT CASE ROUTES (Phase 2 Implementation)
+// ============================================================================
+Route::prefix('v1/support-cases')->middleware(['auth:sanctum', 'audit'])->group(function () {
+    // User routes
+    Route::get('/', [\App\Http\Controllers\Api\SupportCaseController::class, 'index']);
+    Route::post('/', [\App\Http\Controllers\Api\SupportCaseController::class, 'store']);
+    Route::get('/{caseId}', [\App\Http\Controllers\Api\SupportCaseController::class, 'show']);
+    Route::post('/{caseId}/escalate', [\App\Http\Controllers\Api\SupportCaseController::class, 'escalate']);
+    Route::post('/{caseId}/satisfaction', [\App\Http\Controllers\Api\SupportCaseController::class, 'rateSatisfaction']);
+    Route::post('/validate-order', [\App\Http\Controllers\Api\SupportCaseController::class, 'validateOrder']);
+    Route::post('/{caseId}/notes', [\App\Http\Controllers\Api\SupportCaseController::class, 'addNote']);
+    Route::get('/{caseId}/history', [\App\Http\Controllers\Api\SupportCaseController::class, 'getHistory']);
+});
+
+// Support Queue (Admin/SuperAdmin/SupportAgent only)
+Route::prefix('v1/support-queue')->middleware(['auth:sanctum', 'audit'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\SupportQueueController::class, 'index']);
+    Route::get('/my-cases', [\App\Http\Controllers\Api\SupportQueueController::class, 'myCases']);
+    Route::get('/stats', [\App\Http\Controllers\Api\SupportQueueController::class, 'stats']);
+    Route::get('/available-agents', [\App\Http\Controllers\Api\SupportQueueController::class, 'availableAgents']);
+    Route::post('/{caseId}/claim', [\App\Http\Controllers\Api\SupportQueueController::class, 'claim']);
+    Route::post('/{caseId}/assign', [\App\Http\Controllers\Api\SupportQueueController::class, 'assign']);
+    Route::post('/{caseId}/transfer', [\App\Http\Controllers\Api\SupportQueueController::class, 'transfer']);
+    Route::post('/{caseId}/resolve', [\App\Http\Controllers\Api\SupportQueueController::class, 'resolve']);
+    Route::post('/{caseId}/close', [\App\Http\Controllers\Api\SupportQueueController::class, 'close']);
+    Route::post('/{caseId}/reopen', [\App\Http\Controllers\Api\SupportQueueController::class, 'reopen']);
+    Route::get('/{caseId}/notes', [\App\Http\Controllers\Api\SupportQueueController::class, 'getNotes']);
+});
+
+// Super Admin escalation review
+Route::prefix('v1/super-admin/support')->middleware(['auth:sanctum', 'role:super_admin', 'audit'])->group(function () {
+    Route::get('/escalated', [\App\Http\Controllers\Api\SupportQueueController::class, 'escalatedCases']);
+    Route::post('/{caseId}/handle-escalation', [\App\Http\Controllers\Api\SupportQueueController::class, 'handleEscalation']);
 });
 
 // Public callback routes (outside protected group)

@@ -20,10 +20,10 @@ class User extends Authenticatable
     'address',
     'role',
     'profile_image',
-    'google_id', 
-    'strava_id', 
-    'avatar', 
-    'provider', 
+    'google_id',
+    'strava_id',
+    'avatar',
+    'provider',
     'is_active',
     'email_verified_at',
     'terms_version',
@@ -175,7 +175,31 @@ class User extends Authenticatable
     {
         return in_array($this->role, ['delivery_agent', 'shop_attendant', 'seller', 'admin', 'super_admin']);
     }
-    
+
+    /**
+     * Check if user can handle support cases
+     */
+    public function canHandleSupportCases(): bool
+    {
+        return in_array($this->role, ['admin', 'super_admin', 'owner', 'support_agent']);
+    }
+
+    /**
+     * Support cases assigned to this user
+     */
+    public function assignedSupportCases()
+    {
+        return $this->hasMany(\App\Models\SupportCase::class, 'assigned_to');
+    }
+
+    /**
+     * Support cases created by this user
+     */
+    public function supportCases()
+    {
+        return $this->hasMany(\App\Models\SupportCase::class, 'user_id');
+    }
+
     // Multi-role support methods
     public function getAdditionalRolesAttribute($value)
     {
