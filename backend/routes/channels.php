@@ -55,3 +55,14 @@ Broadcast::channel('presence.users', function ($user) {
         'role' => $user->role,
     ];
 });
+
+// Support Case Channels
+Broadcast::channel('support-case.{caseId}', function ($user, $caseId) {
+    $case = \App\Models\SupportCase::find($caseId);
+    if (!$case) return false;
+    return $user->id === $case->user_id || $user->canHandleSupportCases();
+});
+
+Broadcast::channel('support-queue', function ($user) {
+    return $user->canHandleSupportCases();
+});

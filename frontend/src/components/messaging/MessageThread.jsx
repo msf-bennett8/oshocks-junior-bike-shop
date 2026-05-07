@@ -9,7 +9,8 @@ import MessageBubble from './MessageBubble';
 import { useAuth } from '../../context/AuthContext';
 import {
   ArrowLeft, Phone, Video, MoreVertical, Send, Paperclip,
-  Smile, X, Reply, Pencil, Trash2, CheckCheck, Check
+  Smile, X, Reply, Pencil, Trash2, CheckCheck, Check,
+  Copy, CheckCircle2, Headphones, ShoppingBag, AlertCircle
 } from 'lucide-react';
 import Avatar from '../common/Avatar';
 
@@ -27,6 +28,10 @@ const MessageThread = ({
   onSendTyping,
   isMobile = false,
   onBack,
+  onClaimCase,
+  onResolveCase,
+  onEscalateCase,
+  onCloseCase,
 }) => {
   const { user } = useAuth();
   const [input, setInput] = useState('');
@@ -35,6 +40,7 @@ const MessageThread = ({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
+  const [showCaseActions, setShowCaseActions] = useState(false);
   const inputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -74,6 +80,14 @@ const MessageThread = ({
 
     return () => observer.disconnect();
   }, [messages]);
+
+  // Close case actions dropdown on click outside
+  useEffect(() => {
+    if (!showCaseActions) return;
+    const handleClick = () => setShowCaseActions(false);
+    setTimeout(() => document.addEventListener('click', handleClick), 0);
+    return () => document.removeEventListener('click', handleClick);
+  }, [showCaseActions]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -159,6 +173,15 @@ const MessageThread = ({
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const formatTime = (iso) => {
+    if (!iso) return '';
+    const date = new Date(iso);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    if (isToday) return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  };
+
   return (
     <div className="flex flex-col h-full bg-white">
       {/* ─── HEADER ─── */}
@@ -224,6 +247,113 @@ const MessageThread = ({
         </div>
       </div>
 
+      {/* ─── CASE INFO BANNER (Support Cases Only) ─── */}
+      {conversation?.support_case && (
+        <div className="px-4 py-2.5 bg-gradient-to-r from-orange-50 to-amber-50 border-b border-orange-100 flex-shrink-0">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-1 px-2 py-1 bg-white/80 rounded-lg border border-orange-200">
+                <Headphones className="w-3.5 h-3.5 text-orange-600" />
+                <span className="text-xs font-mono font-bold text-orange-800">
+                  {conversation.support_case.case_id}
+                </span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(conversation.support_case.case_id);
+                    // Optional: show toast
+                  }}
+                  className="p-0.5 hover:bg-orange-100 rounded transition-colors"
+                  title="Copy case ID"
+                >
+                  <Copy className="w-3 h-3 text-orange-400" />
+                </button>
+              </div>
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                conversation.support_case.status === 'new' ? 'bg-gray-100 text-gray-600' :
+                conversation.support_case.status === 'open' ? 'bg-blue-100 text-blue-700' :
+                conversation.support_case.status === 'in_progress' ? 'bg-amber-100 text-amber-700' :
+                conversation.support_case.status === 'pending_user' ? 'bg-purple-100 text-purple-700' :
+                conversation.support_case.status === 'resolved' ? 'bg-green-100 text-green-700' :
+                conversation.support_case.status === 'closed' ? 'bg-slate-100 text-slate-600' :
+                'bg-red-100 text-red-700'
+              }`}>
+                {conversation.support_case.status?.replace('_', ' ').toUpperCase()}
+              </span>
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                conversation.support_case.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                conversation.support_case.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                conversation.support_case.priority === 'medium' ? 'bg-blue-100 text-blue-700' :
+                'bg-green-100 text-green-700'
+              }`}>
+                {conversation.support_case.priority?.toUpperCase()}
+              </span>
+            </div>
+            
+            {/* Agent actions dropdown */}
+            {user?.canHandleSupportCases && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowCaseActions(!showCaseActions)}
+                  className="text-xs bg-white border border-orange-200 text-orange-700 px-2.5 py-1 rounded-lg hover:bg-orange-50 transition-colors font-medium flex items-center gap-1"
+                >
+                  Actions
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {showCaseActions && (
+                  <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-30 min-w-[140px] py-1">
+                    {conversation.support_case.status === 'new' && !conversation.support_case.assigned_to && (
+                      <button
+                        onClick={() => { onClaimCase?.(conversation.support_case.case_id); setShowCaseActions(false); }}
+                        className="w-full text-left px-3 py-2 text-xs text-blue-700 hover:bg-blue-50 flex items-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Claim Case
+                      </button>
+                    )}
+                    {['open', 'in_progress', 'pending_user', 'escalated'].includes(conversation.support_case.status) && (
+                      <button
+                        onClick={() => { onResolveCase?.(conversation.support_case.case_id); setShowCaseActions(false); }}
+                        className="w-full text-left px-3 py-2 text-xs text-green-700 hover:bg-green-50 flex items-center gap-1.5"
+                      >
+                        <CheckCheck className="w-3.5 h-3.5" /> Resolve
+                      </button>
+                    )}
+                    {conversation.support_case.status !== 'escalated' && conversation.support_case.status !== 'closed' && (
+                      <button
+                        onClick={() => { onEscalateCase?.(conversation.support_case.case_id); setShowCaseActions(false); }}
+                        className="w-full text-left px-3 py-2 text-xs text-red-700 hover:bg-red-50 flex items-center gap-1.5"
+                      >
+                        <AlertCircle className="w-3.5 h-3.5" /> Escalate
+                      </button>
+                    )}
+                    {conversation.support_case.status === 'resolved' && (
+                      <button
+                        onClick={() => { onCloseCase?.(conversation.support_case.case_id); setShowCaseActions(false); }}
+                        className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-1.5"
+                      >
+                        <X className="w-3.5 h-3.5" /> Close
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          {/* Order link if applicable */}
+          {conversation.order && (
+            <div className="mt-1.5 flex items-center gap-2 text-[11px] text-gray-500">
+              <ShoppingBag className="w-3 h-3" />
+              <span className="font-mono text-gray-600">{conversation.order.order_number || conversation.order.order_display}</span>
+              <span>•</span>
+              <span>{conversation.order.status}</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ─── MESSAGES ─── */}
       <div 
         ref={messagesContainerRef}
@@ -254,17 +384,28 @@ const MessageThread = ({
                 setContextMenu({ msgId: msg.id, x: e.clientX, y: e.clientY });
               }}
             >
-              <MessageBubble
-                message={msg}
-                isOwn={isOwn}
-                showAvatar={showAvatar}
-                isLastInGroup={isLastInGroup}
-                onReply={() => handleReply(msg)}
-                onEdit={() => handleEdit(msg)}
-                onDelete={() => handleDelete(msg)}
-                onReaction={(reaction) => handleReaction(msg.id, reaction)}
-                replyToMessage={msg.reply_to ? messages.find(m => m.id === msg.reply_to) : null}
-              />
+              {/* System messages */}
+              {msg.type === 'system' ? (
+                <div className="flex justify-center my-3">
+                  <div className="bg-gray-100 border border-gray-200 rounded-full px-4 py-1.5 flex items-center gap-2">
+                    <span className="text-gray-400">📌</span>
+                    <span className="text-xs text-gray-500">{msg.body}</span>
+                    <span className="text-[10px] text-gray-400">{formatTime(msg.created_at)}</span>
+                  </div>
+                </div>
+              ) : (
+                <MessageBubble
+                  message={msg}
+                  isOwn={isOwn}
+                  showAvatar={showAvatar}
+                  isLastInGroup={isLastInGroup}
+                  onReply={() => handleReply(msg)}
+                  onEdit={() => handleEdit(msg)}
+                  onDelete={() => handleDelete(msg)}
+                  onReaction={(reaction) => handleReaction(msg.id, reaction)}
+                  replyToMessage={msg.reply_to ? messages.find(m => m.id === msg.reply_to) : null}
+                />
+              )}
               
               {/* Hover reaction bar */}
               <div className={`absolute ${isOwn ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white shadow-lg rounded-full px-2 py-1 flex items-center gap-1 z-10`}>

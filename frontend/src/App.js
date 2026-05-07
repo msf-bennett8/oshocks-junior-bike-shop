@@ -101,6 +101,7 @@ const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage'));
 const AdminCategoriesPage = lazy(() => import('./pages/admin/AdminCategoriesPage'));
 const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'));
+const SupportInboxPage = lazy(() => import('./pages/admin/SupportInboxPage'));
 
 // Super Admin Dashboard
 const SuperAdminDashboardPage = lazy(() => import('./pages/superadmin/SuperAdminDashboardPage'));
@@ -811,6 +812,14 @@ function App() {
                   element={
                     <AdminRoute>
                       <AdminSettingsPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/support-inbox"
+                  element={
+                    <AdminRoute>
+                      <SupportInboxPage />
                     </AdminRoute>
                   }
                 />

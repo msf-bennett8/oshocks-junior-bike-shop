@@ -156,6 +156,9 @@ class SupportCaseController extends Controller
             // Link conversation to case
             $conversation->update(['support_case_id' => $supportCase->case_id]);
 
+            // Broadcast case creation event
+            broadcast(new \App\Events\SupportCaseUpdated($supportCase, 'created', $user?->id));
+
             // Add system participant (admin bot) for routing
             $this->addSystemParticipant($conversation);
 
@@ -216,6 +219,9 @@ class SupportCaseController extends Controller
             'escalated_by' => $user->id,
             'escalation_reason' => $request->reason,
         ]);
+
+        // Broadcast escalation event
+        broadcast(new \App\Events\SupportCaseUpdated($case, 'escalated', $user->id, ['reason' => $request->reason]));
 
         // Notify super admins
         $this->notifyEscalation($case);

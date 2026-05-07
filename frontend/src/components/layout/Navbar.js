@@ -12,7 +12,7 @@ import CallOverlay from '../messaging/CallOverlay';
 import CreateChatModal from '../messaging/CreateChatModal';
 import { useWebRTC } from '../../hooks/useWebRTC';
 import { useMessaging } from '../../hooks/useMessaging';
-import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Plus, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowRight, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, Users, Package2, BarChart3, FolderTree, Heart, Bell, MessageCircle } from 'lucide-react';
+import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Plus, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowRight, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, Users, Package2, BarChart3, FolderTree, Heart, Bell, MessageCircle, Inbox } from 'lucide-react';
 import SearchBar from '../common/SearchBar';
 import Avatar from '../common/Avatar';
 
@@ -367,6 +367,7 @@ const Navbar = () => {
           { name: 'Analytics', link: '/admin/analytics', icon: BarChart3 },
           { name: 'Reports', link: '/admin/reports', icon: BarChart3 },
           { name: 'Settings', link: '/admin/settings', icon: Settings },
+          { name: 'Support Queue', link: '/admin/support-inbox', icon: Inbox },
         ]
       });
     }
@@ -691,6 +692,30 @@ const Navbar = () => {
                     )}
 
                     <hr className="my-1 border-gray-100" />
+
+                    {/* Support Queue */}
+                    {isAuthenticated && (user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'support_agent') && (
+                      <button
+                        onClick={() => {
+                          setShowQuickActions(false);
+                          navigate('/admin/support-inbox');
+                        }}
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-orange-50 transition-colors w-full text-left"
+                      >
+                        <div className="relative">
+                          <Inbox className="w-5 h-5 text-orange-600" />
+                          {unreadTotal > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
+                              {unreadTotal > 9 ? '9+' : unreadTotal}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <span className="text-gray-900 font-medium">Support Queue</span>
+                          <p className="text-xs text-gray-500">Manage support cases</p>
+                        </div>
+                      </button>
+                    )}
 
                     {/* Notifications */}
                     {isAuthenticated && (

@@ -15,6 +15,8 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         \App\Console\Commands\NotificationCleanupCommand::class,
         \App\Console\Commands\CleanupGuestConversations::class,
+        \App\Console\Commands\CheckSLABreach::class,
+        \App\Console\Commands\AutoEscalateStaleCases::class,
     ];
 
     /**
@@ -28,6 +30,10 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->onOneServer()
             ->appendOutputTo(storage_path('logs/notification-cleanup.log'));
+
+        // Phase 11: SLA & Escalation Jobs
+        $schedule->command('support:check-sla')->everyFifteenMinutes();
+        $schedule->command('support:escalate-stale')->hourly();
     }
 
     /**

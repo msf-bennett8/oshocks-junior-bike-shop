@@ -27,7 +27,7 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
-        
+
         // CRITICAL: Strava OAuth Configuration
         \SocialiteProviders\Manager\SocialiteWasCalled::class => [
             'SocialiteProviders\\Strava\\StravaExtendSocialite@handle',
@@ -55,7 +55,7 @@ class EventServiceProvider extends ServiceProvider
         // ============================================================================
         // NOTIFICATION EVENTS - PHASE 3
         // ============================================================================
-        
+
         // Order Events
         \App\Events\OrderPlaced::class => [
             \App\Listeners\SendOrderConfirmation::class,
@@ -142,6 +142,11 @@ class EventServiceProvider extends ServiceProvider
         ],
         \App\Events\DeliveryIssueReported::class => [
             \App\Listeners\SendDeliveryIssueNotification::class,
+        ],
+
+        // Phase 10: Support Case Audit
+        \App\Events\SupportCaseUpdated::class => [
+            \App\Listeners\SupportCaseAuditListener::class,
         ],
     ];
 

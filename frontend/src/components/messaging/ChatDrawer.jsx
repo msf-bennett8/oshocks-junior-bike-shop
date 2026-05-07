@@ -493,6 +493,10 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
                   onSendTyping={sendTypingIndicator}
                   isMobile={true}
                   onBack={handleBackToList}
+                  onClaimCase={(caseId) => console.log('Claim:', caseId)}
+                  onResolveCase={(caseId) => console.log('Resolve:', caseId)}
+                  onEscalateCase={(caseId) => console.log('Escalate:', caseId)}
+                  onCloseCase={(caseId) => console.log('Close:', caseId)}
                 />
               </div>
             )}
@@ -538,6 +542,10 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
                 messagesEndRef={messagesEndRef}
                 onSendTyping={sendTypingIndicator}
                 isMobile={false}
+                onClaimCase={(caseId) => console.log('Claim:', caseId)}
+                onResolveCase={(caseId) => console.log('Resolve:', caseId)}
+                onEscalateCase={(caseId) => console.log('Escalate:', caseId)}
+                onCloseCase={(caseId) => console.log('Close:', caseId)}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-gray-400 bg-gray-50/50">
@@ -617,6 +625,10 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
             onSendTyping={sendTypingIndicator}
             isMobile={true}
             onBack={handleBackToList}
+            onClaimCase={(caseId) => console.log('Claim:', caseId)}
+            onResolveCase={(caseId) => console.log('Resolve:', caseId)}
+            onEscalateCase={(caseId) => console.log('Escalate:', caseId)}
+            onCloseCase={(caseId) => console.log('Close:', caseId)}
           />
         </div>
       )}

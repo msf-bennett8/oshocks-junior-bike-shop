@@ -138,6 +138,9 @@ class SupportQueueController extends Controller
             'status' => 'open',
         ]);
 
+        // Broadcast claim event
+        broadcast(new \App\Events\SupportCaseUpdated($case, 'claimed', $user->id));
+
         return response()->json([
             'success' => true,
             'message' => 'Case claimed successfully.',
@@ -254,6 +257,9 @@ class SupportQueueController extends Controller
             'resolved_by' => $user->id,
             'resolution_notes' => $request->resolution_notes,
         ]);
+
+        // Broadcast resolve event
+        broadcast(new \App\Events\SupportCaseUpdated($case, 'resolved', $user->id));
 
         return response()->json([
             'success' => true,

@@ -3,13 +3,14 @@
 // ============================================================================
 
 import React, { useState, useMemo } from 'react';
-import { Search, Archive, Pin, MoreVertical, Trash2, Phone, Video, Inbox } from 'lucide-react';
+import { Search, Archive, Pin, MoreVertical, Trash2, Phone, Video, Inbox, Headphones, AlertCircle, ShoppingBag, Mail, Clock } from 'lucide-react';
 import Avatar from '../common/Avatar';
 
 const FILTERS = [
   { key: 'all', label: 'All' },
   { key: 'unread', label: 'Unread' },
   { key: 'pinned', label: 'Pinned' },
+  { key: 'support', label: 'Support' },
   { key: 'archived', label: 'Archived' },
 ];
 
@@ -41,6 +42,7 @@ const ConversationList = ({
       switch (activeFilter) {
         case 'unread': return c.unread_count > 0;
         case 'pinned': return c.is_pinned;
+        case 'support': return c.type === 'support' || c.type === 'order_support';
         case 'archived': return c.is_archived;
         default: return !c.is_archived; // Hide archived in 'all' unless explicitly filtered
       }
@@ -192,11 +194,29 @@ const ConversationList = ({
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
-                    <h4 className={`text-sm font-medium truncate ${
-                      hasUnread ? 'text-gray-900 font-semibold' : 'text-gray-700'
-                    }`}>
-                      {conv.title || conv.other_participant?.name || 'Support'}
-                    </h4>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <h4 className={`text-sm font-medium truncate ${
+                        hasUnread ? 'text-gray-900 font-semibold' : 'text-gray-700'
+                      }`}>
+                        {conv.title || conv.other_participant?.name || 'Support'}
+                      </h4>
+                      {/* Support Case Badge */}
+                      {conv.support_case && (
+                        <span className={`flex-shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                          conv.support_case.status === 'escalated' ? 'bg-red-100 text-red-700' :
+                          conv.support_case.status === 'resolved' ? 'bg-green-100 text-green-700' :
+                          conv.support_case.status === 'closed' ? 'bg-slate-100 text-slate-600' :
+                          conv.support_case.status === 'in_progress' ? 'bg-amber-100 text-amber-700' :
+                          'bg-blue-100 text-blue-700'
+                        }`}>
+                          {conv.support_case.case_type === 'order_issue' && <ShoppingBag className="w-2.5 h-2.5" />}
+                          {conv.support_case.case_type === 'account_help' && <Mail className="w-2.5 h-2.5" />}
+                          {conv.support_case.case_type === 'report_problem' && <AlertCircle className="w-2.5 h-2.5" />}
+                          {conv.support_case.case_type === 'delivery_question' && <Clock className="w-2.5 h-2.5" />}
+                          {conv.support_case.case_id?.slice(-6)}
+                        </span>
+                      )}
+                    </div>
                     <span className={`text-[11px] flex-shrink-0 ${hasUnread ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>
                       {formatTime(conv.last_message_at)}
                     </span>
