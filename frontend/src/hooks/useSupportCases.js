@@ -94,6 +94,37 @@ export const useSupportCases = () => {
     return res.data;
   }, []);
 
+  // Create case within existing conversation (threaded)
+  const createCaseInConversation = useCallback(async (conversationId, data) => {
+    const res = await supportCaseService.createCaseInConversation(conversationId, data);
+    return res.data;
+  }, []);
+
+  // Get all cases in a conversation
+  const getConversationCases = useCallback(async (conversationId) => {
+    const res = await supportCaseService.getConversationCases(conversationId);
+    return res.data;
+  }, []);
+
+  // Delete case (soft delete)
+  const deleteCase = useCallback(async (caseId) => {
+    await supportCaseService.deleteCase(caseId);
+    setCases(prev => prev.filter(c => c.case_id !== caseId));
+  }, []);
+
+  // Restore deleted case
+  const restoreCase = useCallback(async (caseId) => {
+    const res = await supportCaseService.restoreCase(caseId);
+    setCases(prev => [res.data.data, ...prev]);
+    return res.data;
+  }, []);
+
+  // Get full user case history
+  const getUserCaseHistory = useCallback(async () => {
+    const res = await supportCaseService.getUserCaseHistory();
+    return res.data;
+  }, []);
+
   // Real-time updates
   useEffect(() => {
     if (typeof subscribeToChannel !== 'function') return;
@@ -123,6 +154,11 @@ export const useSupportCases = () => {
     closeCase,
     escalateCase,
     createCase,
+    createCaseInConversation,
+    getConversationCases,
+    deleteCase,
+    restoreCase,
+    getUserCaseHistory
   };
 };
 

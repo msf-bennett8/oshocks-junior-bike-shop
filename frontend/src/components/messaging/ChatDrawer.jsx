@@ -8,8 +8,10 @@
 import React, { useEffect, useCallback, useRef, useState } from 'react';
 import ConversationList from './ConversationList';
 import MessageThread from './MessageThread';
+import CaseCreateModal from './CaseCreateModal';
 import { useMessaging } from '../../hooks/useMessaging';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 import { ArrowLeft, X, GripVertical } from 'lucide-react';
 
 const MIN_CHAT_WIDTH = 280;   // px — allow slightly narrower
@@ -41,6 +43,7 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
   const [view, setView] = React.useState('list'); // 'list' | 'thread' — mobile only
+  const [showCreateCase, setShowCreateCase] = useState(false);
 
   // ─── SPLIT-PANE STATE ───
   const [chatWidth, setChatWidth] = useState(() => {
@@ -459,6 +462,16 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
             </button>
           </div>
         </div>
+        {/* New Case button when in thread with active conversation */}
+        {activeConversation?.is_support_case && (
+          <button
+            onClick={() => setShowCreateCase(true)}
+            className="mx-4 mb-2 py-1.5 bg-orange-50 border border-orange-200 text-orange-700 rounded-lg text-xs font-medium hover:bg-orange-100 transition-colors flex items-center justify-center gap-1.5"
+          >
+            <span className="w-4 h-4 rounded-full bg-orange-200 flex items-center justify-center text-orange-700 text-xs font-bold">+</span>
+            New Support Case
+          </button>
+        )}
 
         {/* Content — Split or Mobile style based on width */}
         {isNarrow ? (
@@ -561,6 +574,18 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
           </div>
         </div>
         )}
+
+        {/* Create Case Modal */}
+        {showCreateCase && activeConversation && (
+          <CaseCreateModal
+            conversationId={activeConversation.id}
+            onClose={() => setShowCreateCase(false)}
+            onCreated={() => {
+              setShowCreateCase(false);
+              fetchConversations();
+            }}
+          />
+        )}
       </div>
     </div>
     );
@@ -631,6 +656,18 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
             onCloseCase={(caseId) => console.log('Close:', caseId)}
           />
         </div>
+      )}
+
+      {/* Create Case Modal - Mobile */}
+      {showCreateCase && activeConversation && (
+        <CaseCreateModal
+          conversationId={activeConversation.id}
+          onClose={() => setShowCreateCase(false)}
+          onCreated={() => {
+            setShowCreateCase(false);
+            fetchConversations();
+          }}
+        />
       )}
     </div>
   );

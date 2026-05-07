@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SupportCase extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $primaryKey = 'case_id';
     protected $keyType = 'string';
@@ -115,6 +116,14 @@ class SupportCase extends Model
         return $this->belongsTo(User::class, 'closed_by');
     }
 
+    /**
+     * Messages belonging to this case
+     */
+    public function caseMessages(): HasMany
+    {
+        return $this->hasMany(\App\Models\Message::class, 'case_id');
+    }
+
     // Scopes
     public function scopeUnclaimed($query)
     {
@@ -184,8 +193,8 @@ class SupportCase extends Model
     // Helper methods
     public function canBeClaimedBy(User $user): bool
     {
-        return $user->canHandleSupportCases() 
-            && $this->status === 'new' 
+        return $user->canHandleSupportCases()
+            && $this->status === 'new'
             && is_null($this->assigned_to);
     }
 
@@ -207,5 +216,25 @@ class SupportCase extends Model
     public function isAssignedTo(User $user): bool
     {
         return $this->assigned_to === $user->id;
+    }
+
+    /**
+     * Check if case can be deleted (only new/unclaimed cases)
+     */
+    public function canBeDeleted(): bool
+    {
+        return $this->status === 'new' && is_null($this->assigned_to);
+    }
+
+    /**
+     * Get all cases for a user with full audit trail
+     */
+    public static function getUserCaseHistory(int $userId)
+    {
+        return self::withTrashed()
+            ->with(['resolvedBy', 'assignedAgent', 'escalatedBy', 'closedBy', 'history.changedBy'])
+            ->where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 }

@@ -112,44 +112,25 @@ class ConversationController extends Controller
             }
         }
 
-        // For support tickets, find or create with support user
+        // For support tickets, use persistent conversation (hybrid conversational ticketing)
         if (($validated['type'] ?? 'direct') === 'support' || ($validated['type'] ?? 'direct') === 'order_support') {
-            $supportUser = User::whereIn('role', ['admin', 'super_admin'])->first();
+            $orderId = $validated['order_id'] ?? null;
 
-            if (!$supportUser) {
-                return response()->json(['error' => 'No support agent available'], 503);
-            }
+            // Use getOrCreateSupportConversation for persistent thread
+            $conversation = Conversation::getOrCreateSupportConversation($user, $guestSessionId, $orderId);
 
-            // Check for existing open support conversation for this user/order
-            $existingQuery = Conversation::where('type', $validated['type'])
-                ->where('status', '!=', 'resolved');
+            // Check if we should create a new case in this conversation
+            $hasActiveCase = $conversation->activeSupportCases()->exists();
 
-            if ($user) {
-                $existingQuery->where(function ($q) use ($user) {
-                    $q->whereHas('participants', function ($pq) use ($user) {
-                        $pq->where('user_id', $user->id);
-                    })->orWhere('created_by', $user->id);
-                });
-            } elseif ($guestSessionId) {
-                $existingQuery->where('guest_session_id', $guestSessionId);
-            }
-
-            if (!empty($validated['order_id'])) {
-                $existingQuery->where('order_id', $validated['order_id']);
-            }
-
-            $existing = $existingQuery->first();
-
-            if ($existing) {
-                return response()->json([
-                    'data' => $existing->load(['participants', 'latestMessage']),
-                    'existing' => true,
-                ]);
-            }
-
-            $validated['title'] = $validated['title'] ?? 'Support Request';
+            return response()->json([
+                'data' => $conversation->load(['participants', 'latestMessage', 'activeSupportCases']),
+                'existing' => true,
+                'has_active_case' => $hasActiveCase,
+                'conversation_id' => $conversation->id,
+            ]);
         }
 
+        // For non-support conversations, create normally
         DB::beginTransaction();
 
         try {
@@ -168,80 +149,16 @@ class ConversationController extends Controller
                 $conversation->participants()->attach($user->id, ['joined_at' => now()]);
             }
 
-            // Add support user for support conversations (skip if user IS the support user)
-            if (in_array($validated['type'], ['support', 'order_support'])) {
-                $supportUser = User::whereIn('role', ['admin', 'super_admin'])->first();
-                if ($supportUser && $supportUser->id !== $user?->id) {
-                    $conversation->participants()->attach($supportUser->id, ['joined_at' => now()]);
-                }
-            }
-
             // Add requested participant for direct messages
             if (!empty($validated['participant_id']) && $validated['type'] === 'direct') {
                 $conversation->participants()->attach($validated['participant_id'], ['joined_at' => now()]);
             }
 
-            // System welcome message for support
-            if (in_array($validated['type'], ['support', 'order_support'])) {
-                Message::create([
-                    'conversation_id' => $conversation->id,
-                    'sender_id' => null,
-                    'body' => 'Thank you for contacting Oshocks Support. An agent will assist you shortly.',
-                    'type' => 'system',
-                ]);
-            }
-
-            // Create support case for support conversations
-            $supportCase = null;
-            if (in_array($validated['type'], ['support', 'order_support'])) {
-                $caseType = $request->input('case_type', 'report_problem');
-                $orderId = $validated['order_id'] ?? null;
-
-                // Validate order if order_number provided
-                if ($request->has('order_number') && !$orderId) {
-                    $order = Order::where('order_number', $request->order_number)
-                                  ->orWhere('order_code', $request->order_number)
-                                  ->first();
-                    if ($order) {
-                        $orderId = $order->id;
-                        $conversation->update(['order_id' => $orderId]);
-                    }
-                }
-
-                $supportCase = SupportCase::create([
-                    'conversation_id' => $conversation->id,
-                    'user_id' => $user?->id,
-                    'guest_session_id' => $user ? null : $guestSessionId,
-                    'case_type' => $caseType,
-                    'status' => 'new',
-                    'priority' => $request->input('priority', 'medium'),
-                    'order_id' => $orderId,
-                    'subject' => $request->input('subject', $validated['title'] ?? 'Support Request'),
-                    'description' => $request->input('description'),
-                    'source' => $user ? 'web' : 'chat',
-                    'metadata' => [
-                        'ip' => $request->ip(),
-                        'user_agent' => $request->userAgent(),
-                        'referrer' => $request->header('referer'),
-                    ],
-                ]);
-
-                // Link conversation to case
-                $conversation->update(['support_case_id' => $supportCase->case_id]);
-            }
-
             DB::commit();
 
-            $response = [
+            return response()->json([
                 'data' => $conversation->load('participants'),
-            ];
-
-            if ($supportCase) {
-                $response['support_case'] = $supportCase->fresh();
-                $response['case_id'] = $supportCase->case_id;
-            }
-
-            return response()->json($response, 201);
+            ], 201);
 
         } catch (\Exception $e) {
             DB::rollBack();

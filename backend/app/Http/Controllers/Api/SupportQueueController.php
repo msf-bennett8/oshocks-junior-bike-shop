@@ -197,7 +197,15 @@ class SupportQueueController extends Controller
         $user = Auth::user();
         $case = SupportCase::findOrFail($caseId);
 
-        if (!$user->hasAdminAccess() && !$case->isAssignedTo($user)) {
+        // Role conflict resolution: escalated cases can only be resolved by super_admin or the escalated handler
+        if ($case->status === 'escalated') {
+            if (!$user->hasSuperAdminAccess() && !$case->isAssignedTo($user)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Escalated cases can only be resolved by super admin or the assigned escalated handler.',
+                ], 403);
+            }
+        } elseif (!$user->hasAdminAccess() && !$case->isAssignedTo($user)) {
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
         }
 
@@ -475,6 +483,81 @@ class SupportQueueController extends Controller
         return response()->json([
             'success' => true,
             'data' => $notes,
+        ]);
+    }
+
+    /**
+     * Soft delete a case (admin or case creator only)
+     */
+    public function destroy(string $caseId): JsonResponse
+    {
+        $user = Auth::user();
+        $case = SupportCase::findOrFail($caseId);
+
+        if ($case->user_id !== $user->id && !$user->hasAdminAccess()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+
+        if (!$case->canBeDeleted()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only unclaimed new cases can be deleted.',
+            ], 422);
+        }
+
+        $case->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Case deleted.',
+        ]);
+    }
+
+    /**
+     * Restore a soft-deleted case (admin only)
+     */
+    public function restore(string $caseId): JsonResponse
+    {
+        $user = Auth::user();
+
+        if (!$user->hasAdminAccess()) {
+            return response()->json(['success' => false, 'message' => 'Admin access required.'], 403);
+        }
+
+        $case = SupportCase::withTrashed()->findOrFail($caseId);
+
+        if (!$case->trashed()) {
+            return response()->json(['success' => false, 'message' => 'Case is not deleted.'], 422);
+        }
+
+        $case->restore();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Case restored.',
+            'data' => $case->fresh(),
+        ]);
+    }
+
+    /**
+     * Get full history of all cases for current user
+     */
+    public function getMyFullHistory(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+
+        $cases = SupportCase::withTrashed()
+            ->with(['resolvedBy', 'assignedAgent', 'escalatedBy', 'closedBy', 'history.changedBy', 'conversation'])
+            ->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhere('assigned_to', $user->id);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate($request->per_page ?? 20);
+
+        return response()->json([
+            'success' => true,
+            'data' => $cases,
         ]);
     }
 }

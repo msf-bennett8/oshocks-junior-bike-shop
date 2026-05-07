@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Conversation extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'type',
@@ -145,15 +146,33 @@ class Conversation extends Model
     }
 
     /**
-     * The support case associated with this conversation (if any)
+     * The primary support case associated with this conversation (first one)
      */
     public function supportCase()
     {
-        return $this->hasOne(\App\Models\SupportCase::class, 'conversation_id');
+        return $this->hasOne(\App\Models\SupportCase::class, 'conversation_id')->latest();
     }
 
     /**
-     * Check if this conversation is a support case
+     * All support cases in this conversation (for threaded ticketing)
+     */
+    public function supportCases()
+    {
+        return $this->hasMany(\App\Models\SupportCase::class, 'conversation_id')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Active (non-resolved/closed) support cases in this conversation
+     */
+    public function activeSupportCases()
+    {
+        return $this->hasMany(\App\Models\SupportCase::class, 'conversation_id')
+            ->whereNotIn('status', ['resolved', 'closed'])
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Check if this conversation is a support conversation
      */
     public function isSupportCase(): bool
     {
@@ -166,6 +185,69 @@ class Conversation extends Model
     public function scopeSupportCases($query)
     {
         return $query->whereIn('type', ['support', 'order_support']);
+    }
+
+    /**
+     * Get or create a persistent support conversation for a user
+     */
+    public static function getOrCreateSupportConversation(?User $user, ?string $guestSessionId, ?int $orderId = null): self
+    {
+        $query = self::whereIn('type', ['support', 'order_support'])
+            ->whereNull('deleted_at');
+
+        if ($user) {
+            $query->where(function ($q) use ($user) {
+                $q->where('created_by', $user->id)
+                  ->orWhereHas('participants', function ($pq) use ($user) {
+                      $pq->where('user_id', $user->id);
+                  });
+            });
+        } elseif ($guestSessionId) {
+            $query->where('guest_session_id', $guestSessionId);
+        }
+
+        if ($orderId) {
+            $query->where('order_id', $orderId);
+        } else {
+            $query->whereNull('order_id'); // General support, not order-specific
+        }
+
+        $existing = $query->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        // Create new conversation
+        $supportUser = User::whereIn('role', ['admin', 'super_admin'])->first();
+
+        $conversation = self::create([
+            'created_by' => $user?->id,
+            'guest_session_id' => $user ? null : $guestSessionId,
+            'type' => $orderId ? 'order_support' : 'support',
+            'title' => $orderId ? 'Order Support' : 'Oshocks Support',
+            'order_id' => $orderId,
+            'status' => 'open',
+            'priority' => 'medium',
+        ]);
+
+        if ($user) {
+            $conversation->participants()->attach($user->id, ['joined_at' => now()]);
+        }
+
+        if ($supportUser && $supportUser->id !== $user?->id) {
+            $conversation->participants()->attach($supportUser->id, ['joined_at' => now(), 'is_admin' => true]);
+        }
+
+        // System welcome message
+        Message::create([
+            'conversation_id' => $conversation->id,
+            'sender_id' => null,
+            'body' => 'Welcome to Oshocks Support! You can create a new case anytime by clicking "New Case" below.',
+            'type' => 'system',
+        ]);
+
+        return $conversation;
     }
 
     /**

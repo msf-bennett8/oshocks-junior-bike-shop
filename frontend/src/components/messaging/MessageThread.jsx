@@ -6,6 +6,9 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import MessageBubble from './MessageBubble';
+import CaseThreadHeader from './CaseThreadHeader';
+import CaseCreateModal from './CaseCreateModal';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import {
   ArrowLeft, Phone, Video, MoreVertical, Send, Paperclip,
@@ -41,9 +44,24 @@ const MessageThread = ({
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
   const [showCaseActions, setShowCaseActions] = useState(false);
+  const [showCreateCase, setShowCreateCase] = useState(false);
+  const [activeCaseId, setActiveCaseId] = useState(null);
+  const [conversationCases, setConversationCases] = useState([]);
   const inputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const messagesContainerRef = useRef(null);
+
+  // Fetch cases in this conversation
+  useEffect(() => {
+    if (conversation?.id && conversation?.is_support_case) {
+      api.get(`/conversations/${conversation.id}/cases`).then(res => {
+        setConversationCases(res.data.data || []);
+        // Auto-select first active case
+        const active = res.data.data?.find(c => !['resolved', 'closed'].includes(c.status));
+        if (active) setActiveCaseId(active.case_id);
+      }).catch(() => {});
+    }
+  }, [conversation?.id]);
 
   const otherParticipant = conversation?.other_participant;
   const isOnline = otherParticipant?.is_online;
@@ -247,8 +265,31 @@ const MessageThread = ({
         </div>
       </div>
 
-      {/* ─── CASE INFO BANNER (Support Cases Only) ─── */}
-      {conversation?.support_case && (
+      {/* ─── CASE THREAD HEADERS (All Cases in Conversation) ─── */}
+      {conversation?.is_support_case && conversationCases.length > 0 && (
+        <div className="px-2 py-2 bg-gray-50/50 border-b border-gray-100 flex-shrink-0 max-h-[200px] overflow-y-auto">
+          <div className="flex items-center justify-between px-2 mb-1.5">
+            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Active Cases</span>
+            <button
+              onClick={() => setShowCreateCase(true)}
+              className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full hover:bg-orange-200 transition-colors font-medium"
+            >
+              + New Case
+            </button>
+          </div>
+          {conversationCases.map(c => (
+            <CaseThreadHeader
+              key={c.case_id}
+              supportCase={c}
+              isActive={activeCaseId === c.case_id}
+              onClick={() => setActiveCaseId(c.case_id === activeCaseId ? null : c.case_id)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* ─── CASE INFO BANNER (Legacy Single Case) ─── */}
+      {conversation?.support_case && !conversationCases.length && (
         <div className="px-4 py-2.5 bg-gradient-to-r from-orange-50 to-amber-50 border-b border-orange-100 flex-shrink-0">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2.5">
@@ -354,6 +395,18 @@ const MessageThread = ({
         </div>
       )}
 
+      {/* ─── CREATE CASE MODAL ─── */}
+      {showCreateCase && (
+        <CaseCreateModal
+          conversationId={conversation.id}
+          onClose={() => setShowCreateCase(false)}
+          onCreated={(data) => {
+            setConversationCases(prev => [data.support_case, ...prev]);
+            setActiveCaseId(data.support_case.case_id);
+          }}
+        />
+      )}
+
       {/* ─── MESSAGES ─── */}
       <div 
         ref={messagesContainerRef}
@@ -384,12 +437,30 @@ const MessageThread = ({
                 setContextMenu({ msgId: msg.id, x: e.clientX, y: e.clientY });
               }}
             >
+              {/* Case transition markers */}
+              {msg.case_id && msg.case_id !== activeCaseId && activeCaseId && (
+                <div className="flex justify-center my-1">
+                  <div className="bg-orange-50 border border-orange-100 rounded-lg px-3 py-1 flex items-center gap-1.5 cursor-pointer hover:bg-orange-100 transition-colors"
+                    onClick={() => setActiveCaseId(msg.case_id)}
+                  >
+                    <span className="text-[10px] text-orange-500 font-mono">{msg.case_id}</span>
+                    <span className="text-[10px] text-orange-400">Click to view</span>
+                  </div>
+                </div>
+              )}
+
               {/* System messages */}
               {msg.type === 'system' ? (
                 <div className="flex justify-center my-3">
-                  <div className="bg-gray-100 border border-gray-200 rounded-full px-4 py-1.5 flex items-center gap-2">
-                    <span className="text-gray-400">📌</span>
-                    <span className="text-xs text-gray-500">{msg.body}</span>
+                  <div className={`border rounded-full px-4 py-1.5 flex items-center gap-2 ${
+                    msg.body?.includes('New Case Created') 
+                      ? 'bg-orange-100 border-orange-200' 
+                      : 'bg-gray-100 border-gray-200'
+                  }`}>
+                    <span className={msg.body?.includes('New Case Created') ? 'text-orange-500' : 'text-gray-400'}>📌</span>
+                    <span className={`text-xs ${
+                      msg.body?.includes('New Case Created') ? 'text-orange-700 font-medium' : 'text-gray-500'
+                    }`}>{msg.body}</span>
                     <span className="text-[10px] text-gray-400">{formatTime(msg.created_at)}</span>
                   </div>
                 </div>

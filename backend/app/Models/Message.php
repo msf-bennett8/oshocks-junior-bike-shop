@@ -12,6 +12,7 @@ class Message extends Model
 
     protected $fillable = [
         'conversation_id',
+        'case_id',
         'sender_id',
         'body',
         'type',
@@ -143,5 +144,32 @@ class Message extends Model
     public function supportCaseNote()
     {
         return $this->hasOne(\App\Models\SupportCaseNote::class, 'message_id');
+    }
+
+    /**
+     * Support case this message belongs to (if any)
+     */
+    public function supportCase(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\SupportCase::class, 'case_id');
+    }
+
+    /**
+     * Scope: messages belonging to a specific case
+     */
+    public function scopeForCase($query, ?string $caseId)
+    {
+        if ($caseId) {
+            return $query->where('case_id', $caseId);
+        }
+        return $query->whereNull('case_id');
+    }
+
+    /**
+     * Scope: messages not belonging to any case (general chat)
+     */
+    public function scopeGeneral($query)
+    {
+        return $query->whereNull('case_id');
     }
 }

@@ -27,6 +27,15 @@ const supportCaseService = {
   // Super admin escalation
   getEscalatedCases: () => api.get('/super-admin/support/escalated'),
   handleEscalation: (caseId, action, data = {}) => api.post(`/super-admin/support/${caseId}/handle-escalation`, { action, ...data }),
+
+  // Case threading (hybrid conversational ticketing)
+  createCaseInConversation: (conversationId, data) => api.post(`/conversations/${conversationId}/cases`, data),
+  getConversationCases: (conversationId) => api.get(`/conversations/${conversationId}/cases`),
+  getCaseMessages: (conversationId, caseId) => api.get(`/conversations/${conversationId}/cases/${caseId}/messages`),
+  sendCaseMessage: (conversationId, caseId, body, type = 'text') => api.post(`/conversations/${conversationId}/cases/${caseId}/messages`, { body, type }),
+  deleteCase: (caseId) => api.delete(`/support-cases/${caseId}`),
+  restoreCase: (caseId) => api.post(`/support-cases/${caseId}/restore`),
+  getUserCaseHistory: () => api.get('/user/case-history'),
 };
 
 export default supportCaseService;
