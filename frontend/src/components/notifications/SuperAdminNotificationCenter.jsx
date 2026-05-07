@@ -30,7 +30,7 @@ const priorityConfig = {
   low: { label: 'Low', color: 'text-blue-700', bg: 'bg-blue-100', dot: 'bg-blue-500' },
 };
 
-const SuperAdminNotificationCenter = () => {
+const SuperAdminNotificationCenter = ({ hideTrigger = false }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -195,21 +195,23 @@ const SuperAdminNotificationCenter = () => {
   return (
     <div className="relative">
       {/* Shield Icon with Badge - Desktop Only */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors hidden md:block"
-        title="Admin Alerts"
-      >
-        <Shield className="w-6 h-6" />
-        {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse ring-2 ring-white">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
-        {unreadCount === 0 && (
-          <span className="absolute top-0 right-0 w-2 h-2 bg-green-500 rounded-full ring-2 ring-white" />
-        )}
-      </button>
+      {!hideTrigger && (
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors hidden md:block"
+          title="Admin Alerts"
+        >
+          <Shield className="w-6 h-6" />
+          {unreadCount > 0 && (
+            <span className="absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse ring-2 ring-white">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+          {unreadCount === 0 && (
+            <span className="absolute top-0 right-0 w-2 h-2 bg-green-500 rounded-full ring-2 ring-white" />
+          )}
+        </button>
+      )}
 
       {/* Dropdown/Modal */}
       {isOpen && (

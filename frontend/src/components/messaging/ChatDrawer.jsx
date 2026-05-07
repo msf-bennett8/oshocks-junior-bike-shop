@@ -416,9 +416,9 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
           {isNarrow && !isDragging && (
             <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-blue-400 rounded-full animate-pulse" title="Drag left to expand" />
           )}
-          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3">
             {isNarrow && chatView === 'thread' && activeConversation && (
-              <button 
+              <button
                 onClick={handleBackToList}
                 className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
               >
@@ -426,7 +426,7 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
               </button>
             )}
             <h2 className="font-semibold text-gray-900 text-lg">
-              {isNarrow && chatView === 'thread' && activeConversation 
+              {isNarrow && chatView === 'thread' && activeConversation
                 ? (activeConversation.title || activeConversation.other_participant?.name || 'Chat')
                 : 'Messages'
               }
@@ -437,12 +437,27 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
               </span>
             )}
           </div>
-          <button 
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            {/* Create Chat "+" Button */}
+            <button
+              onClick={() => {
+                // Open create chat modal via global event or callback
+                window.dispatchEvent(new CustomEvent('open-create-chat-modal'));
+              }}
+              className="relative p-2 rounded-full hover:bg-blue-50 transition-colors group"
+              title="New Conversation"
+            >
+              <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
+                <span className="text-white text-xs font-bold">+</span>
+              </div>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content — Split or Mobile style based on width */}
@@ -549,14 +564,28 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
       {view === 'list' ? (
         /* Conversation List View */
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white flex-shrink-0">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white flex-shrink-0">
             <h2 className="font-semibold text-gray-900 text-lg">Messages</h2>
-            <button 
-              onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-1">
+              {/* Create Chat "+" Button */}
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('open-create-chat-modal'));
+                }}
+                className="relative p-2 rounded-full hover:bg-blue-50 transition-colors group"
+                title="New Conversation"
+              >
+                <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">+</span>
+                </div>
+              </button>
+              <button
+                onClick={onClose}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto">
             <ConversationList

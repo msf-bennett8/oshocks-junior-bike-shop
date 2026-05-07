@@ -31,7 +31,7 @@ const iconMap = {
   refund: { icon: Wallet, color: 'text-amber-600', bg: 'bg-amber-100' },
 };
 
-const NotificationCenter = () => {
+const NotificationCenter = ({ hideTrigger = false }) => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState('all');
@@ -58,6 +58,13 @@ const NotificationCenter = () => {
       stopPolling();
     };
   }, [startPolling, stopPolling]);
+
+  // Listen for external open trigger from Quick Actions dropdown
+  useEffect(() => {
+    const handleOpen = () => setIsOpen(true);
+    window.addEventListener('open-notification-center', handleOpen);
+    return () => window.removeEventListener('open-notification-center', handleOpen);
+  }, []);
 
   // Load notifications when dropdown opens
   useEffect(() => {
@@ -175,17 +182,19 @@ const NotificationCenter = () => {
   return (
     <div className="relative">
       {/* Bell Icon */}
-      <button
-        onClick={handleNotificationOpen}
-        className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-      >
-        <Bell className="w-6 h-6" />
-        {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
-      </button>
+      {!hideTrigger && (
+        <button
+          onClick={handleNotificationOpen}
+          className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+        >
+          <Bell className="w-6 h-6" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+        </button>
+      )}
 
       {/* Dropdown/Modal */}
       {isOpen && (

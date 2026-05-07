@@ -12,7 +12,7 @@ import CallOverlay from '../messaging/CallOverlay';
 import CreateChatModal from '../messaging/CreateChatModal';
 import { useWebRTC } from '../../hooks/useWebRTC';
 import { useMessaging } from '../../hooks/useMessaging';
-import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowRight, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, Users, Package2, BarChart3, FolderTree, Heart, Bell, MessageCircle } from 'lucide-react';
+import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Plus, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowRight, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, Users, Package2, BarChart3, FolderTree, Heart, Bell, MessageCircle } from 'lucide-react';
 import SearchBar from '../common/SearchBar';
 import Avatar from '../common/Avatar';
 
@@ -49,7 +49,17 @@ const Navbar = () => {
   // Messaging & Calls state
   const [chatOpen, setChatOpen] = useState(false);
   const [showCreateChat, setShowCreateChat] = useState(false);
+  const [showQuickActions, setShowQuickActions] = useState(false);
   const { incomingCall, dismissIncomingCall, echo, connectionStatus, unreadTotal, setActiveConversation } = useMessaging(user?.id);
+
+    // Listen for open-create-chat-modal event from ChatDrawer
+  useEffect(() => {
+    const handleOpenCreateChat = () => {
+      setShowCreateChat(true);
+    };
+    window.addEventListener('open-create-chat-modal', handleOpenCreateChat);
+    return () => window.removeEventListener('open-create-chat-modal', handleOpenCreateChat);
+  }, []);
 
   // Body class is managed by ChatDrawer.jsx — Navbar just reads it
   const {
@@ -86,6 +96,22 @@ const Navbar = () => {
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showProfileMenu]);
+
+  // Close quick actions dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const dropdown = document.querySelector('.quick-actions-dropdown');
+      const button = document.querySelector('.quick-actions-button');
+      if (dropdown && !dropdown.contains(event.target) && button && !button.contains(event.target)) {
+        setShowQuickActions(false);
+      }
+    };
+
+    if (showQuickActions) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showQuickActions]);
 
   // Handle scroll to show/hide navbar
   useEffect(() => {
@@ -459,12 +485,14 @@ const Navbar = () => {
                 )}
               </Link>
 
-              {/* Notification Icon - Mobile Only - Using NotificationCenter */}
+              {/* Notification Icon - Mobile Only - Using NotificationCenter moved to quick actions
               {isAuthenticated && (
                 <div className="md:hidden">
                   <NotificationCenter />
                 </div>
               )}
+
+              */}
 
               {/* Account - Mobile/Tablet */}
               {isAuthenticated ? (
@@ -724,48 +752,126 @@ const Navbar = () => {
                 </Link>
               )}
 
-              {/* Notification Icon - Authenticated users only - Desktop */}
+              {/* Notification Center - mounted with hidden trigger, modal still works */}
               {isAuthenticated && (
-                <div className="hidden md:block">
-                  <NotificationCenter />
-                </div>
+                <NotificationCenter hideTrigger />
               )}
 
-              {/* Create Chat "+" Button */}
-              <button
-                onClick={() => setShowCreateChat(true)}
-                className="relative p-2 sm:p-2.5 rounded-full hover:bg-blue-50 transition-colors group"
-                title="New Conversation"
-              >
-                <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">+</span>
-                </div>
-              </button>
-
-              {/* Messages Button — Available for guests too */}
-              <button
-                onClick={() => setChatOpen(true)}
-                className="relative p-2 sm:p-2.5 rounded-full hover:bg-orange-50 transition-colors group"
-                title="Messages"
-              >
-                <MessageCircle className="w-5 h-5 text-gray-700 group-hover:text-orange-500 transition-colors" />
-                {/* Unread indicator dot */}
-                {unreadTotal > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
-                    {unreadTotal > 9 ? '9+' : unreadTotal}
-                  </span>
-                )}
-                {/* Connection status dot */}
-                <span className={`absolute bottom-0.5 right-0.5 w-2 h-2 rounded-full border border-white ${
-                  connectionStatus === 'connected' ? 'bg-green-400' :
-                  connectionStatus === 'connecting' ? 'bg-yellow-400 animate-pulse' : 'bg-red-400'
-                }`} />
-              </button>
-
-              {/* SuperAdmin Notification Center - Only for admins - Always render for mobile event handling */}
+              {/* SuperAdmin Notification Center - mounted with hidden trigger, modal still works */}
               {isAuthenticated && (user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'owner') && (
-                <SuperAdminNotificationCenter />
+                <SuperAdminNotificationCenter hideTrigger />
               )}
+
+              {/* Quick Actions Dropdown */}
+              <div className="relative">
+                {/* Desktop: Quick Actions button */}
+                <button
+                  onClick={() => setShowQuickActions(!showQuickActions)}
+                  className="quick-actions-button hidden md:flex items-center gap-2 px-4 py-2 text-white font-medium text-sm shadow-md transition-all hover:shadow-lg"
+                  style={{
+                    background: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)',
+                    borderRadius: '5px',
+                  }}
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Quick Actions</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showQuickActions ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Mobile: Compact Quick Actions button */}
+                <button
+                  onClick={() => setShowQuickActions(!showQuickActions)}
+                  className="quick-actions-button md:hidden flex items-center gap-1 px-2.5 py-1.5 text-white text-xs font-medium shadow-md transition-all hover:shadow-lg active:scale-95"
+                  style={{
+                    background: 'linear-gradient(135deg, rgb(255, 69, 0) 0%, rgb(255, 165, 0) 100%)',
+                    borderRadius: '6px',
+                  }}
+                  title="Quick Actions"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <ChevronDown className={`w-3 h-3 transition-transform ${showQuickActions ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Dropdown Menu */}
+                {showQuickActions && (
+                  <div className={`quick-actions-dropdown absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-fade-in`}>
+                    {/* Messages */}
+                    <button
+                      onClick={() => { setChatOpen(true); setShowQuickActions(false); }}
+                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-orange-50 transition-colors w-full text-left"
+                    >
+                      <div className="relative">
+                        <MessageCircle className="w-5 h-5 text-gray-600" />
+                        {unreadTotal > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
+                            {unreadTotal > 9 ? '9+' : unreadTotal}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <span className="text-gray-900 font-medium">Messages</span>
+                        <p className="text-xs text-gray-500">View conversations</p>
+                      </div>
+                      <span className={`w-2 h-2 rounded-full ${
+                        connectionStatus === 'connected' ? 'bg-green-400' :
+                        connectionStatus === 'connecting' ? 'bg-yellow-400' : 'bg-red-400'
+                      }`} />
+                    </button>
+
+                    {/* New Chat */}
+                    {isAuthenticated && (
+                      <button
+                        onClick={() => { setShowCreateChat(true); setShowQuickActions(false); }}
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 transition-colors w-full text-left"
+                      >
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center">
+                          <Plus className="w-3 h-3 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <span className="text-gray-900 font-medium">New Chat</span>
+                          <p className="text-xs text-gray-500">Start a conversation</p>
+                        </div>
+                      </button>
+                    )}
+
+                    <hr className="my-1 border-gray-100" />
+
+                    {/* Notifications */}
+                    {isAuthenticated && (
+                      <button
+                        onClick={() => { 
+                          setShowQuickActions(false);
+                          window.dispatchEvent(new CustomEvent('open-notification-center'));
+                        }}
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-orange-50 transition-colors w-full text-left"
+                      >
+                        <Bell className="w-5 h-5 text-gray-600" />
+                        <div className="flex-1">
+                          <span className="text-gray-900 font-medium">Notifications</span>
+                          <p className="text-xs text-gray-500">View alerts & updates</p>
+                        </div>
+                      </button>
+                    )}
+
+                    {/* Admin Alerts */}
+                    {isAuthenticated && (user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'owner') && (
+                      <button
+                        onClick={() => {
+                          setShowQuickActions(false);
+                          window.dispatchEvent(new CustomEvent('open-admin-alerts'));
+                        }}
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 transition-colors w-full text-left"
+                      >
+                        <Shield className="w-5 h-5 text-red-600" />
+                        <div className="flex-1">
+                          <span className="text-gray-900 font-medium">Admin Alerts</span>
+                          <p className="text-xs text-gray-500">System notifications</p>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Shop Now Button - Desktop only */}
               <Link
