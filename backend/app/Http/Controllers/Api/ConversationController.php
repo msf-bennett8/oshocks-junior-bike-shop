@@ -311,6 +311,12 @@ class ConversationController extends Controller
                 ],
             ]);
 
+            // Link the existing system message to the case
+            $conversation->messages()
+                ->whereNull('case_id')
+                ->where('type', 'system')
+                ->update(['case_id' => $supportCase->case_id]);
+
             $conversation->update(['support_case_id' => $supportCase->case_id]);
 
             DB::commit();

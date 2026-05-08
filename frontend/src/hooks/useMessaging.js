@@ -496,6 +496,7 @@ export const useMessaging = (userId) => {
       setGuestProfileState(getGuestProfile());
     },
     setActiveConversation,
+    setMessages,        // ✅ ADD THIS
     fetchConversations,
     fetchMessages,
     sendMessage,

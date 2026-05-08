@@ -31,6 +31,7 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
     typingUsers,
     messagesEndRef,
     setActiveConversation,
+    setMessages,        // ✅ ADD THIS
     fetchConversations,
     fetchMessages,
     sendMessage,
@@ -497,6 +498,7 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
                 <MessageThread
                   conversation={activeConversation}
                   messages={messages}
+                  setMessages={setMessages}
                   loading={loading}
                   sending={sending}
                   typingUsers={typingUsers}
@@ -547,6 +549,7 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
                 key={activeConversation.id}
                 conversation={activeConversation}
                 messages={messages}
+                setMessages={setMessages}
                 loading={loading}
                 sending={sending}
                 typingUsers={typingUsers}
@@ -559,6 +562,10 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
                 onResolveCase={(caseId) => console.log('Resolve:', caseId)}
                 onEscalateCase={(caseId) => console.log('Escalate:', caseId)}
                 onCloseCase={(caseId) => console.log('Close:', caseId)}
+                onMessagesAppended={(newMessages) => {
+                  // Append new case messages to the thread immediately
+                  // Use functional update to avoid stale state
+                }}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-gray-400 bg-gray-50/50">
@@ -584,6 +591,10 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
             console.log('[ChatDrawer Desktop] Case created:', data);
             setShowCreateCase(false);
             fetchConversations();
+            // Refresh messages to show the new case messages
+            if (activeConversation?.id) {
+              fetchMessages(activeConversation.id);
+            }
           }}
         />
         )}
@@ -642,6 +653,7 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
           <MessageThread
             conversation={activeConversation}
             messages={messages}
+            setMessages={setMessages}
             loading={loading}
             sending={sending}
             typingUsers={typingUsers}
@@ -661,15 +673,19 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
 
       {/* Create Case Modal - Mobile */}
       {showCreateCase && activeConversation && (
-        <CaseCreateModal
-          conversationId={activeConversation.id}
-          onClose={() => setShowCreateCase(false)}
-          onCreated={(data) => {
-            console.log('[ChatDrawer Mobile] Case created:', data);
-            setShowCreateCase(false);
-            fetchConversations();
-          }}
-        />
+      <CaseCreateModal
+        conversationId={activeConversation.id}
+        onClose={() => setShowCreateCase(false)}
+        onCreated={(data) => {
+          console.log('[ChatDrawer Mobile] Case created:', data);
+          setShowCreateCase(false);
+          fetchConversations();
+          // Refresh messages to show the new case messages
+          if (activeConversation?.id) {
+            fetchMessages(activeConversation.id);
+          }
+        }}
+      />
       )}
     </div>
   );

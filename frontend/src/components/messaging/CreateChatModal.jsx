@@ -196,8 +196,15 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
     setError(null);
 
     try {
-      const payload = {
+      // Step 1: Create or get the support conversation
+      const convPayload = {
         type: selectedCaseType === 'order_issue' ? 'order_support' : 'support',
+      };
+      const convRes = await api.post('/conversations', convPayload);
+      const conversation = convRes.data.data;
+
+      // Step 2: Create the case IN the conversation (this creates messages too)
+      const casePayload = {
         case_type: selectedCaseType,
         subject: caseForm.subject,
         description: caseForm.description,
@@ -207,11 +214,19 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
         }),
       };
 
-      const res = await api.post('/conversations', payload);
-      const conversation = res.data.data;
-      const supportCase = res.data.support_case;
+      const caseRes = await api.post(`/conversations/${conversation.id}/cases`, casePayload);
+      
+      // Merge conversation with case messages for immediate display
+      const conversationWithMessages = {
+        ...conversation,
+        messages: [
+          caseRes.data.data.system_message,
+          caseRes.data.data.user_message,
+        ],
+        support_case: caseRes.data.data.support_case,
+      };
 
-      onConversationCreated?.(conversation, false, supportCase);
+      onConversationCreated?.(conversationWithMessages, false, caseRes.data.data.support_case);
       onClose();
     } catch (err) {
       console.error('Failed to create support case:', err);

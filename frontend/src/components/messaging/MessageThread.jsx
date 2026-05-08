@@ -22,6 +22,7 @@ const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🎉'];
 const MessageThread = ({
   conversation,
   messages,
+  setMessages,        // ✅ ADD THIS
   loading,
   sending,
   typingUsers,
@@ -35,6 +36,7 @@ const MessageThread = ({
   onResolveCase,
   onEscalateCase,
   onCloseCase,
+  onMessagesAppended,
 }) => {
   const { user } = useAuth();
   const [input, setInput] = useState('');
@@ -396,13 +398,20 @@ const MessageThread = ({
       )}
 
       {/* ─── CREATE CASE MODAL ─── */}
-      {showCreateCase && (
+            {showCreateCase && (
         <CaseCreateModal
           conversationId={conversation.id}
           onClose={() => setShowCreateCase(false)}
           onCreated={(data) => {
             setConversationCases(prev => [data.support_case, ...prev]);
             setActiveCaseId(data.support_case.case_id);
+            
+            if (data.system_message) {
+              setMessages(prev => [...prev, data.system_message]);
+            }
+            if (data.user_message) {
+              setMessages(prev => [...prev, data.user_message]);
+            }
           }}
         />
       )}

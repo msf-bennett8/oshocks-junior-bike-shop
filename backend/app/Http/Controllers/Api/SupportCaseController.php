@@ -124,17 +124,7 @@ class SupportCaseController extends Controller
                 ]);
             }
 
-            // Create initial message
-            $message = Message::create([
-                'conversation_id' => $conversation->id,
-                'sender_id' => $user?->id,
-                'body' => $request->description ?? 'Support case created: ' . $request->subject,
-                'type' => 'text',
-                'guest_session_id' => $guestSessionId,
-                'sender_name' => $user?->name ?? 'Guest',
-            ]);
-
-            // Create support case (observer will generate case_id)
+            // Create support case FIRST (observer will generate case_id)
             $supportCase = SupportCase::create([
                 'conversation_id' => $conversation->id,
                 'user_id' => $user?->id,
@@ -149,6 +139,27 @@ class SupportCaseController extends Controller
                 'metadata' => array_merge($request->metadata ?? [], [
                     'ip' => request()->ip(),
                     'user_agent' => request()->userAgent(),
+                ]),
+            ]);
+
+            // Create initial message WITH case_id now available
+            $messageBody = $request->description
+                ? "**Subject:** {$request->subject}\n\n**Description:**\n{$request->description}"
+                : "**Subject:** {$request->subject}";
+
+            $message = Message::create([
+                'conversation_id' => $conversation->id,
+                'case_id' => $supportCase->case_id, // ✅ NOW LINKED TO CASE
+                'sender_id' => $user?->id,
+                'body' => $messageBody,
+                'type' => 'text',
+                'guest_session_id' => $guestSessionId,
+                'sender_name' => $user?->name ?? 'Guest',
+            ]);
+
+            // Link initial message ID back to case metadata
+            $supportCase->update([
+                'metadata' => array_merge($supportCase->metadata ?? [], [
                     'initial_message_id' => $message->id,
                 ]),
             ]);
@@ -166,8 +177,9 @@ class SupportCaseController extends Controller
                 'success' => true,
                 'message' => 'Support case created successfully.',
                 'data' => [
-                    'conversation' => $conversation->fresh(['participants', 'messages']),
-                    'support_case' => $supportCase->fresh(['tags']),
+                    'conversation' => $conversation->fresh(['participants', 'messages.sender', 'messages.supportCase']),
+                    'support_case' => $supportCase->fresh(['tags', 'caseMessages']),
+                    'initial_message' => $message,
                 ],
                 'case_id' => $supportCase->case_id,
             ], 201);

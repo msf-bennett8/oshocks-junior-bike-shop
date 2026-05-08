@@ -100,6 +100,21 @@ class CaseThreadController extends Controller
                 'type' => 'system',
             ]);
 
+            // Create the user's actual message with subject and description
+            $userMessageBody = !empty($validated['description'])
+                ? "**Subject:** {$validated['subject']}\n\n**Description:**\n{$validated['description']}"
+                : "**Subject:** {$validated['subject']}";
+
+            $userMessage = Message::create([
+                'conversation_id' => $conversation->id,
+                'case_id' => $supportCase->case_id,
+                'sender_id' => $user?->id,
+                'body' => $userMessageBody,
+                'type' => 'text',
+                'guest_session_id' => $guestSessionId,
+                'sender_name' => $user?->name ?? 'Guest',
+            ]);
+
             \Log::info('Case created successfully in thread', [
                 'case_id' => $supportCase->case_id,
                 'conversation_id' => $conversation->id,
@@ -114,6 +129,7 @@ class CaseThreadController extends Controller
                 'data' => [
                     'support_case' => $supportCase->fresh(['user', 'order']),
                     'system_message' => $systemMessage,
+                    'user_message' => $userMessage,
                 ],
                 'case_id' => $supportCase->case_id,
             ], 201);
@@ -128,6 +144,13 @@ class CaseThreadController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create case: ' . $e->getMessage(),
+                'debug' => [
+                    'error_class' => get_class($e),
+                    'error_message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString(),
+                ],
             ], 500);
         }
     }

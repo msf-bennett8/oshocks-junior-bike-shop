@@ -17,7 +17,9 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
   const [orderNumber, setOrderNumber] = useState('');
   const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (e) => {
+  // (debug removed)
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     console.log('[CaseCreateModal] handleSubmit called');
@@ -33,21 +35,33 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
     try {
       // Ensure guest session is initialized for anonymous users
       console.log('[CaseCreateModal] Loading guest session utils...');
-      let guestSessionUtils;
-      try {
-        guestSessionUtils = await import('../../utils/guestSession');
-      } catch (importErr) {
-        console.error('[CaseCreateModal] Failed to import guestSession:', importErr);
-        guestSessionUtils = {
-          getGuestSessionId: () => localStorage.getItem('oshocks_guest_session_id'),
-          getGuestProfile: () => ({ name: localStorage.getItem('oshocks_guest_name'), email: null }),
-          setGuestProfile: (name) => localStorage.setItem('oshocks_guest_name', name),
-          generateAnonName: () => `guest_${Math.random().toString(36).slice(2, 8)}`,
-        };
-      }
+      
+      // Inline guest session utils to avoid dynamic import issues in production
+      const getGuestSessionId = () => {
+        let sessionId = localStorage.getItem('oshocks_guest_session_id');
+        if (!sessionId) {
+          sessionId = 'guest_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+          localStorage.setItem('oshocks_guest_session_id', sessionId);
+        }
+        return sessionId;
+      };
+      
+      const getGuestProfile = () => ({
+        name: localStorage.getItem('oshocks_guest_name'),
+        email: localStorage.getItem('oshocks_guest_email'),
+      });
+      
+      const setGuestProfile = (name, email) => {
+        if (name) localStorage.setItem('oshocks_guest_name', name);
+        if (email) localStorage.setItem('oshocks_guest_email', email);
+      };
+      
+      const generateAnonName = () => {
+        const digits = Math.floor(1000 + Math.random() * 9000);
+        return 'anon' + digits;
+      };
+      
       console.log('[CaseCreateModal] Guest session utils loaded');
-
-      const { getGuestSessionId, getGuestProfile, setGuestProfile, generateAnonName } = guestSessionUtils;
 
       const guestId = getGuestSessionId();
       console.log('[CaseCreateModal] Guest session ID:', guestId);
