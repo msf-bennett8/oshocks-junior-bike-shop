@@ -32,12 +32,17 @@ return [
     | system used by the application. Typically, Eloquent is utilized.
     |
     | Supported: "session"
+    | Bennett added "sanctum" guard for API token authentication
     |
     */
 
     'guards' => [
         'web' => [
             'driver' => 'session',
+            'provider' => 'users',
+        ],
+        'sanctum' => [
+            'driver' => 'sanctum',
             'provider' => 'users',
         ],
     ],

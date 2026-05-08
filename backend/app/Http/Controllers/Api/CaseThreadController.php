@@ -20,7 +20,7 @@ class CaseThreadController extends Controller
     public function createCaseInConversation(Request $request, Conversation $conversation): JsonResponse
     {
         try {
-            $user = Auth::user();
+            $user = Auth::guard('sanctum')->user() ?? Auth::user();
             $guestSessionId = !$user ? $request->header('X-Guest-Session-ID') : null;
 
             \Log::info('Creating case in conversation', [

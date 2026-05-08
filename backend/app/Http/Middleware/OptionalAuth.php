@@ -17,17 +17,26 @@ class OptionalAuth
     {
         // If Authorization header exists, try to authenticate with Sanctum
         if ($request->bearerToken()) {
-            $user = Auth::guard('sanctum')->user();
-            
-            if ($user) {
-                // Set the user on the request so $request->user() works in controllers
-                $request->setUserResolver(function ($guard = null) use ($user) {
-                    return $user;
-                });
+            try {
+                $user = Auth::guard('sanctum')->user();
+
+                if ($user) {
+                    // Set sanctum as the default guard so Auth::user() works everywhere
+                    Auth::shouldUse('sanctum');
+
+                    // Set the user on the request so $request->user() works in controllers
+                    $request->setUserResolver(function ($guard = null) use ($user) {
+                        return $user;
+                    });
+                }
+            } catch (\Exception $e) {
+                \Log::warning('OptionalAuth: Failed to authenticate sanctum token', [
+                    'error' => $e->getMessage(),
+                ]);
             }
             // If token invalid/expired, continue as guest — no 401
         }
-        
+
         // Continue regardless of auth status
         return $next($request);
     }
