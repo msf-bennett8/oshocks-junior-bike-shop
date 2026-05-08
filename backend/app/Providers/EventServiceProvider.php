@@ -167,6 +167,7 @@ class EventServiceProvider extends ServiceProvider
         WishlistItem::observe(WishlistObserver::class);
         \App\Models\Order::observe(\App\Observers\OrderObserver::class);
         \App\Models\Product::observe(\App\Observers\ProductObserver::class);
+        \App\Models\SupportCase::observe(\App\Observers\SupportCaseObserver::class);
     }
 
     /**

@@ -29,7 +29,18 @@ mkdir -p /tmp/storage/app/public
 
 chmod -R 775 /tmp/storage
 
-# Link to storage
+# CRITICAL: Symlink Laravel's storage path to /tmp/storage so logs/framework files write to writable disk
+# Remove existing storage directory or symlink first to avoid conflicts
+rm -rf storage
+ln -s /tmp/storage storage
+chmod -R 775 storage
+
+# Also ensure bootstrap/cache is writable
+mkdir -p /tmp/bootstrap/cache
+rm -rf bootstrap/cache
+ln -s /tmp/bootstrap/cache bootstrap/cache
+
+# Link to public storage
 php artisan storage:link --force 2>/dev/null || true
 
 echo "=== MaxMind Geolocation Setup ==="

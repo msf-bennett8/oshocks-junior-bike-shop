@@ -19,31 +19,48 @@ class CaseThreadController extends Controller
      */
     public function createCaseInConversation(Request $request, Conversation $conversation): JsonResponse
     {
-        $user = Auth::user();
-        $guestSessionId = !$user ? $request->header('X-Guest-Session-ID') : null;
+        try {
+            $user = Auth::user();
+            $guestSessionId = !$user ? $request->header('X-Guest-Session-ID') : null;
 
-        $validated = $request->validate([
-            'case_type' => ['required', 'in:order_issue,account_help,report_problem,delivery_question'],
-            'subject' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:5000'],
-            'priority' => ['nullable', 'in:low,medium,high,urgent'],
-            'order_number' => ['nullable', 'string', 'max:50'],
-        ]);
+            \Log::info('Creating case in conversation', [
+                'conversation_id' => $conversation->id,
+                'user_id' => $user?->id,
+                'guest_session_id' => $guestSessionId,
+                'request_data' => $request->all(),
+            ]);
 
-        // Authorization
-        if (!$this->canAccessConversation($user, $guestSessionId, $conversation)) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
-        }
+            $validated = $request->validate([
+                'case_type' => ['required', 'in:order_issue,account_help,report_problem,delivery_question'],
+                'subject' => ['required', 'string', 'max:255'],
+                'description' => ['nullable', 'string', 'max:5000'],
+                'priority' => ['nullable', 'in:low,medium,high,urgent'],
+                'order_number' => ['nullable', 'string', 'max:50'],
+            ]);
 
-        // Only support conversations can have threaded cases
-        if (!$conversation->isSupportCase()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only support conversations can have cases.',
-            ], 422);
-        }
+            // Authorization
+            if (!$this->canAccessConversation($user, $guestSessionId, $conversation)) {
+                \Log::warning('Unauthorized case creation attempt', [
+                    'conversation_id' => $conversation->id,
+                    'user_id' => $user?->id,
+                    'guest_session_id' => $guestSessionId,
+                ]);
+                return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+            }
 
-        return DB::transaction(function () use ($request, $user, $guestSessionId, $conversation, $validated) {
+            // Only support conversations can have threaded cases
+            if (!$conversation->isSupportCase()) {
+                \Log::warning('Non-support conversation case creation rejected', [
+                    'conversation_id' => $conversation->id,
+                    'conversation_type' => $conversation->type,
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only support conversations can have cases.',
+                ], 422);
+            }
+
+            return DB::transaction(function () use ($request, $user, $guestSessionId, $conversation, $validated) {
             // Resolve order if order_number provided
             $orderId = null;
             if (!empty($validated['order_number'])) {
@@ -83,6 +100,11 @@ class CaseThreadController extends Controller
                 'type' => 'system',
             ]);
 
+            \Log::info('Case created successfully in thread', [
+                'case_id' => $supportCase->case_id,
+                'conversation_id' => $conversation->id,
+            ]);
+
             // Broadcast
             broadcast(new \App\Events\SupportCaseUpdated($supportCase, 'created_in_thread', $user?->id));
 
@@ -96,6 +118,18 @@ class CaseThreadController extends Controller
                 'case_id' => $supportCase->case_id,
             ], 201);
         });
+        } catch (\Exception $e) {
+            \Log::error('Failed to create case in conversation', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'conversation_id' => $conversation->id,
+                'request_data' => $request->all(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create case: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

@@ -577,14 +577,15 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
 
         {/* Create Case Modal */}
         {showCreateCase && activeConversation && (
-          <CaseCreateModal
-            conversationId={activeConversation.id}
-            onClose={() => setShowCreateCase(false)}
-            onCreated={() => {
-              setShowCreateCase(false);
-              fetchConversations();
-            }}
-          />
+        <CaseCreateModal
+          conversationId={activeConversation.id}
+          onClose={() => setShowCreateCase(false)}
+          onCreated={(data) => {
+            console.log('[ChatDrawer Desktop] Case created:', data);
+            setShowCreateCase(false);
+            fetchConversations();
+          }}
+        />
         )}
       </div>
     </div>
@@ -663,7 +664,8 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
         <CaseCreateModal
           conversationId={activeConversation.id}
           onClose={() => setShowCreateCase(false)}
-          onCreated={() => {
+          onCreated={(data) => {
+            console.log('[ChatDrawer Mobile] Case created:', data);
             setShowCreateCase(false);
             fetchConversations();
           }}

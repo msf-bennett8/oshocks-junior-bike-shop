@@ -17,43 +17,79 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
   const [orderNumber, setOrderNumber] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+    const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!type || !subject.trim()) return;
-
-    // Ensure guest session is initialized for anonymous users
-    // This guarantees X-Guest-Session-ID and X-Guest-Name headers are sent
-    const { getGuestSessionId, getGuestProfile, setGuestProfile, generateAnonName } = await import('../../utils/guestSession');
-    getGuestSessionId(); // Creates session if missing
-    const profile = getGuestProfile();
-    if (!profile.name) {
-      setGuestProfile(generateAnonName(), profile.email);
+    e.stopPropagation();
+    console.log('[CaseCreateModal] handleSubmit called');
+    if (!type || !subject.trim()) {
+      console.log('[CaseCreateModal] Validation failed - type or subject missing');
+      alert('Please select a case type and enter a subject.');
+      return;
     }
 
     setLoading(true);
+    console.log('[CaseCreateModal] Loading state set to true');
+
     try {
+      // Ensure guest session is initialized for anonymous users
+      console.log('[CaseCreateModal] Loading guest session utils...');
+      let guestSessionUtils;
+      try {
+        guestSessionUtils = await import('../../utils/guestSession');
+      } catch (importErr) {
+        console.error('[CaseCreateModal] Failed to import guestSession:', importErr);
+        guestSessionUtils = {
+          getGuestSessionId: () => localStorage.getItem('oshocks_guest_session_id'),
+          getGuestProfile: () => ({ name: localStorage.getItem('oshocks_guest_name'), email: null }),
+          setGuestProfile: (name) => localStorage.setItem('oshocks_guest_name', name),
+          generateAnonName: () => `guest_${Math.random().toString(36).slice(2, 8)}`,
+        };
+      }
+      console.log('[CaseCreateModal] Guest session utils loaded');
+
+      const { getGuestSessionId, getGuestProfile, setGuestProfile, generateAnonName } = guestSessionUtils;
+
+      const guestId = getGuestSessionId();
+      console.log('[CaseCreateModal] Guest session ID:', guestId);
+
+      const profile = getGuestProfile();
+      console.log('[CaseCreateModal] Guest profile:', profile);
+
+      if (!profile.name) {
+        const anonName = generateAnonName();
+        setGuestProfile(anonName, profile.email);
+        console.log('[CaseCreateModal] Generated guest name:', anonName);
+      }
       const payload = {
         case_type: type,
         subject: subject.trim(),
         description: description.trim(),
         priority,
       };
-      
-      // Only include order_number if it has a value
+
       const trimmedOrder = orderNumber.trim();
       if (trimmedOrder) {
         payload.order_number = trimmedOrder;
       }
 
-      const { data } = await api.post(`/conversations/${conversationId}/cases`, payload);
+      console.log('[CaseCreateModal] Sending POST to /conversations/' + conversationId + '/cases with payload:', payload);
+      console.log('[CaseCreateModal] API baseURL:', api.defaults.baseURL);
 
-      onCreated?.(data.data);
+      const response = await api.post(`/conversations/${conversationId}/cases`, payload);
+      console.log('[CaseCreateModal] API response:', response);
+      console.log('[CaseCreateModal] Response data:', response.data);
+
+      onCreated?.(response.data.data);
       onClose();
     } catch (err) {
-      console.error('Case creation failed:', err.response?.data || err.message);
-      alert(err.response?.data?.message || 'Failed to create case');
+      console.error('[CaseCreateModal] Case creation failed:', err);
+      console.error('[CaseCreateModal] Error response:', err.response);
+      console.error('[CaseCreateModal] Error message:', err.message);
+      console.error('[CaseCreateModal] Error config:', err.config);
+      alert('Case creation failed: ' + (err.response?.data?.message || err.message || 'Unknown error'));
     } finally {
       setLoading(false);
+      console.log('[CaseCreateModal] Loading state set to false');
     }
   };
 

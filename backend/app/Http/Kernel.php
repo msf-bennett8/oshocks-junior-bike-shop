@@ -41,7 +41,7 @@ class Kernel extends HttpKernel
         'api' => [
             \App\Http\Middleware\ForceJsonResponse::class, // Force JSON for API routes
             \Illuminate\Http\Middleware\HandleCors::class, // CRITICAL for OAuth
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class, // REMOVED: Breaks cross-origin Bearer token auth on Railway/Vercel
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],

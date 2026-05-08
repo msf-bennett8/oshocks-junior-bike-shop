@@ -215,17 +215,19 @@ api.interceptors.response.use(
         });
       }
       
-      if (error.response.status === 401) {
+        if (error.response.status === 401) {
         console.warn('🔒 Unauthorized - clearing token');
         // Only redirect to login if NOT on explicitly public endpoints
         // Messaging routes now support guests via X-Guest-Session-ID, so 401 here
         // means the backend rejected a bad token (expired/invalid), not missing auth
-        const isPublicEndpoint = config.url?.includes('/support-user') || 
+        const isPublicEndpoint = config.url?.includes('/support-user') ||
                                 config.url?.includes('/products') ||
                                 config.url?.includes('/categories') ||
                                 config.url?.includes('/search') ||
                                 config.url?.includes('/auth/login') ||
-                                config.url?.includes('/auth/register');
+                                config.url?.includes('/auth/register') ||
+                                config.url?.includes('/conversations') || // Guest messaging routes
+                                config.url?.includes('/calls'); // Guest call routes
         if (!isPublicEndpoint) {
           localStorage.removeItem('authToken');
           window.location.href = '/login';
