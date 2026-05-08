@@ -23,6 +23,7 @@ const supportCaseService = {
   closeCase: (caseId) => api.post(`/support-queue/${caseId}/close`),
   reopenCase: (caseId, reason) => api.post(`/support-queue/${caseId}/reopen`, { reason }),
   getCaseNotes: (caseId) => api.get(`/support-queue/${caseId}/notes`),
+  getHistory: (params = {}) => api.get('/support-queue/history', { params }),
 
   // Super admin escalation
   getEscalatedCases: () => api.get('/super-admin/support/escalated'),

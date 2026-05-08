@@ -38,7 +38,7 @@ class ConversationController extends Controller
             $query->where(function ($q) use ($user) {
                 $q->whereHas('participants', function ($pq) use ($user) {
                     $pq->where('user_id', $user->id);
-                })->orWhere('user_id', $user->id);
+                })->orWhere('created_by', $user->id);
             });
         } elseif ($guestSessionId) {
             $query->where('guest_session_id', $guestSessionId);
@@ -251,7 +251,7 @@ class ConversationController extends Controller
         // Find existing
         $existing = Conversation::where('order_id', $order->id)
             ->where('type', 'order_support')
-            ->where('user_id', $user->id)
+            ->where('created_by', $user->id)
             ->where('status', '!=', 'resolved')
             ->first();
 

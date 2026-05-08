@@ -17,7 +17,7 @@ class CaseThreadController extends Controller
     /**
      * Create a new case within an existing conversation (threaded ticketing)
      */
-    public function createCaseInConversation(Request $request, int $conversationId): JsonResponse
+    public function createCaseInConversation(Request $request, Conversation $conversation): JsonResponse
     {
         $user = Auth::user();
         $guestSessionId = !$user ? $request->header('X-Guest-Session-ID') : null;
@@ -29,8 +29,6 @@ class CaseThreadController extends Controller
             'priority' => ['nullable', 'in:low,medium,high,urgent'],
             'order_number' => ['nullable', 'string', 'max:50'],
         ]);
-
-        $conversation = Conversation::findOrFail($conversationId);
 
         // Authorization
         if (!$this->canAccessConversation($user, $guestSessionId, $conversation)) {
@@ -103,12 +101,10 @@ class CaseThreadController extends Controller
     /**
      * Get all cases in a conversation with their messages
      */
-    public function getConversationCases(Request $request, int $conversationId): JsonResponse
+    public function getConversationCases(Request $request, Conversation $conversation): JsonResponse
     {
         $user = Auth::user();
         $guestSessionId = !$user ? $request->header('X-Guest-Session-ID') : null;
-
-        $conversation = Conversation::findOrFail($conversationId);
 
         if (!$this->canAccessConversation($user, $guestSessionId, $conversation)) {
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
@@ -127,12 +123,10 @@ class CaseThreadController extends Controller
     /**
      * Get messages for a specific case within a conversation
      */
-    public function getCaseMessages(Request $request, int $conversationId, string $caseId): JsonResponse
+    public function getCaseMessages(Request $request, Conversation $conversation, string $caseId): JsonResponse
     {
         $user = Auth::user();
         $guestSessionId = !$user ? $request->header('X-Guest-Session-ID') : null;
-
-        $conversation = Conversation::findOrFail($conversationId);
         $case = SupportCase::findOrFail($caseId);
 
         if (!$this->canAccessConversation($user, $guestSessionId, $conversation)) {
@@ -164,7 +158,7 @@ class CaseThreadController extends Controller
     /**
      * Send a message associated with a specific case
      */
-    public function sendCaseMessage(Request $request, int $conversationId, string $caseId): JsonResponse
+    public function sendCaseMessage(Request $request, Conversation $conversation, string $caseId): JsonResponse
     {
         $user = Auth::user();
         $guestSessionId = !$user ? $request->header('X-Guest-Session-ID') : null;
@@ -173,8 +167,6 @@ class CaseThreadController extends Controller
             'body' => ['required', 'string', 'max:5000'],
             'type' => ['in:text,image,file,system'],
         ]);
-
-        $conversation = Conversation::findOrFail($conversationId);
         $case = SupportCase::findOrFail($caseId);
 
         if (!$this->canAccessConversation($user, $guestSessionId, $conversation)) {
@@ -193,12 +185,20 @@ class CaseThreadController extends Controller
             ], 422);
         }
 
+        // Resolve guest name for display from request headers (sent by frontend)
+        $guestName = null;
+        if (!$user && $guestSessionId) {
+            $guestName = $request->header('X-Guest-Name')
+                ?? $request->input('sender_name')
+                ?? 'Guest';
+        }
+
         $message = Message::create([
             'conversation_id' => $conversation->id,
             'case_id' => $caseId,
             'sender_id' => $user?->id,
             'guest_session_id' => $guestSessionId,
-            'sender_name' => $user ? null : getGuestProfile()['name'] ?? 'Guest',
+            'sender_name' => $user ? null : $guestName,
             'body' => $validated['body'],
             'type' => $validated['type'] ?? 'text',
         ]);
@@ -302,15 +302,23 @@ class CaseThreadController extends Controller
 
     private function canAccessConversation(?User $user, ?string $guestSessionId, Conversation $conversation): bool
     {
-        if ($user && in_array($user->role, ['admin', 'super_admin'])) {
+        // Admin/superadmin can access ALL conversations
+        if ($user && in_array($user->role, ['admin', 'super_admin', 'owner', 'support_agent'])) {
             return true;
         }
 
+        // Authenticated user access
         if ($user) {
-            return $conversation->participants()->where('user_id', $user->id)->exists()
-                || $conversation->created_by === $user->id;
+            $isParticipant = $conversation->participants()->where('user_id', $user->id)->exists();
+            $isCreator = $conversation->created_by === $user->id;
+            return $isParticipant || $isCreator;
         }
 
-        return $conversation->guest_session_id === $guestSessionId;
+        // Guest access via session ID
+        if ($guestSessionId) {
+            return $conversation->guest_session_id === $guestSessionId;
+        }
+
+        return false;
     }
 }

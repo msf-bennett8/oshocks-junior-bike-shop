@@ -264,6 +264,10 @@ export const useMessaging = (userId) => {
     const effectiveName = guestName || profile.name || generateAnonName();
     const effectiveEmail = guestEmail || profile.email || null;
     
+    // Ensure guest session exists first
+    getGuestSessionId();
+    
+    // Update profile
     setGuestProfile(effectiveName, effectiveEmail);
     setGuestProfileState(getGuestProfile());
 

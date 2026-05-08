@@ -24,30 +24,8 @@ const api = axios.create({
   },
 });
 
-// Add X-Socket-ID header for Laravel Echo toOthers() support
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
-  const guestSessionId = localStorage.getItem('oshocks_guest_session_id');
-  
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  if (guestSessionId) {
-    config.headers['X-Guest-Session-ID'] = guestSessionId;
-  }
-  
-  // Critical: send socket ID so Laravel knows who to exclude with toOthers()
-  // Pusher socket ID is accessed via connector.pusher.connection.socket_id
-  const socketId = window.Echo?.connector?.pusher?.connection?.socket_id;
-  if (socketId) {
-    config.headers['X-Socket-ID'] = socketId;
-  }
-  
-  return config;
-});
-
-// NOTE: Auth headers are already set by the interceptor above (including X-Socket-ID)
-// This second interceptor is REMOVED to prevent overwriting
+// NOTE: Single request interceptor below handles all headers (auth, guest, socket, audit)
+// Do NOT add another interceptor above — the one below is the single source of truth
 
 // ============================================================================
 // RETRY CONFIGURATION with audit logging
@@ -95,7 +73,7 @@ export const executeWithRetry = async (requestFn, endpoint) => {
   throw lastError;
 };
 
-// Request interceptor - Add auth token and effective role
+// Request interceptor - Add auth token, guest session, and audit headers
 api.interceptors.request.use(
   (config) => {
     console.log('📤 Outgoing Request:', {
@@ -107,16 +85,25 @@ api.interceptors.request.use(
     });
     
     const token = localStorage.getItem('authToken');
+    const guestSessionId = localStorage.getItem('oshocks_guest_session_id');
+    const guestName = localStorage.getItem('oshocks_guest_name');
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log('🔐 Auth token added to request');
     }
 
-    // Guest session for anonymous chat
-    const guestSessionId = localStorage.getItem('oshocks_guest_session_id');
-    if (guestSessionId && !token) {
+    // Guest session for anonymous chat — ALWAYS send if available, even with token
+    // (backend uses it to link guest history even for authenticated users)
+    if (guestSessionId) {
       config.headers['X-Guest-Session-ID'] = guestSessionId;
       console.log('👤 Guest session ID added:', guestSessionId.slice(0, 8) + '...');
+    }
+    
+    // Guest name for display in messages and cases
+    if (guestName && !token) {
+      config.headers['X-Guest-Name'] = guestName;
+      console.log('👤 Guest name added:', guestName);
     }
     
     // ============================================================================
@@ -148,6 +135,20 @@ api.interceptors.request.use(
       sessionId: sessionId.slice(0, 8) + '...',
       requestId: requestId.slice(0, 8) + '...',
     });
+    
+    // Critical: send socket ID so Laravel knows who to exclude with toOthers()
+    let socketId = null;
+    try {
+      // Pusher / Reverb socket ID extraction
+      socketId = window.Echo?.connector?.pusher?.connection?.socket_id 
+        || window.Echo?.connector?.socket?.id  // Reverb
+        || window.Echo?.socketId;              // Direct property
+    } catch (e) {
+      socketId = null;
+    }
+    if (socketId) {
+      config.headers['X-Socket-ID'] = socketId;
+    }
     
     // Add effective role header for role switching (super_admin only)
     const switchedRole = localStorage.getItem('oshocks_switched_role');

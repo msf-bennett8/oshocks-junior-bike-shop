@@ -641,15 +641,16 @@ Route::prefix('v1/support-cases')->middleware(['auth:sanctum', 'audit'])->group(
 // ============================================================================
 // CASE THREAD ROUTES (Hybrid Conversational Ticketing — New)
 // ============================================================================
-Route::prefix('v1/conversations')->middleware(['auth:sanctum', 'audit'])->group(function () {
-    // Create a new case within an existing conversation
-    Route::post('/{conversationId}/cases', [\App\Http\Controllers\Api\CaseThreadController::class, 'createCaseInConversation']);
-    // Get all cases in a conversation
-    Route::get('/{conversationId}/cases', [\App\Http\Controllers\Api\CaseThreadController::class, 'getConversationCases']);
-    // Get messages for a specific case
-    Route::get('/{conversationId}/cases/{caseId}/messages', [\App\Http\Controllers\Api\CaseThreadController::class, 'getCaseMessages']);
-    // Send message to a specific case
-    Route::post('/{conversationId}/cases/{caseId}/messages', [\App\Http\Controllers\Api\CaseThreadController::class, 'sendCaseMessage']);
+// Guest-accessible case creation (uses optional auth + X-Guest-Session-ID header)
+Route::prefix('v1/conversations')->middleware(['api', 'optional', 'audit'])->group(function () {
+    // Create a new case within an existing conversation (guests + auth)
+    Route::post('/{conversation}/cases', [\App\Http\Controllers\Api\CaseThreadController::class, 'createCaseInConversation']);
+    // Get all cases in a conversation (guests + auth)
+    Route::get('/{conversation}/cases', [\App\Http\Controllers\Api\CaseThreadController::class, 'getConversationCases']);
+    // Get messages for a specific case (guests + auth)
+    Route::get('/{conversation}/cases/{caseId}/messages', [\App\Http\Controllers\Api\CaseThreadController::class, 'getCaseMessages']);
+    // Send message to a specific case (guests + auth)
+    Route::post('/{conversation}/cases/{caseId}/messages', [\App\Http\Controllers\Api\CaseThreadController::class, 'sendCaseMessage']);
 });
 
 // Get full user case history (all cases ever)
@@ -672,6 +673,7 @@ Route::prefix('v1/support-queue')->middleware(['auth:sanctum', 'audit'])->group(
     Route::delete('/{caseId}', [\App\Http\Controllers\Api\SupportQueueController::class, 'destroy']);
     Route::post('/{caseId}/restore', [\App\Http\Controllers\Api\SupportQueueController::class, 'restore']);
     Route::get('/my-full-history', [\App\Http\Controllers\Api\SupportQueueController::class, 'getMyFullHistory']);
+    Route::get('/history', [\App\Http\Controllers\Api\SupportQueueController::class, 'getHistory']);
 });
 
 // Super Admin escalation review

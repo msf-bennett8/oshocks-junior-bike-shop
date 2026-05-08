@@ -21,19 +21,36 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
     e.preventDefault();
     if (!type || !subject.trim()) return;
 
+    // Ensure guest session is initialized for anonymous users
+    // This guarantees X-Guest-Session-ID and X-Guest-Name headers are sent
+    const { getGuestSessionId, getGuestProfile, setGuestProfile, generateAnonName } = await import('../../utils/guestSession');
+    getGuestSessionId(); // Creates session if missing
+    const profile = getGuestProfile();
+    if (!profile.name) {
+      setGuestProfile(generateAnonName(), profile.email);
+    }
+
     setLoading(true);
     try {
-      const { data } = await api.post(`/conversations/${conversationId}/cases`, {
+      const payload = {
         case_type: type,
         subject: subject.trim(),
         description: description.trim(),
         priority,
-        order_number: orderNumber.trim() || undefined,
-      });
+      };
+      
+      // Only include order_number if it has a value
+      const trimmedOrder = orderNumber.trim();
+      if (trimmedOrder) {
+        payload.order_number = trimmedOrder;
+      }
+
+      const { data } = await api.post(`/conversations/${conversationId}/cases`, payload);
 
       onCreated?.(data.data);
       onClose();
     } catch (err) {
+      console.error('Case creation failed:', err.response?.data || err.message);
       alert(err.response?.data?.message || 'Failed to create case');
     } finally {
       setLoading(false);

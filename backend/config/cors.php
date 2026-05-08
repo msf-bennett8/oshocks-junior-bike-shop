@@ -2,9 +2,9 @@
 
 return [
     'paths' => ['api/*', 'sanctum/csrf-cookie', 'auth/*'],
-    
+
     'allowed_methods' => ['*'],
-    
+
     'allowed_origins' => [
         'https://oshocks-junior-bike-shop.vercel.app',
         'https://oshocks-backend-production.up.railway.app',
@@ -13,12 +13,12 @@ return [
         'http://127.0.0.1:3000',
         'http://127.0.0.1:5173',
     ],
-    
+
     'allowed_origins_patterns' => [
         '#^https://oshocks-junior-bike-shop-.*\.vercel\.app$#',
         '#^https://.*\.up\.railway\.app$#',
     ],
-    
+
     'allowed_headers' => [
         'Content-Type',
         'Authorization',
@@ -42,11 +42,13 @@ return [
         'x-device-fingerprint',
         'Access-Control-Allow-Origin',
         'x-guest-session-id',
+        'x-guest-name',
+        'x-guest-email',
     ],
-    
+
     'exposed_headers' => ['Authorization'],
-    
+
     'max_age' => 86400,
-    
+
     'supports_credentials' => true,
 ];

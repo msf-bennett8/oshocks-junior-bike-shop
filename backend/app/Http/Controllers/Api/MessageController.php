@@ -74,11 +74,19 @@ class MessageController extends Controller
             ], 200);
         }
 
+        // Resolve guest name from headers or request body
+        $guestName = null;
+        if (!$user && $guestSessionId) {
+            $guestName = $request->header('X-Guest-Name')
+                ?? $validated['sender_name']
+                ?? 'Guest';
+        }
+
         $message = Message::create([
             'conversation_id' => $conversation->id,
             'sender_id' => $user?->id,
             'guest_session_id' => $user ? null : $guestSessionId,
-            'sender_name' => $validated['sender_name'] ?? ($user ? null : 'Guest'),
+            'sender_name' => $user ? null : $guestName,
             'sender_email' => $validated['sender_email'] ?? null,
             'body' => $validated['body'],
             'type' => $validated['type'] ?? 'text',
@@ -116,7 +124,11 @@ class MessageController extends Controller
             'socket_id' => $socketId,
             'to_others' => $socketId ? 'yes' : 'no (sender will receive own broadcast)',
         ]);
-        broadcast(new MessageSent($message))->toOthers();
+        try {
+            broadcast(new MessageSent($message))->toOthers();
+        } catch (\Exception $e) {
+            \Log::warning('Broadcast failed: ' . $e->getMessage());
+        }
 
         $response = [
             'data' => $message->load('sender'),

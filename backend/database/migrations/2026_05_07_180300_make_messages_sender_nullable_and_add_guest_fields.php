@@ -6,38 +6,35 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('messages', function (Blueprint $table) {
-            // Make sender_id nullable (drop FK first, then recreate)
-            $table->dropForeign(['sender_id']);
-            $table->unsignedBigInteger('sender_id')->nullable()->change();
-            $table->foreign('sender_id')->references('id')->on('users')->nullOnDelete();
+            // Only add guest_session_id if it doesn't exist
+            if (!Schema::hasColumn('messages', 'guest_session_id')) {
+                $table->string('guest_session_id', 64)->nullable()->after('sender_id');
+            }
 
-            // Add guest session support
-            $table->string('guest_session_id', 64)->nullable()->after('sender_id');
-            $table->string('sender_name', 100)->nullable()->after('guest_session_id');
+            // Make sender_id nullable (idempotent)
+            if (Schema::hasColumn('messages', 'sender_id')) {
+                $table->unsignedBigInteger('sender_id')->nullable()->change();
+            }
 
-            // Index for guest lookups
-            $table->index('guest_session_id');
+            // Add sender_name if missing (different from guest_name)
+            if (!Schema::hasColumn('messages', 'sender_name')) {
+                $table->string('sender_name', 100)->nullable()->after('guest_session_id');
+            }
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('messages', function (Blueprint $table) {
-            $table->dropIndex(['guest_session_id']);
-            $table->dropColumn(['guest_session_id', 'sender_name']);
-
-            $table->dropForeign(['sender_id']);
-            $table->unsignedBigInteger('sender_id')->nullable(false)->change();
-            $table->foreign('sender_id')->references('id')->on('users')->onDelete('cascade');
+            if (Schema::hasColumn('messages', 'guest_session_id')) {
+                $table->dropColumn('guest_session_id');
+            }
+            if (Schema::hasColumn('messages', 'sender_name')) {
+                $table->dropColumn('sender_name');
+            }
         });
     }
 };

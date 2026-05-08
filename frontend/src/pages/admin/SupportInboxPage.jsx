@@ -16,6 +16,7 @@ const TABS = [
   { key: 'escalated', label: 'Escalated', icon: AlertTriangle, color: 'text-red-600' },
   { key: 'resolved', label: 'Resolved', icon: CheckCircle, color: 'text-green-600' },
   { key: 'all', label: 'All Active', icon: Clock, color: 'text-amber-600' },
+  { key: 'history', label: 'History', icon: Clock, color: 'text-slate-600' },
 ];
 
 const TYPE_FILTERS = [
@@ -38,6 +39,7 @@ const SupportInboxPage = () => {
     resolveCase,
     closeCase,
     escalateCase,
+    fetchHistory,
   } = useSupportCases();
 
   const [activeTab, setActiveTab] = useState('unclaimed');
@@ -60,6 +62,11 @@ const SupportInboxPage = () => {
     if (activeTab === 'my-cases') params.mine = true;
     if (activeTab === 'escalated') params.status = 'escalated';
     if (activeTab === 'resolved') params.status = 'resolved';
+    if (activeTab === 'history') {
+      await fetchHistory({ case_type: typeFilter !== 'all' ? typeFilter : undefined });
+      await fetchStats();
+      return;
+    }
     if (typeFilter !== 'all') params.queue = typeFilter;
 
     await fetchQueue(params);

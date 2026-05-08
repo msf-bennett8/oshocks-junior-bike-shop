@@ -560,4 +560,45 @@ class SupportQueueController extends Controller
             'data' => $cases,
         ]);
     }
+
+    /**
+     * Get resolved/closed case history (admin/agent view)
+     */
+    public function getHistory(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        if (!$user->canHandleSupportCases()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+
+        $query = SupportCase::with(['user', 'assignedAgent', 'resolvedBy', 'closedBy', 'order'])
+            ->history();
+
+        // Filter by case type (accepts 'queue' from frontend or 'case_type')
+        $caseType = $request->queue ?? $request->case_type;
+        if ($caseType) {
+            $query->byType($caseType);
+        }
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('case_id', 'like', "%{$search}%")
+                  ->orWhere('subject', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($uq) use ($search) {
+                      $uq->where('name', 'like', "%{$search}%")
+                         ->orWhere('email', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $cases = $query->orderBy('resolved_at', 'desc')
+                       ->orderBy('closed_at', 'desc')
+                       ->paginate($request->per_page ?? 25);
+
+        return response()->json([
+            'success' => true,
+            'data' => $cases,
+        ]);
+    }
 }

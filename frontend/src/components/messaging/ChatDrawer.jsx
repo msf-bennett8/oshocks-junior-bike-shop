@@ -463,7 +463,7 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
           </div>
         </div>
         {/* New Case button when in thread with active conversation */}
-        {activeConversation?.is_support_case && (
+        {(activeConversation?.is_support_case || activeConversation?.type === 'support' || activeConversation?.type === 'order_support') && (
           <button
             onClick={() => setShowCreateCase(true)}
             className="mx-4 mb-2 py-1.5 bg-orange-50 border border-orange-200 text-orange-700 rounded-lg text-xs font-medium hover:bg-orange-100 transition-colors flex items-center justify-center gap-1.5"

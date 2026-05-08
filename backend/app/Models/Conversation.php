@@ -192,8 +192,7 @@ class Conversation extends Model
      */
     public static function getOrCreateSupportConversation(?User $user, ?string $guestSessionId, ?int $orderId = null): self
     {
-        $query = self::whereIn('type', ['support', 'order_support'])
-            ->whereNull('deleted_at');
+        $query = self::whereIn('type', ['support', 'order_support']);
 
         if ($user) {
             $query->where(function ($q) use ($user) {

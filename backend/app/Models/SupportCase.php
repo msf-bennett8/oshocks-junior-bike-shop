@@ -147,6 +147,11 @@ class SupportCase extends Model
         return $query->whereNotIn('status', ['resolved', 'closed']);
     }
 
+    public function scopeHistory($query)
+    {
+        return $query->whereIn('status', ['resolved', 'closed']);
+    }
+
     // Accessors
     public function getIsEscalatedAttribute(): bool
     {

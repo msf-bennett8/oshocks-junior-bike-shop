@@ -69,14 +69,22 @@ export const useSupportCases = () => {
   // Resolve case
   const resolveCase = useCallback(async (caseId, resolutionNotes) => {
     const res = await supportCaseService.resolveCase(caseId, resolutionNotes);
-    setCases(prev => prev.filter(c => c.case_id !== caseId));
+    setCases(prev => prev.map(c =>
+      c.case_id === caseId
+        ? { ...c, status: 'resolved', resolved_at: new Date().toISOString(), resolution_notes: resolutionNotes }
+        : c
+    ));
     return res.data;
   }, []);
 
   // Close case
   const closeCase = useCallback(async (caseId) => {
     const res = await supportCaseService.closeCase(caseId);
-    setCases(prev => prev.filter(c => c.case_id !== caseId));
+    setCases(prev => prev.map(c =>
+      c.case_id === caseId
+        ? { ...c, status: 'closed', closed_at: new Date().toISOString() }
+        : c
+    ));
     return res.data;
   }, []);
 
@@ -125,6 +133,22 @@ export const useSupportCases = () => {
     return res.data;
   }, []);
 
+  // Fetch history (resolved + closed cases)
+  const fetchHistory = useCallback(async (params = {}) => {
+    setLoading(true);
+    try {
+      const res = await supportCaseService.getHistory(params);
+      setCases(res.data.data?.data || res.data.data || []);
+      setError(null);
+      return res.data;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch case history');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Real-time updates
   useEffect(() => {
     if (typeof subscribeToChannel !== 'function') return;
@@ -158,7 +182,8 @@ export const useSupportCases = () => {
     getConversationCases,
     deleteCase,
     restoreCase,
-    getUserCaseHistory
+    getUserCaseHistory,
+    fetchHistory
   };
 };
 
