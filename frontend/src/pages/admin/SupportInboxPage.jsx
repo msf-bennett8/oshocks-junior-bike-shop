@@ -1273,7 +1273,7 @@ const HistoryCaseModal = ({ supportCase, onClose }) => {
 };
 
 // ============================================================================
-// NOTES TAB — Internal staff notes
+// NOTES TAB — Case notes (staff + customers)
 // ============================================================================
 const NotesTab = ({ caseData, user, onRefresh }) => {
   const [notes, setNotes] = useState([]);
@@ -1281,6 +1281,9 @@ const NotesTab = ({ caseData, user, onRefresh }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isPrivate, setIsPrivate] = useState(true);
+
+  const isStaff = user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'support_agent';
+  const isOwner = caseData.user_id === user?.id;
 
   useEffect(() => {
     loadNotes();
@@ -1305,15 +1308,41 @@ const NotesTab = ({ caseData, user, onRefresh }) => {
     if (!newNote.trim() || saving) return;
     setSaving(true);
     try {
-      await supportCaseService.addNote(caseData.case_id, newNote.trim(), isPrivate);
+      // Staff can set privacy; customers' notes are always public to staff
+      const privacy = isStaff ? isPrivate : false;
+      await supportCaseService.addNote(caseData.case_id, newNote.trim(), privacy);
       setNewNote('');
+      // Reset privacy to default for staff
+      if (isStaff) setIsPrivate(true);
       await loadNotes();
       onRefresh?.();
     } catch (err) {
       console.error('Failed to add note:', err);
+      alert(err.response?.data?.message || 'Failed to add note');
     } finally {
       setSaving(false);
     }
+  };
+
+  // Filter notes: staff see all; customers see only non-private notes + their own
+  const visibleNotes = isStaff ? notes : notes.filter(n => !n.is_private || n.agent_id === user?.id);
+
+  const getRoleBadge = (role) => {
+    const configs = {
+      super_admin: { label: 'Super Admin', color: 'bg-red-100 text-red-700' },
+      admin: { label: 'Admin', color: 'bg-purple-100 text-purple-700' },
+      support_agent: { label: 'Agent', color: 'bg-blue-100 text-blue-700' },
+      seller: { label: 'Seller', color: 'bg-orange-100 text-orange-700' },
+      user: { label: 'Customer', color: 'bg-green-100 text-green-700' },
+    };
+    const config = configs[role] || { label: role?.replace('_', ' ') || 'User', color: 'bg-gray-100 text-gray-600' };
+    return <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${config.color}`}>{config.label}</span>;
+  };
+
+  const getNoteBg = (note) => {
+    if (note.is_private) return 'bg-gray-50 border-gray-200';
+    if (note.creator_role === 'user' || note.creator_role === 'seller') return 'bg-green-50 border-green-200';
+    return 'bg-blue-50 border-blue-200';
   };
 
   return (
@@ -1322,11 +1351,10 @@ const NotesTab = ({ caseData, user, onRefresh }) => {
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
             <StickyNote className="w-4 h-4" />
-            Internal Notes
+            Case Notes
           </h3>
-          <span className="text-xs text-gray-500 flex items-center gap-1">
-            <Lock className="w-3 h-3" />
-            Staff only
+          <span className="text-xs text-gray-500">
+            {visibleNotes.length} note{visibleNotes.length !== 1 ? 's' : ''}
           </span>
         </div>
 
@@ -1334,31 +1362,47 @@ const NotesTab = ({ caseData, user, onRefresh }) => {
           <div className="flex justify-center py-8">
             <Loader2 className="w-6 h-6 text-orange-500 animate-spin" />
           </div>
-        ) : notes.length === 0 ? (
+        ) : visibleNotes.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
             <StickyNote className="w-10 h-10 mx-auto mb-2 opacity-30" />
             <p className="text-sm">No notes yet</p>
-            <p className="text-xs text-gray-400 mt-1">Add a note below</p>
+            <p className="text-xs text-gray-400 mt-1">
+              {isStaff ? 'Add an internal note below' : 'Add a note to communicate with support'}
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
-            {notes.map((note) => (
-              <div key={note.id} className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+            {visibleNotes.map((note) => (
+              <div key={note.id} className={`border rounded-xl p-4 ${getNoteBg(note)}`}>
                 <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-yellow-200 flex items-center justify-center text-yellow-800 text-xs font-bold">
-                      {note.agent?.name?.[0]?.toUpperCase() || 'S'}
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                      note.is_private
+                        ? 'bg-gray-200 text-gray-600'
+                        : note.creator_role === 'user' || note.creator_role === 'seller'
+                          ? 'bg-green-200 text-green-800'
+                          : 'bg-blue-200 text-blue-800'
+                    }`}>
+                      {note.creator_initials || note.agent?.name?.[0]?.toUpperCase() || '?'}
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-gray-900">{note.agent?.name || 'Staff'}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-semibold text-gray-900">{note.creator_name || note.agent?.name || 'Unknown'}</p>
+                        {getRoleBadge(note.creator_role || note.agent?.role)}
+                      </div>
                       <p className="text-[10px] text-gray-500">{new Date(note.created_at).toLocaleString()}</p>
                     </div>
                   </div>
-                  {note.is_private && (
-                    <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                      <Lock className="w-2.5 h-2.5" /> Private
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {note.is_private && (
+                      <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                        <Lock className="w-2.5 h-2.5" /> Private
+                      </span>
+                    )}
+                    {note.agent_id === user?.id && (
+                      <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">You</span>
+                    )}
+                  </div>
                 </div>
                 <p className="text-sm text-gray-700 whitespace-pre-wrap">{note.content}</p>
               </div>
@@ -1368,38 +1412,47 @@ const NotesTab = ({ caseData, user, onRefresh }) => {
       </div>
 
       {/* Add Note Input */}
-      <div className="p-4 border-t border-gray-200 bg-white">
-        <div className="space-y-2">
-          <textarea
-            value={newNote}
-            onChange={(e) => setNewNote(e.target.value)}
-            placeholder="Add an internal note..."
-            rows={3}
-            className="w-full px-4 py-3 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 resize-none"
-          />
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isPrivate}
-                onChange={(e) => setIsPrivate(e.target.checked)}
-                className="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
-              />
-              <span className="flex items-center gap-1">
-                <Lock className="w-3 h-3" /> Private (staff only)
-              </span>
-            </label>
-            <button
-              onClick={handleAddNote}
-              disabled={!newNote.trim() || saving}
-              className="px-4 py-2 bg-yellow-600 text-white rounded-lg text-sm font-medium hover:bg-yellow-700 disabled:opacity-50 transition-colors flex items-center gap-2"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              Add Note
-            </button>
+      {(isStaff || isOwner) && (
+        <div className="p-4 border-t border-gray-200 bg-white">
+          <div className="space-y-2">
+            <textarea
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              placeholder={isStaff ? "Add an internal note..." : "Add a note for the support team..."}
+              rows={3}
+              className="w-full px-4 py-3 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
+            <div className="flex items-center justify-between">
+              {isStaff && (
+                <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isPrivate}
+                    onChange={(e) => setIsPrivate(e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span className="flex items-center gap-1">
+                    <Lock className="w-3 h-3" /> Private (staff only)
+                  </span>
+                </label>
+              )}
+              {!isStaff && (
+                <span className="text-xs text-gray-500 flex items-center gap-1">
+                  <Unlock className="w-3 h-3" /> Visible to support team
+                </span>
+              )}
+              <button
+                onClick={handleAddNote}
+                disabled={!newNote.trim() || saving}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                Add Note
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

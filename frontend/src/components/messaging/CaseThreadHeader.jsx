@@ -63,9 +63,17 @@ export const CaseThreadHeader = ({ supportCase, isActive, onClick }) => {
       </div>
 
       {supportCase.order && (
-        <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-gray-400">
-          <Package className="w-3 h-3" />
-          <span className="font-mono">{supportCase.order.order_number}</span>
+        <div className="mt-1.5 flex flex-col gap-0.5 text-[10px] text-gray-400">
+          <div className="flex items-center gap-1.5">
+            <Package className="w-3 h-3" />
+            <span className="font-mono">{supportCase.order.order_number || supportCase.order.order_display}</span>
+          </div>
+          {supportCase.order.purchase_id && (
+            <div className="flex items-center gap-1.5 pl-4">
+              <span className="text-gray-300">ID:</span>
+              <span className="font-mono text-gray-500">{supportCase.order.purchase_id}</span>
+            </div>
+          )}
         </div>
       )}
     </div>

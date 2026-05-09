@@ -357,7 +357,8 @@ class SupportCaseController extends Controller
     }
 
     /**
-     * Add internal note to case
+     * Add note to case — available to all authenticated users
+     * Staff notes default to private; customer notes are always visible to staff
      */
     public function addNote(Request $request, string $caseId): JsonResponse
     {
@@ -370,15 +371,22 @@ class SupportCaseController extends Controller
         $user = Auth::user();
         $case = SupportCase::findOrFail($caseId);
 
-        if (!$user->canHandleSupportCases()) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        // Authorization: case owner OR staff can add notes
+        $isStaff = $user->canHandleSupportCases();
+        $isOwner = $case->user_id === $user->id;
+
+        if (!$isStaff && !$isOwner) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized to add notes to this case.'], 403);
         }
 
+        // Staff notes default to private; customer notes are never private
+        $isPrivate = $isStaff ? ($request->is_private ?? true) : false;
+
         $note = SupportCaseNote::create([
-            'case_id' => $caseId,
+            'case_id' => $case->id,
             'agent_id' => $user->id,
             'content' => $request->content,
-            'is_private' => $request->is_private ?? true,
+            'is_private' => $isPrivate,
             'message_id' => $request->message_id,
         ]);
 

@@ -20,6 +20,8 @@ class SupportCaseNote extends Model
         'message_id',
     ];
 
+    protected $appends = ['creator_name', 'creator_role', 'creator_initials', 'is_staff_note'];
+
     protected $casts = [
         'is_private' => 'boolean',
     ];
@@ -37,5 +39,37 @@ class SupportCaseNote extends Model
     public function message(): BelongsTo
     {
         return $this->belongsTo(Message::class);
+    }
+
+    /**
+     * Get the creator's display name
+     */
+    public function getCreatorNameAttribute(): string
+    {
+        return $this->agent?->name ?? 'Unknown';
+    }
+
+    /**
+     * Get the creator's role
+     */
+    public function getCreatorRoleAttribute(): ?string
+    {
+        return $this->agent?->role ?? null;
+    }
+
+    /**
+     * Get the creator's initials for avatar
+     */
+    public function getCreatorInitialsAttribute(): string
+    {
+        return $this->agent?->name ? strtoupper(substr($this->agent->name, 0, 1)) : '?';
+    }
+
+    /**
+     * Check if the note creator is staff
+     */
+    public function getIsStaffNoteAttribute(): bool
+    {
+        return in_array($this->agent?->role, ['admin', 'super_admin', 'support_agent']);
     }
 }
