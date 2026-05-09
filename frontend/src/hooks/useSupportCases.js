@@ -14,7 +14,8 @@ export const useSupportCases = () => {
     setLoading(true);
     try {
       const res = await supportCaseService.getMyCases(params);
-      setCases(res.data.data?.data || res.data.data || []);
+      const data = res.data?.data?.data || res.data?.data;
+      setCases(Array.isArray(data) ? data : []);
       setError(null);
       return res.data;
     } catch (err) {
@@ -30,7 +31,8 @@ export const useSupportCases = () => {
     setLoading(true);
     try {
       const res = await supportCaseService.getQueue(params);
-      setCases(res.data.data?.data || res.data.data || []);
+      const data = res.data?.data?.data || res.data?.data;
+      setCases(Array.isArray(data) ? data : []);
       setError(null);
       return res.data;
     } catch (err) {
@@ -88,6 +90,17 @@ export const useSupportCases = () => {
     return res.data;
   }, []);
 
+  // Reopen case
+  const reopenCase = useCallback(async (caseId, reason) => {
+    const res = await supportCaseService.reopenCase(caseId, reason);
+    setCases(prev => prev.map(c =>
+      c.case_id === caseId
+        ? { ...c, status: 'in_progress', closed_at: null, resolved_at: null }
+        : c
+    ));
+    return res.data;
+  }, []);
+
   // Escalate case
   const escalateCase = useCallback(async (caseId, reason) => {
     const res = await supportCaseService.escalateCase(caseId, reason);
@@ -138,7 +151,8 @@ export const useSupportCases = () => {
     setLoading(true);
     try {
       const res = await supportCaseService.getHistory(params);
-      setCases(res.data.data?.data || res.data.data || []);
+      const data = res.data?.data?.data || res.data?.data;
+      setCases(Array.isArray(data) ? data : []);
       setError(null);
       return res.data;
     } catch (err) {
@@ -152,13 +166,13 @@ export const useSupportCases = () => {
   // Real-time updates
   useEffect(() => {
     if (typeof subscribeToChannel !== 'function') return;
-    
+
     const unsub = subscribeToChannel('support-queue', 'support-case.updated', (payload) => {
       setCases(prev => prev.map(c =>
         c.case_id === payload.case_id ? { ...c, ...payload } : c
       ));
     });
-    
+
     return () => {
       if (typeof unsub === 'function') unsub();
     };
@@ -176,6 +190,7 @@ export const useSupportCases = () => {
     assignCase,
     resolveCase,
     closeCase,
+    reopenCase,
     escalateCase,
     createCase,
     createCaseInConversation,

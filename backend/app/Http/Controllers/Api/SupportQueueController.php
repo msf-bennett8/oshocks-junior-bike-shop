@@ -135,7 +135,8 @@ class SupportQueueController extends Controller
 
         $case->update([
             'assigned_to' => $request->agent_id ?? $user->id,
-            'status' => 'open',
+            'status' => 'in_progress',
+            'claimed_at' => now(),
         ]);
 
         // Broadcast claim event
@@ -266,6 +267,17 @@ class SupportQueueController extends Controller
             'resolution_notes' => $request->resolution_notes,
         ]);
 
+        // Add resolution message to conversation
+        if ($case->conversation_id) {
+            \App\Models\Message::create([
+                'conversation_id' => $case->conversation_id,
+                'case_id' => $case->case_id,
+                'sender_id' => null,
+                'body' => "✅ Case Resolved\n\nResolution: " . $request->resolution_notes,
+                'type' => 'system',
+            ]);
+        }
+
         // Broadcast resolve event
         broadcast(new \App\Events\SupportCaseUpdated($case, 'resolved', $user->id));
 
@@ -302,6 +314,17 @@ class SupportQueueController extends Controller
             'closed_by' => $user->id,
         ]);
 
+        // Add close message to conversation
+        if ($case->conversation_id) {
+            \App\Models\Message::create([
+                'conversation_id' => $case->conversation_id,
+                'case_id' => $case->case_id,
+                'sender_id' => null,
+                'body' => "🔒 Case closed by {$user->name}",
+                'type' => 'system',
+            ]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Case closed.',
@@ -328,15 +351,16 @@ class SupportQueueController extends Controller
             ], 422);
         }
 
-        // Only user who created it or admin can reopen
-        if ($case->user_id !== $user->id && !$user->hasAdminAccess()) {
+        // Admin, assigned agent, or case creator can reopen
+        if (!$user->hasAdminAccess() && !$case->isAssignedTo($user) && $case->user_id !== $user->id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
         }
 
         $case->update([
-            'status' => 'open',
+            'status' => 'in_progress',
             'resolved_at' => null,
             'resolved_by' => null,
+            'resolution_notes' => null,
             'closed_at' => null,
             'closed_by' => null,
         ]);
@@ -348,6 +372,19 @@ class SupportQueueController extends Controller
             'content' => "Case reopened. Reason: {$request->reason}",
             'is_private' => false,
         ]);
+
+        // Add reopen message to conversation
+        if ($case->conversation_id) {
+            \App\Models\Message::create([
+                'conversation_id' => $case->conversation_id,
+                'case_id' => $case->case_id,
+                'sender_id' => null,
+                'body' => "🔄 Case reopened by {$user->name}. Reason: {$request->reason}",
+                'type' => 'system',
+            ]);
+        }
+
+        broadcast(new \App\Events\SupportCaseUpdated($case, 'reopened', $user->id));
 
         return response()->json([
             'success' => true,
