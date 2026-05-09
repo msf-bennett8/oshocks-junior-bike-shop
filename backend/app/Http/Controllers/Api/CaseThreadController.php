@@ -195,20 +195,34 @@ class CaseThreadController extends Controller
             return response()->json(['success' => false, 'message' => 'Case does not belong to this conversation.'], 403);
         }
 
-        $messages = $conversation->messages()
-            ->where(function ($q) use ($caseId) {
-                $q->where('case_id', $caseId)
-                  ->orWhereNull('case_id'); // Include general messages too
-            })
+        $includeFull = $request->boolean('include_full_conversation', false);
+
+        $query = $conversation->messages()
             ->with('sender')
-            ->orderBy('created_at', 'asc')
-            ->cursorPaginate(50);
+            ->orderBy('created_at', 'asc');
+
+        if (!$includeFull) {
+            // Default: only case messages + system messages
+            $query->where(function ($q) use ($caseId) {
+                $q->where('case_id', $caseId)
+                  ->orWhereIn('type', ['system', 'case_created', 'case_resolved', 'case_closed', 'case_escalated']);
+            });
+        }
+
+        $messages = $query->get()->map(function ($msg) use ($caseId) {
+            $msg->is_case_message = $msg->case_id === $caseId;
+            return $msg;
+        });
 
         return response()->json([
             'success' => true,
-            'data' => $messages->items(),
-            'next_cursor' => $messages->nextCursor()?->encode(),
-            'case' => $case,
+            'data' => $messages,
+            'meta' => [
+                'case_id' => $caseId,
+                'include_full_conversation' => $includeFull,
+                'case_message_count' => $messages->where('is_case_message', true)->count(),
+                'total_message_count' => $messages->count(),
+            ],
         ]);
     }
 

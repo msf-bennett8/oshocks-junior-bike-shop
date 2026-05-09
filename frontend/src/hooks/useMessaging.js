@@ -114,11 +114,16 @@ export const useMessaging = (userId) => {
     }
   }, []);
 
-  const fetchMessages = useCallback(async (conversationId, cursor = null) => {
+  const fetchMessages = useCallback(async (conversationId, cursor = null, includeFullConversation = false) => {
     if (!conversationId) return;
     setLoading(true);
     try {
-      const url = `/conversations/${conversationId}/messages${cursor ? `?cursor=${cursor}` : ''}`;
+      let url = `/conversations/${conversationId}/messages`;
+      const params = new URLSearchParams();
+      if (cursor) params.append('cursor', cursor);
+      if (includeFullConversation) params.append('include_full_conversation', 'true');
+      if (params.toString()) url += `?${params.toString()}`;
+
       const res = await api.get(url);
       // Handle both paginated and direct array responses
       const responseData = res.data.data || res.data || [];
@@ -126,6 +131,24 @@ export const useMessaging = (userId) => {
       setMessages(prev => cursor ? [...newMessages, ...prev] : newMessages);
     } catch (err) {
       console.error('Failed to fetch messages:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Fetch case-specific messages with optional full conversation context
+  const fetchCaseMessages = useCallback(async (conversationId, caseId, includeFullConversation = false) => {
+    if (!conversationId || !caseId) return;
+    setLoading(true);
+    try {
+      const res = await api.get(`/conversations/${conversationId}/cases/${caseId}/messages`, {
+        params: { include_full_conversation: includeFullConversation }
+      });
+      const responseData = res.data.data || [];
+      const newMessages = Array.isArray(responseData) ? responseData : responseData.data || [];
+      setMessages(prev => newMessages);
+    } catch (err) {
+      console.error('Failed to fetch case messages:', err);
     } finally {
       setLoading(false);
     }
@@ -499,6 +522,7 @@ export const useMessaging = (userId) => {
     setMessages,        // ✅ ADD THIS
     fetchConversations,
     fetchMessages,
+    fetchCaseMessages,
     sendMessage,
     retryMessage,
     startConversation,

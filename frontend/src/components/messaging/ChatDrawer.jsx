@@ -512,6 +512,17 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
                   onResolveCase={(caseId) => console.log('Resolve:', caseId)}
                   onEscalateCase={(caseId) => console.log('Escalate:', caseId)}
                   onCloseCase={(caseId) => console.log('Close:', caseId)}
+                  onLoadFullConversation={async (conversationId, caseId, includeFull) => {
+                    const url = `/conversations/${conversationId}/cases/${caseId}/messages`;
+                    const params = includeFull ? { include_full_conversation: true } : {};
+                    try {
+                      const res = await api.get(url, { params });
+                      const data = res.data?.data;
+                      setMessages(Array.isArray(data) ? data : []);
+                    } catch (err) {
+                      console.error('Failed to load messages:', err);
+                    }
+                  }}
                 />
               </div>
             )}
@@ -565,6 +576,18 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
                 onMessagesAppended={(newMessages) => {
                   // Append new case messages to the thread immediately
                   // Use functional update to avoid stale state
+                }}
+                onLoadFullConversation={async (conversationId, caseId, includeFull) => {
+                  // Fetch case messages with or without full conversation context
+                  const url = `/conversations/${conversationId}/cases/${caseId}/messages`;
+                  const params = includeFull ? { include_full_conversation: true } : {};
+                  try {
+                    const res = await api.get(url, { params });
+                    const data = res.data?.data;
+                    setMessages(Array.isArray(data) ? data : []);
+                  } catch (err) {
+                    console.error('Failed to load messages:', err);
+                  }
                 }}
               />
             ) : (
@@ -667,6 +690,17 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
             onResolveCase={(caseId) => console.log('Resolve:', caseId)}
             onEscalateCase={(caseId) => console.log('Escalate:', caseId)}
             onCloseCase={(caseId) => console.log('Close:', caseId)}
+            onLoadFullConversation={async (conversationId, caseId, includeFull) => {
+              const url = `/conversations/${conversationId}/cases/${caseId}/messages`;
+              const params = includeFull ? { include_full_conversation: true } : {};
+              try {
+                const res = await api.get(url, { params });
+                const data = res.data?.data;
+                setMessages(Array.isArray(data) ? data : []);
+              } catch (err) {
+                console.error('Failed to load messages:', err);
+              }
+            }}
           />
         </div>
       )}

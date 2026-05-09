@@ -37,6 +37,7 @@ const MessageThread = ({
   onEscalateCase,
   onCloseCase,
   onMessagesAppended,
+  onLoadFullConversation,
 }) => {
   const { user } = useAuth();
   const [input, setInput] = useState('');
@@ -47,6 +48,8 @@ const MessageThread = ({
   const [contextMenu, setContextMenu] = useState(null);
   const [showCaseActions, setShowCaseActions] = useState(false);
   const [showCreateCase, setShowCreateCase] = useState(false);
+  const [showFullConversation, setShowFullConversation] = useState(false);
+  const [loadingFullConversation, setLoadingFullConversation] = useState(false);
   const [activeCaseId, setActiveCaseId] = useState(null);
   const [conversationCases, setConversationCases] = useState([]);
   const inputRef = useRef(null);
@@ -446,8 +449,8 @@ const MessageThread = ({
                 setContextMenu({ msgId: msg.id, x: e.clientX, y: e.clientY });
               }}
             >
-              {/* Case transition markers */}
-              {msg.case_id && msg.case_id !== activeCaseId && activeCaseId && (
+              {/* Non-case message indicator (when showing full conversation) */}
+              {showFullConversation && msg.case_id && msg.case_id !== activeCaseId && activeCaseId && (
                 <div className="flex justify-center my-1">
                   <div className="bg-orange-50 border border-orange-100 rounded-lg px-3 py-1 flex items-center gap-1.5 cursor-pointer hover:bg-orange-100 transition-colors"
                     onClick={() => setActiveCaseId(msg.case_id)}
@@ -479,6 +482,7 @@ const MessageThread = ({
                   isOwn={isOwn}
                   showAvatar={showAvatar}
                   isLastInGroup={isLastInGroup}
+                  isContextMessage={showFullConversation && msg.case_id !== activeCaseId && msg.type !== 'system'}
                   onReply={() => handleReply(msg)}
                   onEdit={() => handleEdit(msg)}
                   onDelete={() => handleDelete(msg)}
@@ -517,6 +521,63 @@ const MessageThread = ({
           </div>
         )}
         
+        {/* ─── SEE FULL CONVERSATION BUTTON ─── */}
+        {conversation?.is_support_case && !showFullConversation && onLoadFullConversation && (
+          <div className="flex justify-center py-4">
+            <button
+              onClick={async () => {
+                setLoadingFullConversation(true);
+                try {
+                  await onLoadFullConversation?.(conversation.id, activeCaseId, true);
+                  setShowFullConversation(true);
+                } catch (err) {
+                  console.error('Failed to load full conversation:', err);
+                } finally {
+                  setLoadingFullConversation(false);
+                }
+              }}
+              disabled={loadingFullConversation}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-full border border-gray-200 transition-colors disabled:opacity-50"
+            >
+              {loadingFullConversation ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  See Full Conversation
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* ─── FULL CONVERSATION LOADED INDICATOR ─── */}
+        {showFullConversation && (
+          <div className="flex justify-center py-2">
+            <div className="flex items-center gap-1.5 text-[10px] text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Showing full conversation history
+              <button
+                onClick={() => {
+                  setShowFullConversation(false);
+                  // Reload case-only messages
+                  onLoadFullConversation?.(conversation.id, activeCaseId, false);
+                }}
+                className="text-blue-500 hover:text-blue-700 font-medium ml-1"
+              >
+                Show case only
+              </button>
+            </div>
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 

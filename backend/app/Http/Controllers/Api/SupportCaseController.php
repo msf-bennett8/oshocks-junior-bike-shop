@@ -417,4 +417,60 @@ class SupportCaseController extends Controller
             Log::error('Failed to notify escalation', ['error' => $e->getMessage()]);
         }
     }
+
+        /**
+     * Get messages for a case — case-only or full conversation context
+     */
+    public function getCaseMessages(Request $request, string $conversationId, ?string $caseId = null): JsonResponse
+    {
+        $user = Auth::user();
+        $conversation = Conversation::findOrFail($conversationId);
+
+        // Authorization
+        if (!$user->canHandleSupportCases()) {
+            // Regular user can only access their own conversations
+            $isParticipant = $conversation->participants()->where('user_id', $user->id)->exists()
+                || $conversation->created_by === $user->id;
+            if (!$isParticipant) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+            }
+        }
+
+        $includeFull = $request->boolean('include_full_conversation', false);
+
+        $query = $conversation->messages()
+            ->with(['sender', 'attachments', 'reactions', 'replyToMessage'])
+            ->orderBy('created_at', 'asc');
+
+        if (!$includeFull && $caseId) {
+            // Default: only messages for this specific case
+            $query->where(function ($q) use ($caseId) {
+                $q->where('case_id', $caseId)
+                  ->orWhereNull('case_id') // Include system messages
+                  ->whereIn('type', ['system', 'case_created', 'case_resolved', 'case_closed']);
+            });
+        }
+
+        // If full conversation requested, we return ALL messages but mark which belong to the case
+        $messages = $query->get();
+
+        // Add metadata for frontend to distinguish case vs general messages
+        $messages = $messages->map(function ($msg) use ($caseId) {
+            $msg->is_case_message = $msg->case_id === $caseId;
+            $msg->case_id_value = $msg->case_id;
+            return $msg;
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $messages,
+            'meta' => [
+                'case_id' => $caseId,
+                'include_full_conversation' => $includeFull,
+                'case_message_count' => $messages->where('is_case_message', true)->count(),
+                'total_message_count' => $messages->count(),
+            ],
+        ]);
+    }
+    
 }

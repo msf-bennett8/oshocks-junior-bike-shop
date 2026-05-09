@@ -881,11 +881,16 @@ const ConversationTab = ({ caseData, user }) => {
     loadMessages();
   }, [caseData.case_id]);
 
-  const loadMessages = async () => {
+  const [showFullConversation, setShowFullConversation] = useState(false);
+  const [loadingFullConversation, setLoadingFullConversation] = useState(false);
+
+  const loadMessages = async (includeFullConversation = false) => {
     try {
       setLoading(true);
       // Load messages from the case's conversation
-      const res = await api.get(`/conversations/${caseData.conversation_id}/cases/${caseData.case_id}/messages`);
+      const res = await api.get(`/conversations/${caseData.conversation_id}/cases/${caseData.case_id}/messages`, {
+        params: includeFullConversation ? { include_full_conversation: true } : {}
+      });
       const data = res.data?.data;
       setMessages(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -902,6 +907,23 @@ const ConversationTab = ({ caseData, user }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLoadFullConversation = async () => {
+    setLoadingFullConversation(true);
+    try {
+      await loadMessages(true);
+      setShowFullConversation(true);
+    } catch (err) {
+      console.error('Failed to load full conversation:', err);
+    } finally {
+      setLoadingFullConversation(false);
+    }
+  };
+
+  const handleShowCaseOnly = async () => {
+    setShowFullConversation(false);
+    await loadMessages(false);
   };
 
   const handleSend = async () => {
@@ -970,9 +992,18 @@ const ConversationTab = ({ caseData, user }) => {
               );
             }
 
+            const isContextMessage = showFullConversation && msg.case_id && msg.case_id !== caseData.case_id && msg.type !== 'system';
+
             return (
-              <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] ${isOwn ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'} rounded-2xl px-4 py-2.5`}>
+              <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'} ${isContextMessage ? 'opacity-60' : ''}`}>
+                <div className={`max-w-[80%] ${isOwn ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'} rounded-2xl px-4 py-2.5 ${isContextMessage ? 'border border-dashed border-gray-300' : ''}`}>
+                  {isContextMessage && (
+                    <div className="flex items-center gap-1 mb-1">
+                      <span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-medium">
+                        #{msg.case_id?.slice(-6) || 'General'}
+                      </span>
+                    </div>
+                  )}
                   {!isOwn && (
                     <p className="text-[10px] font-medium text-gray-500 mb-0.5">{msg.sender?.name || msg.sender_name || 'Guest'}</p>
                   )}
@@ -988,6 +1019,49 @@ const ConversationTab = ({ caseData, user }) => {
             );
           })
         )}
+        {/* See Full Conversation Button */}
+        {!showFullConversation && (
+          <div className="flex justify-center py-4">
+            <button
+              onClick={handleLoadFullConversation}
+              disabled={loadingFullConversation}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-full border border-gray-200 transition-colors disabled:opacity-50"
+            >
+              {loadingFullConversation ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  See Full Conversation
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Full Conversation Loaded Indicator */}
+        {showFullConversation && (
+          <div className="flex justify-center py-2">
+            <div className="flex items-center gap-1.5 text-[10px] text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Showing full conversation history
+              <button
+                onClick={handleShowCaseOnly}
+                className="text-blue-500 hover:text-blue-700 font-medium ml-1"
+              >
+                Show case only
+              </button>
+            </div>
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 

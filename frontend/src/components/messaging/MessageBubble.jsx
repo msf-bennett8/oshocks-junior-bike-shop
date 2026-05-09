@@ -16,6 +16,7 @@ const MessageBubble = ({
   onDelete,
   onReaction,
   replyToMessage = null,
+  isContextMessage = false,
 }) => {
   const [showActions, setShowActions] = useState(false);
   
@@ -36,7 +37,7 @@ const MessageBubble = ({
   const isDeleted = message.is_deleted;
 
   return (
-    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-1 group`}>
+    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} mb-1 group ${isContextMessage ? 'opacity-55' : ''}`}>
       {/* Avatar for others */}
       {!isOwn && showAvatar && (
         <Avatar
@@ -66,10 +67,17 @@ const MessageBubble = ({
               : isOwn
                 ? 'bg-blue-600 text-white rounded-br-md'
                 : 'bg-white text-gray-800 rounded-bl-md shadow-sm border border-gray-100'
-          } ${isCallInvite ? 'border-2 border-blue-300' : ''} ${replyToMessage ? (isOwn ? 'rounded-tr-lg' : 'rounded-tl-lg') : ''}`}
+          } ${isCallInvite ? 'border-2 border-blue-300' : ''} ${replyToMessage ? (isOwn ? 'rounded-tr-lg' : 'rounded-tl-lg') : ''} ${isContextMessage ? 'border-dashed border-gray-300' : ''}`}
           onMouseEnter={() => setShowActions(true)}
           onMouseLeave={() => setShowActions(false)}
         >
+          {isContextMessage && (
+            <div className="flex items-center gap-1 mb-1">
+              <span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded font-medium">
+                #{message.case_id?.slice(-6) || 'General'}
+              </span>
+            </div>
+          )}
           {isDeleted ? (
             <p className="text-xs">This message was deleted</p>
           ) : isCallInvite ? (

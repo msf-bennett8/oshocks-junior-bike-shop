@@ -32,7 +32,10 @@ const supportCaseService = {
   // Case threading (hybrid conversational ticketing)
   createCaseInConversation: (conversationId, data) => api.post(`/conversations/${conversationId}/cases`, data),
   getConversationCases: (conversationId) => api.get(`/conversations/${conversationId}/cases`),
-  getCaseMessages: (conversationId, caseId) => api.get(`/conversations/${conversationId}/cases/${caseId}/messages`),
+  getCaseMessages: (conversationId, caseId, includeFullConversation = false) => 
+    api.get(`/conversations/${conversationId}/cases/${caseId}/messages`, {
+      params: { include_full_conversation: includeFullConversation }
+    }),
   sendCaseMessage: (conversationId, caseId, body, type = 'text') => api.post(`/conversations/${conversationId}/cases/${caseId}/messages`, { body, type }),
   deleteCase: (caseId) => api.delete(`/support-cases/${caseId}`),
   restoreCase: (caseId) => api.post(`/support-cases/${caseId}/restore`),
