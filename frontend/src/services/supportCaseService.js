@@ -7,7 +7,7 @@ const supportCaseService = {
   createCase: (data) => api.post('/support-cases', data),
   escalateCase: (caseId, reason) => api.post(`/support-cases/${caseId}/escalate`, { reason }),
   rateSatisfaction: (caseId, rating, comment) => api.post(`/support-cases/${caseId}/satisfaction`, { rating, comment }),
-  validateOrder: (orderNumber) => api.post('/support-cases/validate-order', { order_number: orderNumber }),
+  validateOrder: (purchaseId) => api.post('/support-cases/validate-order', { purchase_id: purchaseId }),
   addNote: (caseId, content, isPrivate = true) => api.post(`/support-cases/${caseId}/notes`, { content, is_private: isPrivate }),
   getHistory: (caseId) => api.get(`/support-cases/${caseId}/history`),
 

@@ -61,11 +61,14 @@ class CaseThreadController extends Controller
             }
 
             return DB::transaction(function () use ($request, $user, $guestSessionId, $conversation, $validated) {
-            // Resolve order if order_number provided
+            // Resolve order if order_number provided (searches order_display, purchase_id, order_number, order_code)
             $orderId = null;
-            if (!empty($validated['order_number'])) {
-                $order = \App\Models\Order::where('order_number', $validated['order_number'])
-                    ->orWhere('order_code', $validated['order_number'])
+            $orderLookup = $validated['order_number'] ?? $request->input('purchase_id') ?? null;
+            if (!empty($orderLookup)) {
+                $order = \App\Models\Order::where('order_display', $orderLookup)
+                    ->orWhere('purchase_id', $orderLookup)
+                    ->orWhere('order_number', $orderLookup)
+                    ->orWhere('order_code', $orderLookup)
                     ->first();
                 if ($order) {
                     $orderId = $order->id;
@@ -91,13 +94,20 @@ class CaseThreadController extends Controller
                 ],
             ]);
 
+            // Build system message with order info if applicable
+            $orderDisplay = $order?->order_display ?? $order?->order_number ?? null;
+            $systemMessageBody = $orderDisplay
+                ? "📋 New Case Created: {$validated['subject']} ({$supportCase->case_id}) for order {$orderDisplay}"
+                : "📋 New Case Created: {$validated['subject']} ({$supportCase->case_id})";
+
             // Create a system message announcing the new case
             $systemMessage = Message::create([
                 'conversation_id' => $conversation->id,
                 'case_id' => $supportCase->case_id,
                 'sender_id' => null,
-                'body' => "📋 New Case Created: {$validated['subject']} ({$supportCase->case_id})",
+                'body' => $systemMessageBody,
                 'type' => 'system',
+                'metadata' => $orderDisplay ? ['order_display' => $orderDisplay, 'event_type' => 'created'] : ['event_type' => 'created'],
             ]);
 
             // Create the user's actual message with subject and description
@@ -168,7 +178,7 @@ class CaseThreadController extends Controller
         }
 
         $cases = $conversation->supportCases()
-            ->with(['assignedAgent', 'resolvedBy', 'escalatedBy', 'history.changedBy'])
+            ->with(['assignedAgent', 'resolvedBy', 'escalatedBy', 'history.changedBy', 'order'])
             ->get();
 
         return response()->json([

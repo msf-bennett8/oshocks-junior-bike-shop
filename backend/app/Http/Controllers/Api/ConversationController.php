@@ -30,9 +30,14 @@ class ConversationController extends Controller
         $user = $request->user();
         $guestSessionId = $request->header('X-Guest-Session-ID');
 
-        $query = Conversation::with(['participants', 'messages' => function ($q) {
+        $query = Conversation::with([
+            'participants',
+            'messages' => function ($q) {
                 $q->latest()->limit(1);
-            }]);
+            },
+            'supportCase.order',
+            'order',
+        ]);
 
         if ($user) {
             $query->where(function ($q) use ($user) {
@@ -63,7 +68,18 @@ class ConversationController extends Controller
 
             $conv->last_message = $conv->messages->first()?->body;
             $conv->last_message_at = $conv->messages->first()?->created_at;
-            $conv->support_case = $conv->supportCase;
+            // Load support case with order relationship
+            $supportCase = $conv->supportCase;
+            if ($supportCase) {
+                $supportCase->load('order');
+                // Normalize empty order stubs
+                if (empty($supportCase->order?->id) && empty($supportCase->order?->order_display) && empty($supportCase->order?->order_number)) {
+                    $supportCase->setRelation('order', null);
+                }
+            }
+            $conv->support_case = $supportCase;
+            // Also include direct conversation order for order_support chats
+            $conv->order = $conv->order;
 
             return $conv;
         });

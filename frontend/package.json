@@ -6,6 +6,7 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.0.0",
     "axios": "^1.12.2",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.38.0",
     "laravel-echo": "^2.3.4",
     "lucide-react": "^0.545.0",

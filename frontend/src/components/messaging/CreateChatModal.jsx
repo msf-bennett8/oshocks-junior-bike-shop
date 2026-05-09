@@ -161,8 +161,8 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
     };
     setCaseForm(prev => ({
       ...prev,
-      subject: orderContext ? `${labels[type]}: ${orderContext.orderNumber}` : labels[type],
-      order_number: orderContext?.orderNumber || '',
+      subject: orderContext ? `${labels[type]}: ${orderContext.purchaseId || orderContext.orderNumber}` : labels[type],
+      order_number: orderContext?.purchaseId || orderContext?.orderNumber || '',
     }));
     if (orderContext?.orderNumber) {
       validateOrder(orderContext.orderNumber);
@@ -174,6 +174,7 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
     setValidatingOrder(true);
     try {
       const res = await supportCaseService.validateOrder(orderNumber.trim());
+      // Note: validateOrder already searches order_display as primary
       setOrderValid(true);
       setOrderData(res.data);
       setError(null);
@@ -210,7 +211,7 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
         description: caseForm.description,
         priority: caseForm.priority,
         ...(selectedCaseType === 'order_issue' && caseForm.order_number && {
-          order_number: caseForm.order_number,
+          purchase_id: caseForm.order_number,
         }),
       };
 
@@ -416,7 +417,7 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
                     <div>
                       <p className="font-medium text-orange-900">Order Context</p>
                       <p className="text-sm text-orange-700">
-                        This support case will be linked to Order #{orderContext.orderNumber}
+                        This support case will be linked to Purchase ID {orderContext.purchaseId || orderContext.orderNumber}
                       </p>
                     </div>
                   </div>
@@ -489,7 +490,7 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
                   {/* Order Number (only for order_issue) */}
                   {selectedCaseType === 'order_issue' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Order Number *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Purchase ID *</label>
                       <div className="flex gap-2">
                         <div className="relative flex-1">
                           <ShoppingBag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -504,7 +505,7 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
                             onBlur={(e) => {
                               if (e.target.value.trim().length >= 3) validateOrder(e.target.value.trim());
                             }}
-                            placeholder="e.g. ORD-2026-0001"
+                            placeholder="e.g. AF7SEIV1U0"
                             className={`w-full pl-9 pr-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
                               orderValid === true ? 'bg-green-50 border-2 border-green-300 focus:ring-green-500' :
                               orderValid === false ? 'bg-red-50 border-2 border-red-300 focus:ring-red-500' :
@@ -528,14 +529,14 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
                             <span className="text-sm font-medium text-green-800">Order validated</span>
                           </div>
                           <p className="text-xs text-green-700 mt-1">
-                            Order #{orderData.data?.order_number || orderData.order_number} • {orderData.data?.status || orderData.status} • ${orderData.data?.total || orderData.total}
+                            Purchase ID {orderData.data?.purchase_id || orderData.purchase_id || orderData.data?.order_number || orderData.order_number} • {orderData.data?.status || orderData.status} • ${orderData.data?.total || orderData.total}
                           </p>
                         </div>
                       )}
                       {orderValid === false && (
                         <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2">
                           <AlertCircle className="w-4 h-4 text-red-500" />
-                          <span className="text-sm text-red-700">Order not found. Please check the number.</span>
+                          <span className="text-sm text-red-700">Order not found. Please check your Purchase ID.</span>
                         </div>
                       )}
                     </div>

@@ -49,6 +49,19 @@ class SupportCaseController extends Controller
         $cases = $query->orderBy('created_at', 'desc')
                        ->paginate($request->per_page ?? 20);
 
+        // Normalize empty order stubs in paginated collection
+        $cases->getCollection()->transform(function ($case) {
+            $caseArray = $case->toArray();
+            // Check for meaningful order data (id OR order_display OR order_number)
+            $hasOrder = !empty($caseArray['order']['id'] ?? null)
+                     || !empty($caseArray['order']['order_display'] ?? null)
+                     || !empty($caseArray['order']['order_number'] ?? null);
+            if (!$hasOrder) {
+                $caseArray['order'] = null;
+            }
+            return $caseArray;
+        });
+
         return response()->json([
             'success' => true,
             'data' => $cases,
@@ -74,9 +87,19 @@ class SupportCaseController extends Controller
             ], 403);
         }
 
+        $response = $case->toArray();
+
+        // Normalize empty order stubs to null for clean frontend handling
+        $hasOrder = !empty($response['order']['id'] ?? null)
+                 || !empty($response['order']['order_display'] ?? null)
+                 || !empty($response['order']['order_number'] ?? null);
+        if (!$hasOrder) {
+            $response['order'] = null;
+        }
+
         return response()->json([
             'success' => true,
-            'data' => $case,
+            'data' => $response,
         ]);
     }
 
@@ -89,11 +112,14 @@ class SupportCaseController extends Controller
         $guestSessionId = !$user ? $request->header('X-Guest-Session-ID') : null;
 
         return DB::transaction(function () use ($request, $user, $guestSessionId) {
-            // Validate order if provided
+            // Validate order if provided (order_display preferred, fallback to purchase_id/order_code/order_number)
             $orderId = null;
-            if ($request->order_number) {
-                $order = Order::where('order_number', $request->order_number)
-                              ->orWhere('order_code', $request->order_number)
+            $orderLookup = $request->purchase_id ?? $request->order_number ?? $request->order_display;
+            if ($orderLookup) {
+                $order = Order::where('order_display', $orderLookup)
+                              ->orWhere('purchase_id', $orderLookup)
+                              ->orWhere('order_number', $orderLookup)
+                              ->orWhere('order_code', $orderLookup)
                               ->first();
                 if (!$order) {
                     return response()->json([
@@ -167,8 +193,11 @@ class SupportCaseController extends Controller
             // Link conversation to case
             $conversation->update(['support_case_id' => $supportCase->case_id]);
 
-            // Broadcast case creation event
-            broadcast(new \App\Events\SupportCaseUpdated($supportCase, 'created', $user?->id));
+            // Broadcast case creation event with order info
+            $orderDisplay = $order?->order_display ?? $order?->order_number ?? null;
+            broadcast(new \App\Events\SupportCaseUpdated($supportCase, 'created', $user?->id, [
+                'order_display' => $orderDisplay,
+            ]));
 
             // Add system participant (admin bot) for routing
             $this->addSystemParticipant($conversation);
@@ -286,12 +315,13 @@ class SupportCaseController extends Controller
     public function validateOrder(Request $request): JsonResponse
     {
         $request->validate([
-            'order_number' => ['required', 'string', 'max:50'],
+            'purchase_id' => ['required', 'string', 'max:50'],
         ]);
 
-        $order = Order::where('order_number', $request->order_number)
-                      ->orWhere('order_code', $request->order_number)
-                      ->orWhere('order_display', $request->order_number)
+        $order = Order::where('order_display', $request->purchase_id)
+                      ->orWhere('purchase_id', $request->purchase_id)
+                      ->orWhere('order_number', $request->purchase_id)
+                      ->orWhere('order_code', $request->purchase_id)
                       ->with(['user', 'orderItems.product'])
                       ->first();
 
@@ -315,6 +345,7 @@ class SupportCaseController extends Controller
             'success' => true,
             'data' => [
                 'order_id' => $order->id,
+                'purchase_id' => $order->purchase_id,
                 'order_number' => $order->order_number,
                 'order_display' => $order->order_display,
                 'status' => $order->status,
@@ -472,5 +503,5 @@ class SupportCaseController extends Controller
             ],
         ]);
     }
-    
+
 }

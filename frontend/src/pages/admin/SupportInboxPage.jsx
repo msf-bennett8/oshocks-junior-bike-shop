@@ -4,6 +4,7 @@ import { useSupportCases } from '../../hooks/useSupportCases';
 import supportCaseService from '../../services/supportCaseService';
 import api from '../../services/api';
 import { CaseStatusChip } from '../../components/messaging/CaseStatusChip';
+import { SystemMessage } from '../../components/messaging/SystemMessage';
 import {
   Inbox, Users, AlertTriangle, CheckCircle, Clock, TrendingUp,
   Search, Filter, RefreshCw, ChevronDown, Eye, UserCheck,
@@ -744,61 +745,84 @@ const DetailsTab = ({ caseData, isAgent, isAssigned, onClaim, onResolve, onEscal
       </div>
 
       {/* Linked Order Card */}
-      {caseData.order && (
-        <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <ShoppingBag className="w-4 h-4 text-orange-600" />
-            <h4 className="text-sm font-semibold text-orange-800">Linked Order</h4>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">Order #</span>
-              <div className="flex items-center gap-1">
-                <span className="text-sm font-mono font-medium text-gray-900">{caseData.order.order_number || caseData.order.order_display}</span>
-                <CopyButton text={caseData.order.order_number || caseData.order.order_display} field="order_number" />
-              </div>
+      {caseData.case_type === 'order_issue' && (
+        caseData.order?.id || caseData.order?.order_display || caseData.order?.order_number ? (
+          <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <ShoppingBag className="w-4 h-4 text-orange-600" />
+              <h4 className="text-sm font-semibold text-orange-800">Linked Order</h4>
             </div>
 
-            {caseData.order.customer_name && (
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Customer</span>
+                <span className="text-xs text-gray-500">Order Display</span>
                 <div className="flex items-center gap-1">
-                  <span className="text-sm text-gray-900">{caseData.order.customer_name}</span>
-                  <CopyButton text={caseData.order.customer_name} field="customer_name" />
+                  <span className="text-sm font-mono font-medium text-gray-900">{caseData.order.order_display || caseData.order.order_number || caseData.order.purchase_id}</span>
+                  <CopyButton text={caseData.order.order_display || caseData.order.order_number || caseData.order.purchase_id} field="order_display" />
                 </div>
               </div>
-            )}
 
-            {caseData.order.customer_email && (
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">Email</span>
-                <div className="flex items-center gap-1">
-                  <span className="text-sm text-gray-900">{caseData.order.customer_email}</span>
-                  <CopyButton text={caseData.order.customer_email} field="customer_email" />
+              {caseData.order.purchase_id && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Purchase ID</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-mono text-gray-700">{caseData.order.purchase_id}</span>
+                    <CopyButton text={caseData.order.purchase_id} field="purchase_id" />
+                  </div>
                 </div>
+              )}
+
+              {caseData.order.customer_name && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Customer</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-gray-900">{caseData.order.customer_name}</span>
+                    <CopyButton text={caseData.order.customer_name} field="customer_name" />
+                  </div>
+                </div>
+              )}
+
+              {caseData.order.customer_email && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Email</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-gray-900">{caseData.order.customer_email}</span>
+                    <CopyButton text={caseData.order.customer_email} field="customer_email" />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Status</span>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                  caseData.order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                  caseData.order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                  caseData.order.status === 'processing' ? 'bg-amber-100 text-amber-700' :
+                  caseData.order.status === 'pending' ? 'bg-gray-100 text-gray-700' :
+                  'bg-gray-100 text-gray-600'
+                }`}>
+                  {caseData.order.status?.toUpperCase()}
+                </span>
               </div>
-            )}
 
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">Status</span>
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                caseData.order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                caseData.order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
-                caseData.order.status === 'processing' ? 'bg-amber-100 text-amber-700' :
-                caseData.order.status === 'pending' ? 'bg-gray-100 text-gray-700' :
-                'bg-gray-100 text-gray-600'
-              }`}>
-                {caseData.order.status?.toUpperCase()}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500">Total</span>
-              <span className="text-sm font-bold text-gray-900">${parseFloat(caseData.order.total).toFixed(2)}</span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Total</span>
+                <span className="text-sm font-bold text-gray-900">${caseData.order.total ? parseFloat(caseData.order.total).toFixed(2) : '0.00'}</span>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <ShoppingBag className="w-4 h-4 text-orange-600" />
+              <h4 className="text-sm font-semibold text-orange-800">Linked Order</h4>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-orange-600 bg-orange-100 rounded-lg px-3 py-2">
+              <AlertCircle className="w-3.5 h-3.5" />
+              <span>Order not linked — no order data available</span>
+            </div>
+          </div>
+        )
       )}
 
       {/* Customer Info */}
@@ -982,10 +1006,22 @@ const ConversationTab = ({ caseData, user }) => {
             const isSystem = msg.type === 'system';
 
             if (isSystem) {
+              // Parse system message for case creation with order info
+              const orderMatch = msg.body?.match(/for order ([A-Z0-9]+)/i);
+              const orderDisplay = orderMatch?.[1];
+              const caseMatch = msg.body?.match(/Case Created:.*?\(([A-Z0-9]+)\)/i);
+              const caseId = caseMatch?.[1];
+
               return (
                 <div key={msg.id} className="flex justify-center my-2">
-                  <div className="bg-gray-100 border border-gray-200 rounded-full px-4 py-1.5 flex items-center gap-2">
-                    <span className="text-xs text-gray-500">{msg.body}</span>
+                  <div className="bg-gray-100 border border-gray-200 rounded-full px-4 py-1.5 flex items-center gap-2 max-w-lg">
+                    <SystemMessage
+                      event={msg.metadata?.event_type || 'created'}
+                      timestamp={msg.created_at}
+                      details={msg.body}
+                      caseId={caseId}
+                      orderDisplay={orderDisplay}
+                    />
                     <span className="text-[10px] text-gray-400">{formatTime(msg.created_at)}</span>
                   </div>
                 </div>

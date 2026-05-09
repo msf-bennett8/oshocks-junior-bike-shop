@@ -83,7 +83,7 @@ class SupportCase extends Model
 
     public function order(): BelongsTo
     {
-        return $this->belongsTo(Order::class)->withDefault();
+        return $this->belongsTo(Order::class, 'order_id');
     }
 
     public function notes(): HasMany

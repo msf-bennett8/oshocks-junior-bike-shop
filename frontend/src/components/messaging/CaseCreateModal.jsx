@@ -83,7 +83,7 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
 
       const trimmedOrder = orderNumber.trim();
       if (trimmedOrder) {
-        payload.order_number = trimmedOrder;
+        payload.purchase_id = trimmedOrder;
       }
 
       console.log('[CaseCreateModal] Sending POST to /conversations/' + conversationId + '/cases with payload:', payload);
@@ -183,16 +183,17 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
             </select>
           </div>
 
-          {/* Order Number (optional) */}
+          {/* Purchase ID / Order Lookup (optional) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Order Number (optional)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Purchase ID (optional)</label>
             <input
               type="text"
               value={orderNumber}
               onChange={(e) => setOrderNumber(e.target.value)}
-              placeholder="e.g. ORD-12345"
+              placeholder="e.g. AF7SEIV1U0"
               className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
+            <p className="text-xs text-gray-400 mt-1">Found in your order confirmation email or SMS</p>
           </div>
 
           <div className="flex gap-3 pt-2">

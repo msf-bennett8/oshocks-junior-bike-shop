@@ -388,13 +388,27 @@ const MessageThread = ({
             )}
           </div>
           
-          {/* Order link if applicable */}
-          {conversation.order && (
+          {/* Order link if applicable — check both conversation.order and support_case.order */}
+          {(conversation.order || conversation.support_case?.order) && (
             <div className="mt-1.5 flex items-center gap-2 text-[11px] text-gray-500">
               <ShoppingBag className="w-3 h-3" />
-              <span className="font-mono text-gray-600">{conversation.order.order_number || conversation.order.order_display}</span>
+              <span className="font-mono text-gray-600">
+                {(conversation.support_case?.order?.order_display || conversation.support_case?.order?.order_number || conversation.support_case?.order?.purchase_id) ||
+                 (conversation.order?.order_display || conversation.order?.order_number || conversation.order?.purchase_id)}
+              </span>
+              <button
+                onClick={() => {
+                  const orderDisplay = (conversation.support_case?.order?.order_display || conversation.support_case?.order?.order_number || conversation.support_case?.order?.purchase_id) ||
+                                       (conversation.order?.order_display || conversation.order?.order_number || conversation.order?.purchase_id);
+                  navigator.clipboard.writeText(orderDisplay);
+                }}
+                className="p-0.5 hover:bg-orange-100 rounded transition-colors"
+                title="Copy order ID"
+              >
+                <Copy className="w-3 h-3 text-orange-400" />
+              </button>
               <span>•</span>
-              <span>{conversation.order.status}</span>
+              <span>{conversation.support_case?.order?.status || conversation.order?.status}</span>
             </div>
           )}
         </div>
