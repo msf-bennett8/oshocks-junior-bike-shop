@@ -383,7 +383,7 @@ class SupportCaseController extends Controller
         $isPrivate = $isStaff ? ($request->is_private ?? true) : false;
 
         $note = SupportCaseNote::create([
-            'case_id' => $case->id,
+            'case_id' => $case->case_id,
             'agent_id' => $user->id,
             'content' => $request->content,
             'is_private' => $isPrivate,

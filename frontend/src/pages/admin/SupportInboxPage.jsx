@@ -1293,8 +1293,9 @@ const NotesTab = ({ caseData, user, onRefresh }) => {
     try {
       setLoading(true);
       const res = await supportCaseService.getCaseNotes(caseData.case_id);
-      const data = res.data?.data;
-      setNotes(Array.isArray(data) ? data : []);
+      // Handle paginated response: res.data.data.data OR direct array: res.data.data
+      const notesData = res.data?.data?.data || res.data?.data || [];
+      setNotes(Array.isArray(notesData) ? notesData : []);
     } catch (err) {
       console.error('Failed to load notes:', err);
       // Fallback to case data notes
@@ -1310,10 +1311,17 @@ const NotesTab = ({ caseData, user, onRefresh }) => {
     try {
       // Staff can set privacy; customers' notes are always public to staff
       const privacy = isStaff ? isPrivate : false;
-      await supportCaseService.addNote(caseData.case_id, newNote.trim(), privacy);
+      const res = await supportCaseService.addNote(caseData.case_id, newNote.trim(), privacy);
       setNewNote('');
       // Reset privacy to default for staff
       if (isStaff) setIsPrivate(true);
+      
+      // Optimistically add the new note to the list immediately
+      const newNoteData = res.data?.data;
+      if (newNoteData) {
+        setNotes(prev => [newNoteData, ...prev]);
+      }
+      
       await loadNotes();
       onRefresh?.();
     } catch (err) {

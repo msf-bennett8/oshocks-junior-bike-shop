@@ -503,9 +503,8 @@ class SupportQueueController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
         }
 
-        $case = SupportCase::where('case_id', $caseId)->firstOrFail();
         $notes = SupportCaseNote::with('agent')
-                                  ->where('case_id', $case->id)
+                                  ->where('case_id', $caseId)
                                   ->where(function ($q) use ($user) {
                                       // Show private notes only to handlers, public to all
                                       if ($user->canHandleSupportCases()) {
