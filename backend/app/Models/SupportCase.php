@@ -298,4 +298,20 @@ class SupportCase extends Model
     {
         $this->attributes['service_details'] = is_string($value) ? $value : json_encode($value);
     }
+
+    /**
+     * Appointment notes for this service booking case
+     */
+    public function appointmentNotes()
+    {
+        return $this->hasMany(AppointmentNote::class, 'case_id', 'case_id')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Appointment history/audit trail
+     */
+    public function appointmentHistory()
+    {
+        return $this->hasMany(AppointmentHistory::class, 'case_id', 'case_id')->orderBy('created_at', 'desc');
+    }
 }

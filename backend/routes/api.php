@@ -534,6 +534,12 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
         Route::post('/{caseId}/complete', [ServiceBookingController::class, 'complete']);
         Route::post('/{caseId}/cancel', [ServiceBookingController::class, 'cancel']);
         Route::post('/{id}/no-show', [\App\Http\Controllers\Api\ServiceBookingController::class, 'markNoShow']);
+
+        // ─── Appointment Notes & History (New) ───
+        Route::get('/{caseId}/notes', [ServiceBookingController::class, 'getNotes']);
+        Route::post('/{caseId}/notes', [ServiceBookingController::class, 'addNote']);
+        Route::get('/{caseId}/history', [ServiceBookingController::class, 'getHistory']);
+        Route::get('/user/{userId}/all', [ServiceBookingController::class, 'getUserAppointments']);
     });
 
     // Reviews (User actions - already defined above, but helpful votes here)

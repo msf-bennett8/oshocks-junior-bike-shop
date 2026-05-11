@@ -7,9 +7,11 @@ use App\Models\Message;
 use App\Models\ServiceBooking;
 use App\Models\SupportCase;
 use App\Models\SupportCaseHistory;
+use App\Models\AppointmentHistory;
 use App\Models\User;
 use App\Events\SupportCaseUpdated;
 use App\Services\NotificationService;
+use App\Services\SupportCaseIdService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -28,97 +30,110 @@ class BookingService
     }
 
     /**
-     * Create a service booking with full conversation thread
-     *
-     * Flow:
-     * 1. Create SupportCase (type='service')
-     * 2. Create Conversation (or use existing)
-     * 3. Create ServiceBooking linked to case
-     * 4. Create system message in conversation
-     * 5. Return everything
+     * Create a new service booking with conversation integration
      */
-    public function createBooking(array $data, ?User $user = null, ?string $guestSessionId = null): array
+    public function createBooking(array $data, $user, ?string $guestSessionId): array
     {
         return DB::transaction(function () use ($data, $user, $guestSessionId) {
-            $userId = $user?->id;
-            $now = now();
+            $idService = app(SupportCaseIdService::class);
 
-            // ─── STEP 1: Create or Find Conversation FIRST ───
-            $conversation = $this->getOrCreateConversation($userId, $guestSessionId, null);
+            // ─── Step 1: Find or create ONE conversation per user ───
+            $conversation = $this->getOrCreateUserConversation($user, $guestSessionId);
 
-            // ─── STEP 2: Create Support Case with conversation_id ───
-            $case = new SupportCase();
-            $case->case_id = $this->idService->generate('service');
-            $case->case_type = 'service';
-            $case->status = 'new';
-            $case->priority = 'medium';
-            $case->subject = 'Service Booking: ' . $data['service_type'];
-            $case->description = $data['service_description'] ?? 'No additional details provided.';
-            $case->user_id = $userId;
-            $case->guest_session_id = $guestSessionId;
-            $case->source = 'web';
-            $case->appointment_status = 'pending';
-            $case->appointment_at = $data['requested_date'] ?? null;
-            $case->service_details = [
-                'service_type' => $data['service_type'],
-                'requested_date' => $data['requested_date'] ?? null,
-                'preferred_time' => $data['preferred_time'] ?? null,
-                'shop_location' => $data['shop_location'] ?? null,
-                'customer_name' => $data['customer_name'],
-                'customer_phone' => $data['customer_phone'] ?? null,
-                'customer_email' => $data['customer_email'] ?? null,
-            ];
-            $case->conversation_id = $conversation->id;
-            $case->save();
+            // ─── Step 2: Create support case (this generates case_id via observer) ───
+            $caseType = 'service';
+            $subject = $this->buildBookingSubject($data);
+            $description = $data['service_description'] ?? 'No description provided';
 
-            // ─── STEP 3: Create Service Booking Record ───
+            $supportCase = SupportCase::create([
+                'conversation_id' => $conversation->id,
+                'user_id' => $user?->id,
+                'guest_session_id' => $user ? null : $guestSessionId,
+                'case_type' => $caseType,
+                'status' => 'new',
+                'priority' => 'medium',
+                'subject' => $subject,
+                'description' => $description,
+                'source' => $user ? 'web' : 'chat',
+                'appointment_status' => 'pending',
+                'service_details' => json_encode([
+                    'service_type' => $data['service_type'] ?? null,
+                    'shop_location' => $data['shop_location'] ?? null,
+                    'requested_date' => $data['requested_date'] ?? null,
+                    'preferred_time' => $data['preferred_time'] ?? null,
+                ]),
+                'metadata' => [
+                    'ip' => request()->ip(),
+                    'user_agent' => request()->userAgent(),
+                    'booking_origin' => 'web',
+                ],
+            ]);
+
+            // ─── Step 3: Create service booking linked to case ───
             $booking = ServiceBooking::create([
-                'case_id' => $case->case_id,
+                'case_id' => $supportCase->case_id,
                 'service_type' => $data['service_type'],
-                'service_description' => $data['service_description'] ?? null,
+                'service_description' => $description,
                 'estimated_price' => $data['estimated_price'] ?? null,
                 'requested_date' => $data['requested_date'] ?? null,
                 'preferred_time' => $data['preferred_time'] ?? null,
-                'seller_id' => $data['seller_id'] ?? null,
-                'customer_name' => $data['customer_name'],
+                'customer_name' => $data['customer_name'] ?? $user?->name ?? 'Guest',
                 'customer_phone' => $data['customer_phone'] ?? null,
-                'customer_email' => $data['customer_email'] ?? null,
-                'guest_session_id' => $guestSessionId,
-                'status' => 'pending',
+                'customer_email' => $data['customer_email'] ?? $user?->email ?? null,
+                'guest_session_id' => $user ? null : $guestSessionId,
                 'shop_location' => $data['shop_location'] ?? null,
+                'status' => 'pending',
                 'customer_notes' => $data['customer_notes'] ?? null,
             ]);
 
-            // ─── STEP 4: Create System Message ───
-            $systemMessage = $this->createBookingSystemMessage($conversation->id, $case, $booking);
+            // ─── Step 4: Create system message in conversation ───
+            $systemMessage = Message::create([
+                'conversation_id' => $conversation->id,
+                'case_id' => $supportCase->case_id,
+                'sender_id' => null,
+                'body' => "📅 New Service Booking: {$subject}",
+                'type' => 'system',
+                'metadata' => [
+                    'event_type' => 'service_booking_created',
+                    'booking_id' => $booking->id,
+                    'case_id' => $supportCase->case_id,
+                ],
+            ]);
 
-            // ─── STEP 5: Create Initial User Message (if notes provided) ───
-            $userMessage = null;
-            if (!empty($data['customer_notes'])) {
-                $userMessage = Message::create([
+            // ─── Step 5: Create initial user message (the description) ───
+            if ($description && $description !== 'No description provided') {
+                Message::create([
                     'conversation_id' => $conversation->id,
-                    'sender_id' => $userId,
-                    'guest_session_id' => $guestSessionId,
-                    'sender_name' => $data['customer_name'],
-                    'sender_email' => $data['customer_email'] ?? null,
-                    'body' => $data['customer_notes'],
+                    'case_id' => $supportCase->case_id,
+                    'sender_id' => $user?->id,
+                    'body' => $description,
                     'type' => 'text',
-                    'case_id' => $case->case_id,
+                    'guest_session_id' => $user ? null : $guestSessionId,
+                    'sender_name' => $user?->name ?? ($data['customer_name'] ?? 'Guest'),
                 ]);
             }
 
-            // ─── STEP 6: Broadcast & Notify ───
-            broadcast(new SupportCaseUpdated($case, 'created', $userId))->toOthers();
+            // ─── Step 6: Link case to conversation ───
+            $conversation->update(['support_case_id' => $supportCase->case_id]);
 
-            // Send notification (email/SMS placeholder ready)
-            $this->notifyBookingCreated($case, $booking, $user);
+            // ─── Step 7: Add user as participant if not already ───
+            if ($user) {
+                $isParticipant = $conversation->participants()
+                    ->where('user_id', $user->id)
+                    ->exists();
+                if (!$isParticipant) {
+                    $conversation->participants()->attach($user->id, [
+                        'joined_at' => now(),
+                        'is_admin' => false,
+                    ]);
+                }
+            }
 
             return [
-                'support_case' => $case->fresh(['serviceBooking', 'conversation']),
-                'conversation' => $conversation->fresh(),
-                'service_booking' => $booking->fresh(['seller']),
+                'service_booking' => $booking->fresh(['supportCase', 'seller', 'assignedMechanic']),
+                'support_case' => $supportCase->fresh(['conversation']),
+                'conversation' => $conversation->fresh(['participants', 'messages']),
                 'system_message' => $systemMessage,
-                'user_message' => $userMessage,
             ];
         });
     }
@@ -320,37 +335,77 @@ class BookingService
     }
 
     /**
-     * Get or create conversation for booking
+     * Find or create a single conversation per user for appointments
      */
-    protected function getOrCreateConversation(?int $userId, ?string $guestSessionId, ?string $caseId): Conversation
+    protected function getOrCreateUserConversation($user, ?string $guestSessionId): Conversation
     {
-        // Try to find existing conversation for this user/guest
-        $query = Conversation::query();
+        $query = Conversation::whereIn('type', ['support', 'order_support']);
 
-        if ($userId) {
-            $query->where('user_id', $userId);
+        if ($user) {
+            $query->where(function ($q) use ($user) {
+                $q->where('created_by', $user->id)
+                  ->orWhereHas('participants', function ($pq) use ($user) {
+                      $pq->where('user_id', $user->id);
+                  });
+            });
         } elseif ($guestSessionId) {
             $query->where('guest_session_id', $guestSessionId);
         }
 
-        $conversation = $query->where('type', 'support')
-            ->latest()
-            ->first();
+        // Look for existing conversation without an order_id (general support)
+        $existing = $query->whereNull('order_id')->first();
 
-        if (!$conversation) {
-            $conversation = Conversation::create([
-                'type' => 'support',
-                'title' => 'Service Booking',
-                'created_by' => $userId ?? 1, // Default to system user if guest
-                'user_id' => $userId,
-                'guest_session_id' => $guestSessionId,
-                'guest_name' => request()->input('customer_name'),
-                'guest_email' => request()->input('customer_email'),
-                'last_message_at' => now(),
+        if ($existing) {
+            return $existing;
+        }
+
+        // Create new conversation
+        $supportUser = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->first();
+
+        $conversation = Conversation::create([
+            'created_by' => $user?->id,
+            'guest_session_id' => $user ? null : $guestSessionId,
+            'type' => 'support',
+            'title' => $user ? "Appointments - {$user->name}" : 'Appointments - Guest',
+            'status' => 'open',
+            'priority' => 'medium',
+        ]);
+
+        if ($user) {
+            $conversation->participants()->attach($user->id, ['joined_at' => now()]);
+        }
+
+        if ($supportUser && $supportUser->id !== $user?->id) {
+            $conversation->participants()->attach($supportUser->id, [
+                'joined_at' => now(),
+                'is_admin' => true,
             ]);
         }
 
         return $conversation;
+    }
+
+    /**
+     * Build the booking subject line from form data
+     * Format: "{ServiceType} service on {Date} at {Time} at {Shop}"
+     */
+    protected function buildBookingSubject(array $data): string
+    {
+        $serviceType = str_replace('_', ' ', $data['service_type'] ?? 'Service');
+        $date = $data['requested_date'] ?? 'TBD';
+        $time = $data['preferred_time'] ?? 'TBD';
+        $shop = $data['shop_location'] ?? 'TBD';
+
+        // Format date nicely if it's a valid date
+        if ($date !== 'TBD') {
+            try {
+                $date = \Carbon\Carbon::parse($date)->format('M j, Y');
+            } catch (\Exception $e) {
+                // Keep as-is if parsing fails
+            }
+        }
+
+        return "{$serviceType} service on {$date} at {$time} at {$shop}";
     }
 
     /**

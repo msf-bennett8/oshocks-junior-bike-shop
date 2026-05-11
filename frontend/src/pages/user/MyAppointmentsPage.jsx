@@ -7,8 +7,9 @@ import {
   CheckCircle, XCircle, RefreshCw, Loader2, Search,
   ChevronDown, ChevronUp, MessageSquare,
   AlertCircle, Copy, Check, ArrowLeft, CalendarDays,
-  ClipboardList
+  ClipboardList, MoreVertical
 } from 'lucide-react';
+import AppointmentPanel from '../../components/appointments/AppointmentPanel';
 
 const STATUS_CONFIG = {
   pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700 border-yellow-200', icon: Clock },
@@ -36,6 +37,8 @@ const MyAppointmentsPage = () => {
   const [rescheduleData, setRescheduleData] = useState({ new_date: '', reason: '' });
   const [actionLoading, setActionLoading] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
+  const [panelBooking, setPanelBooking] = useState(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   useEffect(() => {
     fetchMyBookings();
@@ -312,11 +315,26 @@ const MyAppointmentsPage = () => {
                           </span>
                         )}
                         <button
-                          onClick={(e) => { e.stopPropagation(); navigateToMessages(booking); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPanelBooking(booking);
+                            setIsPanelOpen(true);
+                          }}
                           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                           title="Open Messages"
                         >
                           <MessageSquare className="w-4 h-4 text-gray-500" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPanelBooking(booking);
+                            setIsPanelOpen(true);
+                          }}
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="More Options"
+                        >
+                          <MoreVertical className="w-4 h-4 text-gray-500" />
                         </button>
                         <button className="p-1 hover:bg-gray-100 rounded-lg transition-colors hidden sm:block">
                           {isExpanded ? (
@@ -418,6 +436,22 @@ const MyAppointmentsPage = () => {
           </div>
         )}
       </div>
+
+      {/* Appointment Panel */}
+      <AppointmentPanel
+        booking={panelBooking}
+        isOpen={isPanelOpen}
+        onClose={() => {
+          setIsPanelOpen(false);
+          setPanelBooking(null);
+        }}
+        onNavigateToMessages={(booking) => {
+          const convId = booking?.support_case?.conversation_id;
+          if (convId) {
+            navigate(`/messages?conversationId=${convId}`);
+          }
+        }}
+      />
 
       {/* Cancel Modal */}
       {showCancelModal && selectedBooking && (

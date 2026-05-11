@@ -160,4 +160,35 @@ class ServiceBooking extends Model
         return $this->belongsTo(User::class, 'cancellation_reviewed_by');
     }
 
+    /**
+     * Appointment notes for this booking
+     */
+    public function appointmentNotes()
+    {
+        return $this->hasMany(AppointmentNote::class, 'case_id', 'case_id')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Appointment history/audit trail
+     */
+    public function appointmentHistory()
+    {
+        return $this->hasMany(AppointmentHistory::class, 'case_id', 'case_id')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get the conversation through the support case
+     */
+    public function conversation()
+    {
+        return $this->hasOneThrough(
+            Conversation::class,
+            SupportCase::class,
+            'case_id',        // Foreign key on support_cases
+            'id',             // Foreign key on conversations
+            'case_id',        // Local key on service_bookings
+            'conversation_id' // Local key on support_cases
+        );
+    }
+
 }

@@ -7,8 +7,9 @@ import {
   Calendar, Clock, Wrench, User, Phone, Mail, MapPin,
   CheckCircle, XCircle, RefreshCw, Loader2, Search,
   Filter, ChevronDown, ChevronUp, Eye, MessageSquare, Users,
-  AlertCircle, Copy, Check, DollarSign
+  AlertCircle, Copy, Check, DollarSign, MoreVertical
 } from 'lucide-react';
+import AppointmentPanel from '../../components/appointments/AppointmentPanel';
 
 const AppointmentInboxPage = () => {
   const { user } = useAuth();
@@ -45,6 +46,8 @@ const AppointmentInboxPage = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [expandedBooking, setExpandedBooking] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [panelBooking, setPanelBooking] = useState(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   useEffect(() => {
     fetchBookings();
@@ -434,20 +437,29 @@ const AppointmentInboxPage = () => {
                         </button>
                       )
                     )}
-                    <button
+                                        <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        const convId = booking.support_case?.conversation_id;
-                        if (convId) {
-                          window.location.href = `/messages?conversationId=${convId}`;
-                        }
+                        setPanelBooking(booking);
+                        setIsPanelOpen(true);
                       }}
                       className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                       title="Open Messages"
                     >
                       <MessageSquare className="w-4 h-4 text-gray-500" />
                     </button>
-                    <button 
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPanelBooking(booking);
+                        setIsPanelOpen(true);
+                      }}
+                      className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                      title="More Options"
+                    >
+                      <MoreVertical className="w-4 h-4 text-gray-500" />
+                    </button>
+                    <button
                       className="p-1 hover:bg-gray-100 rounded-lg transition-colors hidden sm:block"
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -627,6 +639,22 @@ const AppointmentInboxPage = () => {
           </div>
         )}
       </div>
+
+      {/* Appointment Panel */}
+      <AppointmentPanel
+        booking={panelBooking}
+        isOpen={isPanelOpen}
+        onClose={() => {
+          setIsPanelOpen(false);
+          setPanelBooking(null);
+        }}
+        onNavigateToMessages={(booking) => {
+          const convId = booking?.support_case?.conversation_id;
+          if (convId) {
+            window.location.href = `/messages?conversationId=${convId}`;
+          }
+        }}
+      />
 
       {/* Confirm Modal */}
       {showConfirmModal && selectedBooking && (

@@ -134,6 +134,46 @@ export const useBookings = () => {
     }
   }, []);
 
+  /** Fetch notes for a booking */
+  const fetchNotes = useCallback(async (caseId) => {
+    try {
+      const res = await bookingService.getNotes(caseId);
+      return { success: true, data: res.data?.data || [] };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.message };
+    }
+  }, []);
+
+  /** Add note to a booking */
+  const addNote = useCallback(async (caseId, content, visibility = 'public') => {
+    try {
+      const res = await bookingService.addNote(caseId, content, visibility);
+      return { success: true, data: res.data?.data };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.message };
+    }
+  }, []);
+
+  /** Fetch history for a booking */
+  const fetchHistory = useCallback(async (caseId) => {
+    try {
+      const res = await bookingService.getHistory(caseId);
+      return { success: true, data: res.data?.data || [] };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.message };
+    }
+  }, []);
+
+  /** Fetch all appointments for a user */
+  const fetchUserAppointments = useCallback(async (userId) => {
+    try {
+      const res = await bookingService.getUserAppointments(userId);
+      return { success: true, data: res.data?.data || [] };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.message };
+    }
+  }, []);
+
   return {
     bookings,
     myBookings,
@@ -148,6 +188,10 @@ export const useBookings = () => {
     rescheduleBooking,
     completeBooking,
     cancelBooking,
+    fetchNotes,
+    addNote,
+    fetchHistory,
+    fetchUserAppointments,
   };
 };
 

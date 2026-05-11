@@ -456,7 +456,7 @@ class ServiceBookingController extends Controller
         ]);
     }
 
-    /**
+        /**
      * Authorization helper
      */
     protected function canView(ServiceBooking $booking, $user): bool
@@ -472,6 +472,137 @@ class ServiceBookingController extends Controller
         // Customer: own booking only
         return $booking->supportCase?->user_id === $user->id ||
                $booking->merged_to_user_id === $user->id;
+    }
+
+    /**
+     * Get notes for a booking
+     * GET /api/v1/service-bookings/{caseId}/notes
+     */
+    public function getNotes(string $caseId): JsonResponse
+    {
+        $user = auth()->user();
+        $booking = ServiceBooking::where('case_id', $caseId)->firstOrFail();
+
+        if (!$this->canView($booking, $user)) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+
+        $isStaff = in_array($user->role, ['admin', 'super_admin', 'support_agent', 'service_agent']);
+
+        $query = $booking->appointmentNotes()->with('user');
+
+        // Non-staff: only see public notes + their own notes
+        if (!$isStaff) {
+            $query->where(function ($q) use ($user) {
+                $q->where('visibility', 'public')
+                  ->orWhere('user_id', $user->id);
+            });
+        }
+
+        $notes = $query->orderBy('created_at', 'desc')->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $notes,
+        ]);
+    }
+
+    /**
+     * Add note to a booking
+     * POST /api/v1/service-bookings/{caseId}/notes
+     */
+    public function addNote(Request $request, string $caseId): JsonResponse
+    {
+        $request->validate([
+            'content' => ['required', 'string', 'max:5000'],
+            'visibility' => ['nullable', 'in:private,staff_public,public'],
+        ]);
+
+        $user = auth()->user();
+        $booking = ServiceBooking::where('case_id', $caseId)->firstOrFail();
+
+        if (!$this->canView($booking, $user)) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+
+        $isStaff = in_array($user->role, ['admin', 'super_admin', 'support_agent', 'service_agent']);
+
+        // Determine visibility
+        $visibility = $request->input('visibility', 'public');
+
+        // Non-staff can only create public notes
+        if (!$isStaff) {
+            $visibility = 'public';
+        }
+
+        // Staff default to private if not specified
+        if ($isStaff && !$request->has('visibility')) {
+            $visibility = 'private';
+        }
+
+        $note = \App\Models\AppointmentNote::create([
+            'case_id' => $caseId,
+            'user_id' => $user->id,
+            'content' => $request->input('content'),
+            'visibility' => $visibility,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $note->load('user'),
+        ], 201);
+    }
+
+    /**
+     * Get appointment history/audit trail
+     * GET /api/v1/service-bookings/{caseId}/history
+     */
+    public function getHistory(string $caseId): JsonResponse
+    {
+        $user = auth()->user();
+        $booking = ServiceBooking::where('case_id', $caseId)->firstOrFail();
+
+        if (!$this->canView($booking, $user)) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+
+        $history = $booking->appointmentHistory()
+            ->with(['changedBy', 'fromSeller', 'toSeller', 'fromMechanic', 'toMechanic'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(50);
+
+        return response()->json([
+            'success' => true,
+            'data' => $history,
+        ]);
+    }
+
+    /**
+     * Get all appointments for a user (for the History tab)
+     * GET /api/v1/service-bookings/user/{userId}/all
+     */
+    public function getUserAppointments(int $userId): JsonResponse
+    {
+        $currentUser = auth()->user();
+
+        // Authorization: staff can see any user's appointments, users can only see their own
+        $isStaff = in_array($currentUser->role, ['admin', 'super_admin', 'support_agent', 'service_agent']);
+        if (!$isStaff && $currentUser->id !== $userId) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+
+        $appointments = ServiceBooking::with(['supportCase.conversation', 'seller', 'assignedMechanic'])
+            ->whereHas('supportCase', function ($q) use ($userId) {
+                $q->where('user_id', $userId);
+            })
+            ->orWhere('merged_to_user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $appointments,
+        ]);
     }
 
     /**
