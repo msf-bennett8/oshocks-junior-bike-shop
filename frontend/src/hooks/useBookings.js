@@ -158,7 +158,9 @@ export const useBookings = () => {
   const fetchHistory = useCallback(async (caseId) => {
     try {
       const res = await bookingService.getHistory(caseId);
-      return { success: true, data: res.data?.data || [] };
+      // Handle paginated response: res.data.data.data contains the records
+      const historyData = res.data?.data?.data || res.data?.data || [];
+      return { success: true, data: historyData };
     } catch (err) {
       return { success: false, error: err.response?.data?.message };
     }

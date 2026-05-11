@@ -3,7 +3,7 @@
 // ============================================================================
 
 import React, { useState } from 'react';
-import { Reply, Pencil, Trash2, Check, CheckCheck } from 'lucide-react';
+import { Reply, Pencil, Trash2, Check, CheckCheck, Phone, Paperclip } from 'lucide-react';
 import Avatar from '../common/Avatar';
 
 const MessageBubble = ({ 
@@ -82,7 +82,7 @@ const MessageBubble = ({
             <p className="text-xs">This message was deleted</p>
           ) : isCallInvite ? (
             <div className="flex items-center gap-2">
-              <span className="text-lg">📞</span>
+              <Phone className="w-5 h-5 text-blue-500" />
               <div>
                 <p className="font-medium">Missed call</p>
                 <p className="text-xs opacity-75">
@@ -101,7 +101,7 @@ const MessageBubble = ({
                     <img src={att.file_path} alt={att.file_name} className="rounded-lg max-w-full max-h-48 object-cover" />
                   ) : (
                     <div className={`flex items-center gap-2 p-2 rounded-lg ${isOwn ? 'bg-blue-700' : 'bg-gray-100'}`}>
-                      <span className="text-lg">📎</span>
+                      <Paperclip className={`w-4 h-4 ${isOwn ? 'text-blue-200' : 'text-gray-500'}`} />
                       <div className="min-w-0">
                         <p className="text-xs font-medium truncate">{att.file_name}</p>
                         <p className="text-[10px] opacity-75">{att.file_size}</p>

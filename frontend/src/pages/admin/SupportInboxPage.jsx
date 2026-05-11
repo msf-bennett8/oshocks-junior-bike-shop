@@ -1280,10 +1280,20 @@ const NotesTab = ({ caseData, user, onRefresh }) => {
   const [newNote, setNewNote] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [isPrivate, setIsPrivate] = useState(true);
+  const [visibility, setVisibility] = useState('private');
 
   const isStaff = user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'support_agent';
   const isOwner = caseData.user_id === user?.id;
+
+  // Visibility options
+  const visibilityOptions = isStaff ? [
+    { value: 'public', label: 'Public', desc: 'User + All Staff', icon: Unlock, color: 'bg-blue-100 text-blue-700 border-blue-200' },
+    { value: 'staff_public', label: 'Staff Only', desc: 'All Staff Only', icon: Eye, color: 'bg-purple-100 text-purple-700 border-purple-200' },
+    { value: 'private', label: 'Private', desc: 'Only Me', icon: Lock, color: 'bg-gray-100 text-gray-700 border-gray-200' },
+  ] : [
+    { value: 'public', label: 'Public', desc: 'Staff can see', icon: Unlock, color: 'bg-blue-100 text-blue-700 border-blue-200' },
+    { value: 'private', label: 'Private', desc: 'Only me', icon: Lock, color: 'bg-gray-100 text-gray-700 border-gray-200' },
+  ];
 
   useEffect(() => {
     loadNotes();
@@ -1309,12 +1319,12 @@ const NotesTab = ({ caseData, user, onRefresh }) => {
     if (!newNote.trim() || saving) return;
     setSaving(true);
     try {
-      // Staff can set privacy; customers' notes are always public to staff
-      const privacy = isStaff ? isPrivate : false;
-      const res = await supportCaseService.addNote(caseData.case_id, newNote.trim(), privacy);
+      // Staff: use visibility selector; Users: use their selected visibility
+      const noteVisibility = isStaff ? visibility : (visibility === 'staff_public' ? 'public' : visibility);
+      const res = await supportCaseService.addNote(caseData.case_id, newNote.trim(), noteVisibility);
       setNewNote('');
-      // Reset privacy to default for staff
-      if (isStaff) setIsPrivate(true);
+      // Reset to default
+      setVisibility(isStaff ? 'private' : 'public');
       
       // Optimistically add the new note to the list immediately
       const newNoteData = res.data?.data;
@@ -1348,9 +1358,21 @@ const NotesTab = ({ caseData, user, onRefresh }) => {
   };
 
   const getNoteBg = (note) => {
-    if (note.is_private) return 'bg-gray-50 border-gray-200';
+    const vis = note.visibility || (note.is_private ? 'private' : 'public');
+    if (vis === 'private') return 'bg-gray-50 border-gray-200';
+    if (vis === 'staff_public') return 'bg-purple-50 border-purple-200';
     if (note.creator_role === 'user' || note.creator_role === 'seller') return 'bg-green-50 border-green-200';
     return 'bg-blue-50 border-blue-200';
+  };
+
+  const getVisibilityBadge = (note) => {
+    const vis = note.visibility || (note.is_private ? 'private' : 'public');
+    switch (vis) {
+      case 'public': return { text: 'Public', icon: Unlock, color: 'bg-blue-100 text-blue-700' };
+      case 'staff_public': return { text: 'Staff', icon: Eye, color: 'bg-purple-100 text-purple-700' };
+      case 'private': return { text: 'Private', icon: Lock, color: 'bg-gray-100 text-gray-700' };
+      default: return { text: 'Public', icon: Unlock, color: 'bg-blue-100 text-blue-700' };
+    }
   };
 
   return (
@@ -1402,11 +1424,15 @@ const NotesTab = ({ caseData, user, onRefresh }) => {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    {note.is_private && (
-                      <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                        <Lock className="w-2.5 h-2.5" /> Private
-                      </span>
-                    )}
+                    {(() => {
+                      const badge = getVisibilityBadge(note);
+                      const BadgeIcon = badge.icon;
+                      return (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5 ${badge.color}`}>
+                          <BadgeIcon className="w-2.5 h-2.5" /> {badge.text}
+                        </span>
+                      );
+                    })()}
                     {note.agent_id === user?.id && (
                       <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">You</span>
                     )}
@@ -1430,33 +1456,44 @@ const NotesTab = ({ caseData, user, onRefresh }) => {
               rows={3}
               className="w-full px-4 py-3 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
-            <div className="flex items-center justify-between">
-              {isStaff && (
-                <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isPrivate}
-                    onChange={(e) => setIsPrivate(e.target.checked)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="flex items-center gap-1">
-                    <Lock className="w-3 h-3" /> Private (staff only)
-                  </span>
-                </label>
-              )}
-              {!isStaff && (
-                <span className="text-xs text-gray-500 flex items-center gap-1">
-                  <Unlock className="w-3 h-3" /> Visible to support team
+            <div className="space-y-3">
+              {/* Visibility Selector */}
+              <div className="flex gap-2">
+                {visibilityOptions.map((opt) => {
+                  const OptIcon = opt.icon;
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => setVisibility(opt.value)}
+                      className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium border-2 transition-all ${
+                        visibility === opt.value
+                          ? `${opt.color} ring-2 ring-offset-1 ring-gray-300`
+                          : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                      }`}
+                    >
+                      <OptIcon className="w-3.5 h-3.5 mx-auto mb-0.5" />
+                      <span className="block">{opt.label}</span>
+                      <span className="block text-[9px] opacity-75 font-normal">{opt.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">
+                  {visibility === 'public' ? 'Visible to everyone' :
+                   visibility === 'staff_public' ? 'Visible to all staff' :
+                   'Only visible to you'}
                 </span>
-              )}
-              <button
-                onClick={handleAddNote}
-                disabled={!newNote.trim() || saving}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-2"
-              >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Add Note
-              </button>
+                <button
+                  onClick={handleAddNote}
+                  disabled={!newNote.trim() || saving}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  Add Note
+                </button>
+              </div>
             </div>
           </div>
         </div>

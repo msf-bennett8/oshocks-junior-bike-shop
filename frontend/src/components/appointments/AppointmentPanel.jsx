@@ -662,10 +662,10 @@ const HistoryTab = ({ booking, history, userAppointments, loading, expandedItem,
       </div>
 
       {/* User Appointment History */}
-      {isStaff && (
+      {(
         <div>
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Calendar className="w-4 h-4" /> All User Appointments
+            <Calendar className="w-4 h-4" /> All Your Appointments
           </h3>
           {userAppointments.length === 0 ? (
             <div className="text-center py-8 bg-gray-50 rounded-xl">
@@ -785,22 +785,25 @@ const HistoryTab = ({ booking, history, userAppointments, loading, expandedItem,
 // ============================================================================
 const NotesTab = ({ booking, notes, setNotes, loading, isStaff, user, onAddNote }) => {
   const [newNote, setNewNote] = useState('');
-  const [visibility, setVisibility] = useState('public');
+  const [visibility, setVisibility] = useState(isStaff ? 'private' : 'public');
   const [sending, setSending] = useState(false);
 
-  // Visibility options for staff
+  // Visibility options
   const visibilityOptions = isStaff ? [
     { value: 'public', label: 'Public', desc: 'User + All Staff', icon: Unlock, color: 'bg-blue-100 text-blue-700 border-blue-200' },
     { value: 'staff_public', label: 'Staff Only', desc: 'All Staff Only', icon: Eye, color: 'bg-purple-100 text-purple-700 border-purple-200' },
     { value: 'private', label: 'Private', desc: 'Only Me', icon: Lock, color: 'bg-gray-100 text-gray-700 border-gray-200' },
   ] : [
     { value: 'public', label: 'Public', desc: 'Staff can see', icon: Unlock, color: 'bg-blue-100 text-blue-700 border-blue-200' },
+    { value: 'private', label: 'Private', desc: 'Only me', icon: Lock, color: 'bg-gray-100 text-gray-700 border-gray-200' },
   ];
 
   const handleSubmit = async () => {
     if (!newNote.trim() || sending) return;
     setSending(true);
-    const res = await onAddNote(booking.case_id, newNote.trim(), visibility);
+    // Users cannot create staff_public notes
+    const noteVisibility = !isStaff && visibility === 'staff_public' ? 'public' : visibility;
+    const res = await onAddNote(booking.case_id, newNote.trim(), noteVisibility);
     setSending(false);
     if (res.success) {
       setNotes(prev => [res.data, ...prev]);
@@ -876,29 +879,27 @@ const NotesTab = ({ booking, notes, setNotes, loading, isStaff, user, onAddNote 
 
       {/* Add Note Input */}
       <div className="p-4 border-t border-gray-200 bg-white">
-        {/* Visibility Selector (staff only) */}
-        {isStaff && (
-          <div className="flex gap-2 mb-3">
-            {visibilityOptions.map((opt) => {
-              const OptIcon = opt.icon;
-              return (
-                <button
-                  key={opt.value}
-                  onClick={() => setVisibility(opt.value)}
-                  className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium border-2 transition-all ${
-                    visibility === opt.value
-                      ? `${opt.color} ring-2 ring-offset-1 ring-gray-300`
-                      : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
-                  }`}
-                >
-                  <OptIcon className="w-3.5 h-3.5 mx-auto mb-0.5" />
-                  <span className="block">{opt.label}</span>
-                  <span className="block text-[9px] opacity-75 font-normal">{opt.desc}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
+              {/* Visibility Selector */}
+      <div className="flex gap-2 mb-3">
+        {visibilityOptions.map((opt) => {
+          const OptIcon = opt.icon;
+          return (
+            <button
+              key={opt.value}
+              onClick={() => setVisibility(opt.value)}
+              className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium border-2 transition-all ${
+                visibility === opt.value
+                  ? `${opt.color} ring-2 ring-offset-1 ring-gray-300`
+                  : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+              }`}
+            >
+              <OptIcon className="w-3.5 h-3.5 mx-auto mb-0.5" />
+              <span className="block">{opt.label}</span>
+              <span className="block text-[9px] opacity-75 font-normal">{opt.desc}</span>
+            </button>
+          );
+        })}
+      </div>
 
         <div className="flex items-end gap-2">
           <textarea

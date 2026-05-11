@@ -8,7 +8,7 @@ const supportCaseService = {
   escalateCase: (caseId, reason) => api.post(`/support-cases/${caseId}/escalate`, { reason }),
   rateSatisfaction: (caseId, rating, comment) => api.post(`/support-cases/${caseId}/satisfaction`, { rating, comment }),
   validateOrder: (purchaseId) => api.post('/support-cases/validate-order', { purchase_id: purchaseId }),
-  addNote: (caseId, content, isPrivate = true) => api.post(`/support-cases/${caseId}/notes`, { content, is_private: isPrivate }),
+  addNote: (caseId, content, visibility = 'private') => api.post(`/support-cases/${caseId}/notes`, { content, visibility }),
   getHistory: (caseId) => api.get(`/support-cases/${caseId}/history`),
 
   // Queue operations (admin/agent)

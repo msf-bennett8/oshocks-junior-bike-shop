@@ -591,7 +591,12 @@ const ServiceBookingForm = () => {
         }
       }
 
-      const res = await bookingService.createBooking(formData);
+      // Map customer_notes to service_description for backend
+      const payload = {
+        ...formData,
+        service_description: formData.customer_notes || '',
+      };
+      const res = await bookingService.createBooking(payload);
 
       if (res.data?.success) {
         setResult({

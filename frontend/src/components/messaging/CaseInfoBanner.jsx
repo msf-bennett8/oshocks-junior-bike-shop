@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CaseStatusChip } from './CaseStatusChip';
 import { useAuth } from '../../context/AuthContext';
+import { Target, CheckCircle, AlertTriangle, Lock } from 'lucide-react';
 
 export const CaseInfoBanner = ({ supportCase, onClaim, onEscalate, onResolve, onClose }) => {
   const { user } = useAuth();
@@ -84,7 +85,7 @@ export const CaseInfoBanner = ({ supportCase, onClaim, onEscalate, onResolve, on
                       onClick={() => { onClaim?.(); setShowActions(false); }}
                       className="w-full text-left px-4 py-2 text-sm text-blue-700 hover:bg-blue-50 first:rounded-t-lg"
                     >
-                      🎯 Claim Case
+                      <Target className="w-3.5 h-3.5 inline mr-1.5" /> Claim Case
                     </button>
                   )}
                   {canResolve && isAssigned && (
@@ -92,7 +93,7 @@ export const CaseInfoBanner = ({ supportCase, onClaim, onEscalate, onResolve, on
                       onClick={() => { onResolve?.(); setShowActions(false); }}
                       className="w-full text-left px-4 py-2 text-sm text-green-700 hover:bg-green-50"
                     >
-                      ✅ Mark Resolved
+                      <CheckCircle className="w-3.5 h-3.5 inline mr-1.5" /> Mark Resolved
                     </button>
                   )}
                   {canEscalate && (
@@ -100,7 +101,7 @@ export const CaseInfoBanner = ({ supportCase, onClaim, onEscalate, onResolve, on
                       onClick={() => { onEscalate?.(); setShowActions(false); }}
                       className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50"
                     >
-                      🚨 Escalate
+                      <AlertTriangle className="w-3.5 h-3.5 inline mr-1.5" /> Escalate
                     </button>
                   )}
                   {canClose && (
@@ -108,7 +109,7 @@ export const CaseInfoBanner = ({ supportCase, onClaim, onEscalate, onResolve, on
                       onClick={() => { onClose?.(); setShowActions(false); }}
                       className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 last:rounded-b-lg"
                     >
-                      🔒 Close Case
+                      <Lock className="w-3.5 h-3.5 inline mr-1.5" /> Close Case
                     </button>
                   )}
                 </div>

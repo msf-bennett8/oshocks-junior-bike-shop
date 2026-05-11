@@ -172,15 +172,22 @@ class BookingService
             $booking->final_price = $data['final_price'] ?? $booking->estimated_price;
             $booking->save();
 
-            // Log history
-            SupportCaseHistory::create([
+            // Log appointment history
+            AppointmentHistory::create([
                 'case_id' => $case->case_id,
                 'changed_by' => $staff->id,
-                'from_status' => $case->status,
-                'to_status' => 'open',
+                'from_status' => $oldStatus,
+                'to_status' => 'confirmed',
+                'from_date' => $booking->requested_date,
+                'to_date' => $data['confirmed_date'],
+                'from_time' => $booking->preferred_time,
+                'to_time' => $data['confirmed_time'] ?? null,
+                'to_seller_id' => $booking->seller_id,
+                'to_mechanic_id' => $data['assigned_mechanic_id'] ?? $staff->id,
                 'reason' => 'Booking confirmed by staff. Date: ' . $data['confirmed_date'],
                 'metadata' => [
                     'confirmed_date' => $data['confirmed_date'],
+                    'confirmed_time' => $data['confirmed_time'] ?? null,
                     'assigned_mechanic_id' => $data['assigned_mechanic_id'] ?? null,
                 ],
             ]);
@@ -230,11 +237,29 @@ class BookingService
             $case->appointment_at = $data['new_date'];
             $case->save();
 
+            $oldBookingStatus = $booking->status;
+            $oldConfirmedDate = $booking->confirmed_date;
             $booking->status = 'rescheduled';
             $booking->confirmed_date = $data['new_date'];
             $booking->staff_notes = ($booking->staff_notes ? $booking->staff_notes . "\n" : '') .
                                     "Rescheduled by {$staff->name} from {$oldDate} to {$data['new_date']}";
             $booking->save();
+
+            // Log appointment history
+            AppointmentHistory::create([
+                'case_id' => $case->case_id,
+                'changed_by' => $staff->id,
+                'from_status' => $oldBookingStatus,
+                'to_status' => 'rescheduled',
+                'from_date' => $oldConfirmedDate,
+                'to_date' => $data['new_date'],
+                'reason' => "Rescheduled by {$staff->name} from {$oldDate} to {$data['new_date']}",
+                'metadata' => [
+                    'old_date' => $oldDate,
+                    'new_date' => $data['new_date'],
+                    'reschedule_reason' => $data['reason'] ?? null,
+                ],
+            ]);
 
             // System message
             $systemMessage = Message::create([
@@ -272,9 +297,24 @@ class BookingService
             $case->resolved_by = $staff->id;
             $case->save();
 
+            $oldBookingStatus = $booking->status;
             $booking->status = 'completed';
             $booking->completed_date = now();
             $booking->save();
+
+            // Log appointment history
+            AppointmentHistory::create([
+                'case_id' => $case->case_id,
+                'changed_by' => $staff->id,
+                'from_status' => $oldBookingStatus,
+                'to_status' => 'completed',
+                'to_date' => now(),
+                'reason' => 'Service completed by staff',
+                'metadata' => [
+                    'completed_by' => $staff->id,
+                    'completed_at' => now()->toDateTimeString(),
+                ],
+            ]);
 
             $systemMessage = Message::create([
                 'conversation_id' => $case->conversation_id,
@@ -309,11 +349,25 @@ class BookingService
             $case->closed_at = now();
             $case->save();
 
+            $oldBookingStatus = $booking->status;
             $booking->status = 'cancelled';
             $booking->cancelled_date = now();
             $booking->staff_notes = ($booking->staff_notes ? $booking->staff_notes . "\n" : '') .
                                     "Cancelled: {$reason}";
             $booking->save();
+
+            // Log appointment history
+            AppointmentHistory::create([
+                'case_id' => $case->case_id,
+                'changed_by' => $user?->id,
+                'from_status' => $oldBookingStatus,
+                'to_status' => 'cancelled',
+                'reason' => $reason,
+                'metadata' => [
+                    'cancelled_by_role' => $user ? $user->role : 'guest',
+                    'cancelled_by_id' => $user?->id,
+                ],
+            ]);
 
             $systemMessage = Message::create([
                 'conversation_id' => $case->conversation_id,

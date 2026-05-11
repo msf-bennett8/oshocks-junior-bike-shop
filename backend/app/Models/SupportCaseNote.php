@@ -17,6 +17,7 @@ class SupportCaseNote extends Model
         'agent_id',
         'content',
         'is_private',
+        'visibility',
         'message_id',
     ];
 
@@ -25,6 +26,16 @@ class SupportCaseNote extends Model
     protected $casts = [
         'is_private' => 'boolean',
     ];
+
+    /**
+     * Get visibility attribute (backward compatible with is_private)
+     */
+    public function getVisibilityAttribute($value): string
+    {
+        if ($value) return $value;
+        // Backward compatibility: is_private true = private, false = public
+        return $this->is_private ? 'private' : 'public';
+    }
 
     public function supportCase(): BelongsTo
     {

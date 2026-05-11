@@ -89,6 +89,29 @@ class SupportCaseController extends Controller
 
         $response = $case->toArray();
 
+        // Filter notes based on visibility
+        $isStaff = $user->canHandleSupportCases();
+        $isOwner = $case->user_id === $user->id;
+        if (isset($response['notes']) && is_array($response['notes'])) {
+            $response['notes'] = array_values(array_filter($response['notes'], function ($note) use ($isStaff, $isOwner, $user) {
+                $visibility = $note['visibility'] ?? ($note['is_private'] ? 'private' : 'public');
+
+                // Public notes: everyone sees
+                if ($visibility === 'public') return true;
+
+                // Note creator always sees their own notes
+                if ($note['agent_id'] === $user->id) return true;
+
+                // Staff-public: only staff sees
+                if ($visibility === 'staff_public') return $isStaff;
+
+                // Private: only staff sees (staff private notes)
+                if ($visibility === 'private') return $isStaff;
+
+                return false;
+            }));
+        }
+
         // Normalize empty order stubs to null for clean frontend handling
         $hasOrder = !empty($response['order']['id'] ?? null)
                  || !empty($response['order']['order_display'] ?? null)
@@ -170,8 +193,8 @@ class SupportCaseController extends Controller
 
             // Create initial message WITH case_id now available
             $messageBody = $request->description
-                ? "**Subject:** {$request->subject}\n\n**Description:**\n{$request->description}"
-                : "**Subject:** {$request->subject}";
+                ? "Subject: {$request->subject}\n\nDescription:\n{$request->description}"
+                : "Subject: {$request->subject}";
 
             $message = Message::create([
                 'conversation_id' => $conversation->id,
@@ -358,13 +381,15 @@ class SupportCaseController extends Controller
 
     /**
      * Add note to case — available to all authenticated users
-     * Staff notes default to private; customer notes are always visible to staff
+     * Staff: public (user+staff), staff_public (staff only), private (only me)
+     * Users: public (staff sees), private (only user)
      */
     public function addNote(Request $request, string $caseId): JsonResponse
     {
         $request->validate([
             'content' => ['required', 'string', 'max:5000'],
-            'is_private' => ['boolean'],
+            'visibility' => ['nullable', 'string', 'in:public,staff_public,private'],
+            'is_private' => ['boolean'], // Legacy support
             'message_id' => ['nullable', 'exists:messages,id'],
         ]);
 
@@ -379,14 +404,31 @@ class SupportCaseController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized to add notes to this case.'], 403);
         }
 
-        // Staff notes default to private; customer notes are never private
-        $isPrivate = $isStaff ? ($request->is_private ?? true) : false;
+        // Determine visibility
+        $visibility = $request->visibility;
+
+        if (!$visibility) {
+            // Legacy fallback: is_private boolean
+            $isPrivate = $isStaff ? ($request->is_private ?? true) : false;
+            $visibility = $isPrivate ? 'private' : 'public';
+        }
+
+        // Users cannot create staff_public notes
+        if (!$isStaff && $visibility === 'staff_public') {
+            $visibility = 'public';
+        }
+
+        // Users' private notes are truly private (only them)
+        // Staff private notes are only them
+        // Staff staff_public notes are visible to all staff
+        // Public notes are visible to everyone
 
         $note = SupportCaseNote::create([
             'case_id' => $case->case_id,
             'agent_id' => $user->id,
             'content' => $request->content,
-            'is_private' => $isPrivate,
+            'is_private' => in_array($visibility, ['private', 'staff_public']),
+            'visibility' => $visibility,
             'message_id' => $request->message_id,
         ]);
 
