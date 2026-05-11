@@ -112,7 +112,10 @@ const MyAppointmentsPage = () => {
     }
   };
 
-  const canCancel = (status) => ['pending', 'confirmed', 'rescheduled'].includes(status);
+  const canRequestCancellation = (booking) => {
+    return ['pending', 'confirmed', 'rescheduled'].includes(booking.status)
+      && booking.cancellation_request_status === 'none';
+  };
   const canReschedule = (status) => ['pending', 'confirmed', 'rescheduled'].includes(status);
 
   return (
@@ -290,13 +293,23 @@ const MyAppointmentsPage = () => {
                             Reschedule
                           </button>
                         )}
-                        {canCancel(booking.status) && (
+                        {canRequestCancellation(booking) && (
                           <button
                             onClick={(e) => { e.stopPropagation(); openCancelModal(booking); }}
                             className="px-3 py-1.5 bg-red-50 text-red-700 rounded-lg text-xs font-medium hover:bg-red-100 transition-colors"
                           >
-                            Cancel
+                            Request Cancel
                           </button>
+                        )}
+                        {booking.cancellation_request_status === 'pending_review' && (
+                          <span className="px-3 py-1.5 bg-yellow-50 text-yellow-700 rounded-lg text-xs font-medium border border-yellow-200">
+                            Cancel Pending
+                          </span>
+                        )}
+                        {booking.cancellation_request_status === 'denied' && (
+                          <span className="px-3 py-1.5 bg-orange-50 text-orange-700 rounded-lg text-xs font-medium border border-orange-200">
+                            Cancel Denied
+                          </span>
                         )}
                         <button
                           onClick={(e) => { e.stopPropagation(); navigateToMessages(booking); }}
@@ -364,6 +377,38 @@ const MyAppointmentsPage = () => {
                             <p className="text-gray-700 bg-white p-2 rounded-lg border border-gray-100">{booking.customer_notes}</p>
                           </div>
                         )}
+                        {booking.cancellation_request_status !== 'none' && (
+                          <div className="sm:col-span-2 lg:col-span-3">
+                            <p className="text-xs text-gray-500 mb-1">Cancellation Status</p>
+                            <div className="bg-white p-3 rounded-lg border border-gray-100 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  booking.cancellation_request_status === 'pending_review' ? 'bg-yellow-100 text-yellow-700' :
+                                  booking.cancellation_request_status === 'approved' ? 'bg-green-100 text-green-700' :
+                                  'bg-orange-100 text-orange-700'
+                                }`}>
+                                  {booking.cancellation_request_status === 'pending_review' ? 'Awaiting Staff Review' :
+                                   booking.cancellation_request_status === 'approved' ? 'Approved' : 'Denied'}
+                                </span>
+                              </div>
+                              {booking.cancellation_reason && (
+                                <p className="text-sm text-gray-600">
+                                  <span className="font-medium">Your reason:</span> {booking.cancellation_reason}
+                                </p>
+                              )}
+                              {booking.cancellation_denial_reason && (
+                                <p className="text-sm text-gray-600">
+                                  <span className="font-medium">Staff response:</span> {booking.cancellation_denial_reason}
+                                </p>
+                              )}
+                              {booking.cancellation_requested_at && (
+                                <p className="text-xs text-gray-400">
+                                  Requested: {new Date(booking.cancellation_requested_at).toLocaleDateString()}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -383,7 +428,7 @@ const MyAppointmentsPage = () => {
                 <XCircle className="w-5 h-5 text-red-600" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Cancel Appointment</h3>
+                <h3 className="text-lg font-bold text-gray-900">Request Cancellation</h3>
                 <p className="text-sm text-gray-500">{selectedBooking.case_id}</p>
               </div>
             </div>
@@ -413,7 +458,7 @@ const MyAppointmentsPage = () => {
                   className="flex-1 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
                 >
                   {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
-                  Cancel Appointment
+                  Submit Request
                 </button>
               </div>
             </div>

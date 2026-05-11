@@ -72,7 +72,7 @@ class ServiceBookingController extends Controller
         $user = auth()->user();
 
         // Role-based filtering
-        $query = ServiceBooking::with(['supportCase', 'seller', 'assignedMechanic']);
+        $query = ServiceBooking::with(['supportCase', 'seller', 'assignedMechanic', 'cancellationRequester', 'cancellationReviewer']);
 
         if ($user->role === 'seller') {
             // Sellers see only their shop's bookings
@@ -90,6 +90,10 @@ class ServiceBookingController extends Controller
         // Status filter
         if ($request->has('status')) {
             $query->where('status', $request->input('status'));
+        }
+
+        if ($request->has('cancellation_status')) {
+            $query->where('cancellation_request_status', $request->input('cancellation_status'));
         }
 
         // Date range
@@ -115,7 +119,7 @@ class ServiceBookingController extends Controller
      */
     public function show(string $caseId): JsonResponse
     {
-        $booking = ServiceBooking::with(['supportCase', 'seller', 'assignedMechanic'])
+        $booking = ServiceBooking::with(['supportCase', 'seller', 'assignedMechanic', 'cancellationRequester', 'cancellationReviewer'])
             ->where('case_id', $caseId)
             ->firstOrFail();
 
@@ -267,51 +271,127 @@ class ServiceBookingController extends Controller
     }
 
     /**
-     * Cancel a booking (staff or customer)
+     * Request cancellation (user) or approve/deny (staff)
      * POST /api/v1/service-bookings/{caseId}/cancel
      */
     public function cancel(Request $request, string $caseId): JsonResponse
     {
+        $user = auth()->user();
+        $booking = ServiceBooking::where('case_id', $caseId)->firstOrFail();
+
+        // ─── STAFF: Approve or Deny a pending cancellation request ───
+        if ($user && in_array($user->role, ['admin', 'super_admin', 'support_agent'])) {
+            $request->validate([
+                'action' => 'required|in:approve,deny',
+                'denial_reason' => 'required_if:action,deny|string|max:500|nullable',
+            ]);
+
+            if ($booking->cancellation_request_status !== 'pending_review') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No pending cancellation request for this booking.',
+                ], 400);
+            }
+
+            $action = $request->input('action');
+
+            if ($action === 'approve') {
+                $result = $this->bookingService->cancelBooking(
+                    caseId: $caseId,
+                    reason: $booking->cancellation_reason,
+                    user: $user
+                );
+
+                $booking->cancellation_request_status = 'approved';
+                $booking->cancellation_reviewed_by = $user->id;
+                $booking->cancellation_reviewed_at = now();
+                $booking->save();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Cancellation approved. Booking cancelled.',
+                    'data' => $result,
+                ]);
+            } else {
+                $booking->cancellation_request_status = 'denied';
+                $booking->cancellation_denial_reason = $request->input('denial_reason');
+                $booking->cancellation_reviewed_by = $user->id;
+                $booking->cancellation_reviewed_at = now();
+                $booking->save();
+
+                if ($booking->supportCase?->conversation_id) {
+                    \App\Models\Message::create([
+                        'conversation_id' => $booking->supportCase->conversation_id,
+                        'sender_id' => null,
+                        'body' => "❌ Cancellation Request Denied\n\nReason: {$request->input('denial_reason')}\n\nYour appointment remains active. Contact us if you have concerns.",
+                        'type' => 'system',
+                        'metadata' => ['event_type' => 'cancellation_denied'],
+                        'case_id' => $booking->case_id,
+                    ]);
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Cancellation request denied.',
+                    'data' => $booking->fresh(),
+                ]);
+            }
+        }
+
+        // ─── USER: Submit cancellation request ───
         $request->validate([
             'reason' => 'required|string|max:500',
         ]);
 
-        $user = auth()->user();
-        $booking = ServiceBooking::where('case_id', $caseId)->firstOrFail();
-
-        // Authorization: staff can cancel any, customers can cancel their own
-        $canCancel = false;
+        $canRequest = false;
         if ($user) {
-            $canCancel = in_array($user->role, ['admin', 'super_admin', 'support_agent'])
-                || $booking->supportCase?->user_id === $user->id;
+            $canRequest = $booking->supportCase?->user_id === $user->id
+                || $booking->merged_to_user_id === $user->id;
         }
 
-        if (!$canCancel) {
+        if (!$canRequest) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized.',
+                'message' => 'Unauthorized. You can only request cancellation for your own bookings.',
             ], 403);
         }
 
-        try {
-            $result = $this->bookingService->cancelBooking(
-                caseId: $caseId,
-                reason: $request->input('reason'),
-                user: $user
-            );
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Booking cancelled.',
-                'data' => $result,
-            ]);
-
-        } catch (\Exception $e) {
+        if ($booking->cancellation_request_status === 'pending_review') {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
+                'message' => 'You already have a pending cancellation request.',
+            ], 400);
         }
+
+        if (!in_array($booking->status, ['pending', 'confirmed', 'rescheduled'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This booking cannot be cancelled at its current status.',
+            ], 400);
+        }
+
+        $booking->cancellation_request_status = 'pending_review';
+        $booking->cancellation_reason = $request->input('reason');
+        $booking->cancellation_requested_by = $user->id;
+        $booking->cancellation_requested_at = now();
+        $booking->save();
+
+        if ($booking->supportCase?->conversation_id) {
+            \App\Models\Message::create([
+                'conversation_id' => $booking->supportCase->conversation_id,
+                'sender_id' => null,
+                'body' => "⏳ Cancellation Requested by Customer\n\nReason: {$request->input('reason')}\n\nAwaiting staff review.",
+                'type' => 'system',
+                'metadata' => ['event_type' => 'cancellation_requested'],
+                'case_id' => $booking->case_id,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cancellation request submitted. Awaiting staff approval.',
+            'data' => $booking->fresh(),
+        ]);
     }
 
     /**
@@ -350,7 +430,7 @@ class ServiceBookingController extends Controller
             ], 401);
         }
 
-        $query = ServiceBooking::with(['supportCase.conversation', 'seller'])
+        $query = ServiceBooking::with(['supportCase.conversation', 'seller', 'cancellationRequester', 'cancellationReviewer'])
             ->orderBy('created_at', 'desc');
 
         if ($user) {

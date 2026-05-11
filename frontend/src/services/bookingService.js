@@ -29,8 +29,16 @@ const bookingService = {
   /** Mark booking as complete */
   completeBooking: (caseId) => api.post(`/service-bookings/${caseId}/complete`),
 
-  /** Cancel a booking */
-  cancelBooking: (caseId, reason) => api.post(`/service-bookings/${caseId}/cancel`, { reason }),
+  /** 
+   * Request cancellation (user) or approve/deny (staff)
+   * action: 'request' | 'approve' | 'deny'
+   */
+  cancelBooking: (caseId, reason, action = 'request', denialReason = null) => 
+    api.post(`/service-bookings/${caseId}/cancel`, { 
+      reason, 
+      action,
+      denial_reason: denialReason 
+    }),
 };
 
 export default bookingService;

@@ -29,6 +29,13 @@ class ServiceBooking extends Model
         'customer_email',
         'guest_session_id',
         'status',
+        'cancellation_request_status',
+        'cancellation_reason',
+        'cancellation_denial_reason',
+        'cancellation_requested_by',
+        'cancellation_requested_at',
+        'cancellation_reviewed_by',
+        'cancellation_reviewed_at',
         'shop_location',
         'staff_notes',
         'customer_notes',
@@ -44,6 +51,8 @@ class ServiceBooking extends Model
         'merged_at' => 'datetime',
         'estimated_price' => 'decimal:2',
         'final_price' => 'decimal:2',
+        'cancellation_requested_at' => 'datetime',
+        'cancellation_reviewed_at' => 'datetime',
     ];
 
     /**
@@ -134,4 +143,21 @@ class ServiceBooking extends Model
     {
         return in_array($this->status, ['in_progress', 'ready']);
     }
+
+    /**
+     * User who requested cancellation
+     */
+    public function cancellationRequester()
+    {
+        return $this->belongsTo(User::class, 'cancellation_requested_by');
+    }
+
+    /**
+     * Staff who reviewed cancellation
+     */
+    public function cancellationReviewer()
+    {
+        return $this->belongsTo(User::class, 'cancellation_reviewed_by');
+    }
+
 }

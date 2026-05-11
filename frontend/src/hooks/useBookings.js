@@ -84,9 +84,9 @@ export const useBookings = () => {
     setLoading(true);
     try {
       const res = await bookingService.confirmBooking(caseId, data);
-      setBookings(prev => prev.map(b => 
-        b.case_id === caseId ? { ...b, ...res.data.data.service_booking } : b
-      ));
+      const updated = res.data.data.service_booking || res.data.data;
+      setBookings(prev => prev.map(b => b.case_id === caseId ? { ...b, ...updated } : b));
+      setMyBookings(prev => prev.map(b => b.case_id === caseId ? { ...b, ...updated } : b));
       return { success: true, data: res.data.data };
     } catch (err) {
       return { success: false, error: err.response?.data?.message };
@@ -99,9 +99,9 @@ export const useBookings = () => {
   const rescheduleBooking = useCallback(async (caseId, data) => {
     try {
       const res = await bookingService.rescheduleBooking(caseId, data);
-      setBookings(prev => prev.map(b => 
-        b.case_id === caseId ? { ...b, ...res.data.data.service_booking } : b
-      ));
+      const updated = res.data.data.service_booking || res.data.data;
+      setBookings(prev => prev.map(b => b.case_id === caseId ? { ...b, ...updated } : b));
+      setMyBookings(prev => prev.map(b => b.case_id === caseId ? { ...b, ...updated } : b));
       return { success: true };
     } catch (err) {
       return { success: false, error: err.response?.data?.message };
@@ -112,23 +112,23 @@ export const useBookings = () => {
   const completeBooking = useCallback(async (caseId) => {
     try {
       const res = await bookingService.completeBooking(caseId);
-      setBookings(prev => prev.map(b => 
-        b.case_id === caseId ? { ...b, ...res.data.data.service_booking } : b
-      ));
+      const updated = res.data.data.service_booking || res.data.data;
+      setBookings(prev => prev.map(b => b.case_id === caseId ? { ...b, ...updated } : b));
+      setMyBookings(prev => prev.map(b => b.case_id === caseId ? { ...b, ...updated } : b));
       return { success: true };
     } catch (err) {
       return { success: false, error: err.response?.data?.message };
     }
   }, []);
 
-  /** Cancel booking */
-  const cancelBooking = useCallback(async (caseId, reason) => {
+  /** Request cancellation (user) or approve/deny (staff) */
+  const cancelBooking = useCallback(async (caseId, reason, action = 'request', denialReason = null) => {
     try {
-      const res = await bookingService.cancelBooking(caseId, reason);
-      setBookings(prev => prev.map(b => 
-        b.case_id === caseId ? { ...b, ...res.data.data.service_booking } : b
-      ));
-      return { success: true };
+      const res = await bookingService.cancelBooking(caseId, reason, action, denialReason);
+      const updated = res.data.data.service_booking || res.data.data;
+      setBookings(prev => prev.map(b => b.case_id === caseId ? { ...b, ...updated } : b));
+      setMyBookings(prev => prev.map(b => b.case_id === caseId ? { ...b, ...updated } : b));
+      return { success: true, data: res.data.data };
     } catch (err) {
       return { success: false, error: err.response?.data?.message };
     }
