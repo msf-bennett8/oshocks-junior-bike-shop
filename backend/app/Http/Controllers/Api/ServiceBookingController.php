@@ -3,152 +3,432 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreServiceBookingRequest;
+use App\Http\Requests\ConfirmBookingRequest;
 use App\Models\ServiceBooking;
-use App\Services\BusinessOperationsService;
+use App\Models\SupportCase;
+use App\Services\BookingService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class ServiceBookingController extends Controller
 {
+    protected BookingService $bookingService;
+
+    public function __construct(BookingService $bookingService)
+    {
+        $this->bookingService = $bookingService;
+    }
+
     /**
-     * Create service booking
+     * Create a new service booking
      * POST /api/v1/service-bookings
      */
-    public function store(Request $request)
+    public function store(StoreServiceBookingRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'service_type' => 'required|in:tune_up,repair,fitting,maintenance',
-            'mechanic_id' => 'nullable|exists:users,id',
-            'product_id' => 'nullable|exists:products,id',
-            'scheduled_date' => 'required|date|after:today',
-            'scheduled_time' => 'required',
-            'duration_minutes' => 'integer|min:30',
-            'location_id' => 'required|exists:addresses,id',
-            'price_estimate' => 'nullable|numeric',
-        ]);
+        try {
+            $user = auth()->user();
+            $guestSessionId = $request->input('guest_session_id') ??
+                             $request->header('X-Guest-Session-ID');
 
-        if ($validator->fails()) {
+            // Generate guest session if not provided
+            if (!$user && !$guestSessionId) {
+                $guestSessionId = 'guest_' . uniqid();
+            }
+
+            $result = $this->bookingService->createBooking(
+                data: $request->validated(),
+                user: $user,
+                guestSessionId: $guestSessionId
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Service booking created successfully. Our team will confirm your appointment shortly.',
+                'data' => $result,
+            ], 201);
+
+        } catch (\Exception $e) {
+            Log::error('Service booking creation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+                'message' => 'Failed to create booking. Please try again.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
         }
-
-        $booking = BusinessOperationsService::bookService($request->user(), $request->all());
-
-        return response()->json([
-            'success' => true,
-            'data' => $booking
-        ], 201);
     }
 
     /**
-     * Reschedule booking
-     * POST /api/v1/service-bookings/{id}/reschedule
+     * Get all bookings (admin/agent/seller view)
+     * GET /api/v1/service-bookings
      */
-    public function reschedule(Request $request, $id)
+    public function index(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'scheduled_date' => 'required|date|after:today',
-            'scheduled_time' => 'required',
+        $user = auth()->user();
+
+        // Role-based filtering
+        $query = ServiceBooking::with(['supportCase', 'seller', 'assignedMechanic']);
+
+        if ($user->role === 'seller') {
+            // Sellers see only their shop's bookings
+            $sellerProfile = $user->sellerProfile;
+            if ($sellerProfile) {
+                $query->where('seller_id', $sellerProfile->id);
+            }
+        } elseif (!in_array($user->role, ['admin', 'super_admin', 'support_agent'])) {
+            // Regular users see only their own
+            $query->whereHas('supportCase', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        }
+
+        // Status filter
+        if ($request->has('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        // Date range
+        if ($request->has('from_date')) {
+            $query->whereDate('requested_date', '>=', $request->input('from_date'));
+        }
+        if ($request->has('to_date')) {
+            $query->whereDate('requested_date', '<=', $request->input('to_date'));
+        }
+
+        $bookings = $query->orderBy('created_at', 'desc')
+            ->paginate($request->input('per_page', 20));
+
+        return response()->json([
+            'success' => true,
+            'data' => $bookings,
+        ]);
+    }
+
+    /**
+     * Get single booking
+     * GET /api/v1/service-bookings/{caseId}
+     */
+    public function show(string $caseId): JsonResponse
+    {
+        $booking = ServiceBooking::with(['supportCase', 'seller', 'assignedMechanic'])
+            ->where('case_id', $caseId)
+            ->firstOrFail();
+
+        // Authorization check
+        $user = auth()->user();
+        if (!$this->canView($booking, $user)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized.',
+            ], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $booking,
+        ]);
+    }
+
+    /**
+     * Confirm a booking (staff only)
+     * POST /api/v1/service-bookings/{caseId}/confirm
+     */
+    public function confirm(ConfirmBookingRequest $request, string $caseId): JsonResponse
+    {
+        try {
+            $result = $this->bookingService->confirmBooking(
+                caseId: $caseId,
+                data: $request->validated(),
+                staff: auth()->user()
+            );
+
+            // ─── Send notification to customer ───
+            $booking = $result['service_booking'] ?? null;
+            $supportCase = $result['support_case'] ?? null;
+
+            if ($booking && $supportCase) {
+                // Notify the customer
+                $customer = $supportCase->user;
+                if ($customer) {
+                    $customer->notify(new \App\Notifications\ServiceBookingConfirmed($booking, $supportCase));
+                }
+
+                // Broadcast real-time update
+                event(new \App\Events\SupportCaseUpdated(
+                    $supportCase,
+                    'appointment_confirmed',
+                    auth()->id(),
+                    [
+                        'booking_id' => $booking->id,
+                        'confirmed_date' => $booking->confirmed_date,
+                        'seller_id' => $booking->seller_id,
+                        'seller_name' => $booking->seller?->shop_name ?? null,
+                    ]
+                ));
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking confirmed successfully. Customer has been notified.',
+                'data' => $result,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Booking confirmation failed', [
+                'case_id' => $caseId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Reschedule a booking (staff or customer)
+     * POST /api/v1/service-bookings/{caseId}/reschedule
+     */
+    public function reschedule(Request $request, string $caseId): JsonResponse
+    {
+        $request->validate([
+            'new_date' => 'required|date|after_or_equal:today',
             'reason' => 'required|string|max:500',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+        $user = auth()->user();
+        $booking = ServiceBooking::where('case_id', $caseId)->firstOrFail();
+
+        // Authorization: staff can reschedule any, customers can reschedule their own
+        $canReschedule = false;
+        if ($user) {
+            $canReschedule = in_array($user->role, ['admin', 'super_admin', 'support_agent'])
+                || $booking->supportCase?->user_id === $user->id;
         }
 
-        $booking = ServiceBooking::where('booking_id', $id)
-            ->where('user_id', $request->user()->id)
-            ->first();
-
-        if (!$booking) {
+        if (!$canReschedule) {
             return response()->json([
                 'success' => false,
-                'message' => 'Booking not found'
-            ], 404);
+                'message' => 'Unauthorized.',
+            ], 403);
         }
 
-        $newBooking = BusinessOperationsService::rescheduleService(
-            $booking,
-            $request->only(['scheduled_date', 'scheduled_time']),
-            $request->reason
-        );
+        try {
+            $result = $this->bookingService->rescheduleBooking(
+                caseId: $caseId,
+                data: $request->only(['new_date', 'reason']),
+                staff: $user
+            );
 
-        return response()->json([
-            'success' => true,
-            'data' => $newBooking
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking rescheduled successfully.',
+                'data' => $result,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
-     * Cancel booking
-     * POST /api/v1/service-bookings/{id}/cancel
+     * Complete a booking
+     * POST /api/v1/service-bookings/{caseId}/complete
      */
-    public function cancel(Request $request, $id)
+    public function complete(string $caseId): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        try {
+            $result = $this->bookingService->completeBooking(
+                caseId: $caseId,
+                staff: auth()->user()
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking marked as completed.',
+                'data' => $result,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Cancel a booking (staff or customer)
+     * POST /api/v1/service-bookings/{caseId}/cancel
+     */
+    public function cancel(Request $request, string $caseId): JsonResponse
+    {
+        $request->validate([
             'reason' => 'required|string|max:500',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+        $user = auth()->user();
+        $booking = ServiceBooking::where('case_id', $caseId)->firstOrFail();
+
+        // Authorization: staff can cancel any, customers can cancel their own
+        $canCancel = false;
+        if ($user) {
+            $canCancel = in_array($user->role, ['admin', 'super_admin', 'support_agent'])
+                || $booking->supportCase?->user_id === $user->id;
         }
 
-        $booking = ServiceBooking::where('booking_id', $id)
-            ->where('user_id', $request->user()->id)
-            ->first();
-
-        if (!$booking) {
+        if (!$canCancel) {
             return response()->json([
                 'success' => false,
-                'message' => 'Booking not found'
-            ], 404);
+                'message' => 'Unauthorized.',
+            ], 403);
         }
 
-        BusinessOperationsService::cancelService(
-            $booking,
-            $request->reason,
-            'customer',
-            $request->refund_requested ?? false
-        );
+        try {
+            $result = $this->bookingService->cancelBooking(
+                caseId: $caseId,
+                reason: $request->input('reason'),
+                user: $user
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking cancelled.',
+                'data' => $result,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get available sellers/service providers
+     * GET /api/v1/service-bookings/sellers
+     */
+    public function availableSellers(Request $request): JsonResponse
+    {
+        $sellers = \App\Models\SellerProfile::with(['user'])
+            ->where('status', 'approved')
+            ->when($request->has('service_type'), function ($q) use ($request) {
+                // Future: filter by service types offered
+                return $q;
+            })
+            ->get();
 
         return response()->json([
             'success' => true,
-            'message' => 'Booking cancelled'
+            'data' => $sellers,
         ]);
     }
 
     /**
-     * Mark no-show (mechanic/admin only)
+     * Get my bookings (customer view - auth + guest)
+     * GET /api/v1/service-bookings/my-bookings
+     */
+    public function myBookings(Request $request): JsonResponse
+    {
+        $user = auth()->user();
+        $guestSessionId = $request->header('X-Guest-Session-ID');
+
+        if (!$user && !$guestSessionId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required.',
+            ], 401);
+        }
+
+        $query = ServiceBooking::with(['supportCase.conversation', 'seller'])
+            ->orderBy('created_at', 'desc');
+
+        if ($user) {
+            $query->where(function ($q) use ($user) {
+                $q->whereHas('supportCase', function ($sq) use ($user) {
+                    $sq->where('user_id', $user->id);
+                })
+                ->orWhere('merged_to_user_id', $user->id);
+            });
+        } elseif ($guestSessionId) {
+            $query->where('guest_session_id', $guestSessionId);
+        }
+
+        if ($request->has('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        $bookings = $query->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $bookings,
+        ]);
+    }
+
+    /**
+     * Authorization helper
+     */
+    protected function canView(ServiceBooking $booking, $user): bool
+    {
+        if (in_array($user->role, ['admin', 'super_admin', 'support_agent'])) {
+            return true;
+        }
+
+        if ($user->role === 'seller') {
+            return $booking->seller_id === $user->sellerProfile?->id;
+        }
+
+        // Customer: own booking only
+        return $booking->supportCase?->user_id === $user->id ||
+               $booking->merged_to_user_id === $user->id;
+    }
+
+    /**
+     * Mark booking as no-show (staff only)
      * POST /api/v1/service-bookings/{id}/no-show
      */
-    public function markNoShow(Request $request, $id)
+    public function markNoShow(string $id): JsonResponse
     {
-        $booking = ServiceBooking::where('booking_id', $id)->first();
+        $user = auth()->user();
 
-        if (!$booking) {
+        if (!in_array($user->role, ['admin', 'super_admin', 'support_agent'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Booking not found'
-            ], 404);
+                'message' => 'Unauthorized.',
+            ], 403);
         }
 
-        BusinessOperationsService::markNoShow(
-            $booking,
-            $request->party ?? 'customer',
-            $request->offer_reschedule ?? false
-        );
+        $booking = ServiceBooking::findOrFail($id);
+        $booking->status = 'no_show';
+        $booking->save();
+
+        // Create system message in conversation
+        if ($booking->supportCase?->conversation_id) {
+            \App\Models\Message::create([
+                'conversation_id' => $booking->supportCase->conversation_id,
+                'sender_id' => null,
+                'body' => "❌ Customer No-Show\n\nThe customer did not arrive for the scheduled appointment.",
+                'type' => 'system',
+                'metadata' => ['event_type' => 'booking_no_show'],
+                'case_id' => $booking->case_id,
+            ]);
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'No-show recorded'
+            'message' => 'Marked as no-show.',
+            'data' => $booking,
         ]);
     }
 }

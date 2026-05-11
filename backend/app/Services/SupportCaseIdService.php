@@ -6,9 +6,9 @@ use Carbon\Carbon;
 
 /**
  * Support Case ID Generator using Bennett-Fibonacci-36th Codec principles
- * 
+ *
  * Format: AETRUHB7KPL (10 characters + 3 random alpha = 13 chars)
- * 
+ *
  * Position breakdown:
  * A = Year (A=2026, B=2027, C=2028...)
  * E = Month (A=Jan, B=Feb, C=Mar, D=Apr, E=May...)
@@ -30,6 +30,8 @@ class SupportCaseIdService
         'account_help'      => '5',
         'report_problem'    => '3',
         'delivery_question' => '8',
+        'service'           => '2',
+        'inquiry'           => '1',
     ];
 
     /**
@@ -196,23 +198,23 @@ class SupportCaseIdService
     public function isValid(string $caseId): bool
     {
         if (strlen($caseId) !== 13) return false;
-        
+
         // Check positions 0-6 are letters (A-Z)
         for ($i = 0; $i <= 6; $i++) {
             if (!ctype_alpha($caseId[$i])) return false;
         }
-        
+
         // Position 6 is actually a digit (last digit of minute)
         if (!ctype_digit($caseId[6])) return false;
-        
+
         // Position 7 is case type digit
         if (!isset(array_flip(self::CASE_TYPE_DIGITS)[$caseId[7]])) return false;
-        
+
         // Positions 8-10 are letters
         for ($i = 8; $i <= 10; $i++) {
             if (!ctype_alpha($caseId[$i])) return false;
         }
-        
+
         return true;
     }
 }

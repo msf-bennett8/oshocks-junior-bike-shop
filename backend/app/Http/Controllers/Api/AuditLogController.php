@@ -242,7 +242,7 @@ class AuditLogController extends Controller
         }
 
         $validCategories = ['security', 'payment', 'order', 'product', 'user'];
-        
+
         if (!in_array($category, $validCategories)) {
             return response()->json([
                 'success' => false,
@@ -420,7 +420,7 @@ class AuditLogController extends Controller
     public function archives(Request $request)
     {
         $perPage = $request->get('per_page', 20);
-        
+
         $query = \App\Models\AuditArchive::query();
 
         // Filters
@@ -495,11 +495,11 @@ class AuditLogController extends Controller
         }
 
         $totalArchived = \App\Models\AuditArchive::count();
-        
+
         // Archives older than 90 days (eligible for permanent deletion)
         $eligibleForDeletion = \App\Models\AuditArchive::where(
-            'archived_at', 
-            '<', 
+            'archived_at',
+            '<',
             now()->subDays(90)
         )->count();
 
@@ -587,7 +587,7 @@ class AuditLogController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             Log::error('❌ Archive restoration failed', [
                 'archive_id' => $id,
                 'error' => $e->getMessage()
@@ -634,7 +634,7 @@ class AuditLogController extends Controller
 
             foreach ($request->archive_ids as $archiveId) {
                 $archive = \App\Models\AuditArchive::find($archiveId);
-                
+
                 if ($archive) {
                     try {
                         AuditLog::create([
@@ -687,7 +687,7 @@ class AuditLogController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Bulk restoration failed: ' . $e->getMessage()
@@ -867,7 +867,7 @@ class AuditLogController extends Controller
         if (isset($payload['events']) && !isset($payload['logs'])) {
             $payload['logs'] = $payload['events'];
         }
-        
+
         $validator = Validator::make($payload, [
             'logs' => 'required|array',
             'logs.*.event_type' => 'required|string|max:100',
@@ -933,10 +933,79 @@ class AuditLogController extends Controller
             }
         }
 
-        return response()->json([
+                return response()->json([
             'success' => true,
             'message' => "Stored {$stored} audit logs",
             'stored_count' => $stored
         ]);
+    }
+
+    /**
+     * Store a single frontend audit log (guest + auth compatible)
+     * POST /api/v1/audit-logs/frontend
+     */
+    public function storeFrontend(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'event_type' => 'required|string|max:100',
+            'event_category' => 'required|string|max:50',
+            'severity' => 'required|in:low,medium,high,critical',
+            'actor_type' => 'nullable|string|max:50',
+            'description' => 'nullable|string|max:500',
+            'correlation_id' => 'nullable|string|max:100',
+            'session_id' => 'nullable|string|max:100',
+            'metadata' => 'nullable|array',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $user = $request->user();
+
+            $log = AuditLog::create([
+                'event_type' => strtoupper($request->event_type),
+                'event_category' => strtolower($request->event_category),
+                'user_id' => $user?->id,
+                'user_role' => $user?->role ?? ($user ? 'user' : 'guest'),
+                'actor_type' => $request->actor_type ?? ($user ? 'USER' : 'ANONYMOUS'),
+                'action' => 'logged',
+                'model_type' => null,
+                'model_id' => null,
+                'description' => $request->description ?? $request->event_type,
+                'old_values' => null,
+                'new_values' => null,
+                'metadata' => array_merge(is_array($request->metadata ?? null) ? $request->metadata : [], [
+                    'source' => 'frontend_single',
+                    'correlation_id' => $request->correlation_id,
+                    'session_id' => $request->session_id,
+                    'received_at' => now()->toIso8601String(),
+                ]),
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'request_method' => $request->method(),
+                'request_url' => $request->url(),
+                'severity' => $request->severity ?? 'low',
+                'is_suspicious' => false,
+                'occurred_at' => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'id' => $log->id,
+            ], 201);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to store frontend audit log', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to store audit log'
+            ], 500);
+        }
     }
 }

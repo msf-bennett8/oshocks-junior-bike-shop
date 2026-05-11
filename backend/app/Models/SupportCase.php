@@ -242,4 +242,60 @@ class SupportCase extends Model
             ->orderBy('created_at', 'desc')
             ->get();
     }
+
+        /**
+     * Service booking details (for case_type = 'service')
+     */
+    public function serviceBooking()
+    {
+        return $this->hasOne(ServiceBooking::class, 'case_id', 'case_id');
+    }
+
+    /**
+     * Seller assigned to this case (for service bookings)
+     */
+    public function seller()
+    {
+        return $this->belongsTo(SellerProfile::class, 'seller_id');
+    }
+
+    /**
+     * Service agent/mechanic assigned
+     */
+    public function serviceAgent()
+    {
+        return $this->belongsTo(User::class, 'service_agent_id');
+    }
+
+    /**
+     * Check if this is a service booking case
+     */
+    public function isServiceBooking(): bool
+    {
+        return $this->case_type === 'service';
+    }
+
+    /**
+     * Check if this is a contact inquiry
+     */
+    public function isInquiry(): bool
+    {
+        return $this->case_type === 'inquiry';
+    }
+
+    /**
+     * Get service details accessor
+     */
+    public function getServiceDetailsAttribute($value)
+    {
+        return $value ? json_decode($value, true) : null;
+    }
+
+    /**
+     * Set service details mutator
+     */
+    public function setServiceDetailsAttribute($value)
+    {
+        $this->attributes['service_details'] = is_string($value) ? $value : json_encode($value);
+    }
 }

@@ -1,10 +1,108 @@
-import React, { useState } from 'react';
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, DollarSign, ShoppingCart, Users, Package, Star, Download, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  AreaChart, Area
+} from 'recharts';
+import {
+  TrendingUp, DollarSign, ShoppingCart, Users, Package,
+  Star, Download, Calendar, CalendarDays, CheckCircle,
+  XCircle, RefreshCw, Wrench, Clock, Filter, ChevronDown
+} from 'lucide-react';
+import api from '../../services/api';
 
 const AdminReportsPage = () => {
   const [dateRange, setDateRange] = useState('30days');
   const [reportType, setReportType] = useState('overview');
+  const [loading, setLoading] = useState(false);
+  const [appointmentData, setAppointmentData] = useState(null);
+  const [error, setError] = useState(null);
+
+  // ─── Load appointment analytics from API ───
+  useEffect(() => {
+    if (reportType !== 'appointments') return;
+
+    const loadAppointments = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const fromDate = getDateFromRange(dateRange);
+        const res = await api.get('/v1/service-bookings', {
+          params: { per_page: 1000, from_date: fromDate }
+        });
+        const bookings = res.data?.data?.data || [];
+        setAppointmentData(computeAppointmentStats(bookings));
+      } catch (err) {
+        console.error('Failed to load appointment analytics:', err);
+        setError('Failed to load appointment data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAppointments();
+  }, [reportType, dateRange]);
+
+  const getDateFromRange = (range) => {
+    const now = new Date();
+    switch (range) {
+      case '7days': return new Date(now - 7 * 86400000).toISOString().split('T')[0];
+      case '30days': return new Date(now - 30 * 86400000).toISOString().split('T')[0];
+      case '90days': return new Date(now - 90 * 86400000).toISOString().split('T')[0];
+      case 'year': return new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
+      default: return new Date(now - 30 * 86400000).toISOString().split('T')[0];
+    }
+  };
+
+  const computeAppointmentStats = (bookings) => {
+    const statusCounts = { pending: 0, confirmed: 0, rescheduled: 0, completed: 0, cancelled: 0, 'no-show': 0 };
+    const dailyData = {};
+    const sellerData = {};
+    const serviceTypes = {};
+    let totalRevenue = 0;
+
+    bookings.forEach(b => {
+      const status = b.status || 'pending';
+      statusCounts[status] = (statusCounts[status] || 0) + 1;
+
+      const date = b.created_at ? b.created_at.split('T')[0] : 'unknown';
+      if (!dailyData[date]) dailyData[date] = { date, bookings: 0, confirmed: 0, completed: 0 };
+      dailyData[date].bookings++;
+      if (status === 'confirmed') dailyData[date].confirmed++;
+      if (status === 'completed') dailyData[date].completed++;
+
+      const sellerName = b.seller?.shop_name || b.seller?.business_name || 'Unassigned';
+      if (!sellerData[sellerName]) sellerData[sellerName] = { name: sellerName, bookings: 0, completed: 0, revenue: 0 };
+      sellerData[sellerName].bookings++;
+      if (status === 'completed') {
+        sellerData[sellerName].completed++;
+        sellerData[sellerName].revenue += parseFloat(b.price || 0);
+      }
+
+      const svc = b.service_type || 'general';
+      serviceTypes[svc] = (serviceTypes[svc] || 0) + 1;
+
+      if (status === 'completed') totalRevenue += parseFloat(b.price || 0);
+    });
+
+    const total = bookings.length;
+    const conversionRate = total > 0 ? ((statusCounts.confirmed + statusCounts.completed) / total * 100).toFixed(1) : 0;
+    const completionRate = total > 0 ? (statusCounts.completed / total * 100).toFixed(1) : 0;
+    const noShowRate = total > 0 ? ((statusCounts['no-show'] || 0) / total * 100).toFixed(1) : 0;
+
+    return {
+      total,
+      statusCounts,
+      conversionRate,
+      completionRate,
+      noShowRate,
+      totalRevenue,
+      dailyTrend: Object.values(dailyData).sort((a, b) => a.date.localeCompare(b.date)),
+      sellerPerformance: Object.values(sellerData).sort((a, b) => b.bookings - a.bookings).slice(0, 10),
+      serviceTypeBreakdown: Object.entries(serviceTypes).map(([name, value]) => ({ name: name.replace(/_/g, ' '), value })),
+      statusPie: Object.entries(statusCounts).map(([name, value]) => ({ name, value })).filter(x => x.value > 0),
+    };
+  };
 
   // Mock data - replace with actual API calls
   const salesData = [
@@ -52,7 +150,17 @@ const AdminReportsPage = () => {
     { label: 'Products Sold', value: '4,567', change: '+10.1%', icon: Package, color: 'bg-orange-500' },
   ];
 
-  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+  const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
+
+  const appointmentKpiData = (data) => {
+    if (!data) return [];
+    return [
+      { label: 'Total Bookings', value: data.total.toString(), change: `${data.dailyTrend.length} days active`, icon: Calendar, color: 'bg-blue-500' },
+      { label: 'Conversion Rate', value: `${data.conversionRate}%`, change: `${data.statusCounts.confirmed} confirmed`, icon: CheckCircle, color: 'bg-emerald-500' },
+      { label: 'Completion Rate', value: `${data.completionRate}%`, change: `${data.statusCounts.completed} completed`, icon: TrendingUp, color: 'bg-orange-500' },
+      { label: 'No-Show Rate', value: `${data.noShowRate}%`, change: `${data.statusCounts['no-show'] || 0} missed`, icon: XCircle, color: 'bg-red-500' },
+    ];
+  };
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 0 }).format(amount);
@@ -94,18 +202,25 @@ const AdminReportsPage = () => {
           </div>
 
           {/* Report Type Tabs */}
-          <div className="flex gap-2 border-b border-gray-200">
-            {['overview', 'sales', 'products', 'vendors', 'customers'].map((type) => (
+          <div className="flex gap-2 border-b border-gray-200 overflow-x-auto">
+            {['overview', 'sales', 'products', 'vendors', 'customers', 'appointments'].map((type) => (
               <button
                 key={type}
                 onClick={() => setReportType(type)}
-                className={`px-4 py-2 font-medium capitalize transition ${
+                className={`px-4 py-2 font-medium capitalize transition whitespace-nowrap ${
                   reportType === type
                     ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
-                {type}
+                {type === 'appointments' ? (
+                  <span className="flex items-center gap-1.5">
+                    <CalendarDays size={16} />
+                    Appointments
+                  </span>
+                ) : (
+                  type
+                )}
               </button>
             ))}
           </div>
@@ -271,6 +386,154 @@ const AdminReportsPage = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* ─── APPOINTMENTS TAB ─── */}
+        {reportType === 'appointments' && (
+          <div className="space-y-6">
+            {loading && (
+              <div className="flex items-center justify-center py-12">
+                <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+                <span className="ml-3 text-gray-600">Loading appointment analytics...</span>
+              </div>
+            )}
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 mb-6">
+                {error}
+              </div>
+            )}
+
+            {!loading && appointmentData && (
+              <>
+                {/* Appointment KPI Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  {appointmentKpiData(appointmentData).map((kpi, index) => (
+                    <div key={index} className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className={`${kpi.color} p-3 rounded-lg`}>
+                          <kpi.icon className="text-white" size={24} />
+                        </div>
+                      </div>
+                      <h3 className="text-gray-600 text-sm font-medium mb-1">{kpi.label}</h3>
+                      <p className="text-2xl font-bold text-gray-900">{kpi.value}</p>
+                      <p className="text-xs text-gray-500 mt-1">{kpi.change}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Status Distribution Pie Chart */}
+                  <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                    <h2 className="text-xl font-bold text-gray-900 mb-6">Booking Status Distribution</h2>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={appointmentData.statusPie}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                          outerRadius={100}
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
+                          {appointmentData.statusPie.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Service Type Bar Chart */}
+                  <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                    <h2 className="text-xl font-bold text-gray-900 mb-6">Service Types</h2>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={appointmentData.serviceTypeBreakdown}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                        <XAxis dataKey="name" stroke="#6B7280" />
+                        <YAxis stroke="#6B7280" />
+                        <Tooltip />
+                        <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Daily Trend Area Chart */}
+                <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                  <h2 className="text-xl font-bold text-gray-900 mb-6">Daily Booking Trend</h2>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={appointmentData.dailyTrend}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                      <XAxis dataKey="date" stroke="#6B7280" />
+                      <YAxis stroke="#6B7280" />
+                      <Tooltip />
+                      <Legend />
+                      <Area type="monotone" dataKey="bookings" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.2} name="Total Bookings" />
+                      <Area type="monotone" dataKey="confirmed" stroke="#10B981" fill="#10B981" fillOpacity={0.2} name="Confirmed" />
+                      <Area type="monotone" dataKey="completed" stroke="#F59E0B" fill="#F59E0B" fillOpacity={0.2} name="Completed" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Seller Performance Table */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="p-6 border-b border-gray-100">
+                    <h2 className="text-xl font-bold text-gray-900">Seller Performance</h2>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Seller</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bookings</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completed</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completion Rate</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {appointmentData.sellerPerformance.map((seller, index) => (
+                          <tr key={index} className="hover:bg-gray-50 transition">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="font-medium text-gray-900">{seller.name}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-gray-700">{seller.bookings}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-gray-700">{seller.completed}</td>
+                            <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">{formatCurrency(seller.revenue)}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <div className="w-24 bg-gray-200 rounded-full h-2">
+                                  <div
+                                    className="h-2 rounded-full bg-emerald-500"
+                                    style={{ width: `${seller.bookings > 0 ? (seller.completed / seller.bookings * 100) : 0}%` }}
+                                  />
+                                </div>
+                                <span className="text-sm text-gray-600">
+                                  {seller.bookings > 0 ? (seller.completed / seller.bookings * 100).toFixed(1) : 0}%
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {!loading && !appointmentData && !error && (
+              <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-100 text-center">
+                <CalendarDays size={48} className="mx-auto mb-4 text-gray-400" />
+                <h3 className="text-xl font-bold text-gray-900 mb-2">No Appointment Data</h3>
+                <p className="text-gray-600">No service bookings found for the selected date range.</p>
+              </div>
+            )}
           </div>
         )}
 

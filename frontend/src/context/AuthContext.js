@@ -125,9 +125,19 @@ const login = async (credentials) => {
     // Trigger merge events for cart and wishlist
     window.dispatchEvent(new StorageEvent('storage', { key: 'authToken' }));
     
-    // Link guest chat sessions
+    // Link guest chat sessions, bookings, and inquiries
     const { linkGuestSessionOnLogin } = await import('../utils/guestSession');
     linkGuestSessionOnLogin(api).catch(console.error);
+    
+    // Also trigger backend guest merge for bookings/inquiries
+    const guestSessionId = localStorage.getItem('oshocks_guest_session_id');
+    if (guestSessionId) {
+      api.post('/conversations/link-guest', {}, {
+        headers: { 'X-Guest-Session-ID': guestSessionId }
+      }).then(() => {
+        localStorage.removeItem('oshocks_guest_session_id');
+      }).catch(console.error);
+    }
 
     // Dispatch login event immediately for contexts to handle sync
     window.dispatchEvent(new CustomEvent('userLoggedIn', { 

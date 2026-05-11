@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Package, User, AlertTriangle, Truck, Send } from 'lucide-react';
+import { X, Package, User, AlertTriangle, Truck, Send, Wrench, MessageSquare } from 'lucide-react';
 import api from '../../services/api';
 
 const caseTypes = [
@@ -7,6 +7,8 @@ const caseTypes = [
   { value: 'account_help', label: 'Account Help', icon: User, color: 'bg-indigo-100 text-indigo-700' },
   { value: 'report_problem', label: 'Report Problem', icon: AlertTriangle, color: 'bg-red-100 text-red-700' },
   { value: 'delivery_question', label: 'Delivery', icon: Truck, color: 'bg-cyan-100 text-cyan-700' },
+  { value: 'service', label: 'Service Booking', icon: Wrench, color: 'bg-emerald-100 text-emerald-700' },
+  { value: 'inquiry', label: 'General Inquiry', icon: MessageSquare, color: 'bg-violet-100 text-violet-700' },
 ];
 
 export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {

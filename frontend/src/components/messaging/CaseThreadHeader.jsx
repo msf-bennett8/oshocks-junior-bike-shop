@@ -1,12 +1,14 @@
 import React from 'react';
 import { CaseStatusChip } from './CaseStatusChip';
-import { ClipboardCopy, AlertTriangle, CheckCircle, Package } from 'lucide-react';
+import { ClipboardCopy, AlertTriangle, CheckCircle, Package, Wrench, Mail } from 'lucide-react';
 
 const typeIcons = {
   order_issue: Package,
   account_help: AlertTriangle,
   report_problem: AlertTriangle,
   delivery_question: Package,
+  service: Wrench,
+  inquiry: Mail,
 };
 
 const typeLabels = {
@@ -14,6 +16,8 @@ const typeLabels = {
   account_help: 'Account Help',
   report_problem: 'Report Problem',
   delivery_question: 'Delivery',
+  service: 'Service Booking',
+  inquiry: 'Contact Inquiry',
 };
 
 export const CaseThreadHeader = ({ supportCase, isActive, onClick }) => {

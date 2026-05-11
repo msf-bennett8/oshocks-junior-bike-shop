@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext'; 
+import { useAuth } from '../../context/AuthContext';
+import bookingService from '../../services/bookingService';
+import { getGuestSessionId, setGuestProfile, getGuestProfile } from '../../utils/guestSession';
 import { 
   Wrench, Package, Zap, Shield, Clock, CheckCircle, 
-  Calendar, MapPin, Phone, Mail, X 
+  Calendar, MapPin, Phone, Mail, X, Loader2, AlertCircle 
 } from 'lucide-react';
 
 const ServicesPage = () => {
@@ -455,45 +457,7 @@ const ServicesPage = () => {
               {/* Quick Booking Form */}
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
                 <h3 className="text-xl font-bold mb-4">Quick Booking</h3>
-                <form className="space-y-4">
-                  <input
-                    type="text"
-                    value={bookingForm.fullName}
-                    onChange={(e) => setBookingForm({...bookingForm, fullName: e.target.value})}
-                    placeholder="Your Name"
-                    className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  />
-                  <input
-                    type="tel"
-                    value={bookingForm.phone}
-                    onChange={(e) => setBookingForm({...bookingForm, phone: e.target.value})}
-                    placeholder="Phone Number"
-                    className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  />
-                  <select 
-                        value={bookingForm.service}
-                        onChange={(e) => setBookingForm({...bookingForm, service: e.target.value})}
-                        className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                      >
-                    <option>Select Service</option>
-                    <option>Basic Maintenance</option>
-                    <option>Repair Service</option>
-                    <option>Custom Assembly</option>
-                    <option>E-Bike Service</option>
-                    <option>Express Service</option>
-                  </select>
-                  <textarea
-                    value={bookingForm.details}
-                    onChange={(e) => setBookingForm({...bookingForm, details: e.target.value})}
-                    placeholder="Additional Details (Optional)"
-                    rows="3"
-                    className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  ></textarea>
-                  <button className="w-full bg-white text-orange-600 px-6 py-3 rounded-lg font-semibold hover:bg-orange-50 transition-colors flex items-center justify-center gap-2">
-                    <Calendar className="w-5 h-5" />
-                    Book Appointment
-                  </button>
-                </form>
+                <ServiceBookingForm />
               </div>
             </div>
           </div>
@@ -575,6 +539,235 @@ const ServicesPage = () => {
         </div>
       )}
     </div>
+  );
+};
+
+// ============================================================================
+// SERVICE BOOKING FORM — Wired to API
+// ============================================================================
+
+const ServiceBookingForm = () => {
+  const { user } = useAuth();
+  const [formData, setFormData] = useState({
+    customer_name: user?.name || '',
+    customer_phone: user?.phone || '',
+    customer_email: user?.email || '',
+    service_type: '',
+    requested_date: '',
+    preferred_time: '',
+    shop_location: '',
+    customer_notes: '',
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState(null); // { type: 'success'|'error', message: '' }
+
+  const serviceOptions = [
+    { value: 'bike_repair', label: 'Bike Repair & Maintenance' },
+    { value: 'custom_assembly', label: 'Custom Bike Assembly' },
+    { value: 'e_bike_service', label: 'E-Bike Service & Repair' },
+    { value: 'annual_service', label: 'Annual Service Package' },
+    { value: 'express_service', label: 'Express Service' },
+    { value: 'pre_purchase_inspection', label: 'Pre-Purchase Inspection' },
+  ];
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (result) setResult(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setResult(null);
+
+    try {
+      // Ensure guest session for anonymous users
+      if (!user) {
+        const guestId = getGuestSessionId();
+        const profile = getGuestProfile();
+        if (!profile.name && formData.customer_name) {
+          setGuestProfile(formData.customer_name, formData.customer_email);
+        }
+      }
+
+      const res = await bookingService.createBooking(formData);
+
+      if (res.data?.success) {
+        setResult({
+          type: 'success',
+          message: res.data.message || 'Booking created successfully! Check your messages for confirmation.',
+          caseId: res.data.data?.support_case?.case_id,
+        });
+        // Reset form
+        setFormData({
+          customer_name: user?.name || '',
+          customer_phone: user?.phone || '',
+          customer_email: user?.email || '',
+          service_type: '',
+          requested_date: '',
+          preferred_time: '',
+          shop_location: '',
+          customer_notes: '',
+        });
+      }
+    } catch (err) {
+      setResult({
+        type: 'error',
+        message: err.response?.data?.message || 'Failed to create booking. Please try again.',
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (result?.type === 'success') {
+    return (
+      <div className="text-center py-6">
+        <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+        <h4 className="text-lg font-bold text-white mb-2">Booking Confirmed!</h4>
+        <p className="text-orange-100 mb-4">{result.message}</p>
+        {result.caseId && (
+          <div className="flex items-center justify-center gap-2">
+            <p className="text-sm text-orange-200 font-mono bg-white/10 rounded-lg px-3 py-2 inline-flex items-center gap-2">
+              Appointment ID: {result.caseId}
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(result.caseId);
+                  const el = document.getElementById('copy-toast');
+                  if (el) { el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 2000); }
+                }}
+                className="p-1 hover:bg-white/20 rounded transition-colors"
+                title="Copy to clipboard"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+              </button>
+            </p>
+            <span id="copy-toast" className="text-xs text-green-300 hidden">Copied!</span>
+          </div>
+        )}
+        <button
+          onClick={() => setResult(null)}
+          className="mt-4 w-full bg-white text-orange-600 px-6 py-3 rounded-lg font-semibold hover:bg-orange-50 transition-colors"
+        >
+          Book Another
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {result?.type === 'error' && (
+        <div className="bg-red-500/20 border border-red-400 rounded-lg p-3 flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 text-red-300 flex-shrink-0" />
+          <p className="text-sm text-red-100">{result.message}</p>
+        </div>
+      )}
+
+      <input
+        type="text"
+        name="customer_name"
+        value={formData.customer_name}
+        onChange={handleChange}
+        placeholder="Your Name *"
+        required
+        className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-300"
+      />
+
+      <input
+        type="tel"
+        name="customer_phone"
+        value={formData.customer_phone}
+        onChange={handleChange}
+        placeholder="Phone Number *"
+        required
+        className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-300"
+      />
+
+      <input
+        type="email"
+        name="customer_email"
+        value={formData.customer_email}
+        onChange={handleChange}
+        placeholder="Email (optional)"
+        className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-300"
+      />
+
+      <select
+        name="service_type"
+        value={formData.service_type}
+        onChange={handleChange}
+        required
+        className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300"
+      >
+        <option value="">Select Service *</option>
+        {serviceOptions.map(opt => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+
+      <div className="grid grid-cols-2 gap-3">
+        <input
+          type="date"
+          name="requested_date"
+          value={formData.requested_date}
+          onChange={handleChange}
+          min={new Date().toISOString().split('T')[0]}
+          required
+          className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300"
+        />
+        <input
+          type="time"
+          name="preferred_time"
+          value={formData.preferred_time}
+          onChange={handleChange}
+          className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300"
+        />
+      </div>
+
+      <input
+        type="text"
+        name="shop_location"
+        value={formData.shop_location}
+        onChange={handleChange}
+        placeholder="Preferred Shop Location (optional)"
+        className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-300"
+      />
+
+      <textarea
+        name="customer_notes"
+        value={formData.customer_notes}
+        onChange={handleChange}
+        placeholder="Describe your bike issue or service needs..."
+        rows="3"
+        className="w-full px-4 py-3 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-300 resize-none"
+      ></textarea>
+
+      <button
+        type="submit"
+        disabled={submitting}
+        className="w-full bg-white text-orange-600 px-6 py-3 rounded-lg font-semibold hover:bg-orange-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+      >
+        {submitting ? (
+          <>
+            <Loader2 className="w-5 h-5 animate-spin" />
+            Creating Booking...
+          </>
+        ) : (
+          <>
+            <Calendar className="w-5 h-5" />
+            Book Appointment
+          </>
+        )}
+      </button>
+
+      {!user && (
+        <p className="text-xs text-orange-200 text-center">
+          You'll be assigned a guest ID. <a href="/login" className="underline hover:text-white">Log in</a> to track all your bookings.
+        </p>
+      )}
+    </form>
   );
 };
 

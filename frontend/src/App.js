@@ -83,6 +83,7 @@ const Wishlist = lazy(() => import('./pages/user/Wishlist'));
 const AddressesPage = lazy(() => import('./pages/user/AddressesPage'));
 const ReviewsPage = lazy(() => import('./pages/user/ReviewsPage'));
 const SettingsPage = lazy(() => import('./pages/user/SettingsPage'));
+const MyAppointmentsPage = lazy(() => import('./pages/user/MyAppointmentsPage'));
 
 // Seller Dashboard
 const SellerDashboardPage = lazy(() => import('./pages/seller/SellerDashboardPage'));
@@ -102,6 +103,7 @@ const AdminCategoriesPage = lazy(() => import('./pages/admin/AdminCategoriesPage
 const AdminReportsPage = lazy(() => import('./pages/admin/AdminReportsPage'));
 const AdminSettingsPage = lazy(() => import('./pages/admin/AdminSettingsPage'));
 const SupportInboxPage = lazy(() => import('./pages/admin/SupportInboxPage'));
+const AppointmentInboxPage = lazy(() => import('./pages/admin/AppointmentInboxPage'));
 
 // Super Admin Dashboard
 const SuperAdminDashboardPage = lazy(() => import('./pages/superadmin/SuperAdminDashboardPage'));
@@ -688,6 +690,14 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/my-appointments"
+                  element={
+                    <ProtectedRoute>
+                      <MyAppointmentsPage />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* ============================================
                     SELLER DASHBOARD (Seller Only)
@@ -820,6 +830,14 @@ function App() {
                   element={
                     <AdminRoute>
                       <SupportInboxPage />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/appointments"
+                  element={
+                    <AdminRoute>
+                      <AppointmentInboxPage />
                     </AdminRoute>
                   }
                 />

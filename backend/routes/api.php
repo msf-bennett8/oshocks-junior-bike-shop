@@ -33,6 +33,8 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\Api\SupportInboxController;
 use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\MessageController;
+use App\Http\Controllers\Api\ServiceBookingController;
+use App\Http\Controllers\Api\ContactInquiryController;
 
 // ============================================================================
 // OAUTH ROUTES - STATELESS (No CSRF, No Session)
@@ -93,10 +95,14 @@ Route::middleware(['api', 'audit'])->prefix('v1')->group(function () {
     Route::get('/sellers/{id}', [SellerProfileController::class, 'show']);
     Route::get('/sellers/{id}/products', [SellerProfileController::class, 'getProducts']);
     Route::get('/sellers/{id}/reviews', [SellerReviewController::class, 'getBySeller']);
+    Route::get('/sellers/{id}/availability', [SellerProfileController::class, 'getAvailability']);
 
     // Payment Recorders (public view)
     Route::get('/payment-recorders', [\App\Http\Controllers\PaymentRecorderController::class, 'index']);
     Route::get('/payment-recorders/{id}', [\App\Http\Controllers\PaymentRecorderController::class, 'show']);
+
+    // Frontend audit logging (guest + auth - no sanctum required)
+    Route::post('/audit-logs/frontend', [\App\Http\Controllers\Api\AuditLogController::class, 'storeFrontend']);
 
     // Public support user endpoint (for guest chat - returns generic support info)
     Route::get('/support-user', function () {
@@ -516,11 +522,17 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
     // PHASE 10: BUSINESS OPERATIONS (Main Protected Group)
     // ============================================================================
 
-    // Service Bookings
+    // Service Bookings (Phase 10 - Hybrid Conversational)
     Route::prefix('service-bookings')->group(function () {
-        Route::post('/', [\App\Http\Controllers\Api\ServiceBookingController::class, 'store']);
-        Route::post('/{id}/reschedule', [\App\Http\Controllers\Api\ServiceBookingController::class, 'reschedule']);
-        Route::post('/{id}/cancel', [\App\Http\Controllers\Api\ServiceBookingController::class, 'cancel']);
+        Route::post('/', [ServiceBookingController::class, 'store']); // Guest + auth (handled in controller)
+        Route::get('/', [ServiceBookingController::class, 'index']);
+        Route::get('/my-bookings', [ServiceBookingController::class, 'myBookings']);
+        Route::get('/sellers', [ServiceBookingController::class, 'availableSellers']);
+        Route::get('/{caseId}', [ServiceBookingController::class, 'show']);
+        Route::post('/{caseId}/confirm', [ServiceBookingController::class, 'confirm']);
+        Route::post('/{caseId}/reschedule', [ServiceBookingController::class, 'reschedule']);
+        Route::post('/{caseId}/complete', [ServiceBookingController::class, 'complete']);
+        Route::post('/{caseId}/cancel', [ServiceBookingController::class, 'cancel']);
         Route::post('/{id}/no-show', [\App\Http\Controllers\Api\ServiceBookingController::class, 'markNoShow']);
     });
 
@@ -637,6 +649,15 @@ Route::prefix('v1/support-cases')->middleware(['auth:sanctum', 'audit'])->group(
     Route::delete('/{caseId}', [\App\Http\Controllers\Api\CaseThreadController::class, 'destroy']);
     Route::post('/{caseId}/restore', [\App\Http\Controllers\Api\CaseThreadController::class, 'restore']);
 });
+
+    // ============================================================================
+    // SERVICE BOOKINGS & CONTACT INQUIRIES (Phase 10 - Hybrid Conversational)
+    // ============================================================================
+    Route::prefix('contact-inquiries')->group(function () {
+        Route::post('/', [ContactInquiryController::class, 'store']); // Guest + auth
+        Route::get('/my-inquiries', [ContactInquiryController::class, 'myInquiries']);
+        Route::get('/queue', [ContactInquiryController::class, 'queue']);
+    });
 
 // ============================================================================
 // CASE THREAD ROUTES (Hybrid Conversational Ticketing — New)

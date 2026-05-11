@@ -12,8 +12,8 @@ import CallOverlay from '../messaging/CallOverlay';
 import CreateChatModal from '../messaging/CreateChatModal';
 import { useWebRTC } from '../../hooks/useWebRTC';
 import { useMessaging } from '../../hooks/useMessaging';
-import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Plus, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowRight, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, Users, Package2, BarChart3, FolderTree, Heart, Bell, MessageCircle, Inbox } from 'lucide-react';
-import SearchBar from '../common/SearchBar';
+
+import SearchBar from '../common/SearchBar';import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Plus, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowRight, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, Users, Package2, BarChart3, FolderTree, Heart, Bell, MessageCircle, Inbox, Calendar, ClipboardList } from 'lucide-react';
 import Avatar from '../common/Avatar';
 
 const Navbar = () => {
@@ -352,6 +352,7 @@ const Navbar = () => {
           { name: 'Analytics', link: '/super-admin/analytics', icon: BarChart3 },
           { name: 'Reports', link: '/super-admin/reports', icon: BarChart3 },
           { name: 'Notification Templates', link: '/super-admin/notification-templates', icon: Bell },
+          { name: 'Appointments', link: '/admin/appointments', icon: Calendar },
           { name: 'Settings', link: '/super-admin/settings', icon: Settings },
         ]
       });
@@ -367,7 +368,8 @@ const Navbar = () => {
           { name: 'Analytics', link: '/admin/analytics', icon: BarChart3 },
           { name: 'Reports', link: '/admin/reports', icon: BarChart3 },
           { name: 'Settings', link: '/admin/settings', icon: Settings },
-          { name: 'Support Queue', link: '/admin/support-inbox', icon: Inbox },
+          { name: 'Appointments', link: '/admin/appointments', icon: Calendar },
+        { name: 'Support Queue', link: '/admin/support-inbox', icon: Inbox },
         ]
       });
     }
@@ -692,6 +694,66 @@ const Navbar = () => {
                     )}
 
                     <hr className="my-1 border-gray-100" />
+
+                    {/* Appointments - Expandable Dropdown */}
+                    {isAuthenticated && (
+                      <div className="relative group/appointments">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const submenu = e.currentTarget.nextElementSibling;
+                            if (submenu) {
+                              submenu.classList.toggle('hidden');
+                            }
+                          }}
+                          className="flex items-center gap-3 px-4 py-2.5 hover:bg-emerald-50 transition-colors w-full text-left"
+                        >
+                          <div className="relative">
+                            <Calendar className="w-5 h-5 text-emerald-600" />
+                          </div>
+                          <div className="flex-1">
+                            <span className="text-gray-900 font-medium">Appointments</span>
+                            <p className="text-xs text-gray-500">View & manage bookings</p>
+                          </div>
+                          <ChevronDown className="w-3.5 h-3.5 text-gray-400 transition-transform group-hover/appointments:rotate-180" />
+                        </button>
+                        
+                        {/* Submenu */}
+                        <div className="hidden bg-gray-50 border-l-2 border-emerald-200 ml-4">
+                          {/* My Appointments - All authenticated users */}
+                          <button
+                            onClick={() => {
+                              setShowQuickActions(false);
+                              navigate('/my-appointments');
+                            }}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-emerald-100/50 transition-colors w-full text-left"
+                          >
+                            <User className="w-4 h-4 text-emerald-600" />
+                            <div>
+                              <span className="text-sm text-gray-800 font-medium">My Appointments</span>
+                              <p className="text-[11px] text-gray-500">Your bookings</p>
+                            </div>
+                          </button>
+                          
+                          {/* Platform Appointments - Staff only */}
+                          {(user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'support_agent') && (
+                            <button
+                              onClick={() => {
+                                setShowQuickActions(false);
+                                navigate('/admin/appointments');
+                              }}
+                              className="flex items-center gap-3 px-4 py-2 hover:bg-emerald-100/50 transition-colors w-full text-left"
+                            >
+                              <ClipboardList className="w-4 h-4 text-blue-600" />
+                              <div>
+                                <span className="text-sm text-gray-800 font-medium">Platform Appointments</span>
+                                <p className="text-[11px] text-gray-500">Manage all bookings</p>
+                              </div>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Support Queue */}
                     {isAuthenticated && (user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'support_agent') && (

@@ -81,4 +81,20 @@ class SellerProfile extends Model
     {
         return $this->status === 'suspended';
     }
+
+    /**
+     * Seller availability slots
+     */
+    public function availability()
+    {
+        return $this->hasMany(\App\Models\SellerAvailability::class, 'seller_profile_id');
+    }
+
+    /**
+     * Scope: active sellers only
+     */
+    public function scopeIsActive($query)
+    {
+        return $query->where('status', 'approved');
+    }
 }

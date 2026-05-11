@@ -19,6 +19,14 @@ class SupportCaseUpdated implements ShouldBroadcast
     public ?int $actorId;
     public array $metadata;
 
+    // Booking event types
+    public const ACTION_BOOKING_CREATED = 'booking_created';
+    public const ACTION_BOOKING_CONFIRMED = 'booking_confirmed';
+    public const ACTION_BOOKING_RESCHEDULED = 'booking_rescheduled';
+    public const ACTION_BOOKING_COMPLETED = 'booking_completed';
+    public const ACTION_BOOKING_CANCELLED = 'booking_cancelled';
+    public const ACTION_INQUIRY_CREATED = 'inquiry_created';
+
     public function __construct(SupportCase $supportCase, string $action, ?int $actorId = null, array $metadata = [])
     {
         $this->supportCase = $supportCase;

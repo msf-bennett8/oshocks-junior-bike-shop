@@ -49,27 +49,45 @@ const ContactPage = () => {
     setIsSubmitting(true);
     setFormStatus({ type: '', message: '' });
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setFormStatus({
-        type: 'success',
-        message: 'Thank you for contacting us! We will get back to you within 24 hours.'
-      });
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        category: 'general',
-        message: ''
+    try {
+      const { submitInquiry } = await import('../../services/contactInquiryService');
+      
+      const res = await submitInquiry({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        subject: formData.subject,
+        category: formData.category,
+        message: formData.message,
+        department: 'general',
       });
 
-      // Clear success message after 5 seconds
+      if (res.success) {
+        setFormStatus({
+          type: 'success',
+          message: res.message || 'Thank you for contacting us! We will get back to you within 24 hours.'
+        });
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          category: 'general',
+          message: ''
+        });
+      }
+    } catch (err) {
+      setFormStatus({
+        type: 'error',
+        message: err.response?.data?.message || 'Failed to send message. Please try again.'
+      });
+    } finally {
+      setIsSubmitting(false);
+      // Clear message after 8 seconds
       setTimeout(() => {
         setFormStatus({ type: '', message: '' });
-      }, 5000);
-    }, 1500);
+      }, 8000);
+    }
   };
 
   const contactMethods = [

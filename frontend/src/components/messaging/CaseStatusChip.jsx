@@ -10,6 +10,15 @@ const statusConfig = {
   escalated: { label: 'Escalated', bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', dot: 'bg-red-500 animate-pulse' },
 };
 
+// Appointment status config for service bookings
+const appointmentStatusConfig = {
+  pending: { label: 'Pending', bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200', dot: 'bg-yellow-500 animate-pulse' },
+  confirmed: { label: 'Confirmed', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', dot: 'bg-emerald-500' },
+  rescheduled: { label: 'Rescheduled', bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', dot: 'bg-orange-500' },
+  completed: { label: 'Completed', bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', dot: 'bg-green-600' },
+  cancelled: { label: 'Cancelled', bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', dot: 'bg-red-600' },
+};
+
 const priorityConfig = {
   low: { label: 'Low', color: 'text-green-600' },
   medium: { label: 'Medium', color: 'text-blue-600' },
@@ -17,8 +26,12 @@ const priorityConfig = {
   urgent: { label: 'Urgent', color: 'text-red-600 font-bold' },
 };
 
-export const CaseStatusChip = ({ status, priority, showPriority = false, size = 'sm' }) => {
-  const config = statusConfig[status] || statusConfig.new;
+export const CaseStatusChip = ({ status, priority, showPriority = false, size = 'sm', appointmentStatus }) => {
+  // If appointmentStatus is provided (service booking), show that instead
+  const config = appointmentStatus 
+    ? (appointmentStatusConfig[appointmentStatus] || appointmentStatusConfig.pending)
+    : (statusConfig[status] || statusConfig.new);
+  
   const sizeClasses = size === 'sm' ? 'text-xs px-2 py-0.5' : 'text-sm px-3 py-1';
 
   return (

@@ -4,69 +4,134 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ServiceBooking extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'booking_id',
-        'user_id',
+        'case_id',
         'service_type',
-        'mechanic_id',
-        'product_id', // bike being serviced
-        'scheduled_date',
-        'scheduled_time',
-        'duration_minutes',
-        'location_id', // shop location or mobile service area
-        'status', // pending, confirmed, in_progress, completed, cancelled, no_show
-        'reschedule_count',
-        'original_booking_id', // for reschedules
-        'reschedule_reason',
-        'cancellation_reason',
-        'cancelled_by', // customer, mechanic, system
-        'completed_at',
-        'completion_notes',
-        'rating_prompt_sent',
-        'price_estimate',
+        'service_description',
+        'estimated_price',
         'final_price',
+        'requested_date',
+        'preferred_time',
+        'confirmed_date',
+        'confirmed_time',
+        'completed_date',
+        'cancelled_date',
+        'seller_id',
+        'assigned_mechanic_id',
+        'customer_name',
+        'customer_phone',
+        'customer_email',
+        'guest_session_id',
+        'status',
+        'shop_location',
+        'staff_notes',
+        'customer_notes',
+        'merged_to_user_id',
+        'merged_at',
     ];
 
     protected $casts = [
-        'scheduled_date' => 'date',
-        'scheduled_time' => 'datetime',
-        'completed_at' => 'datetime',
-        'price_estimate' => 'decimal:2',
+        'requested_date' => 'datetime',
+        'confirmed_date' => 'datetime',
+        'completed_date' => 'datetime',
+        'cancelled_date' => 'datetime',
+        'merged_at' => 'datetime',
+        'estimated_price' => 'decimal:2',
         'final_price' => 'decimal:2',
     ];
 
-    public function user()
+    /**
+     * The support case this booking belongs to
+     */
+    public function supportCase()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(SupportCase::class, 'case_id', 'case_id');
     }
 
-    public function mechanic()
+    /**
+     * The seller/shop where service is performed
+     */
+    public function seller()
     {
-        return $this->belongsTo(User::class, 'mechanic_id');
+        return $this->belongsTo(SellerProfile::class, 'seller_id');
     }
 
-    public function product()
+    /**
+     * The mechanic assigned to this booking
+     */
+    public function assignedMechanic()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(User::class, 'assigned_mechanic_id');
     }
 
-    public function location()
+    /**
+     * User this booking was merged to (guest → auth)
+     */
+    public function mergedToUser()
     {
-        return $this->belongsTo(Address::class, 'location_id');
+        return $this->belongsTo(User::class, 'merged_to_user_id');
     }
 
-    public function originalBooking()
+    /**
+     * Scope: Pending bookings
+     */
+    public function scopePending($query)
     {
-        return $this->belongsTo(self::class, 'original_booking_id');
+        return $query->where('status', 'pending');
     }
 
-    public function reschedules()
+    /**
+     * Scope: Confirmed bookings
+     */
+    public function scopeConfirmed($query)
     {
-        return $this->hasMany(self::class, 'original_booking_id');
+        return $query->where('status', 'confirmed');
+    }
+
+    /**
+     * Scope: Today's bookings
+     */
+    public function scopeToday($query)
+    {
+        return $query->whereDate('confirmed_date', today());
+    }
+
+    /**
+     * Scope: Upcoming bookings
+     */
+    public function scopeUpcoming($query)
+    {
+        return $query->where('status', 'confirmed')
+                     ->where('confirmed_date', '>=', now());
+    }
+
+    /**
+     * Check if booking can be confirmed
+     */
+    public function canBeConfirmed(): bool
+    {
+        return in_array($this->status, ['pending', 'rescheduled']);
+    }
+
+    /**
+     * Check if booking can be cancelled
+     */
+    public function canBeCancelled(): bool
+    {
+        return in_array($this->status, ['pending', 'confirmed', 'rescheduled']);
+    }
+
+    /**
+     * Check if booking can be marked complete
+     */
+    public function canBeCompleted(): bool
+    {
+        return in_array($this->status, ['in_progress', 'ready']);
     }
 }

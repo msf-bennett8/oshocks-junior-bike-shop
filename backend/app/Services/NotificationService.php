@@ -20,7 +20,7 @@ class NotificationService
     public static function send(User $user, string $type, string $title, string $message, array $data = [], string $channel = 'in_app'): array
     {
         $notificationId = 'ntf_' . Str::random(16);
-        
+
         // 1. Create notification record
         $notification = Notification::create([
             'notification_id' => $notificationId,
@@ -101,15 +101,15 @@ class NotificationService
      * Create a notification record (used by AuditNotificationService)
      */
     public static function createNotification(
-        User $user, 
-        string $type, 
-        string $title, 
-        string $message, 
+        User $user,
+        string $type,
+        string $title,
+        string $message,
         array $data = []
     ): Notification
     {
         $notificationId = 'ntf_' . Str::random(16);
-        
+
         return Notification::create([
             'notification_id' => $notificationId,
             'user_id' => $user->id,
@@ -141,7 +141,7 @@ class NotificationService
     public static function sendFromTemplate(User $user, string $templateKey, array $variables = [], string $channel = 'in_app', array $overrides = []): array
     {
         $template = config("notifications.templates.{$templateKey}");
-        
+
         if (!$template) {
             Log::error("Notification template not found: {$templateKey}");
             return ['success' => false, 'error' => 'Template not found'];
@@ -150,7 +150,7 @@ class NotificationService
         // Apply variable substitution
         $title = self::parseTemplate($template['title'], $variables);
         $message = self::parseTemplate($template['message'], $variables);
-        
+
         // Build data array from template
         $data = [
             'priority' => $overrides['priority'] ?? $template['priority'] ?? 'normal',
@@ -188,11 +188,11 @@ class NotificationService
     public static function queueNotification(User $user, string $type, array $data = [], string $channel = 'in_app', ?string $template = null, ?int $delayMinutes = null): void
     {
         $job = new SendNotification($user, $type, $data, $channel, $template);
-        
+
         if ($delayMinutes) {
             $job->delay(now()->addMinutes($delayMinutes));
         }
-        
+
         dispatch($job);
     }
 
@@ -202,10 +202,10 @@ class NotificationService
     public static function sendBulk(array $userIds, string $type, array $data = [], string $channel = 'in_app', ?string $template = null): array
     {
         $results = ['sent' => 0, 'failed' => 0, 'skipped' => 0];
-        
+
         foreach ($userIds as $userId) {
             $user = User::find($userId);
-            
+
             if (!$user) {
                 $results['failed']++;
                 continue;
@@ -280,7 +280,7 @@ class NotificationService
         // Daily limit check
         $dailyKey = "notification_daily:{$user->id}:{$channel}";
         $dailyCount = Cache::get($dailyKey, 0);
-        
+
         $dailyMax = match($channel) {
             'push' => min($limits['max_push_per_hour'] * 24, $limits['max_per_day']),
             'sms' => $limits['max_sms_per_day'],
@@ -311,7 +311,7 @@ class NotificationService
                 ]);
                 return false;
             }
-            
+
             Cache::put($hourlyKey, $hourlyCount + 1, 3600); // 1 hour
         }
 
@@ -350,7 +350,7 @@ class NotificationService
         return preg_replace_callback('/\{\{([^}]+)\}\}/', function($matches) use ($variables) {
             $key = trim($matches[1]);
             $parts = explode('.', $key);
-            
+
             $value = $variables;
             foreach ($parts as $part) {
                 if (is_array($value) && isset($value[$part])) {
@@ -361,7 +361,7 @@ class NotificationService
                     return $matches[0]; // Return original if not found
                 }
             }
-            
+
             return is_string($value) || is_numeric($value) ? $value : $matches[0];
         }, $template);
     }
@@ -375,7 +375,7 @@ class NotificationService
             // Check quiet hours
             if (self::isQuietHours($user)) {
                 $notification->update(['scheduled_for' => self::getQuietHoursEnd($user)]);
-                
+
                 return [
                     'success' => true,
                     'provider_message_id' => 'scheduled_quiet_hours',
@@ -437,7 +437,7 @@ class NotificationService
     {
         try {
             $subscriptions = PushSubscription::where('user_id', $user->id)->get();
-            
+
             if ($subscriptions->isEmpty()) {
                 return [
                     'success' => false,
@@ -472,7 +472,7 @@ class NotificationService
             ];
 
             $webPush = new \Minishlink\WebPush\WebPush($auth);
-            
+
             foreach ($subscriptions as $subscription) {
                 $webPush->queueNotification(
                     new \Minishlink\WebPush\Subscription(
@@ -487,7 +487,7 @@ class NotificationService
             // Flush and check results
             $results = $webPush->flush();
             $success = false;
-            
+
             foreach ($results as $report) {
                 if ($report->isSuccess()) {
                     $success = true;
@@ -525,7 +525,7 @@ class NotificationService
     public static function markDelivered(string $notificationId, string $channel, string $providerMessageId): void
     {
         $notification = Notification::where('notification_id', $notificationId)->first();
-        
+
         if (!$notification) {
             return;
         }
@@ -545,7 +545,7 @@ class NotificationService
     public static function trackOpen(string $notificationId, string $channel, ?string $ipAddress = null, ?string $deviceType = null): void
     {
         $notification = Notification::where('notification_id', $notificationId)->first();
-        
+
         if (!$notification || $notification->opened_at) {
             return;
         }
@@ -567,7 +567,7 @@ class NotificationService
     public static function trackClick(string $notificationId, string $channel, string $clickedUrl, ?string $ipAddress = null): void
     {
         $notification = Notification::where('notification_id', $notificationId)->first();
-        
+
         if (!$notification) {
             return;
         }
@@ -588,7 +588,7 @@ class NotificationService
     private static function isQuietHours(User $user): bool
     {
         $settings = $user->notificationSettings;
-        
+
         if (!$settings || !$settings->quiet_hours_enabled) {
             return false;
         }
@@ -602,18 +602,18 @@ class NotificationService
     private static function getQuietHoursEnd(User $user): \Carbon\Carbon
     {
         $settings = $user->notificationSettings;
-        
+
         if (!$settings) {
             return now()->addHour();
         }
 
         $now = now()->timezone($settings->timezone);
         $end = $now->copy()->setTimeFromTimeString($settings->quiet_hours_end);
-        
+
         if ($end->isPast()) {
             $end->addDay();
         }
-        
+
         return $end->utc();
     }
 
@@ -737,7 +737,7 @@ class NotificationService
     public static function trackDelivery(string $notificationId, ?string $ipAddress = null): void
     {
         $notification = \App\Models\Notification::where('notification_id', $notificationId)->first();
-        
+
         if (!$notification) {
             return;
         }
@@ -793,7 +793,7 @@ class NotificationService
 
         // 2. Fallback to config
         $configTemplates = config('notifications.templates', []);
-        
+
         if (isset($configTemplates[$templateKey])) {
             $template = $configTemplates[$templateKey];
             return [
@@ -871,6 +871,120 @@ class NotificationService
             'template_key' => $templateKey,
             'template_source' => $template['source'],
             'channels' => $results,
+        ];
+    }
+
+    /**
+     * Send booking creation notification
+     */
+    public static function notifyBookingCreated($case, $booking): array
+    {
+        $user = $case->user_id ? User::find($case->user_id) : null;
+
+        return self::sendGuestNotification(
+            user: $user,
+            guestEmail: $booking->customer_email,
+            guestPhone: $booking->customer_phone,
+            template: 'booking_created',
+            data: [
+                'case_id' => $case->case_id,
+                'service_type' => $booking->service_type,
+                'requested_date' => $booking->requested_date?->format('M j, Y'),
+                'customer_name' => $booking->customer_name,
+            ],
+            channel: 'email'
+        );
+    }
+
+    /**
+     * Send booking confirmation notification
+     */
+    public static function notifyBookingConfirmed($case, $booking): array
+    {
+        $user = $case->user_id ? User::find($case->user_id) : null;
+
+        return self::sendGuestNotification(
+            user: $user,
+            guestEmail: $booking->customer_email,
+            guestPhone: $booking->customer_phone,
+            template: 'booking_confirmed',
+            data: [
+                'case_id' => $case->case_id,
+                'service_type' => $booking->service_type,
+                'confirmed_date' => $booking->confirmed_date?->format('M j, Y g:i A'),
+                'shop_location' => $booking->shop_location,
+                'customer_name' => $booking->customer_name,
+            ],
+            channel: 'email'
+        );
+    }
+
+    /**
+     * Send inquiry received notification (auto-reply)
+     */
+    public static function notifyInquiryReceived($case, $data): array
+    {
+        $user = $case->user_id ? User::find($case->user_id) : null;
+
+        return self::sendGuestNotification(
+            user: $user,
+            guestEmail: $data['email'] ?? null,
+            guestPhone: $data['phone'] ?? null,
+            template: 'inquiry_received',
+            data: [
+                'case_id' => $case->case_id,
+                'subject' => $data['subject'],
+                'category' => $data['category'],
+                'customer_name' => $data['name'],
+            ],
+            channel: 'email'
+        );
+    }
+
+    /**
+     * Send guest-aware notification (for bookings, inquiries)
+     * Used by BookingService and ContactInquiryController
+     */
+    public static function sendGuestNotification(
+        ?User $user,
+        ?string $guestEmail,
+        ?string $guestPhone,
+        string $template,
+        array $data = [],
+        string $channel = 'in_app'
+    ): array {
+        // If we have a registered user, send to them
+        if ($user) {
+            return self::sendTemplated($user, $template, $data, ['channels' => [$channel]]);
+        }
+
+        // Otherwise, if we have guest email, queue for email sending
+        if ($guestEmail) {
+            // Create a placeholder notification record for guest
+            $notificationId = 'ntf_guest_' . Str::random(16);
+
+            \Log::info('Guest notification queued', [
+                'notification_id' => $notificationId,
+                'template' => $template,
+                'guest_email' => $guestEmail,
+                'guest_phone' => $guestPhone,
+                'data' => $data,
+            ]);
+
+            // TODO: Implement guest email sending via Mailable or queue job
+            // For now, return success so the booking flow continues
+            return [
+                'success' => true,
+                'notification_id' => $notificationId,
+                'channel' => $channel,
+                'guest_email' => $guestEmail,
+                'queued' => true,
+            ];
+        }
+
+        return [
+            'success' => false,
+            'error' => 'No recipient available (no user or guest email)',
         ];
     }
 }

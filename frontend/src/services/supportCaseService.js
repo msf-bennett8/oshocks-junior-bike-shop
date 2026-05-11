@@ -40,6 +40,20 @@ const supportCaseService = {
   deleteCase: (caseId) => api.delete(`/support-cases/${caseId}`),
   restoreCase: (caseId) => api.post(`/support-cases/${caseId}/restore`),
   getUserCaseHistory: () => api.get('/user/case-history'),
+
+  // ─── Service Bookings ───
+  getBookings: (params = {}) => api.get('/service-bookings', { params }),
+  getMyBookings: () => api.get('/service-bookings/my-bookings'),
+  createBooking: (data) => api.post('/service-bookings', data),
+  confirmBooking: (caseId, data) => api.post(`/service-bookings/${caseId}/confirm`, data),
+  rescheduleBooking: (caseId, data) => api.post(`/service-bookings/${caseId}/reschedule`, data),
+  completeBooking: (caseId) => api.post(`/service-bookings/${caseId}/complete`),
+  cancelBooking: (caseId, reason) => api.post(`/service-bookings/${caseId}/cancel`, { reason }),
+
+  // ─── Contact Inquiries ───
+  submitInquiry: (data) => api.post('/contact-inquiries', data),
+  getMyInquiries: (params = {}) => api.get('/contact-inquiries/my-inquiries', { params }),
+  getInquiryQueue: (params = {}) => api.get('/contact-inquiries/queue', { params }),
 };
 
 export default supportCaseService;

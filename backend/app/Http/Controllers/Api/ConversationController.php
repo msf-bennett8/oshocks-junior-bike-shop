@@ -350,7 +350,7 @@ class ConversationController extends Controller
     }
 
     /**
-     * Link guest conversations to authenticated user
+     * Link guest conversations, bookings, and inquiries to authenticated user
      */
     public function linkGuestSessions(Request $request)
     {
@@ -369,13 +369,26 @@ class ConversationController extends Controller
             ]);
         }
 
+        // Link conversations
         $linkedCount = Conversation::linkGuestSessions($guestSessionId, $user);
+
+        // Also merge service bookings and inquiries via GuestMergeService
+        try {
+            $mergeService = app(\App\Services\GuestMergeService::class);
+            $mergeStats = $mergeService->merge($guestSessionId, $user->id);
+            $linkedCount += $mergeStats['service_bookings'] ?? 0;
+            $linkedCount += $mergeStats['support_cases'] ?? 0;
+            $linkedCount += $mergeStats['conversations'] ?? 0;
+            $linkedCount += $mergeStats['messages'] ?? 0;
+        } catch (\Exception $e) {
+            \Log::warning('Guest merge service failed: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true,
             'linked_count' => $linkedCount,
             'message' => $linkedCount > 0
-                ? "Linked {$linkedCount} guest conversation(s) to your account"
+                ? "Linked {$linkedCount} guest item(s) to your account"
                 : 'No guest conversations found to link',
         ]);
     }
