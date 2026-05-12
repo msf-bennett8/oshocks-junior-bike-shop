@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useBookings } from '../../hooks/useBookings';
 import api from '../../services/api';
 import bookingService from '../../services/bookingService';
+import { useMessaging } from '../../hooks/useMessaging';
 import {
   X, FileText, MessageSquare, History, StickyNote,
   Calendar, Clock, Wrench, User, Phone, Mail, MapPin,
@@ -355,59 +356,35 @@ const DetailsTab = ({ booking, isStaff }) => {
 // CONVERSATION TAB
 // ============================================================================
 const ConversationTab = ({ booking, user, onNavigateToMessages }) => {
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const {
+    messages,
+    loading,
+    sending,
+    fetchCaseMessages,
+    sendMessage,
+    setMessages,
+  } = useMessaging(user?.id);
+
   const [showFullConversation, setShowFullConversation] = useState(false);
   const [input, setInput] = useState('');
-  const [sending, setSending] = useState(false);
 
   const conversationId = booking.support_case?.conversation_id;
   const caseId = booking.case_id;
 
   useEffect(() => {
     if (conversationId && caseId) {
-      loadMessages();
+      fetchCaseMessages(conversationId, caseId, showFullConversation);
     }
-  }, [conversationId, caseId]);
-
-  const loadMessages = async (includeFull = false) => {
-    if (!conversationId || !caseId) return;
-    setLoading(true);
-    try {
-      const url = `/conversations/${conversationId}/cases/${caseId}/messages`;
-      const params = includeFull ? { include_full_conversation: true } : {};
-      const res = await api.get(url, { params });
-      const data = res.data?.data;
-      setMessages(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error('Failed to load messages:', err);
-      // Fallback to general conversation messages
-      try {
-        const res = await api.get(`/conversations/${conversationId}/messages`);
-        const data = res.data?.data;
-        setMessages(Array.isArray(data) ? data : []);
-      } catch (err2) {
-        setMessages([]);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+    return () => setMessages([]);
+  }, [conversationId, caseId, showFullConversation, fetchCaseMessages, setMessages]);
 
   const handleSend = async () => {
     if (!input.trim() || sending || !conversationId || !caseId) return;
-    setSending(true);
     try {
-      await api.post(`/conversations/${conversationId}/cases/${caseId}/messages`, {
-        body: input.trim(),
-        type: 'text',
-      });
+      await sendMessage(conversationId, input.trim(), 'text', { case_id: caseId });
       setInput('');
-      await loadMessages(showFullConversation);
     } catch (err) {
       console.error('Failed to send message:', err);
-    } finally {
-      setSending(false);
     }
   };
 
@@ -482,11 +459,10 @@ const ConversationTab = ({ booking, user, onNavigateToMessages }) => {
           })
         )}
 
-        {/* Full conversation toggle */}
         {!showFullConversation && messages.length > 0 && (
           <div className="flex justify-center py-2">
             <button
-              onClick={() => { setShowFullConversation(true); loadMessages(true); }}
+              onClick={() => setShowFullConversation(true)}
               className="text-xs text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1"
             >
               <ExternalLink className="w-3 h-3" />
@@ -497,7 +473,7 @@ const ConversationTab = ({ booking, user, onNavigateToMessages }) => {
         {showFullConversation && (
           <div className="flex justify-center py-2">
             <button
-              onClick={() => { setShowFullConversation(false); loadMessages(false); }}
+              onClick={() => setShowFullConversation(false)}
               className="text-xs text-gray-500 hover:text-gray-700 font-medium"
             >
               Show Case Only
@@ -506,7 +482,6 @@ const ConversationTab = ({ booking, user, onNavigateToMessages }) => {
         )}
       </div>
 
-      {/* Input */}
       <div className="p-4 border-t border-gray-200 bg-white">
         <div className="flex items-end gap-2">
           <textarea
@@ -532,7 +507,6 @@ const ConversationTab = ({ booking, user, onNavigateToMessages }) => {
         </div>
       </div>
 
-      {/* Navigate to full chat */}
       <div className="px-4 py-2 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
         <button
           onClick={() => onNavigateToMessages?.(booking)}

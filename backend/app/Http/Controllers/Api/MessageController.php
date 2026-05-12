@@ -23,12 +23,11 @@ class MessageController extends Controller
 
         $messages = $conversation->messages()
             ->with('sender')
-            ->orderBy('created_at', 'desc')
-            ->cursorPaginate(50);
+            ->orderBy('created_at', 'asc')
+            ->get();
 
         return response()->json([
-            'data' => $messages->items(),
-            'next_cursor' => $messages->nextCursor()?->encode(),
+            'data' => $messages,
         ]);
     }
 

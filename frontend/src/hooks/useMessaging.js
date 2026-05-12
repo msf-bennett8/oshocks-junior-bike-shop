@@ -27,7 +27,10 @@ class MessageQueue {
       const msg = this.queue[0];
       try {
         // Attempt send — api interceptor handles auth headers automatically
-        const res = await api.post(`/conversations/${msg.conversationId}/messages`, {
+        const url = msg.caseId 
+          ? `/conversations/${msg.conversationId}/cases/${msg.caseId}/messages`
+          : `/conversations/${msg.conversationId}/messages`;
+        const res = await api.post(url, {
           body: msg.body,
           type: msg.type,
           metadata: msg.metadata,
@@ -205,6 +208,7 @@ export const useMessaging = (userId) => {
         // Queue for actual send with retry
         messageQueue.add({
           conversationId,
+          caseId: metadata?.case_id || null,
           body: body.trim(),
           type,
           metadata,
