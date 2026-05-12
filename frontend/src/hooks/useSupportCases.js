@@ -9,23 +9,6 @@ export const useSupportCases = () => {
   const [stats, setStats] = useState(null);
   const { subscribeToChannel } = useWebSocket();
 
-  // Fetch user's support cases
-  const fetchMyCases = useCallback(async (params = {}) => {
-    setLoading(true);
-    try {
-      const res = await supportCaseService.getMyCases(params);
-      const data = res.data?.data?.data || res.data?.data;
-      setCases(Array.isArray(data) ? data : []);
-      setError(null);
-      return res.data;
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch cases');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   // Fetch queue (admin/agent)
   const fetchQueue = useCallback(async (params = {}) => {
     setLoading(true);
@@ -177,6 +160,23 @@ export const useSupportCases = () => {
       if (typeof unsub === 'function') unsub();
     };
   }, [subscribeToChannel]);
+
+  // Fetch current user's cases (for MySupportCasesPage)
+  const fetchMyCases = useCallback(async (params = {}) => {
+    setLoading(true);
+    try {
+      const res = await supportCaseService.getMyCases(params);
+      const data = res.data?.data?.data || res.data?.data;
+      setCases(Array.isArray(data) ? data : []);
+      setError(null);
+      return res.data;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch your cases');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   return {
     cases,

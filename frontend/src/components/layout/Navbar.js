@@ -61,6 +61,20 @@ const Navbar = () => {
     return () => window.removeEventListener('open-create-chat-modal', handleOpenCreateChat);
   }, []);
 
+  // Listen for open-chat-drawer event from support cases page
+  useEffect(() => {
+    const handleOpenChatDrawer = (e) => {
+      setChatOpen(true);
+      if (e.detail?.conversationId) {
+        setTimeout(() => {
+          setActiveConversation({ id: e.detail.conversationId });
+        }, 100);
+      }
+    };
+    window.addEventListener('open-chat-drawer', handleOpenChatDrawer);
+    return () => window.removeEventListener('open-chat-drawer', handleOpenChatDrawer);
+  }, [setActiveConversation]);
+
   // Body class is managed by ChatDrawer.jsx — Navbar just reads it
   const {
     localStream,
@@ -755,28 +769,69 @@ const Navbar = () => {
                       </div>
                     )}
 
-                    {/* Support Queue */}
-                    {isAuthenticated && (user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'support_agent') && (
-                      <button
-                        onClick={() => {
-                          setShowQuickActions(false);
-                          navigate('/admin/support-inbox');
-                        }}
-                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-orange-50 transition-colors w-full text-left"
-                      >
-                        <div className="relative">
-                          <Inbox className="w-5 h-5 text-orange-600" />
-                          {unreadTotal > 0 && (
-                            <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
-                              {unreadTotal > 9 ? '9+' : unreadTotal}
-                            </span>
+                    {/* Support Cases — Expandable Dropdown */}
+                    {isAuthenticated && (
+                      <div className="relative group/cases">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const submenu = e.currentTarget.nextElementSibling;
+                            if (submenu) {
+                              submenu.classList.toggle('hidden');
+                            }
+                          }}
+                          className="flex items-center gap-3 px-4 py-2.5 hover:bg-orange-50 transition-colors w-full text-left"
+                        >
+                          <div className="relative">
+                            <Inbox className="w-5 h-5 text-orange-600" />
+                            {unreadTotal > 0 && (
+                              <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
+                                {unreadTotal > 9 ? '9+' : unreadTotal}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <span className="text-gray-900 font-medium">Support Cases</span>
+                            <p className="text-xs text-gray-500">View & manage cases</p>
+                          </div>
+                          <ChevronDown className="w-3.5 h-3.5 text-gray-400 transition-transform group-hover/cases:rotate-180" />
+                        </button>
+
+                        {/* Submenu */}
+                        <div className="hidden bg-gray-50 border-l-2 border-orange-200 ml-4">
+                          {/* My Cases — All authenticated users */}
+                          <button
+                            onClick={() => {
+                              setShowQuickActions(false);
+                              navigate('/my-cases');
+                            }}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-orange-100/50 transition-colors w-full text-left"
+                          >
+                            <User className="w-4 h-4 text-orange-600" />
+                            <div>
+                              <span className="text-sm text-gray-800 font-medium">My Cases</span>
+                              <p className="text-[11px] text-gray-500">Your support requests</p>
+                            </div>
+                          </button>
+
+                          {/* Platform Cases — Staff only (links to existing support-inbox) */}
+                          {(user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'support_agent') && (
+                            <button
+                              onClick={() => {
+                                setShowQuickActions(false);
+                                navigate('/admin/support-inbox');
+                              }}
+                              className="flex items-center gap-3 px-4 py-2 hover:bg-orange-100/50 transition-colors w-full text-left"
+                            >
+                              <Inbox className="w-4 h-4 text-blue-600" />
+                              <div>
+                                <span className="text-sm text-gray-800 font-medium">Platform Cases</span>
+                                <p className="text-[11px] text-gray-500">Manage all support cases</p>
+                              </div>
+                            </button>
                           )}
                         </div>
-                        <div className="flex-1">
-                          <span className="text-gray-900 font-medium">Support Queue</span>
-                          <p className="text-xs text-gray-500">Manage support cases</p>
-                        </div>
-                      </button>
+                      </div>
                     )}
 
                     {/* Notifications */}

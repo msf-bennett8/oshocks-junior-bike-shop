@@ -499,6 +499,69 @@ class SupportCaseController extends Controller
         }
     }
 
+    /**
+     * Get current authenticated user's support cases
+     */
+    public function myCases(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+
+        $query = SupportCase::with(['assignedAgent', 'order', 'conversation'])
+            ->where('user_id', $user->id)
+            ->orderBy('created_at', 'desc');
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('case_type')) {
+            $query->where('case_type', $request->case_type);
+        }
+
+        $cases = $query->paginate($request->per_page ?? 20);
+
+        // Normalize empty order stubs
+        $cases->getCollection()->transform(function ($case) {
+            $caseArray = $case->toArray();
+            $hasOrder = !empty($caseArray['order']['id'] ?? null)
+                     || !empty($caseArray['order']['order_display'] ?? null)
+                     || !empty($caseArray['order']['order_number'] ?? null);
+            if (!$hasOrder) {
+                $caseArray['order'] = null;
+            }
+            return $caseArray;
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $cases,
+        ]);
+    }
+
+    /**
+     * Get stats for current user's cases
+     */
+    public function myCaseStats(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+
+        $stats = [
+            'total' => SupportCase::where('user_id', $user->id)->count(),
+            'new' => SupportCase::where('user_id', $user->id)->where('status', 'new')->count(),
+            'open' => SupportCase::where('user_id', $user->id)->where('status', 'open')->count(),
+            'in_progress' => SupportCase::where('user_id', $user->id)->where('status', 'in_progress')->count(),
+            'pending_user' => SupportCase::where('user_id', $user->id)->where('status', 'pending_user')->count(),
+            'resolved' => SupportCase::where('user_id', $user->id)->where('status', 'resolved')->count(),
+            'closed' => SupportCase::where('user_id', $user->id)->where('status', 'closed')->count(),
+            'escalated' => SupportCase::where('user_id', $user->id)->where('status', 'escalated')->count(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $stats,
+        ]);
+    }
+
         /**
      * Get messages for a case — case-only or full conversation context
      */

@@ -84,6 +84,7 @@ const AddressesPage = lazy(() => import('./pages/user/AddressesPage'));
 const ReviewsPage = lazy(() => import('./pages/user/ReviewsPage'));
 const SettingsPage = lazy(() => import('./pages/user/SettingsPage'));
 const MyAppointmentsPage = lazy(() => import('./pages/user/MyAppointmentsPage'));
+const MySupportCasesPage = lazy(() => import('./pages/user/MySupportCasesPage'));
 
 // Seller Dashboard
 const SellerDashboardPage = lazy(() => import('./pages/seller/SellerDashboardPage'));
@@ -695,6 +696,15 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <MyAppointmentsPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/my-cases"
+                  element={
+                    <ProtectedRoute>
+                      <MySupportCasesPage />
                     </ProtectedRoute>
                   }
                 />

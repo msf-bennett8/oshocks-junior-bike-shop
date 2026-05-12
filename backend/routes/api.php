@@ -645,6 +645,8 @@ Route::prefix('v1')->middleware(['api', 'optional', 'audit'])->group(function ()
 Route::prefix('v1/support-cases')->middleware(['auth:sanctum', 'audit'])->group(function () {
     // User routes
     Route::get('/', [\App\Http\Controllers\Api\SupportCaseController::class, 'index']);
+    Route::get('/my-cases', [\App\Http\Controllers\Api\SupportCaseController::class, 'myCases']);
+    Route::get('/my-cases/stats', [\App\Http\Controllers\Api\SupportCaseController::class, 'myCaseStats']);
     Route::post('/', [\App\Http\Controllers\Api\SupportCaseController::class, 'store']);
     Route::get('/{caseId}', [\App\Http\Controllers\Api\SupportCaseController::class, 'show']);
     Route::post('/{caseId}/escalate', [\App\Http\Controllers\Api\SupportCaseController::class, 'escalate']);

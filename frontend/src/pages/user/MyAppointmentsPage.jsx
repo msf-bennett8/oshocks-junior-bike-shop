@@ -109,9 +109,11 @@ const MyAppointmentsPage = () => {
   };
 
   const navigateToMessages = (booking) => {
-    const conversationId = booking.support_case?.conversation_id;
+    const conversationId = booking?.conversation?.id || booking?.conversation_id || booking?.support_case?.conversation_id || booking?.support_case?.conversation?.id;
     if (conversationId) {
-      navigate(`/messages?conversationId=${conversationId}`);
+      window.dispatchEvent(new CustomEvent('open-chat-drawer', {
+        detail: { conversationId: conversationId }
+      }));
     }
   };
 
@@ -122,7 +124,7 @@ const MyAppointmentsPage = () => {
   const canReschedule = (status) => ['pending', 'confirmed', 'rescheduled'].includes(status);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-[120px] md:pt-20">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -446,9 +448,11 @@ const MyAppointmentsPage = () => {
           setPanelBooking(null);
         }}
         onNavigateToMessages={(booking) => {
-          const convId = booking?.support_case?.conversation_id;
+          const convId = booking?.conversation?.id || booking?.conversation_id || booking?.support_case?.conversation_id || booking?.support_case?.conversation?.id;
           if (convId) {
-            navigate(`/messages?conversationId=${convId}`);
+            window.dispatchEvent(new CustomEvent('open-chat-drawer', {
+              detail: { conversationId: convId }
+            }));
           }
         }}
       />

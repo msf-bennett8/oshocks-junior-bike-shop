@@ -2,7 +2,8 @@ import api from './api';
 
 const supportCaseService = {
   // User-facing support case operations
-  getMyCases: (params = {}) => api.get('/support-cases', { params }),
+  getMyCases: (params = {}) => api.get('/support-cases/my-cases', { params }),
+  getMyCaseStats: () => api.get('/support-cases/my-cases/stats'),
   getCase: (caseId) => api.get(`/support-cases/${caseId}`),
   createCase: (data) => api.post('/support-cases', data),
   escalateCase: (caseId, reason) => api.post(`/support-cases/${caseId}/escalate`, { reason }),

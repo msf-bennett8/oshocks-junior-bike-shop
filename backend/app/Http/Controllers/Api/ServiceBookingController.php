@@ -430,7 +430,7 @@ class ServiceBookingController extends Controller
             ], 401);
         }
 
-        $query = ServiceBooking::with(['supportCase.conversation', 'seller', 'cancellationRequester', 'cancellationReviewer'])
+        $query = ServiceBooking::with(['supportCase.conversation', 'conversation', 'seller', 'cancellationRequester', 'cancellationReviewer'])
             ->orderBy('created_at', 'desc');
 
         if ($user) {
@@ -591,7 +591,7 @@ class ServiceBookingController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
         }
 
-        $appointments = ServiceBooking::with(['supportCase.conversation', 'seller', 'assignedMechanic'])
+        $appointments = ServiceBooking::with(['supportCase.conversation', 'conversation', 'seller', 'assignedMechanic'])
             ->whereHas('supportCase', function ($q) use ($userId) {
                 $q->where('user_id', $userId);
             })
