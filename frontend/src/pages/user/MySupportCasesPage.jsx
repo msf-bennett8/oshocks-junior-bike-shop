@@ -9,6 +9,7 @@ import {
   ArrowRight, Shield, Star, Send, Plus, MoreVertical, Phone, Mail
 } from 'lucide-react';
 import { CaseStatusChip } from '../../components/messaging/CaseStatusChip';
+import CasePanel from '../../components/messaging/CasePanel';
 
 const TYPE_CONFIG = {
   order_issue: { label: 'Order Issue', color: 'bg-orange-100 text-orange-700 border-orange-200', icon: Tag },
@@ -36,8 +37,8 @@ const MySupportCasesPage = () => {
   const [expandedCase, setExpandedCase] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedCase, setSelectedCase] = useState(null);
+  const [panelCase, setPanelCase] = useState(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
   // Create form state
@@ -106,8 +107,8 @@ const MySupportCasesPage = () => {
   };
 
   const openCaseDetail = (supportCase) => {
-    setSelectedCase(supportCase);
-    setShowDetailModal(true);
+    setPanelCase(supportCase);
+    setIsPanelOpen(true);
   };
 
   const getTypeConfig = (type) => TYPE_CONFIG[type] || TYPE_CONFIG.inquiry;
@@ -516,113 +517,23 @@ const MySupportCasesPage = () => {
         </div>
       )}
 
-      {/* Case Detail Modal */}
-      {showDetailModal && selectedCase && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900">{selectedCase.case_id}</h3>
-                    <p className="text-sm text-gray-500">{selectedCase.subject}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <XCircle className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 mb-1">Status</p>
-                  <CaseStatusChip status={selectedCase.status} />
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 mb-1">Priority</p>
-                  <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getPriorityConfig(selectedCase.priority).color}`}>
-                    {getPriorityConfig(selectedCase.priority).label}
-                  </span>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 mb-1">Type</p>
-                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getTypeConfig(selectedCase.case_type).color}`}>
-                    {React.createElement(getTypeConfig(selectedCase.case_type).icon, { className: 'w-3 h-3' })}
-                    {getTypeConfig(selectedCase.case_type).label}
-                  </span>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 mb-1">Created</p>
-                  <p className="text-sm font-medium text-gray-900">
-                    {new Date(selectedCase.created_at).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-2">Description</h4>
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedCase.description || 'No description provided'}</p>
-                </div>
-              </div>
-
-              {selectedCase.assigned_agent && (
-                <div className="bg-blue-50 rounded-xl p-4">
-                  <h4 className="text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                    <Shield className="w-4 h-4" /> Assigned Agent
-                  </h4>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center text-blue-800 text-sm font-bold">
-                      {selectedCase.assigned_agent.name?.[0]?.toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{selectedCase.assigned_agent.name}</p>
-                      <p className="text-xs text-gray-500">{selectedCase.assigned_agent.email}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {selectedCase.resolution_notes && (
-                <div className="bg-green-50 rounded-xl p-4">
-                  <h4 className="text-sm font-semibold text-green-800 mb-2">Resolution</h4>
-                  <p className="text-sm text-green-800">{selectedCase.resolution_notes}</p>
-                  {selectedCase.resolved_at && (
-                    <p className="text-xs text-green-600 mt-2">
-                      Resolved on {new Date(selectedCase.resolved_at).toLocaleDateString()}
-                      {selectedCase.resolved_by?.name && ` by ${selectedCase.resolved_by.name}`}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => { setShowDetailModal(false); navigateToMessages(selectedCase); }}
-                  className="flex-1 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-medium hover:shadow-md transition-all flex items-center justify-center gap-2"
-                >
-                  <MessageSquare className="w-4 h-4" />
-                  Open Messages
-                </button>
-                <button
-                  onClick={() => setShowDetailModal(false)}
-                  className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Case Panel */}
+      <CasePanel
+        supportCase={panelCase}
+        isOpen={isPanelOpen}
+        onClose={() => {
+          setIsPanelOpen(false);
+          setPanelCase(null);
+        }}
+        onNavigateToMessages={(supportCase) => {
+          const convId = supportCase?.conversation_id;
+          if (convId) {
+            window.dispatchEvent(new CustomEvent('open-chat-drawer', {
+              detail: { conversationId: convId }
+            }));
+          }
+        }}
+      />
     </div>
   );
 };

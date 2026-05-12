@@ -509,13 +509,20 @@ class ConversationController extends Controller
             abort(403, 'Not a participant in this conversation');
         }
 
+        $perPage = $request->get('per_page', 50);
         $messages = $conversation->messages()
             ->with('sender')
-            ->orderBy('created_at', 'asc')
-            ->get();
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
 
         return response()->json([
-            'data' => $messages,
+            'data' => $messages->items(),
+            'meta' => [
+                'current_page' => $messages->currentPage(),
+                'last_page' => $messages->lastPage(),
+                'per_page' => $messages->perPage(),
+                'total' => $messages->total(),
+            ],
         ]);
     }
 
