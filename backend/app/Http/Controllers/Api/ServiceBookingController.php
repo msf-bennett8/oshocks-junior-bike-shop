@@ -45,7 +45,7 @@ class ServiceBookingController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => $result['support_case']
+                'message' => $result['conversation']
                     ? 'Service booking created. Our team will confirm your appointment shortly. Check your messages for updates.'
                     : 'Booking request received! Check your email for confirmation. Our team will contact you shortly.',
                 'data' => [

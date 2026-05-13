@@ -43,34 +43,9 @@ class BookingService
             $description = $data['service_description'] ?? 'No description provided';
             $subject = $this->buildBookingSubject($data);
 
-            // ─── Step 1: Create conversation for this booking ───
-            $supportUser = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->first();
-            $createdBy = $user?->id ?? $supportUser?->id;
-
-            $conversation = Conversation::create([
-                'type' => 'booking',
-                'title' => "Booking: {$subject}",
-                'created_by' => $createdBy,
-                'guest_session_id' => $user ? null : $guestSessionId,
-                'guest_name' => $user ? null : ($data['customer_name'] ?? 'Guest'),
-                'status' => 'open',
-                'priority' => 'medium',
-                'last_message_at' => now(),
-            ]);
-
-            if ($user) {
-                $conversation->participants()->attach($user->id, [
-                    'joined_at' => now(),
-                    'is_admin' => false,
-                ]);
-            }
-
-            if ($supportUser && $supportUser->id !== $user?->id) {
-                $conversation->participants()->attach($supportUser->id, [
-                    'joined_at' => now(),
-                    'is_admin' => true,
-                ]);
-            }
+            // ─── Step 1: Get or create shared support conversation ───
+            // All bookings and cases share one "Oshocks Support" conversation per user
+            $conversation = Conversation::getOrCreateSupportConversation($user, $guestSessionId);
 
             // ─── Step 2: Create standalone service booking linked to conversation ───
             $booking = ServiceBooking::create([
