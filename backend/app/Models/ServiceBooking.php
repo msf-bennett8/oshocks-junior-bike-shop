@@ -10,8 +10,13 @@ class ServiceBooking extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $primaryKey = 'id';
+    protected $keyType = 'string';
+    public $incrementing = false;
+
     protected $fillable = [
-        'case_id',
+        'id', // <-- ADD THIS (string booking ID, auto-generated)
+        'case_id', // nullable — null for standalone bookings, set for case-linked bookings
         'service_type',
         'service_description',
         'estimated_price',
@@ -41,6 +46,7 @@ class ServiceBooking extends Model
         'customer_notes',
         'merged_to_user_id',
         'merged_at',
+        'metadata',
     ];
 
     protected $casts = [
@@ -53,6 +59,7 @@ class ServiceBooking extends Model
         'final_price' => 'decimal:2',
         'cancellation_requested_at' => 'datetime',
         'cancellation_reviewed_at' => 'datetime',
+        'metadata' => 'array',
     ];
 
     /**
@@ -169,6 +176,20 @@ class ServiceBooking extends Model
     }
 
     /**
+     * Auto-generate booking ID on creating
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($booking) {
+            if (empty($booking->id)) {
+                $booking->id = app(\App\Services\BookingIdService::class)->generate();
+            }
+        });
+    }
+
+    /**
      * Appointment history/audit trail
      */
     public function appointmentHistory()
@@ -177,17 +198,23 @@ class ServiceBooking extends Model
     }
 
     /**
-     * Get the conversation through the support case
+     * Get the conversation through the support case (only for case-linked bookings)
      */
     public function conversation()
     {
+        // For standalone bookings (no case_id), return empty relation
+        if (!$this->case_id) {
+            return $this->hasOne(Conversation::class, 'id')->whereRaw('1 = 0');
+        }
+
+        // For case-linked bookings, get conversation via support_case
         return $this->hasOneThrough(
             Conversation::class,
             SupportCase::class,
-            'case_id',        // Foreign key on support_cases
-            'id',             // Foreign key on conversations
-            'case_id',        // Local key on service_bookings
-            'conversation_id' // Local key on support_cases
+            'case_id',        // Foreign key on support_cases table
+            'id',             // Foreign key on conversations table
+            'case_id',        // Local key on service_bookings table
+            'conversation_id' // Local key on support_cases table
         );
     }
 

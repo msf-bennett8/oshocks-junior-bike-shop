@@ -45,8 +45,14 @@ class ServiceBookingController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Service booking created successfully. Our team will confirm your appointment shortly.',
-                'data' => $result,
+                'message' => $result['support_case']
+                    ? 'Service booking created. Our team will confirm your appointment shortly. Check your messages for updates.'
+                    : 'Booking request received! Check your email for confirmation. Our team will contact you shortly.',
+                'data' => [
+                    'service_booking' => $result['service_booking'],
+                    'support_case' => $result['support_case'],
+                    'conversation' => $result['conversation'],
+                ],
             ], 201);
 
         } catch (\Exception $e) {
@@ -72,7 +78,7 @@ class ServiceBookingController extends Controller
         $user = auth()->user();
 
         // Role-based filtering
-        $query = ServiceBooking::with(['supportCase', 'seller', 'assignedMechanic', 'cancellationRequester', 'cancellationReviewer']);
+        $query = ServiceBooking::with(['supportCase', 'supportCase.conversation', 'seller', 'assignedMechanic', 'cancellationRequester', 'cancellationReviewer']);
 
         if ($user->role === 'seller') {
             // Sellers see only their shop's bookings
@@ -119,8 +125,12 @@ class ServiceBookingController extends Controller
      */
     public function show(string $caseId): JsonResponse
     {
+        // Support both case_id (for case-linked) and id (for standalone)
         $booking = ServiceBooking::with(['supportCase', 'seller', 'assignedMechanic', 'cancellationRequester', 'cancellationReviewer'])
-            ->where('case_id', $caseId)
+            ->where(function ($q) use ($caseId) {
+                $q->where('case_id', $caseId)
+                  ->orWhere('id', $caseId);
+            })
             ->firstOrFail();
 
         // Authorization check
@@ -155,25 +165,27 @@ class ServiceBookingController extends Controller
             $booking = $result['service_booking'] ?? null;
             $supportCase = $result['support_case'] ?? null;
 
-            if ($booking && $supportCase) {
-                // Notify the customer
-                $customer = $supportCase->user;
+            if ($booking) {
+                // Notify the customer (email/SMS regardless of case-linked or standalone)
+                $customer = $supportCase?->user ?? ($booking->mergedToUser ?? null);
                 if ($customer) {
                     $customer->notify(new \App\Notifications\ServiceBookingConfirmed($booking, $supportCase));
                 }
 
-                // Broadcast real-time update
-                event(new \App\Events\SupportCaseUpdated(
-                    $supportCase,
-                    'appointment_confirmed',
-                    auth()->id(),
-                    [
-                        'booking_id' => $booking->id,
-                        'confirmed_date' => $booking->confirmed_date,
-                        'seller_id' => $booking->seller_id,
-                        'seller_name' => $booking->seller?->shop_name ?? null,
-                    ]
-                ));
+                // Broadcast real-time update (only if case-linked)
+                if ($supportCase) {
+                    event(new \App\Events\SupportCaseUpdated(
+                        $supportCase,
+                        'appointment_confirmed',
+                        auth()->id(),
+                        [
+                            'booking_id' => $booking->id,
+                            'confirmed_date' => $booking->confirmed_date,
+                            'seller_id' => $booking->seller_id,
+                            'seller_name' => $booking->seller?->shop_name ?? null,
+                        ]
+                    ));
+                }
             }
 
             return response()->json([
@@ -207,7 +219,10 @@ class ServiceBookingController extends Controller
         ]);
 
         $user = auth()->user();
-        $booking = ServiceBooking::where('case_id', $caseId)->firstOrFail();
+        $booking = ServiceBooking::where(function ($q) use ($caseId) {
+                $q->where('case_id', $caseId)
+                  ->orWhere('id', $caseId);
+            })->firstOrFail();
 
         // Authorization: staff can reschedule any, customers can reschedule their own
         $canReschedule = false;
@@ -277,7 +292,10 @@ class ServiceBookingController extends Controller
     public function cancel(Request $request, string $caseId): JsonResponse
     {
         $user = auth()->user();
-        $booking = ServiceBooking::where('case_id', $caseId)->firstOrFail();
+        $booking = ServiceBooking::where(function ($q) use ($caseId) {
+                $q->where('case_id', $caseId)
+                  ->orWhere('id', $caseId);
+            })->firstOrFail();
 
         // ─── STAFF: Approve or Deny a pending cancellation request ───
         if ($user && in_array($user->role, ['admin', 'super_admin', 'support_agent'])) {
@@ -329,6 +347,7 @@ class ServiceBookingController extends Controller
                         'case_id' => $booking->case_id,
                     ]);
                 }
+                // Standalone bookings: no conversation, customer gets email notification only
 
                 return response()->json([
                     'success' => true,
@@ -386,6 +405,7 @@ class ServiceBookingController extends Controller
                 'case_id' => $booking->case_id,
             ]);
         }
+        // Standalone bookings: no conversation, staff sees in inbox + email notification
 
         return response()->json([
             'success' => true,
@@ -430,15 +450,22 @@ class ServiceBookingController extends Controller
             ], 401);
         }
 
-        $query = ServiceBooking::with(['supportCase.conversation', 'conversation', 'seller', 'cancellationRequester', 'cancellationReviewer'])
+        $query = ServiceBooking::with(['supportCase', 'supportCase.conversation', 'seller', 'assignedMechanic', 'cancellationRequester', 'cancellationReviewer'])
             ->orderBy('created_at', 'desc');
 
         if ($user) {
             $query->where(function ($q) use ($user) {
+                // Case-linked bookings (via supportCase user_id)
                 $q->whereHas('supportCase', function ($sq) use ($user) {
                     $sq->where('user_id', $user->id);
                 })
-                ->orWhere('merged_to_user_id', $user->id);
+                // Merged bookings
+                ->orWhere('merged_to_user_id', $user->id)
+                // Standalone bookings: match by email
+                ->orWhere(function ($sq) use ($user) {
+                    $sq->whereNull('case_id')
+                       ->where('customer_email', $user->email);
+                });
             });
         } elseif ($guestSessionId) {
             $query->where('guest_session_id', $guestSessionId);
@@ -470,8 +497,11 @@ class ServiceBookingController extends Controller
         }
 
         // Customer: own booking only
+        // Case-linked: via supportCase user_id or merged_to_user_id
+        // Standalone: via email match or merged_to_user_id
         return $booking->supportCase?->user_id === $user->id ||
-               $booking->merged_to_user_id === $user->id;
+               $booking->merged_to_user_id === $user->id ||
+               ($booking->customer_email && $booking->customer_email === $user->email);
     }
 
     /**
@@ -481,7 +511,10 @@ class ServiceBookingController extends Controller
     public function getNotes(string $caseId): JsonResponse
     {
         $user = auth()->user();
-        $booking = ServiceBooking::where('case_id', $caseId)->firstOrFail();
+        $booking = ServiceBooking::where(function ($q) use ($caseId) {
+                $q->where('case_id', $caseId)
+                  ->orWhere('id', $caseId);
+            })->firstOrFail();
 
         if (!$this->canView($booking, $user)) {
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
@@ -519,7 +552,10 @@ class ServiceBookingController extends Controller
         ]);
 
         $user = auth()->user();
-        $booking = ServiceBooking::where('case_id', $caseId)->firstOrFail();
+        $booking = ServiceBooking::where(function ($q) use ($caseId) {
+                $q->where('case_id', $caseId)
+                  ->orWhere('id', $caseId);
+            })->firstOrFail();
 
         if (!$this->canView($booking, $user)) {
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
@@ -560,7 +596,10 @@ class ServiceBookingController extends Controller
     public function getHistory(string $caseId): JsonResponse
     {
         $user = auth()->user();
-        $booking = ServiceBooking::where('case_id', $caseId)->firstOrFail();
+        $booking = ServiceBooking::where(function ($q) use ($caseId) {
+                $q->where('case_id', $caseId)
+                  ->orWhere('id', $caseId);
+            })->firstOrFail();
 
         if (!$this->canView($booking, $user)) {
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
@@ -591,11 +630,21 @@ class ServiceBookingController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
         }
 
-        $appointments = ServiceBooking::with(['supportCase.conversation', 'conversation', 'seller', 'assignedMechanic'])
-            ->whereHas('supportCase', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
+        $user = \App\Models\User::find($userId);
+        $appointments = ServiceBooking::with(['supportCase', 'supportCase.conversation', 'seller', 'assignedMechanic'])
+            ->where(function ($q) use ($userId, $user) {
+                $q->whereHas('supportCase', function ($sq) use ($userId) {
+                    $sq->where('user_id', $userId);
+                })
+                ->orWhere('merged_to_user_id', $userId)
+                // Standalone bookings matched by email
+                ->orWhere(function ($sq) use ($user) {
+                    if ($user?->email) {
+                        $sq->whereNull('case_id')
+                           ->where('customer_email', $user->email);
+                    }
+                });
             })
-            ->orWhere('merged_to_user_id', $userId)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -624,7 +673,7 @@ class ServiceBookingController extends Controller
         $booking->status = 'no_show';
         $booking->save();
 
-        // Create system message in conversation
+        // Create system message in conversation (only for case-linked bookings)
         if ($booking->supportCase?->conversation_id) {
             \App\Models\Message::create([
                 'conversation_id' => $booking->supportCase->conversation_id,
@@ -635,6 +684,7 @@ class ServiceBookingController extends Controller
                 'case_id' => $booking->case_id,
             ]);
         }
+        // Standalone bookings: no conversation, staff handles via inbox + email
 
         return response()->json([
             'success' => true,

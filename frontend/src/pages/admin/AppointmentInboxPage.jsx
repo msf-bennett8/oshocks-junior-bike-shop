@@ -86,10 +86,11 @@ const AppointmentInboxPage = () => {
     const matchesFilter = filter === 'all' || 
       b.status === filter || 
       (filter === 'pending_review' && b.cancellation_request_status === 'pending_review');
-    const matchesSearch = !search || 
-      b.service_type?.toLowerCase().includes(search.toLowerCase()) ||
-      b.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
-      b.case_id?.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = !search ||
+        b.service_type?.toLowerCase().includes(search.toLowerCase()) ||
+        b.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
+        b.case_id?.toLowerCase().includes(search.toLowerCase()) ||
+        b.id?.toLowerCase().includes(search.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
@@ -266,7 +267,7 @@ const AppointmentInboxPage = () => {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by service, customer, or case ID..."
+              placeholder="Search by service, customer, booking ID, or case ID..."
               className="w-full pl-10 pr-4 py-2.5 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
@@ -302,14 +303,14 @@ const AppointmentInboxPage = () => {
                           size="sm"
                         />
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleCopyId(booking.case_id); }}
+                          onClick={(e) => { e.stopPropagation(); handleCopyId(booking.case_id || booking.id); }}
                           className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs font-mono text-gray-600 transition-colors"
                           title="Copy Appointment ID"
                         >
-                          {copiedId === booking.case_id ? (
+                          {copiedId === (booking.case_id || booking.id) ? (
                             <><Check className="w-3 h-3 text-green-600" /> Copied</>
                           ) : (
-                            <><Copy className="w-3 h-3" /> {booking.case_id}</>
+                            <><Copy className="w-3 h-3" /> {booking.case_id || booking.id}</>
                           )}
                         </button>
                       <span className="text-xs text-gray-500 flex items-center gap-1">
@@ -579,11 +580,17 @@ const AppointmentInboxPage = () => {
                         <Clock className="w-3.5 h-3.5" /> Appointment Status
                       </p>
                       <div className="flex items-center gap-2">
-                        <CaseStatusChip
-                          status={booking.support_case?.status}
-                          appointmentStatus={booking.status}
-                          size="sm"
-                        />
+                        {booking.case_id ? (
+                          <CaseStatusChip
+                            status={booking.support_case?.status}
+                            appointmentStatus={booking.status}
+                            size="sm"
+                          />
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-medium border border-gray-200">
+                            <Wrench className="w-3 h-3" /> Standalone
+                          </span>
+                        )}
                         <span className="text-gray-400">•</span>
                         <span className="text-xs text-gray-500">
                           Last updated: {new Date(booking.updated_at).toLocaleString()}
@@ -649,9 +656,12 @@ const AppointmentInboxPage = () => {
           setPanelBooking(null);
         }}
         onNavigateToMessages={(booking) => {
-          const convId = booking?.support_case?.conversation_id;
+          const convId = booking?.support_case?.conversation_id || booking?.support_case?.conversation?.id;
           if (convId) {
             window.location.href = `/messages?conversationId=${convId}`;
+          } else {
+            // Standalone booking — no conversation
+            alert('This is a standalone booking with no associated chat. Customer booked directly from Services Page.');
           }
         }}
       />

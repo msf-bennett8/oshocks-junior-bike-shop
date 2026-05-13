@@ -599,10 +599,12 @@ const ServiceBookingForm = () => {
       const res = await bookingService.createBooking(payload);
 
       if (res.data?.success) {
+        const booking = res.data.data?.service_booking;
         setResult({
           type: 'success',
-          message: res.data.message || 'Booking created successfully! Check your messages for confirmation.',
-          caseId: res.data.data?.support_case?.case_id,
+          message: res.data.message || 'Booking created successfully! Check your email for confirmation.',
+          caseId: booking?.id, // Use booking ID, not case ID (no case for standalone)
+          isStandalone: true,
         });
         // Reset form
         setFormData({
@@ -635,7 +637,7 @@ const ServiceBookingForm = () => {
         {result.caseId && (
           <div className="flex items-center justify-center gap-2">
             <p className="text-sm text-orange-200 font-mono bg-white/10 rounded-lg px-3 py-2 inline-flex items-center gap-2">
-              Appointment ID: {result.caseId}
+              Booking Ref: {result.caseId}
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(result.caseId);

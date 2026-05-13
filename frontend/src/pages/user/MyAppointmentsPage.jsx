@@ -46,10 +46,11 @@ const MyAppointmentsPage = () => {
 
   const filteredBookings = myBookings.filter(b => {
     const matchesFilter = filter === 'all' || b.status === filter;
-    const matchesSearch = !search ||
-      b.service_type?.toLowerCase().includes(search.toLowerCase()) ||
-      b.case_id?.toLowerCase().includes(search.toLowerCase()) ||
-      b.shop_location?.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = !search ||
+        b.service_type?.toLowerCase().includes(search.toLowerCase()) ||
+        b.case_id?.toLowerCase().includes(search.toLowerCase()) ||
+        b.id?.toLowerCase().includes(search.toLowerCase()) ||
+        b.shop_location?.toLowerCase().includes(search.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
@@ -109,10 +110,16 @@ const MyAppointmentsPage = () => {
   };
 
   const navigateToMessages = (booking) => {
-    const conversationId = booking?.conversation?.id || booking?.conversation_id || booking?.support_case?.conversation_id || booking?.support_case?.conversation?.id;
+    // For case-linked bookings: conversation is on supportCase
+    const conversationId = booking?.support_case?.conversation_id || booking?.support_case?.conversation?.id;
     if (conversationId) {
       window.dispatchEvent(new CustomEvent('open-chat-drawer', {
         detail: { conversationId: conversationId }
+      }));
+    } else {
+      // Standalone booking — no conversation. Open chat modal to create support case if needed.
+      window.dispatchEvent(new CustomEvent('open-create-chat-modal', {
+        detail: { prefillType: 'services_booking', bookingId: booking.id }
       }));
     }
   };
@@ -235,14 +242,14 @@ const MyAppointmentsPage = () => {
                             {statusConfig.label}
                           </span>
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleCopyId(booking.case_id); }}
+                            onClick={(e) => { e.stopPropagation(); handleCopyId(booking.case_id || booking.id); }}
                             className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-mono text-gray-600 transition-colors"
                             title="Copy Appointment ID"
                           >
-                            {copiedId === booking.case_id ? (
+                            {copiedId === (booking.case_id || booking.id) ? (
                               <><Check className="w-3 h-3 text-green-600" /> Copied</>
                             ) : (
-                              <><Copy className="w-3 h-3" /> {booking.case_id}</>
+                              <><Copy className="w-3 h-3" /> {booking.case_id || booking.id}</>
                             )}
                           </button>
                           <span className="text-xs text-gray-400 flex items-center gap-1">
