@@ -90,26 +90,24 @@ class BookingService
                 ],
             ]);
 
-            // ─── Step 4: Create user message with description (if provided) ───
+            // ─── Step 4: Create user message (always, even if description is empty) ───
             $userMessage = null;
-            if ($description && $description !== 'No description provided') {
-                $userBody = "Subject: " . str_replace('_', ' ', $booking->service_type) . "\n" .
-                    "Date: " . ($booking->requested_date?->format('M j, Y') ?? 'TBD') . "\n" .
-                    "Description:\n" . $description;
+            $userBody = "Subject: " . str_replace('_', ' ', $booking->service_type) . "\n" .
+                "Date: " . ($booking->requested_date?->format('M j, Y') ?? 'TBD') . "\n" .
+                "Description:\n" . ($description && $description !== 'No description provided' ? $description : 'No description provided');
 
-                $userMessage = Message::create([
-                    'conversation_id' => $conversation->id,
-                    'sender_id' => $user?->id,
-                    'body' => $userBody,
-                    'type' => 'text',
-                    'guest_session_id' => $user ? null : $guestSessionId,
-                    'sender_name' => $user?->name ?? $data['customer_name'] ?? 'Guest',
-                    'metadata' => [
-                        'event_type' => 'booking_description',
-                        'booking_id' => $booking->id,
-                    ],
-                ]);
-            }
+            $userMessage = Message::create([
+                'conversation_id' => $conversation->id,
+                'sender_id' => $user?->id,
+                'body' => $userBody,
+                'type' => 'text',
+                'guest_session_id' => $user ? null : $guestSessionId,
+                'sender_name' => $user?->name ?? $data['customer_name'] ?? 'Guest',
+                'metadata' => [
+                    'event_type' => 'booking_description',
+                    'booking_id' => $booking->id,
+                ],
+            ]);
 
             // Update conversation last_message_at so it appears in chat list
             $conversation->update(['last_message_at' => ($userMessage?->created_at ?? $systemMessage->created_at) ?? now()]);
