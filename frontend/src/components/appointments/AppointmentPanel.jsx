@@ -361,6 +361,7 @@ const ConversationTab = ({ booking, user, onNavigateToMessages }) => {
     loading,
     sending,
     fetchCaseMessages,
+    fetchMessages,
     sendMessage,
     setMessages,
   } = useMessaging(user?.id);
@@ -368,20 +369,31 @@ const ConversationTab = ({ booking, user, onNavigateToMessages }) => {
   const [showFullConversation, setShowFullConversation] = useState(false);
   const [input, setInput] = useState('');
 
-  const conversationId = booking.support_case?.conversation_id;
+  // Support case-linked bookings: use case-specific endpoint
+  // Standalone bookings: use general conversation endpoint (conversation_id in metadata)
+  const conversationId = booking.support_case?.conversation_id ?? booking.metadata?.conversation_id ?? booking.conversation_id;
   const caseId = booking.case_id;
 
   useEffect(() => {
-    if (conversationId && caseId) {
+    if (!conversationId) return;
+    
+    if (caseId) {
+      // Case-linked booking: fetch case-specific messages
       fetchCaseMessages(conversationId, caseId, showFullConversation);
+    } else {
+      // Standalone booking: fetch general conversation messages
+      fetchMessages(conversationId);
     }
+    
     return () => setMessages([]);
-  }, [conversationId, caseId, showFullConversation, fetchCaseMessages, setMessages]);
+  }, [conversationId, caseId, showFullConversation, fetchCaseMessages, fetchMessages, setMessages]);
 
   const handleSend = async () => {
-    if (!input.trim() || sending || !conversationId || !caseId) return;
+    if (!input.trim() || sending || !conversationId) return;
     try {
-      await sendMessage(conversationId, input.trim(), 'text', { case_id: caseId });
+      // For standalone bookings, don't send case_id metadata
+      const metadata = caseId ? { case_id: caseId } : {};
+      await sendMessage(conversationId, input.trim(), 'text', metadata);
       setInput('');
     } catch (err) {
       console.error('Failed to send message:', err);
@@ -516,7 +528,7 @@ const ConversationTab = ({ booking, user, onNavigateToMessages }) => {
           Open in Messages
         </button>
         <span className="text-[10px] text-gray-400">
-          #{booking.case_id}
+          #{booking.case_id || booking.id?.slice(0, 8)}
         </span>
       </div>
     </div>

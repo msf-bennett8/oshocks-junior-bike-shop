@@ -31,9 +31,10 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
     typingUsers,
     messagesEndRef,
     setActiveConversation,
-    setMessages,        // ✅ ADD THIS
+    setMessages,
     fetchConversations,
     fetchMessages,
+    fetchCaseMessages,
     sendMessage,
     markAsRead,
     pinConversation: onPinToggle,
@@ -309,7 +310,11 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
       // Only fetch if we haven't loaded messages for this conversation
       const hasMessagesForConv = messages.some(m => m.conversation_id === activeConversation.id);
       if (!hasMessagesForConv || messages.length === 0) {
-        fetchMessages(activeConversation.id);
+        if (activeConversation?.support_case?.case_id) {
+          fetchCaseMessages(activeConversation.id, activeConversation.support_case.case_id, false);
+        } else {
+          fetchMessages(activeConversation.id);
+        }
       }
       markAsRead(activeConversation.id);
       
@@ -318,16 +323,20 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
         setView('thread');
       }
     }
-  }, [activeConversation?.id, isOpen, isMobile]);
+  }, [activeConversation?.id, activeConversation?.support_case?.case_id, isOpen, isMobile]);
 
   // Load messages when conversation selected (mobile only — desktop handles in click)
   useEffect(() => {
     if (activeConversation?.id && isMobile) {
-      fetchMessages(activeConversation.id);
+      if (activeConversation?.support_case?.case_id) {
+        fetchCaseMessages(activeConversation.id, activeConversation.support_case.case_id, false);
+      } else {
+        fetchMessages(activeConversation.id);
+      }
       markAsRead(activeConversation.id);
       setView('thread');
     }
-  }, [activeConversation?.id, isMobile]);
+  }, [activeConversation?.id, activeConversation?.support_case?.case_id, isMobile]);
 
   const handleSend = (body, replyTo = null, attachments = []) => {
     if (activeConversation?.id) {
@@ -351,13 +360,19 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
   }, [setActiveConversation]);
 
   const handleSelectConversation = useCallback((conv) => {
-    console.log('[ChatDrawer] Clicked conv:', conv?.id);
+    console.log('[ChatDrawer] Clicked conv:', conv?.id, 'has case:', conv?.support_case?.case_id);
     setActiveConversation(conv);
     if (conv?.id) {
-      fetchMessages(conv.id);
+      // If conversation has a support case, fetch case-specific messages
+      // This ensures system messages + user messages are both loaded
+      if (conv?.support_case?.case_id) {
+        fetchCaseMessages(conv.id, conv.support_case.case_id, false);
+      } else {
+        fetchMessages(conv.id);
+      }
       markAsRead(conv.id);
     }
-  }, [setActiveConversation, fetchMessages, markAsRead]);
+  }, [setActiveConversation, fetchMessages, fetchCaseMessages, markAsRead]);
 
   // Sync body class for z-index management
   useEffect(() => {
@@ -382,8 +397,14 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
 
     const handleSelectConv = useCallback((conv) => {
       setActiveConversation(conv);
+      if (conv?.support_case?.case_id) {
+        fetchCaseMessages(conv.id, conv.support_case.case_id, false);
+      } else if (conv?.id) {
+        fetchMessages(conv.id);
+      }
+      markAsRead(conv.id);
       if (isNarrow) setChatView('thread');
-    }, [setActiveConversation, isNarrow]);
+    }, [setActiveConversation, fetchCaseMessages, fetchMessages, markAsRead, isNarrow]);
 
     const handleBackToList = () => {
       setChatView('list');

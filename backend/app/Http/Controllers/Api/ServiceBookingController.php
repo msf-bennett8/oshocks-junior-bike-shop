@@ -52,6 +52,7 @@ class ServiceBookingController extends Controller
                     'service_booking' => $result['service_booking'],
                     'support_case' => $result['support_case'],
                     'conversation' => $result['conversation'],
+                    'system_message' => $result['system_message'],
                 ],
             ], 201);
 
@@ -132,6 +133,11 @@ class ServiceBookingController extends Controller
                   ->orWhere('id', $caseId);
             })
             ->firstOrFail();
+
+        // Load conversation for standalone bookings (conversation_id in metadata)
+        if (!$booking->case_id && !empty($booking->metadata['conversation_id'])) {
+            $booking->setRelation('conversation', \App\Models\Conversation::with(['participants', 'messages'])->find($booking->metadata['conversation_id']));
+        }
 
         // Authorization check
         $user = auth()->user();
@@ -452,6 +458,9 @@ class ServiceBookingController extends Controller
 
         $query = ServiceBooking::with(['supportCase', 'supportCase.conversation', 'seller', 'assignedMechanic', 'cancellationRequester', 'cancellationReviewer'])
             ->orderBy('created_at', 'desc');
+
+        // Eager load conversation for standalone bookings (conversation_id stored in metadata)
+        // We can't eager load via relationship, so we append it in the resource/transform
 
         if ($user) {
             $query->where(function ($q) use ($user) {

@@ -66,8 +66,8 @@ class ConversationController extends Controller
                 ->where('id', '!=', $user?->id)
                 ->first();
 
-            $conv->last_message = $conv->messages->first()?->body;
-            $conv->last_message_at = $conv->messages->first()?->created_at;
+            $conv->last_message = $conv->messages->first()?->body ?? $conv->last_message;
+            $conv->last_message_at = $conv->messages->first()?->created_at ?? $conv->last_message_at ?? $conv->updated_at;
             // Load support case with order relationship
             $supportCase = $conv->supportCase;
             if ($supportCase) {
@@ -166,7 +166,7 @@ class ConversationController extends Controller
                 'status' => 'open',
                 'priority' => 'medium',
             ]);
-            
+
             // Add participants
             if ($user) {
                 $conversation->participants()->attach($user->id, ['joined_at' => now()]);

@@ -162,15 +162,23 @@ class SupportCaseController extends Controller
                 $createdBy = $systemUser?->id;
             }
 
+            // Determine conversation title based on case type
+            $conversationTitle = match($request->case_type) {
+                'services_booking' => "Service: {$request->subject}",
+                'order_issue', 'returns_refund', 'shipment_delivery', 'payment_billing' => "Order: {$request->subject}",
+                default => "Case: {$request->subject}",
+            };
+
             $conversation = Conversation::create([
                 'type' => $orderId ? 'order_support' : 'support',
-                'title' => $request->subject,
+                'title' => $conversationTitle,
                 'created_by' => $createdBy,
                 'guest_session_id' => $guestSessionId,
                 'guest_name' => $guestSessionId ? 'Guest User' : null,
                 'order_id' => $orderId,
                 'status' => 'active',
                 'priority' => $request->priority ?? 'medium',
+                'last_message_at' => now(), // Ensure it appears in chat list immediately
             ]);
 
             // Add user as participant if authenticated
@@ -199,34 +207,19 @@ class SupportCaseController extends Controller
             ], $request->has('attachment') ? ['attachment' => $request->attachment] : []),
             ]);
 
-            // Create initial message WITH case_id now available
-            $messageBody = $request->description
-                ? "Subject: {$request->subject}\n\nDescription:\n{$request->description}"
-                : "Subject: {$request->subject}";
+            // ─── Create clean system message (single line, no description) ───
+            $systemBody = "New Case Created " .
+                "Type: " . str_replace('_', ' ', $supportCase->case_type) . " " .
+                "Subject: {$supportCase->subject} " .
+                "Priority: " . ucfirst($supportCase->priority) . " " .
+                "Status: New " .
+                "Our team will review and respond shortly.";
 
-            $message = Message::create([
-                'conversation_id' => $conversation->id,
-                'case_id' => $supportCase->case_id, // ✅ NOW LINKED TO CASE
-                'sender_id' => $user?->id,
-                'body' => $messageBody,
-                'type' => 'text',
-                'guest_session_id' => $guestSessionId,
-                'sender_name' => $user?->name ?? 'Guest',
-            ]);
-
-            // Link initial message ID back to case metadata
-            $supportCase->update([
-                'metadata' => array_merge($supportCase->metadata ?? [], [
-                    'initial_message_id' => $message->id,
-                ]),
-            ]);
-
-            // Create system message for case creation
-            Message::create([
+            $systemMsg = Message::create([
                 'conversation_id' => $conversation->id,
                 'case_id' => $supportCase->case_id,
                 'sender_id' => null,
-                'body' => "New Case Created: {$supportCase->subject}",
+                'body' => $systemBody,
                 'type' => 'system',
                 'metadata' => [
                     'event_type' => 'case_created',
@@ -234,6 +227,34 @@ class SupportCaseController extends Controller
                     'case_type' => $supportCase->case_type,
                 ],
             ]);
+
+            // ─── Create user message with description (if provided) ───
+            $initialMessage = null;
+            if ($request->description) {
+                $messageBody = "Subject: {$request->subject}\n" .
+                    "Date: " . now()->format('M j, Y') . "\n" .
+                    "Description:\n{$request->description}";
+
+                $initialMessage = Message::create([
+                    'conversation_id' => $conversation->id,
+                    'case_id' => $supportCase->case_id,
+                    'sender_id' => $user?->id,
+                    'body' => $messageBody,
+                    'type' => 'text',
+                    'guest_session_id' => $guestSessionId,
+                    'sender_name' => $user?->name ?? 'Guest',
+                ]);
+
+                // Link initial message ID back to case metadata
+                $supportCase->update([
+                    'metadata' => array_merge($supportCase->metadata ?? [], [
+                        'initial_message_id' => $initialMessage->id,
+                    ]),
+                ]);
+            }
+
+            // Update conversation last_message_at so it appears in chat list
+            $conversation->update(['last_message_at' => ($initialMessage?->created_at ?? $systemMsg->created_at) ?? now()]);
 
             // Link conversation to case
             $conversation->update(['support_case_id' => $supportCase->case_id]);

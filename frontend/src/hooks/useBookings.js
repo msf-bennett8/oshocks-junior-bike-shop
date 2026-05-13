@@ -29,7 +29,20 @@ export const useBookings = () => {
         localStorage.setItem('oshocks_guest_session_id', res.data.data.guest_session_id);
       }
 
-      return { success: true, data: res.data.data };
+      // Store conversation ID from response for standalone bookings
+      const responseData = res.data.data;
+      if (responseData?.conversation?.id) {
+        // Merge conversation into booking data so AppointmentPanel can access it
+        responseData.service_booking = {
+          ...responseData.service_booking,
+          conversation: responseData.conversation,
+          metadata: {
+            ...(responseData.service_booking?.metadata || {}),
+            conversation_id: responseData.conversation.id,
+          },
+        };
+      }
+      return { success: true, data: responseData };
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to create booking';
       setError(msg);
