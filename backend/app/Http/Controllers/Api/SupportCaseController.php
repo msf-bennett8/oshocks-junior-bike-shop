@@ -154,10 +154,18 @@ class SupportCaseController extends Controller
             }
 
             // Create conversation first
+            // For guests, use a system support user as created_by to satisfy FK constraint
+            $createdBy = $user?->id;
+            if (!$createdBy && $guestSessionId) {
+                // Find first admin/super_admin to act as conversation owner
+                $systemUser = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->first();
+                $createdBy = $systemUser?->id;
+            }
+
             $conversation = Conversation::create([
                 'type' => $orderId ? 'order_support' : 'support',
                 'title' => $request->subject,
-                'created_by' => $user?->id,
+                'created_by' => $createdBy,
                 'guest_session_id' => $guestSessionId,
                 'guest_name' => $guestSessionId ? 'Guest User' : null,
                 'order_id' => $orderId,
@@ -186,9 +194,9 @@ class SupportCaseController extends Controller
                 'description' => $request->description,
                 'source' => $user ? 'web' : 'chat',
                 'metadata' => array_merge($request->metadata ?? [], [
-                    'ip' => request()->ip(),
-                    'user_agent' => request()->userAgent(),
-                ]),
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ], $request->has('attachment') ? ['attachment' => $request->attachment] : []),
             ]);
 
             // Create initial message WITH case_id now available
@@ -211,6 +219,20 @@ class SupportCaseController extends Controller
                 'metadata' => array_merge($supportCase->metadata ?? [], [
                     'initial_message_id' => $message->id,
                 ]),
+            ]);
+
+            // Create system message for case creation
+            Message::create([
+                'conversation_id' => $conversation->id,
+                'case_id' => $supportCase->case_id,
+                'sender_id' => null,
+                'body' => "New Case Created: {$supportCase->subject}",
+                'type' => 'system',
+                'metadata' => [
+                    'event_type' => 'case_created',
+                    'case_id' => $supportCase->case_id,
+                    'case_type' => $supportCase->case_type,
+                ],
             ]);
 
             // Link conversation to case
@@ -587,11 +609,13 @@ class SupportCaseController extends Controller
             ->orderBy('created_at', 'asc');
 
         if (!$includeFull && $caseId) {
-            // Default: only messages for this specific case
+            // Default: only messages for this specific case + general system messages
             $query->where(function ($q) use ($caseId) {
                 $q->where('case_id', $caseId)
-                  ->orWhereNull('case_id') // Include system messages
-                  ->whereIn('type', ['system', 'case_created', 'case_resolved', 'case_closed']);
+                  ->orWhere(function ($q2) {
+                      $q2->whereNull('case_id')
+                         ->whereIn('type', ['system', 'case_created', 'case_resolved', 'case_closed']);
+                  });
             });
         }
 

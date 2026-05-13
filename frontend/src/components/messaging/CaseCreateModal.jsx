@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
-import { X, Package, User, AlertTriangle, Truck, Send, Wrench, MessageSquare } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Package, User, AlertTriangle, Truck, Send, Wrench, MessageSquare, CreditCard, RotateCcw, Cpu, HelpCircle, Paperclip, FileText, Loader2, AlertCircle } from 'lucide-react';
 import api from '../../services/api';
 
 const caseTypes = [
   { value: 'order_issue', label: 'Order Issue', icon: Package, color: 'bg-orange-100 text-orange-700' },
-  { value: 'account_help', label: 'Account Help', icon: User, color: 'bg-indigo-100 text-indigo-700' },
+  { value: 'account_login', label: 'Account & Login', icon: User, color: 'bg-indigo-100 text-indigo-700' },
   { value: 'report_problem', label: 'Report Problem', icon: AlertTriangle, color: 'bg-red-100 text-red-700' },
-  { value: 'delivery_question', label: 'Delivery', icon: Truck, color: 'bg-cyan-100 text-cyan-700' },
-  { value: 'service', label: 'Service Booking', icon: Wrench, color: 'bg-emerald-100 text-emerald-700' },
-  { value: 'inquiry', label: 'General Inquiry', icon: MessageSquare, color: 'bg-violet-100 text-violet-700' },
+  { value: 'shipment_delivery', label: 'Shipment & Delivery', icon: Truck, color: 'bg-cyan-100 text-cyan-700' },
+  { value: 'services_booking', label: 'Services & Booking', icon: Wrench, color: 'bg-emerald-100 text-emerald-700' },
+  { value: 'general_inquiry', label: 'General Inquiry', icon: MessageSquare, color: 'bg-violet-100 text-violet-700' },
+  { value: 'payment_billing', label: 'Payment & Billing', icon: CreditCard, color: 'bg-amber-100 text-amber-700' },
+  { value: 'product_info', label: 'Product Information', icon: Package, color: 'bg-teal-100 text-teal-700' },
+  { value: 'returns_refund', label: 'Returns & Refund', icon: RotateCcw, color: 'bg-pink-100 text-pink-700' },
+  { value: 'technical_support', label: 'Technical Support', icon: Cpu, color: 'bg-slate-100 text-slate-700' },
+  { value: 'other', label: 'Other', icon: HelpCircle, color: 'bg-gray-100 text-gray-700' },
 ];
 
 export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
@@ -18,8 +23,93 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
   const [priority, setPriority] = useState('medium');
   const [orderNumber, setOrderNumber] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // Attachment state
+  const [attachment, setAttachment] = useState(null);
+  const [attachmentPreview, setAttachmentPreview] = useState(null);
+  const [attachmentError, setAttachmentError] = useState(null);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const fileInputRef = useRef(null);
+  
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
+  const ALLOWED_TYPES = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+    'application/pdf',
+    'text/plain', 'text/csv',
+    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/zip', 'application/x-zip-compressed',
+    'video/mp4', 'video/webm', 'audio/mpeg', 'audio/wav'
+  ];
+  const BLOCKED_EXTENSIONS = ['.exe', '.dll', '.bat', '.cmd', '.sh', '.php', '.js', '.html', '.htm', '.jar', '.apk', '.ipa'];
 
-  // (debug removed)
+    // ─── ATTACHMENT HANDLERS ───
+  const validateFile = (file) => {
+    if (file.size > MAX_FILE_SIZE) {
+      return `File too large. Maximum size is ${(MAX_FILE_SIZE / 1024 / 1024).toFixed(0)}MB.`;
+    }
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return `File type "${file.type || 'unknown'}" not allowed.`;
+    }
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+    if (BLOCKED_EXTENSIONS.includes(ext)) {
+      return `File extension "${ext}" is blocked for security reasons.`;
+    }
+    const nameParts = file.name.split('.');
+    if (nameParts.length > 2) {
+      const lastTwo = '.' + nameParts.slice(-2).join('.').toLowerCase();
+      if (BLOCKED_EXTENSIONS.some(blocked => lastTwo.includes(blocked))) {
+        return `Suspicious file name detected. Please rename your file.`;
+      }
+    }
+    return null;
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAttachmentError(null);
+    const error = validateFile(file);
+    if (error) {
+      setAttachmentError(error);
+      setAttachment(null);
+      setAttachmentPreview(null);
+      return;
+    }
+    setAttachment(file);
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setAttachmentPreview(ev.target.result);
+      reader.readAsDataURL(file);
+    } else {
+      setAttachmentPreview(null);
+    }
+  };
+
+  const handleRemoveAttachment = () => {
+    setAttachment(null);
+    setAttachmentPreview(null);
+    setAttachmentError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const uploadAttachmentToCloudinary = async (file) => {
+    // TODO: Implement Cloudinary upload
+    console.log('[Cloudinary Upload Placeholder]', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+    });
+    await new Promise(r => setTimeout(r, 800));
+    return {
+      url: `https://res.cloudinary.com/demo/image/upload/${Date.now()}_${file.name}`,
+      public_id: `attachments/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9]/g, '_')}`,
+      resource_type: file.type.startsWith('image/') ? 'image' : 'raw',
+      format: file.name.split('.').pop().toLowerCase(),
+      bytes: file.size,
+      secure_url: `https://res.cloudinary.com/demo/image/upload/${Date.now()}_${file.name}`,
+    };
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -76,6 +166,20 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
         setGuestProfile(anonName, profile.email);
         console.log('[CaseCreateModal] Generated guest name:', anonName);
       }
+      let attachmentData = null;
+      if (attachment) {
+        setUploadingAttachment(true);
+        try {
+          attachmentData = await uploadAttachmentToCloudinary(attachment);
+        } catch (uploadErr) {
+          alert('Failed to upload attachment. Please try again.');
+          setUploadingAttachment(false);
+          setLoading(false);
+          return;
+        }
+        setUploadingAttachment(false);
+      }
+
       const payload = {
         case_type: type,
         subject: subject.trim(),
@@ -88,10 +192,25 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
         payload.purchase_id = trimmedOrder;
       }
 
+      if (attachmentData) {
+        payload.attachment = {
+          url: attachmentData.secure_url,
+          public_id: attachmentData.public_id,
+          name: attachment.name,
+          type: attachment.type,
+          size: attachment.size,
+          resource_type: attachmentData.resource_type,
+        };
+      }
+
       console.log('[CaseCreateModal] Sending POST to /conversations/' + conversationId + '/cases with payload:', payload);
       console.log('[CaseCreateModal] API baseURL:', api.defaults.baseURL);
 
-      const response = await api.post(`/conversations/${conversationId}/cases`, payload);
+      const response = await api.post(`/conversations/${conversationId}/cases`, payload, {
+        headers: {
+          'X-Guest-Session-ID': guestId,
+        },
+      });
       console.log('[CaseCreateModal] API response:', response);
       console.log('[CaseCreateModal] Response data:', response.data);
 
@@ -198,6 +317,68 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
             <p className="text-xs text-gray-400 mt-1">Found in your order confirmation email or SMS</p>
           </div>
 
+          {/* Attachment Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Attachment (Optional)</label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              onChange={handleFileSelect}
+              className="hidden"
+              accept={ALLOWED_TYPES.join(',')}
+            />
+            
+            {!attachment ? (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingAttachment}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-orange-400 hover:text-orange-600 transition-colors disabled:opacity-50"
+              >
+                <Paperclip className="w-4 h-4" />
+                Click to upload file (max 10MB)
+              </button>
+            ) : (
+              <div className={`relative p-3 rounded-xl border-2 ${attachmentError ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'}`}>
+                <div className="flex items-center gap-3">
+                  {attachmentPreview ? (
+                    <img src={attachmentPreview} alt="Preview" className="w-10 h-10 rounded-lg object-cover" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-green-600" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{attachment.name}</p>
+                    <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveAttachment}
+                    disabled={uploadingAttachment}
+                    className="p-1 hover:bg-red-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-4 h-4 text-red-500" />
+                  </button>
+                </div>
+                {uploadingAttachment && (
+                  <div className="absolute inset-0 bg-green-50/80 rounded-xl flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 text-green-600 animate-spin" />
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {attachmentError && (
+              <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {attachmentError}
+              </p>
+            )}
+            <p className="mt-1 text-[11px] text-gray-400">
+              Allowed: JPG, PNG, GIF, PDF, DOC, XLS, CSV, TXT, ZIP, MP4, MP3. Max 10MB.
+            </p>
+          </div>
+
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -208,7 +389,7 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
             </button>
             <button
               type="submit"
-              disabled={!type || !subject.trim() || loading}
+              disabled={!type || !subject.trim() || loading || uploadingAttachment}
               className="flex-1 py-2.5 bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
             >
               {loading ? (

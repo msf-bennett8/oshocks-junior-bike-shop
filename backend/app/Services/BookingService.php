@@ -41,7 +41,7 @@ class BookingService
             $conversation = $this->getOrCreateUserConversation($user, $guestSessionId);
 
             // ─── Step 2: Create support case (this generates case_id via observer) ───
-            $caseType = 'service';
+            $caseType = 'services_booking';
             $subject = $this->buildBookingSubject($data);
             $description = $data['service_description'] ?? 'No description provided';
 
@@ -145,7 +145,7 @@ class BookingService
     {
         return DB::transaction(function () use ($caseId, $data, $staff) {
             $case = SupportCase::where('case_id', $caseId)
-                ->where('case_type', 'service')
+                ->where('case_type', 'services_booking')
                 ->firstOrFail();
 
             $booking = $case->serviceBooking;

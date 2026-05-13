@@ -150,8 +150,15 @@ class ConversationController extends Controller
         DB::beginTransaction();
 
         try {
+            // For guests, find a system admin to satisfy FK constraint on created_by
+            $createdBy = $user?->id;
+            if (!$createdBy && $guestSessionId) {
+                $systemUser = User::whereIn('role', ['admin', 'super_admin'])->first();
+                $createdBy = $systemUser?->id;
+            }
+
             $conversation = Conversation::create([
-                'created_by' => $user?->id,
+                'created_by' => $createdBy,
                 'guest_session_id' => $user ? null : $guestSessionId,
                 'type' => $validated['type'] ?? 'direct',
                 'title' => $validated['title'] ?? null,
@@ -159,7 +166,7 @@ class ConversationController extends Controller
                 'status' => 'open',
                 'priority' => 'medium',
             ]);
-
+            
             // Add participants
             if ($user) {
                 $conversation->participants()->attach($user->id, ['joined_at' => now()]);

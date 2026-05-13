@@ -6,9 +6,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import supportCaseService from '../../services/supportCaseService';
-import { 
-  Search, X, MessageCircle, Headphones, User, Mail, 
-  ShoppingBag, Clock, AlertCircle, ChevronRight, Loader2 
+import {
+  Search, X, MessageCircle, Headphones, User, Mail,
+  ShoppingBag, Clock, AlertCircle, ChevronRight, Loader2,
+  Truck, Wrench, MessageSquare, CreditCard, Package, RotateCcw, Cpu, HelpCircle,
+  Paperclip, FileText
 } from 'lucide-react';
 
 const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext = null }) => {
@@ -31,6 +33,25 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
   const [orderValid, setOrderValid] = useState(null);
   const [orderData, setOrderData] = useState(null);
   const [recentConversations, setRecentConversations] = useState([]);
+  
+  // Attachment state
+  const [attachment, setAttachment] = useState(null);
+  const [attachmentPreview, setAttachmentPreview] = useState(null);
+  const [attachmentError, setAttachmentError] = useState(null);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const fileInputRef = useRef(null);
+  
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const ALLOWED_TYPES = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+    'application/pdf',
+    'text/plain', 'text/csv',
+    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/zip', 'application/x-zip-compressed',
+    'video/mp4', 'video/webm', 'audio/mpeg', 'audio/wav'
+  ];
+  const BLOCKED_EXTENSIONS = ['.exe', '.dll', '.bat', '.cmd', '.sh', '.php', '.js', '.html', '.htm', '.jar', '.apk', '.ipa'];
   const searchInputRef = useRef(null);
   const searchTimeoutRef = useRef(null);
 
@@ -44,6 +65,9 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
       setOrderValid(null);
       setOrderData(null);
       setError(null);
+      setAttachment(null);
+      setAttachmentPreview(null);
+      setAttachmentError(null);
     };
 
   // Focus input on open
@@ -155,9 +179,16 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
     setSupportStep('form');
     const labels = {
       order_issue: 'Order Issue',
-      account_help: 'Account Help',
+      account_login: 'Account & Login',
       report_problem: 'Report a Problem',
-      delivery_question: 'Delivery Question',
+      shipment_delivery: 'Shipment & Delivery',
+      services_booking: 'Services & Booking',
+      general_inquiry: 'General Inquiry',
+      payment_billing: 'Payment & Billing',
+      product_info: 'Product Information',
+      returns_refund: 'Returns & Refund',
+      technical_support: 'Technical Support',
+      other: 'Other',
     };
     setCaseForm(prev => ({
       ...prev,
@@ -167,6 +198,92 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
     if (orderContext?.orderNumber) {
       validateOrder(orderContext.orderNumber);
     }
+  };
+
+    // ─── ATTACHMENT HANDLERS ───
+  const validateFile = (file) => {
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      return `File too large. Maximum size is ${(MAX_FILE_SIZE / 1024 / 1024).toFixed(0)}MB.`;
+    }
+    
+    // Check MIME type
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return `File type "${file.type || 'unknown'}" not allowed. Allowed: images, PDF, DOC, XLS, CSV, TXT, ZIP, MP4, MP3.`;
+    }
+    
+    // Check blocked extensions (extra security)
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+    if (BLOCKED_EXTENSIONS.includes(ext)) {
+      return `File extension "${ext}" is blocked for security reasons.`;
+    }
+    
+    // Check for double extensions (common virus trick)
+    const nameParts = file.name.split('.');
+    if (nameParts.length > 2) {
+      const lastTwo = '.' + nameParts.slice(-2).join('.').toLowerCase();
+      if (BLOCKED_EXTENSIONS.some(blocked => lastTwo.includes(blocked))) {
+        return `Suspicious file name detected. Please rename your file.`;
+      }
+    }
+    
+    return null;
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setAttachmentError(null);
+    const error = validateFile(file);
+    if (error) {
+      setAttachmentError(error);
+      setAttachment(null);
+      setAttachmentPreview(null);
+      return;
+    }
+    
+    setAttachment(file);
+    
+    // Generate preview for images
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setAttachmentPreview(ev.target.result);
+      reader.readAsDataURL(file);
+    } else {
+      setAttachmentPreview(null);
+    }
+  };
+
+  const handleRemoveAttachment = () => {
+    setAttachment(null);
+    setAttachmentPreview(null);
+    setAttachmentError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const uploadAttachmentToCloudinary = async (file) => {
+    // TODO: Implement Cloudinary upload
+    // Placeholder - returns mock URL for now
+    console.log('[Cloudinary Upload Placeholder]', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      timestamp: new Date().toISOString(),
+    });
+    
+    // Simulate upload delay
+    await new Promise(r => setTimeout(r, 800));
+    
+    // Return mock data structure - replace with actual Cloudinary response
+    return {
+      url: `https://res.cloudinary.com/demo/image/upload/${Date.now()}_${file.name}`,
+      public_id: `attachments/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9]/g, '_')}`,
+      resource_type: file.type.startsWith('image/') ? 'image' : 'raw',
+      format: file.name.split('.').pop().toLowerCase(),
+      bytes: file.size,
+      secure_url: `https://res.cloudinary.com/demo/image/upload/${Date.now()}_${file.name}`,
+    };
   };
 
   const validateOrder = async (orderNumber) => {
@@ -197,11 +314,41 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
     setError(null);
 
     try {
+      let attachmentData = null;
+      
+      // Upload attachment to Cloudinary if present
+      if (attachment) {
+        setUploadingAttachment(true);
+        try {
+          attachmentData = await uploadAttachmentToCloudinary(attachment);
+        } catch (uploadErr) {
+          setError('Failed to upload attachment. Please try again.');
+          setUploadingAttachment(false);
+          setLoading(false);
+          return;
+        }
+        setUploadingAttachment(false);
+      }
+
       // Step 1: Create or get the support conversation
       const convPayload = {
         type: selectedCaseType === 'order_issue' ? 'order_support' : 'support',
       };
-      const convRes = await api.post('/conversations', convPayload);
+      
+      // Get guest session for anonymous users
+      const getGuestSessionId = () => {
+        let sessionId = localStorage.getItem('oshocks_guest_session_id');
+        if (!sessionId) {
+          sessionId = 'guest_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+          localStorage.setItem('oshocks_guest_session_id', sessionId);
+        }
+        return sessionId;
+      };
+      
+      const guestId = !user ? getGuestSessionId() : null;
+      const headers = guestId ? { 'X-Guest-Session-ID': guestId } : {};
+      
+      const convRes = await api.post('/conversations', convPayload, { headers });
       const conversation = convRes.data.data;
 
       // Step 2: Create the case IN the conversation (this creates messages too)
@@ -213,9 +360,19 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
         ...(selectedCaseType === 'order_issue' && caseForm.order_number && {
           purchase_id: caseForm.order_number,
         }),
+        ...(attachmentData && {
+          attachment: {
+            url: attachmentData.secure_url,
+            public_id: attachmentData.public_id,
+            name: attachment.name,
+            type: attachment.type,
+            size: attachment.size,
+            resource_type: attachmentData.resource_type,
+          }
+        }),
       };
 
-      const caseRes = await api.post(`/conversations/${conversation.id}/cases`, casePayload);
+      const caseRes = await api.post(`/conversations/${conversation.id}/cases`, casePayload, { headers });
       
       // Merge conversation with case messages for immediate display
       const conversationWithMessages = {
@@ -246,10 +403,10 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden animate-fade-in max-h-[85vh] flex flex-col">
         
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <div className="px-6 py-3 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
           <div>
             <h3 className="text-lg font-bold text-gray-900">New Conversation</h3>
             <p className="text-sm text-gray-500">
@@ -291,7 +448,7 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
         </div>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="p-4 overflow-y-auto flex-1">
           
           {/* USERS TAB */}
           {activeTab === 'users' && (
@@ -426,38 +583,47 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
 
               {/* Step 1: Select Case Type */}
               {supportStep === 'select' && (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-1">
                     What do you need help with?
                   </p>
-                  
-                  {[
-                    { id: 'order_issue', icon: ShoppingBag, label: 'Order Issue', desc: 'Problem with an existing order', color: 'from-orange-500 to-red-500', bg: 'bg-orange-50', border: 'border-orange-200', hover: 'hover:border-orange-400' },
-                    { id: 'account_help', icon: Mail, label: 'Account Help', desc: 'Login, profile, or account issues', color: 'from-indigo-500 to-purple-500', bg: 'bg-indigo-50', border: 'border-indigo-200', hover: 'hover:border-indigo-400' },
-                    { id: 'report_problem', icon: AlertCircle, label: 'Report a Problem', desc: 'Bugs, abuse, or platform issues', color: 'from-red-500 to-rose-500', bg: 'bg-red-50', border: 'border-red-200', hover: 'hover:border-red-400' },
-                    { id: 'delivery_question', icon: Clock, label: 'Delivery Question', desc: 'Shipping, tracking, or delivery', color: 'from-cyan-500 to-blue-500', bg: 'bg-cyan-50', border: 'border-cyan-200', hover: 'hover:border-cyan-400' },
-                  ].map((topic) => (
-                    <button
-                      key={topic.id}
-                      onClick={() => handleSelectCaseType(topic.id)}
-                      className={`w-full flex items-center gap-4 p-4 ${topic.bg} border-2 ${topic.border} ${topic.hover} rounded-xl transition-all text-left group`}
-                    >
-                      <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${topic.color} flex items-center justify-center text-white flex-shrink-0 shadow-sm`}>
-                        <topic.icon className="w-6 h-6" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-900">{topic.label}</p>
-                        <p className="text-sm text-gray-600">{topic.desc}</p>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
-                    </button>
-                  ))}
+
+                  <div className="grid grid-cols-1 gap-2 max-h-[50vh] overflow-y-auto pr-1">
+                    {[
+                      { id: 'order_issue', icon: ShoppingBag, label: 'Order Issue', desc: 'Problem with an order', color: 'from-orange-500 to-red-500', bg: 'bg-orange-50', border: 'border-orange-200', hover: 'hover:border-orange-400' },
+                      { id: 'account_login', icon: User, label: 'Account & Login', desc: 'Login or profile issues', color: 'from-indigo-500 to-purple-500', bg: 'bg-indigo-50', border: 'border-indigo-200', hover: 'hover:border-indigo-400' },
+                      { id: 'report_problem', icon: AlertCircle, label: 'Report Problem', desc: 'Bugs or abuse', color: 'from-red-500 to-rose-500', bg: 'bg-red-50', border: 'border-red-200', hover: 'hover:border-red-400' },
+                      { id: 'shipment_delivery', icon: Truck, label: 'Shipment & Delivery', desc: 'Shipping & tracking', color: 'from-cyan-500 to-blue-500', bg: 'bg-cyan-50', border: 'border-cyan-200', hover: 'hover:border-cyan-400' },
+                      { id: 'services_booking', icon: Wrench, label: 'Services & Booking', desc: 'Book a service', color: 'from-emerald-500 to-green-500', bg: 'bg-emerald-50', border: 'border-emerald-200', hover: 'hover:border-emerald-400' },
+                      { id: 'general_inquiry', icon: MessageSquare, label: 'General Inquiry', desc: 'General questions', color: 'from-violet-500 to-purple-500', bg: 'bg-violet-50', border: 'border-violet-200', hover: 'hover:border-violet-400' },
+                      { id: 'payment_billing', icon: CreditCard, label: 'Payment & Billing', desc: 'Payment issues', color: 'from-amber-500 to-yellow-500', bg: 'bg-amber-50', border: 'border-amber-200', hover: 'hover:border-amber-400' },
+                      { id: 'product_info', icon: Package, label: 'Product Info', desc: 'Product details', color: 'from-teal-500 to-cyan-500', bg: 'bg-teal-50', border: 'border-teal-200', hover: 'hover:border-teal-400' },
+                      { id: 'returns_refund', icon: RotateCcw, label: 'Returns & Refund', desc: 'Return requests', color: 'from-pink-500 to-rose-500', bg: 'bg-pink-50', border: 'border-pink-200', hover: 'hover:border-pink-400' },
+                      { id: 'technical_support', icon: Cpu, label: 'Technical Support', desc: 'Troubleshooting', color: 'from-slate-500 to-gray-500', bg: 'bg-slate-50', border: 'border-slate-200', hover: 'hover:border-slate-400' },
+                      { id: 'other', icon: HelpCircle, label: 'Other', desc: 'Anything else', color: 'from-gray-500 to-slate-500', bg: 'bg-gray-50', border: 'border-gray-200', hover: 'hover:border-gray-400' },
+                    ].map((topic) => (
+                      <button
+                        key={topic.id}
+                        onClick={() => handleSelectCaseType(topic.id)}
+                        className={`w-full flex items-center gap-3 p-3 ${topic.bg} border-2 ${topic.border} ${topic.hover} rounded-xl transition-all text-left group`}
+                      >
+                        <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${topic.color} flex items-center justify-center text-white flex-shrink-0 shadow-sm`}>
+                          <topic.icon className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm text-gray-900">{topic.label}</p>
+                          <p className="text-xs text-gray-600">{topic.desc}</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
               {/* Step 2: Case Details Form */}
               {supportStep === 'form' && (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {/* Back button */}
                   <button
                     onClick={() => setSupportStep('select')}
@@ -468,11 +634,18 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
                   </button>
 
                   {/* Selected case type badge */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {selectedCaseType === 'order_issue' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold"><ShoppingBag className="w-3.5 h-3.5" /> Order Issue</div>}
-                    {selectedCaseType === 'account_help' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold"><Mail className="w-3.5 h-3.5" /> Account Help</div>}
+                    {selectedCaseType === 'account_login' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold"><User className="w-3.5 h-3.5" /> Account & Login</div>}
                     {selectedCaseType === 'report_problem' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-xs font-semibold"><AlertCircle className="w-3.5 h-3.5" /> Report Problem</div>}
-                    {selectedCaseType === 'delivery_question' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-100 text-cyan-700 rounded-full text-xs font-semibold"><Clock className="w-3.5 h-3.5" /> Delivery Question</div>}
+                    {selectedCaseType === 'shipment_delivery' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-100 text-cyan-700 rounded-full text-xs font-semibold"><Truck className="w-3.5 h-3.5" /> Shipment & Delivery</div>}
+                    {selectedCaseType === 'services_booking' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold"><Wrench className="w-3.5 h-3.5" /> Services & Booking</div>}
+                    {selectedCaseType === 'general_inquiry' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-100 text-violet-700 rounded-full text-xs font-semibold"><MessageSquare className="w-3.5 h-3.5" /> General Inquiry</div>}
+                    {selectedCaseType === 'payment_billing' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-full text-xs font-semibold"><CreditCard className="w-3.5 h-3.5" /> Payment & Billing</div>}
+                    {selectedCaseType === 'product_info' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-100 text-teal-700 rounded-full text-xs font-semibold"><Package className="w-3.5 h-3.5" /> Product Information</div>}
+                    {selectedCaseType === 'returns_refund' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-pink-100 text-pink-700 rounded-full text-xs font-semibold"><RotateCcw className="w-3.5 h-3.5" /> Returns & Refund</div>}
+                    {selectedCaseType === 'technical_support' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-full text-xs font-semibold"><Cpu className="w-3.5 h-3.5" /> Technical Support</div>}
+                    {selectedCaseType === 'other' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold"><HelpCircle className="w-3.5 h-3.5" /> Other</div>}
                   </div>
 
                   {/* Subject */}
@@ -487,8 +660,8 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
                     />
                   </div>
 
-                  {/* Order Number (only for order_issue) */}
-                  {selectedCaseType === 'order_issue' && (
+                  {/* Order Number (only for order-related types) */}
+                  {(selectedCaseType === 'order_issue' || selectedCaseType === 'returns_refund' || selectedCaseType === 'payment_billing') && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">Purchase ID *</label>
                       <div className="flex gap-2">
@@ -554,6 +727,72 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
                     />
                   </div>
 
+                  {/* Attachment Upload */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Attachment (Optional)</label>
+                    
+                    {/* Hidden file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      accept={ALLOWED_TYPES.join(',')}
+                    />
+                    
+                    {!attachment ? (
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingAttachment}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-orange-400 hover:text-orange-600 transition-colors disabled:opacity-50"
+                      >
+                        <Paperclip className="w-4 h-4" />
+                        Click to upload file (max 10MB)
+                      </button>
+                    ) : (
+                      <div className={`relative p-3 rounded-xl border-2 ${attachmentError ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'}`}>
+                        <div className="flex items-center gap-3">
+                          {attachmentPreview ? (
+                            <img src={attachmentPreview} alt="Preview" className="w-12 h-12 rounded-lg object-cover" />
+                          ) : (
+                            <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                              <FileText className="w-6 h-6 text-green-600" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{attachment.name}</p>
+                            <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(1)} KB • {attachment.type}</p>
+                          </div>
+                          <button
+                            onClick={handleRemoveAttachment}
+                            disabled={uploadingAttachment}
+                            className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
+                            title="Remove attachment"
+                          >
+                            <X className="w-4 h-4 text-red-500" />
+                          </button>
+                        </div>
+                        {uploadingAttachment && (
+                          <div className="absolute inset-0 bg-green-50/80 rounded-xl flex items-center justify-center">
+                            <Loader2 className="w-5 h-5 text-green-600 animate-spin" />
+                            <span className="ml-2 text-xs text-green-700 font-medium">Uploading...</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {attachmentError && (
+                      <div className="mt-2 flex items-center gap-2 text-xs text-red-600">
+                        <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                        {attachmentError}
+                      </div>
+                    )}
+                    
+                    <p className="mt-1.5 text-[11px] text-gray-400">
+                      Allowed: JPG, PNG, GIF, PDF, DOC, XLS, CSV, TXT, ZIP, MP4, MP3. Max 10MB. No executables.
+                    </p>
+                  </div>
+
                   {/* Priority */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Priority</label>
@@ -582,7 +821,7 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
                   {/* Submit */}
                   <button
                     onClick={handleCreateSupportCase}
-                    disabled={loading || !caseForm.subject.trim() || (selectedCaseType === 'order_issue' && orderValid !== true)}
+                    disabled={loading || uploadingAttachment || !caseForm.subject.trim() || ((selectedCaseType === 'order_issue' || selectedCaseType === 'returns_refund' || selectedCaseType === 'payment_billing') && orderValid !== true)}
                     className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold text-sm hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (
@@ -616,7 +855,7 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <div className="px-6 py-3 border-t border-gray-200 bg-gray-50 flex-shrink-0">
           <p className="text-xs text-gray-500 text-center">
             {isAuthenticated 
               ? 'All conversations are monitored for quality and safety' 

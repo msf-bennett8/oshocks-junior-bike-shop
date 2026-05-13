@@ -1,23 +1,33 @@
 import React from 'react';
 import { CaseStatusChip } from './CaseStatusChip';
-import { ClipboardCopy, AlertTriangle, CheckCircle, Package, Wrench, Mail } from 'lucide-react';
+import { ClipboardCopy, AlertTriangle, CheckCircle, Package, Wrench, Mail, User, Truck, MessageSquare, CreditCard, RotateCcw, Cpu, HelpCircle } from 'lucide-react';
 
 const typeIcons = {
   order_issue: Package,
-  account_help: AlertTriangle,
+  account_login: User,
   report_problem: AlertTriangle,
-  delivery_question: Package,
-  service: Wrench,
-  inquiry: Mail,
+  shipment_delivery: Truck,
+  services_booking: Wrench,
+  general_inquiry: MessageSquare,
+  payment_billing: CreditCard,
+  product_info: Package,
+  returns_refund: RotateCcw,
+  technical_support: Cpu,
+  other: HelpCircle,
 };
 
 const typeLabels = {
   order_issue: 'Order Issue',
-  account_help: 'Account Help',
+  account_login: 'Account & Login',
   report_problem: 'Report Problem',
-  delivery_question: 'Delivery',
-  service: 'Service Booking',
-  inquiry: 'Contact Inquiry',
+  shipment_delivery: 'Shipment & Delivery',
+  services_booking: 'Services & Booking',
+  general_inquiry: 'General Inquiry',
+  payment_billing: 'Payment & Billing',
+  product_info: 'Product Information',
+  returns_refund: 'Returns & Refund',
+  technical_support: 'Technical Support',
+  other: 'Other',
 };
 
 export const CaseThreadHeader = ({ supportCase, isActive, onClick }) => {

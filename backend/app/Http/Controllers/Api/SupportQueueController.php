@@ -24,9 +24,8 @@ class SupportQueueController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
         }
 
-        $query = SupportCase::with(['user', 'order'])
-                            ->whereIn('status', ['new', 'open', 'in_progress', 'pending_user', 'escalated']);
-
+        $query = SupportCase::with(['user', 'order', 'conversation'])
+                            ->whereIn('status', ['new', 'open', 'in_progress', 'pending_user', 'escalated', 'pending']);
         // Filter by case type queue
         if ($request->queue) {
             $query->where('case_type', $request->queue);
@@ -99,9 +98,16 @@ class SupportQueueController extends Controller
                                     ->count(),
             'by_type' => [
                 'order_issue' => SupportCase::byType('order_issue')->active()->count(),
-                'account_help' => SupportCase::byType('account_help')->active()->count(),
+                'account_login' => SupportCase::byType('account_login')->active()->count(),
                 'report_problem' => SupportCase::byType('report_problem')->active()->count(),
-                'delivery_question' => SupportCase::byType('delivery_question')->active()->count(),
+                'shipment_delivery' => SupportCase::byType('shipment_delivery')->active()->count(),
+                'services_booking' => SupportCase::byType('services_booking')->active()->count(),
+                'general_inquiry' => SupportCase::byType('general_inquiry')->active()->count(),
+                'payment_billing' => SupportCase::byType('payment_billing')->active()->count(),
+                'product_info' => SupportCase::byType('product_info')->active()->count(),
+                'returns_refund' => SupportCase::byType('returns_refund')->active()->count(),
+                'technical_support' => SupportCase::byType('technical_support')->active()->count(),
+                'other' => SupportCase::byType('other')->active()->count(),
             ],
             'by_priority' => [
                 'urgent' => SupportCase::where('priority', 'urgent')->active()->count(),

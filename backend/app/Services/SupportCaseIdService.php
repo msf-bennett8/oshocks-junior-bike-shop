@@ -26,12 +26,17 @@ class SupportCaseIdService
      * Case type digit mappings
      */
     public const CASE_TYPE_DIGITS = [
-        'order_issue'       => '7',
-        'account_help'      => '5',
-        'report_problem'    => '3',
-        'delivery_question' => '8',
-        'service'           => '2',
-        'inquiry'           => '1',
+        'order_issue'        => '7',
+        'account_login'      => '5',
+        'report_problem'     => '3',
+        'shipment_delivery'  => '8',
+        'services_booking'   => '2',
+        'general_inquiry'    => '1',
+        'payment_billing'    => '4',
+        'product_info'       => '6',
+        'returns_refund'     => '9',
+        'technical_support'  => '0',
+        'other'              => 'A',
     ];
 
     /**

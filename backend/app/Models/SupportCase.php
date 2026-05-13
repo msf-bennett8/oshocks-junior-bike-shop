@@ -272,7 +272,7 @@ class SupportCase extends Model
      */
     public function isServiceBooking(): bool
     {
-        return $this->case_type === 'service';
+        return $this->case_type === 'services_booking';
     }
 
     /**
@@ -280,7 +280,35 @@ class SupportCase extends Model
      */
     public function isInquiry(): bool
     {
-        return $this->case_type === 'inquiry';
+        return $this->case_type === 'general_inquiry';
+    }
+
+    /**
+     * Check if this case requires order validation
+     */
+    public function requiresOrder(): bool
+    {
+        return in_array($this->case_type, ['order_issue', 'returns_refund', 'payment_billing']);
+    }
+
+    /**
+     * Get human-readable case type label
+     */
+    public function getCaseTypeLabelAttribute(): string
+    {
+        return [
+            'order_issue'       => 'Order Issue',
+            'account_login'     => 'Account & Login',
+            'report_problem'    => 'Report a Problem',
+            'shipment_delivery' => 'Shipment & Delivery',
+            'services_booking'  => 'Services & Booking',
+            'general_inquiry'   => 'General Inquiry',
+            'payment_billing'   => 'Payment & Billing',
+            'product_info'      => 'Product Information',
+            'returns_refund'    => 'Returns & Refund',
+            'technical_support' => 'Technical Support',
+            'other'             => 'Other',
+        ][$this->case_type] ?? 'Support';
     }
 
     /**

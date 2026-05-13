@@ -14,7 +14,8 @@ import {
   X, Reply, Pencil, Trash2, CheckCheck, Headphones, ShoppingBag,
   Pin, Archive, Star, History, StickyNote, User, Calendar,
   DollarSign, CreditCard, MapPin, FileText, Tag, ChevronRight,
-  RotateCcw, Lock, Unlock, Plus, Save, CornerUpLeft
+  RotateCcw, Lock, Unlock, Plus, Save, CornerUpLeft,
+  Wrench, Cpu, HelpCircle
 } from 'lucide-react';
 
 const TABS = [
@@ -29,9 +30,16 @@ const TABS = [
 const TYPE_FILTERS = [
   { key: 'all', label: 'All Types', icon: MessageSquare },
   { key: 'order_issue', label: 'Order Issues', icon: Package },
-  { key: 'account_help', label: 'Account Help', icon: Mail },
+  { key: 'account_login', label: 'Account & Login', icon: User },
   { key: 'report_problem', label: 'Problems', icon: AlertCircle },
-  { key: 'delivery_question', label: 'Delivery', icon: Truck },
+  { key: 'shipment_delivery', label: 'Shipment & Delivery', icon: Truck },
+  { key: 'services_booking', label: 'Services & Booking', icon: Wrench },
+  { key: 'general_inquiry', label: 'General Inquiry', icon: FileText },
+  { key: 'payment_billing', label: 'Payment & Billing', icon: CreditCard },
+  { key: 'product_info', label: 'Product Info', icon: Tag },
+  { key: 'returns_refund', label: 'Returns & Refund', icon: RotateCcw },
+  { key: 'technical_support', label: 'Technical Support', icon: Cpu },
+  { key: 'other', label: 'Other', icon: HelpCircle },
 ];
 
 const SupportInboxPage = () => {
@@ -578,9 +586,16 @@ const StatCard = ({ icon: Icon, label, value, color, bg }) => (
 const TypeBadge = ({ type }) => {
   const config = {
     order_issue: { icon: Package, label: 'Order', color: 'bg-orange-100 text-orange-700' },
-    account_help: { icon: Mail, label: 'Account', color: 'bg-indigo-100 text-indigo-700' },
+    account_login: { icon: User, label: 'Account', color: 'bg-indigo-100 text-indigo-700' },
     report_problem: { icon: AlertCircle, label: 'Report', color: 'bg-red-100 text-red-700' },
-    delivery_question: { icon: Truck, label: 'Delivery', color: 'bg-cyan-100 text-cyan-700' },
+    shipment_delivery: { icon: Truck, label: 'Delivery', color: 'bg-cyan-100 text-cyan-700' },
+    services_booking: { icon: Wrench, label: 'Service', color: 'bg-emerald-100 text-emerald-700' },
+    general_inquiry: { icon: FileText, label: 'Inquiry', color: 'bg-violet-100 text-violet-700' },
+    payment_billing: { icon: CreditCard, label: 'Payment', color: 'bg-amber-100 text-amber-700' },
+    product_info: { icon: Tag, label: 'Product', color: 'bg-teal-100 text-teal-700' },
+    returns_refund: { icon: RotateCcw, label: 'Returns', color: 'bg-pink-100 text-pink-700' },
+    technical_support: { icon: Cpu, label: 'Tech', color: 'bg-slate-100 text-slate-700' },
+    other: { icon: HelpCircle, label: 'Other', color: 'bg-gray-100 text-gray-600' },
   };
   const c = config[type] || { icon: MessageSquare, label: 'Support', color: 'bg-gray-100 text-gray-600' };
   const Icon = c.icon;

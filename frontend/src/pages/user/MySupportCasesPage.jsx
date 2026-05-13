@@ -6,18 +6,24 @@ import {
   Inbox, Clock, CheckCircle, XCircle, AlertTriangle, RefreshCw,
   Loader2, Search, ChevronDown, ChevronUp, MessageSquare, Copy, Check,
   ArrowLeft, History, StickyNote, Eye, Tag, Calendar, User, FileText,
-  ArrowRight, Shield, Star, Send, Plus, MoreVertical, Phone, Mail
+  ArrowRight, Shield, Star, Send, Plus, MoreVertical, Phone, Mail,
+  CreditCard, Package, RotateCcw, Cpu, HelpCircle, Truck, Wrench
 } from 'lucide-react';
 import { CaseStatusChip } from '../../components/messaging/CaseStatusChip';
 import CasePanel from '../../components/messaging/CasePanel';
 
 const TYPE_CONFIG = {
   order_issue: { label: 'Order Issue', color: 'bg-orange-100 text-orange-700 border-orange-200', icon: Tag },
-  account_help: { label: 'Account Help', color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: User },
+  account_login: { label: 'Account & Login', color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: User },
   report_problem: { label: 'Report Problem', color: 'bg-red-100 text-red-700 border-red-200', icon: AlertTriangle },
-  delivery_question: { label: 'Delivery', color: 'bg-cyan-100 text-cyan-700 border-cyan-200', icon: Send },
-  service: { label: 'Service Booking', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: Calendar },
-  inquiry: { label: 'General Inquiry', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: FileText },
+  shipment_delivery: { label: 'Shipment & Delivery', color: 'bg-cyan-100 text-cyan-700 border-cyan-200', icon: Send },
+  services_booking: { label: 'Services & Booking', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: Calendar },
+  general_inquiry: { label: 'General Inquiry', color: 'bg-violet-100 text-violet-700 border-violet-200', icon: FileText },
+  payment_billing: { label: 'Payment & Billing', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: CreditCard },
+  product_info: { label: 'Product Information', color: 'bg-teal-100 text-teal-700 border-teal-200', icon: Package },
+  returns_refund: { label: 'Returns & Refund', color: 'bg-pink-100 text-pink-700 border-pink-200', icon: RotateCcw },
+  technical_support: { label: 'Technical Support', color: 'bg-slate-100 text-slate-700 border-slate-200', icon: Cpu },
+  other: { label: 'Other', color: 'bg-gray-100 text-gray-700 border-gray-200', icon: HelpCircle },
 };
 
 const PRIORITY_CONFIG = {
@@ -435,10 +441,16 @@ const MySupportCasesPage = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                 >
                   <option value="order_issue">Order Issue</option>
-                  <option value="account_help">Account Help</option>
+                  <option value="account_login">Account & Login</option>
                   <option value="report_problem">Report Problem</option>
-                  <option value="delivery_question">Delivery Question</option>
-                  <option value="inquiry">General Inquiry</option>
+                  <option value="shipment_delivery">Shipment & Delivery</option>
+                  <option value="services_booking">Services & Booking</option>
+                  <option value="general_inquiry">General Inquiry</option>
+                  <option value="payment_billing">Payment & Billing</option>
+                  <option value="product_info">Product Information</option>
+                  <option value="returns_refund">Returns & Refund</option>
+                  <option value="technical_support">Technical Support</option>
+                  <option value="other">Other</option>
                 </select>
               </div>
 

@@ -31,11 +31,19 @@ class CaseThreadController extends Controller
             ]);
 
             $validated = $request->validate([
-                'case_type' => ['required', 'in:order_issue,account_help,report_problem,delivery_question'],
+                'case_type' => ['required', 'in:order_issue,account_login,report_problem,shipment_delivery,services_booking,general_inquiry,payment_billing,product_info,returns_refund,technical_support,other'],
                 'subject' => ['required', 'string', 'max:255'],
                 'description' => ['nullable', 'string', 'max:5000'],
                 'priority' => ['nullable', 'in:low,medium,high,urgent'],
                 'order_number' => ['nullable', 'string', 'max:50'],
+                'purchase_id' => ['nullable', 'string', 'max:50'],
+                'attachment' => ['nullable', 'array'],
+                'attachment.url' => ['nullable', 'url', 'max:500'],
+                'attachment.public_id' => ['nullable', 'string', 'max:255'],
+                'attachment.name' => ['nullable', 'string', 'max:255'],
+                'attachment.type' => ['nullable', 'string', 'max:100'],
+                'attachment.size' => ['nullable', 'integer'],
+                'attachment.resource_type' => ['nullable', 'string', 'max:50'],
             ]);
 
             // Authorization
@@ -63,7 +71,7 @@ class CaseThreadController extends Controller
             return DB::transaction(function () use ($request, $user, $guestSessionId, $conversation, $validated) {
             // Resolve order if order_number provided (searches order_display, purchase_id, order_number, order_code)
             $orderId = null;
-            $orderLookup = $validated['order_number'] ?? $request->input('purchase_id') ?? null;
+            $orderLookup = $validated['order_number'] ?? $validated['purchase_id'] ?? null;
             if (!empty($orderLookup)) {
                 $order = \App\Models\Order::where('order_display', $orderLookup)
                     ->orWhere('purchase_id', $orderLookup)
@@ -87,11 +95,11 @@ class CaseThreadController extends Controller
                 'subject' => $validated['subject'],
                 'description' => $validated['description'],
                 'source' => $user ? 'web' : 'chat',
-                'metadata' => [
+                'metadata' => array_merge([
                     'ip' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                     'created_in_thread' => true,
-                ],
+                ], $validated['attachment'] ? ['attachment' => $validated['attachment']] : []),
             ]);
 
             // Build system message with order info if applicable

@@ -13,7 +13,8 @@ import {
   Inbox, Clock, AlertTriangle, Shield, User, Phone, Mail,
   MapPin, Tag, CheckCircle, Loader2, Send, ChevronDown,
   ChevronUp, Lock, Unlock, Eye, EyeOff, Plus, Copy, Check,
-  ExternalLink, Star, Calendar, ArrowLeft
+  ExternalLink, Star, Calendar, ArrowLeft,
+  CreditCard, Package, RotateCcw, Cpu, HelpCircle, Truck, Wrench
 } from 'lucide-react';
 import { CaseStatusChip } from './CaseStatusChip';
 
@@ -26,11 +27,16 @@ const TABS = [
 
 const TYPE_CONFIG = {
   order_issue: { label: 'Order Issue', color: 'bg-orange-100 text-orange-700 border-orange-200', icon: Tag },
-  account_help: { label: 'Account Help', color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: User },
+  account_login: { label: 'Account & Login', color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: User },
   report_problem: { label: 'Report Problem', color: 'bg-red-100 text-red-700 border-red-200', icon: AlertTriangle },
-  delivery_question: { label: 'Delivery', color: 'bg-cyan-100 text-cyan-700 border-cyan-200', icon: Send },
-  service: { label: 'Service Booking', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: Calendar },
-  inquiry: { label: 'General Inquiry', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: FileText },
+  shipment_delivery: { label: 'Shipment & Delivery', color: 'bg-cyan-100 text-cyan-700 border-cyan-200', icon: Send },
+  services_booking: { label: 'Services & Booking', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: Calendar },
+  general_inquiry: { label: 'General Inquiry', color: 'bg-violet-100 text-violet-700 border-violet-200', icon: FileText },
+  payment_billing: { label: 'Payment & Billing', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: CreditCard },
+  product_info: { label: 'Product Information', color: 'bg-teal-100 text-teal-700 border-teal-200', icon: Package },
+  returns_refund: { label: 'Returns & Refund', color: 'bg-pink-100 text-pink-700 border-pink-200', icon: RotateCcw },
+  technical_support: { label: 'Technical Support', color: 'bg-slate-100 text-slate-700 border-slate-200', icon: Cpu },
+  other: { label: 'Other', color: 'bg-gray-100 text-gray-700 border-gray-200', icon: HelpCircle },
 };
 
 const PRIORITY_CONFIG = {

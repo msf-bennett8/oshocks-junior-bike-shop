@@ -3,7 +3,7 @@
 // ============================================================================
 
 import React, { useState, useMemo } from 'react';
-import { Search, Archive, Pin, MoreVertical, Trash2, Phone, Video, Inbox, Headphones, AlertCircle, ShoppingBag, Mail, Clock } from 'lucide-react';
+import { Search, Archive, Pin, MoreVertical, Trash2, Phone, Video, Inbox, Headphones, AlertCircle, ShoppingBag, Mail, Clock, Truck, Wrench, MessageSquare, CreditCard, Package, RotateCcw, Cpu, HelpCircle } from 'lucide-react';
 import Avatar from '../common/Avatar';
 
 const FILTERS = [
@@ -210,9 +210,16 @@ const ConversationList = ({
                           'bg-blue-100 text-blue-700'
                         }`}>
                           {conv.support_case.case_type === 'order_issue' && <ShoppingBag className="w-2.5 h-2.5" />}
-                          {conv.support_case.case_type === 'account_help' && <Mail className="w-2.5 h-2.5" />}
+                          {conv.support_case.case_type === 'account_login' && <Mail className="w-2.5 h-2.5" />}
                           {conv.support_case.case_type === 'report_problem' && <AlertCircle className="w-2.5 h-2.5" />}
-                          {conv.support_case.case_type === 'delivery_question' && <Clock className="w-2.5 h-2.5" />}
+                          {conv.support_case.case_type === 'shipment_delivery' && <Truck className="w-2.5 h-2.5" />}
+                          {conv.support_case.case_type === 'services_booking' && <Wrench className="w-2.5 h-2.5" />}
+                          {conv.support_case.case_type === 'general_inquiry' && <MessageSquare className="w-2.5 h-2.5" />}
+                          {conv.support_case.case_type === 'payment_billing' && <CreditCard className="w-2.5 h-2.5" />}
+                          {conv.support_case.case_type === 'product_info' && <Package className="w-2.5 h-2.5" />}
+                          {conv.support_case.case_type === 'returns_refund' && <RotateCcw className="w-2.5 h-2.5" />}
+                          {conv.support_case.case_type === 'technical_support' && <Cpu className="w-2.5 h-2.5" />}
+                          {conv.support_case.case_type === 'other' && <HelpCircle className="w-2.5 h-2.5" />}
                           {conv.support_case.case_id?.slice(-6)}
                         </span>
                       )}

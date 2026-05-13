@@ -220,8 +220,11 @@ class Conversation extends Model
         // Create new conversation
         $supportUser = User::whereIn('role', ['admin', 'super_admin'])->first();
 
+        // For guests, use system admin as created_by to satisfy FK constraint
+        $createdBy = $user?->id ?? $supportUser?->id;
+
         $conversation = self::create([
-            'created_by' => $user?->id,
+            'created_by' => $createdBy,
             'guest_session_id' => $user ? null : $guestSessionId,
             'type' => $orderId ? 'order_support' : 'support',
             'title' => $orderId ? 'Order Support' : 'Oshocks Support',

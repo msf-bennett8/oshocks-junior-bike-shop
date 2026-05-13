@@ -18,9 +18,16 @@ export const CaseInfoBanner = ({ supportCase, onClaim, onEscalate, onResolve, on
 
   const typeLabels = {
     order_issue: { label: 'Order Issue', color: 'bg-orange-100 text-orange-800' },
-    account_help: { label: 'Account Help', color: 'bg-indigo-100 text-indigo-800' },
+    account_login: { label: 'Account & Login', color: 'bg-indigo-100 text-indigo-800' },
     report_problem: { label: 'Report Problem', color: 'bg-red-100 text-red-800' },
-    delivery_question: { label: 'Delivery Question', color: 'bg-cyan-100 text-cyan-800' },
+    shipment_delivery: { label: 'Shipment & Delivery', color: 'bg-cyan-100 text-cyan-800' },
+    services_booking: { label: 'Services & Booking', color: 'bg-emerald-100 text-emerald-800' },
+    general_inquiry: { label: 'General Inquiry', color: 'bg-violet-100 text-violet-800' },
+    payment_billing: { label: 'Payment & Billing', color: 'bg-amber-100 text-amber-800' },
+    product_info: { label: 'Product Information', color: 'bg-teal-100 text-teal-800' },
+    returns_refund: { label: 'Returns & Refund', color: 'bg-pink-100 text-pink-800' },
+    technical_support: { label: 'Technical Support', color: 'bg-slate-100 text-slate-800' },
+    other: { label: 'Other', color: 'bg-gray-100 text-gray-800' },
   };
 
   const typeConfig = typeLabels[supportCase.case_type] || { label: 'Support', color: 'bg-gray-100' };
