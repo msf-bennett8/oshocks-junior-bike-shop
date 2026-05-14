@@ -262,7 +262,7 @@ class CaseThreadController extends Controller
         $includeFull = $request->boolean('include_full_conversation', false);
 
         $query = $conversation->messages()
-            ->with('sender')
+            ->with(['sender', 'attachments'])
             ->orderBy('created_at', 'asc');
 
         if (!$includeFull) {

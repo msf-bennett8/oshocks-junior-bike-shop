@@ -75,7 +75,10 @@ class SupportCaseController extends Controller
     {
         $user = Auth::user();
         $case = SupportCase::with([
-            'user', 'assignedAgent', 'order', 'conversation.messages',
+            'user', 'assignedAgent', 'order',
+            'conversation.messages' => function ($q) {
+                $q->with(['sender', 'attachments'])->orderBy('created_at', 'desc')->limit(50);
+            },
             'notes.agent', 'history.changedBy', 'tags', 'escalatedBy', 'resolvedBy', 'closedBy'
         ])->findOrFail($caseId);
 
