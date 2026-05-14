@@ -17,6 +17,7 @@ import {
   CreditCard, Package, RotateCcw, Cpu, HelpCircle, Truck, Wrench
 } from 'lucide-react';
 import { CaseStatusChip } from './CaseStatusChip';
+import AttachmentViewerModal from './AttachmentViewerModal';
 
 const TABS = [
   { key: 'details', label: 'Details', icon: FileText },
@@ -472,6 +473,8 @@ const DetailsTab = ({ supportCase, isStaff, getTypeConfig, getPriorityConfig }) 
 const ConversationTab = ({ supportCase, user, messages, msgLoading, sending, fetchCaseMessages, sendMessage, setMessages, onNavigateToMessages }) => {
   const [showFullConversation, setShowFullConversation] = useState(false);
   const [input, setInput] = useState('');
+  const [viewingAttachment, setViewingAttachment] = useState(null);
+  const [viewingAttachmentMessage, setViewingAttachmentMessage] = useState(null);
 
   const conversationId = supportCase.conversation_id;
   const caseId = supportCase.case_id;
@@ -553,6 +556,40 @@ const ConversationTab = ({ supportCase, user, messages, msgLoading, sending, fet
                     </p>
                   )}
                   <p className="text-sm whitespace-pre-wrap">{msg.body}</p>
+                  
+                  {/* Attachments in Case Panel */}
+                  {msg.attachments?.map(att => (
+                    <button
+                      key={att.id}
+                      onClick={() => {
+                        setViewingAttachment(att);
+                        setViewingAttachmentMessage(msg);
+                      }}
+                      className={`mt-2 flex items-center gap-2 p-2 rounded-lg text-left w-full ${
+                        isOwn ? 'bg-orange-700 hover:bg-orange-600' : 'bg-white hover:bg-gray-50 border border-gray-200'
+                      } transition-colors`}
+                    >
+                      {att.is_image || att.file_type === 'image' ? (
+                        <img 
+                          src={att.cloudinary_secure_url || att.file_path} 
+                          alt="" 
+                          className="w-8 h-8 rounded object-cover flex-shrink-0" 
+                        />
+                      ) : (
+                        <FileText className="w-4 h-4 flex-shrink-0" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium truncate">{att.original_name || att.file_name}</p>
+                        <p className="text-[10px] opacity-75">{att.human_readable_size || att.file_size}</p>
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                        isOwn ? 'bg-orange-800 text-orange-100' : 'bg-gray-200 text-gray-600'
+                      }`}>
+                        View
+                      </span>
+                    </button>
+                  ))}
+                  
                   <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'justify-end' : ''}`}>
                     <span className={`text-[10px] ${isOwn ? 'text-orange-200' : 'text-gray-400'}`}>
                       {formatTime(msg.created_at)}
@@ -611,6 +648,18 @@ const ConversationTab = ({ supportCase, user, messages, msgLoading, sending, fet
           </button>
         </div>
       </div>
+
+      {/* Attachment Viewer */}
+      {viewingAttachment && (
+        <AttachmentViewerModal
+          attachment={viewingAttachment}
+          message={viewingAttachmentMessage}
+          onClose={() => {
+            setViewingAttachment(null);
+            setViewingAttachmentMessage(null);
+          }}
+        />
+      )}
 
       <div className="px-4 py-2 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
         <button

@@ -5,17 +5,18 @@ return [
     'api_key' => env('CLOUDINARY_API_KEY'),
     'api_secret' => env('CLOUDINARY_API_SECRET'),
     'secure' => true,
-    
+
     // Upload presets
     'upload_preset' => env('CLOUDINARY_UPLOAD_PRESET', 'ml_default'),
-    
+
     // Folder structure
     'folders' => [
         'products' => 'oshocks/products',
         'users' => 'oshocks/users',
         'categories' => 'oshocks/categories',
+        'cases' => 'oshocks/cases',
     ],
-    
+
     // Image transformation defaults
     'transformations' => [
         'thumbnail' => [

@@ -27,14 +27,14 @@ class CloudinaryService
         ];
 
         $this->cloudinary = new Cloudinary($config);
-        
+
         // CRITICAL FIX: Pass config to UploadApi
         $this->uploadApi = new UploadApi($config);
     }
 
     /**
      * Upload a single image to Cloudinary
-     * 
+     *
      * @param mixed $file - File from request or base64 string
      * @param string $folder - Folder path in Cloudinary
      * @param array $options - Additional upload options
@@ -90,7 +90,7 @@ class CloudinaryService
 
     /**
      * Upload multiple images
-     * 
+     *
      * @param array $files
      * @param string $folder
      * @return array
@@ -98,7 +98,7 @@ class CloudinaryService
     public function uploadMultipleImages($files, $folder = 'oshocks/products')
     {
         $results = [];
-        
+
         foreach ($files as $file) {
             $result = $this->uploadImage($file, $folder);
             if ($result['success']) {
@@ -111,7 +111,7 @@ class CloudinaryService
 
     /**
      * Delete an image from Cloudinary
-     * 
+     *
      * @param string $publicId
      * @return bool
      */
@@ -128,7 +128,7 @@ class CloudinaryService
 
     /**
      * Delete multiple images
-     * 
+     *
      * @param array $publicIds
      * @return bool
      */
@@ -146,8 +146,84 @@ class CloudinaryService
     }
 
     /**
+     * Upload any file type (image, raw, video) to Cloudinary
+     *
+     * @param mixed $file - UploadedFile or base64 string
+     * @param string $folder - Folder path
+     * @param array $options - Upload options
+     * @return array
+     */
+    public function uploadFile($file, string $folder = 'oshocks', array $options = []): array
+    {
+        try {
+            $resourceType = $options['resource_type'] ?? 'auto';
+            $publicId = $options['public_id'] ?? null;
+
+            $uploadOptions = [
+                'folder' => $folder,
+                'resource_type' => $resourceType,
+                'use_filename' => true,
+                'unique_filename' => false,
+                'overwrite' => false,
+            ];
+
+            if ($publicId) {
+                $uploadOptions['public_id'] = $publicId;
+            }
+
+            // Handle different input types
+            if (is_string($file) && str_starts_with($file, 'data:')) {
+                $result = $this->uploadApi->upload($file, $uploadOptions);
+            } elseif ($file instanceof \Illuminate\Http\UploadedFile) {
+                $result = $this->uploadApi->upload($file->getRealPath(), $uploadOptions);
+            } elseif (is_string($file) && file_exists($file)) {
+                $result = $this->uploadApi->upload($file, $uploadOptions);
+            } else {
+                throw new \Exception('Invalid file format for upload');
+            }
+
+            return [
+                'success' => true,
+                'public_id' => $result['public_id'],
+                'url' => $result['secure_url'],
+                'resource_type' => $result['resource_type'],
+                'format' => $result['format'] ?? null,
+                'bytes' => $result['bytes'],
+                'width' => $result['width'] ?? null,
+                'height' => $result['height'] ?? null,
+                'original_filename' => $result['original_filename'] ?? null,
+            ];
+
+        } catch (\Exception $e) {
+            \Log::error('Cloudinary file upload failed: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Delete any file type from Cloudinary
+     *
+     * @param string $publicId
+     * @param string $resourceType - 'image', 'raw', 'video'
+     * @return bool
+     */
+    public function deleteFile(string $publicId, string $resourceType = 'image'): bool
+    {
+        try {
+            $this->uploadApi->destroy($publicId, ['resource_type' => $resourceType]);
+            return true;
+        } catch (\Exception $e) {
+            \Log::error('Cloudinary delete failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Get transformed image URL
-     * 
+     *
      * @param string $publicId
      * @param string $transformation - 'thumbnail', 'medium', 'large'
      * @return string
@@ -155,21 +231,21 @@ class CloudinaryService
     public function getTransformedUrl($publicId, $transformation = 'medium')
     {
         $transformations = config('cloudinary.transformations');
-        
+
         if (!isset($transformations[$transformation])) {
             $transformation = 'medium';
         }
 
         $transform = $transformations[$transformation];
-        
+
         // Get the image
         $image = $this->cloudinary->image($publicId);
-        
+
         // Apply resize transformation based on crop type
         $width = $transform['width'] ?? null;
         $height = $transform['height'] ?? null;
         $crop = $transform['crop'] ?? 'fill';
-        
+
         if ($width && $height) {
             switch ($crop) {
                 case 'fill':
@@ -192,13 +268,13 @@ class CloudinaryService
         } elseif ($height) {
             $image->resize(Resize::scale()->height($height));
         }
-        
+
         return $image->toUrl();
     }
 
     /**
      * Extract public_id from Cloudinary URL
-     * 
+     *
      * @param string $url
      * @return string|null
      */
@@ -216,7 +292,7 @@ class CloudinaryService
 
     /**
      * Get image details from Cloudinary
-     * 
+     *
      * @param string $publicId
      * @return array|null
      */

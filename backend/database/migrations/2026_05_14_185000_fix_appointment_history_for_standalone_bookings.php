@@ -9,52 +9,87 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Drop the existing FK constraint
-        Schema::table('appointment_history', function (Blueprint $table) {
-            $table->dropForeign('appointment_history_case_id_foreign');
-        });
+        if (!Schema::hasTable('appointment_history')) {
+            return;
+        }
+
+        // Drop FK if exists (handle auto-generated constraint names)
+        $fkName = $this->getForeignKeyName('appointment_history', 'case_id');
+        if ($fkName) {
+            Schema::table('appointment_history', function (Blueprint $table) use ($fkName) {
+                $table->dropForeign($fkName);
+            });
+        }
 
         // Make case_id nullable
         Schema::table('appointment_history', function (Blueprint $table) {
             $table->string('case_id', 13)->nullable()->change();
         });
 
-        // Add booking_id column for standalone bookings
-        Schema::table('appointment_history', function (Blueprint $table) {
-            $table->string('booking_id', 13)->nullable()->after('case_id');
-            $table->index('booking_id');
-        });
+        // Add booking_id if not exists
+        if (!Schema::hasColumn('appointment_history', 'booking_id')) {
+            Schema::table('appointment_history', function (Blueprint $table) {
+                $table->string('booking_id', 13)->nullable()->after('case_id');
+                $table->index('booking_id');
+            });
+        }
 
-        // Re-add FK with ON DELETE SET NULL
-        Schema::table('appointment_history', function (Blueprint $table) {
-            $table->foreign('case_id')
-                  ->references('case_id')
-                  ->on('support_cases')
-                  ->onDelete('set null');
-        });
+        // Re-add FK with ON DELETE SET NULL if not exists
+        if (!$this->getForeignKeyName('appointment_history', 'case_id')) {
+            Schema::table('appointment_history', function (Blueprint $table) {
+                $table->foreign('case_id')
+                      ->references('case_id')
+                      ->on('support_cases')
+                      ->onDelete('set null');
+            });
+        }
     }
 
     public function down(): void
     {
-        // Drop the new FK and columns
-        Schema::table('appointment_history', function (Blueprint $table) {
-            $table->dropForeign(['case_id']);
-            $table->dropIndex(['booking_id']);
-            $table->dropColumn('booking_id');
-        });
+        if (!Schema::hasTable('appointment_history')) {
+            return;
+        }
 
-        // Revert case_id to NOT NULL
-        // Note: This will fail if there are NULL case_id rows — clean those first in production
+        $fkName = $this->getForeignKeyName('appointment_history', 'case_id');
+        if ($fkName) {
+            Schema::table('appointment_history', function (Blueprint $table) use ($fkName) {
+                $table->dropForeign($fkName);
+            });
+        }
+
+        if (Schema::hasColumn('appointment_history', 'booking_id')) {
+            Schema::table('appointment_history', function (Blueprint $table) {
+                $table->dropIndex(['booking_id']);
+                $table->dropColumn('booking_id');
+            });
+        }
+
         Schema::table('appointment_history', function (Blueprint $table) {
             $table->string('case_id', 13)->nullable(false)->change();
         });
 
-        // Re-add original FK with CASCADE
-        Schema::table('appointment_history', function (Blueprint $table) {
-            $table->foreign('case_id')
-                  ->references('case_id')
-                  ->on('support_cases')
-                  ->onDelete('cascade');
-        });
+        if (!$this->getForeignKeyName('appointment_history', 'case_id')) {
+            Schema::table('appointment_history', function (Blueprint $table) {
+                $table->foreign('case_id')
+                      ->references('case_id')
+                      ->on('support_cases')
+                      ->onDelete('cascade');
+            });
+        }
+    }
+
+    private function getForeignKeyName(string $table, string $column): ?string
+    {
+        $result = DB::select("
+            SELECT CONSTRAINT_NAME
+            FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+            WHERE TABLE_SCHEMA = DATABASE()
+            AND TABLE_NAME = ?
+            AND CONSTRAINT_TYPE = 'FOREIGN KEY'
+            AND CONSTRAINT_NAME LIKE ?
+        ", [$table, "%{$column}%"]);
+
+        return $result[0]->CONSTRAINT_NAME ?? null;
     }
 };

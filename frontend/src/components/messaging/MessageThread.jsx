@@ -8,6 +8,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import MessageBubble from './MessageBubble';
 import CaseThreadHeader from './CaseThreadHeader';
 import CaseCreateModal from './CaseCreateModal';
+import AttachmentViewerModal from './AttachmentViewerModal';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -49,6 +50,8 @@ const MessageThread = ({
   const [showCaseActions, setShowCaseActions] = useState(false);
   const [showCreateCase, setShowCreateCase] = useState(false);
   const [showFullConversation, setShowFullConversation] = useState(false);
+  const [viewingAttachment, setViewingAttachment] = useState(null);
+  const [viewingAttachmentMessage, setViewingAttachmentMessage] = useState(null);
   const [loadingFullConversation, setLoadingFullConversation] = useState(false);
   const [activeCaseId, setActiveCaseId] = useState(null);
   const [conversationCases, setConversationCases] = useState([]);
@@ -179,6 +182,17 @@ const MessageThread = ({
   const handleReaction = (messageId, reaction) => {
     // TODO: Implement reaction API
     console.log('Reaction:', messageId, reaction);
+  };
+
+  const handleViewAttachment = (attachment, message) => {
+    setViewingAttachment(attachment);
+    setViewingAttachmentMessage(message);
+  };
+
+  const handleReplyToAttachment = () => {
+    if (viewingAttachmentMessage) {
+      handleReply(viewingAttachmentMessage);
+    }
   };
 
   const cancelReply = () => {
@@ -516,7 +530,7 @@ const MessageThread = ({
                     </div>
                   ) : (
                 <MessageBubble
-                  message={msg}
+                  message={{ ...msg, onViewAttachment: handleViewAttachment }}
                   isOwn={isOwn}
                   showAvatar={showAvatar}
                   isLastInGroup={isLastInGroup}
@@ -525,6 +539,7 @@ const MessageThread = ({
                   onEdit={() => handleEdit(msg)}
                   onDelete={() => handleDelete(msg)}
                   onReaction={(reaction) => handleReaction(msg.id, reaction)}
+                  onViewAttachment={handleViewAttachment}
                   replyToMessage={msg.reply_to ? messages.find(m => m.id === msg.reply_to) : null}
                 />
               )}
@@ -722,6 +737,19 @@ const MessageThread = ({
           </button>
         </div>
       </form>
+
+      {/* Attachment Viewer Modal */}
+      {viewingAttachment && (
+        <AttachmentViewerModal
+          attachment={viewingAttachment}
+          message={viewingAttachmentMessage}
+          onClose={() => {
+            setViewingAttachment(null);
+            setViewingAttachmentMessage(null);
+          }}
+          onReply={handleReplyToAttachment}
+        />
+      )}
 
       {/* Context Menu */}
       {contextMenu && (

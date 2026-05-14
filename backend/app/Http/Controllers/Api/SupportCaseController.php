@@ -210,6 +210,41 @@ class SupportCaseController extends Controller
             ], $request->has('attachment') ? ['attachment' => $request->attachment] : []),
             ]);
 
+            // ─── HANDLE ATTACHMENT UPLOAD ───
+            $attachmentRecord = null;
+            if ($request->hasFile('attachment_file')) {
+                try {
+                    $uploadService = app(\App\Services\AttachmentUploadService::class);
+                    $attachmentResult = $uploadService->uploadCaseAttachment(
+                        $request->file('attachment_file'),
+                        $supportCase->case_id
+                    );
+
+                    if ($attachmentResult['success']) {
+                        $attachmentRecord = \App\Models\MessageAttachment::create([
+                            'message_id' => null,
+                            'file_name' => $attachmentResult['original_name'],
+                            'file_path' => $attachmentResult['secure_url'],
+                            'file_type' => $attachmentResult['resource_type'] === 'image' ? 'image' : 'document',
+                            'mime_type' => $attachmentResult['mime_type'],
+                            'file_size' => $attachmentResult['file_size'],
+                            'cloudinary_public_id' => $attachmentResult['public_id'],
+                            'cloudinary_secure_url' => $attachmentResult['secure_url'],
+                            'cloudinary_resource_type' => $attachmentResult['resource_type'],
+                            'original_name' => $attachmentResult['original_name'],
+                            'width' => $attachmentResult['width'],
+                            'height' => $attachmentResult['height'],
+                            'folder_path' => $attachmentResult['folder_path'],
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('Attachment upload failed during support case creation', [
+                        'case_id' => $supportCase->case_id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
             // ─── Create clean system message (single line, no description) ───
             $systemBody = "New Case Created " .
                 "Type: " . str_replace('_', ' ', $supportCase->case_type) . " " .
@@ -254,6 +289,12 @@ class SupportCaseController extends Controller
                         'initial_message_id' => $initialMessage->id,
                     ]),
                 ]);
+
+                // Link attachment to initial message
+                if ($attachmentRecord) {
+                    $attachmentRecord->update(['message_id' => $initialMessage->id]);
+                    $initialMessage->load('attachments');
+                }
             }
 
             // Update conversation last_message_at so it appears in chat list
@@ -275,9 +316,10 @@ class SupportCaseController extends Controller
                 'success' => true,
                 'message' => 'Support case created successfully.',
                 'data' => [
-                    'conversation' => $conversation->fresh(['participants', 'messages.sender', 'messages.supportCase']),
+                    'conversation' => $conversation->fresh(['participants', 'messages.sender', 'messages.attachments', 'messages.supportCase']),
                     'support_case' => $supportCase->fresh(['tags', 'caseMessages']),
-                    'initial_message' => $initialMessage,
+                    'initial_message' => $initialMessage?->load('attachments'),
+                    'attachment' => $attachmentRecord,
                 ],
                 'case_id' => $supportCase->case_id,
             ], 201);

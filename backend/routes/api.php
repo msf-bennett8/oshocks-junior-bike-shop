@@ -654,6 +654,11 @@ Route::prefix('v1')->middleware(['api', 'optional', 'audit'])->group(function ()
     // Message search (auth only)
     Route::get('/conversations/search/messages', [\App\Http\Controllers\Api\ConversationController::class, 'search'])
         ->middleware('auth:sanctum');
+
+    // Attachment upload for cases (guest + auth)
+    Route::post('/attachments/case/{caseId}', [\App\Http\Controllers\Api\AttachmentController::class, 'uploadCaseAttachment']);
+    Route::get('/attachments/{id}', [\App\Http\Controllers\Api\AttachmentController::class, 'show']);
+    Route::delete('/attachments/{id}', [\App\Http\Controllers\Api\AttachmentController::class, 'destroy']);
 }); // End of optional auth messaging group
 
 // ============================================================================

@@ -6,15 +6,16 @@ import React, { useState } from 'react';
 import { Reply, Pencil, Trash2, Check, CheckCheck, Phone, Paperclip } from 'lucide-react';
 import Avatar from '../common/Avatar';
 
-const MessageBubble = ({ 
-  message, 
-  isOwn, 
-  showAvatar = true, 
+const MessageBubble = ({
+  message,
+  isOwn,
+  showAvatar = true,
   isLastInGroup = true,
   onReply,
   onEdit,
   onDelete,
   onReaction,
+  onViewAttachment,
   replyToMessage = null,
   isContextMessage = false,
 }) => {
@@ -104,16 +105,36 @@ const MessageBubble = ({
               {/* Attachments preview */}
               {message.attachments?.map(att => (
                 <div key={att.id} className="mt-2">
-                  {att.file_type === 'image' ? (
-                    <img src={att.file_path} alt={att.file_name} className="rounded-lg max-w-full max-h-48 object-cover" />
-                  ) : (
-                    <div className={`flex items-center gap-2 p-2 rounded-lg ${isOwn ? 'bg-blue-700' : 'bg-gray-100'}`}>
-                      <Paperclip className={`w-4 h-4 ${isOwn ? 'text-blue-200' : 'text-gray-500'}`} />
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium truncate">{att.file_name}</p>
-                        <p className="text-[10px] opacity-75">{att.file_size}</p>
+                  {att.is_image || att.file_type === 'image' ? (
+                    <button
+                      onClick={() => onViewAttachment?.(att, message)}
+                      className="block w-full text-left group relative"
+                    >
+                      <img 
+                        src={att.cloudinary_secure_url || att.file_path} 
+                        alt={att.file_name || att.original_name} 
+                        className="rounded-lg max-w-full max-h-48 object-cover group-hover:opacity-90 transition-opacity" 
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 rounded-lg">
+                        <span className="bg-white/90 text-gray-800 text-xs font-medium px-3 py-1.5 rounded-full shadow-sm">
+                          View Attachment
+                        </span>
                       </div>
-                    </div>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => onViewAttachment?.(att, message)}
+                      className={`w-full flex items-center gap-2 p-2.5 rounded-lg ${isOwn ? 'bg-blue-700 hover:bg-blue-600' : 'bg-gray-100 hover:bg-gray-200'} transition-colors text-left`}
+                    >
+                      <Paperclip className={`w-4 h-4 flex-shrink-0 ${isOwn ? 'text-blue-200' : 'text-gray-500'}`} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium truncate">{att.original_name || att.file_name}</p>
+                        <p className="text-[10px] opacity-75">{att.human_readable_size || att.file_size}</p>
+                      </div>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${isOwn ? 'bg-blue-800 text-blue-100' : 'bg-gray-200 text-gray-600'}`}>
+                        View
+                      </span>
+                    </button>
                   )}
                 </div>
               ))}

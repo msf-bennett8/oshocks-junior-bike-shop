@@ -47,6 +47,8 @@ class MessageController extends Controller
             'metadata' => 'nullable|array',
             'sender_name' => 'nullable|string|max:100',
             'sender_email' => 'nullable|email|max:255',
+            'attachment_file' => 'nullable|file|max:10240',
+            'case_id' => 'nullable|string|size:13',
         ]);
 
         // Run moderation check
@@ -113,7 +115,43 @@ class MessageController extends Controller
             ]);
         }
 
-        // Update conversation timestamp — critical for sorting
+        // ─── HANDLE ATTACHMENT UPLOAD FOR MESSAGE ───
+        if ($request->hasFile('attachment_file') && !empty($validated['case_id'])) {
+            try {
+                $uploadService = app(\App\Services\AttachmentUploadService::class);
+                $attachmentResult = $uploadService->uploadCaseAttachment(
+                    $request->file('attachment_file'),
+                    $validated['case_id']
+                );
+
+                if ($attachmentResult['success']) {
+                    \App\Models\MessageAttachment::create([
+                        'message_id' => $message->id,
+                        'file_name' => $attachmentResult['original_name'],
+                        'file_path' => $attachmentResult['secure_url'],
+                        'file_type' => $attachmentResult['resource_type'] === 'image' ? 'image' : 'document',
+                        'mime_type' => $attachmentResult['mime_type'],
+                        'file_size' => $attachmentResult['file_size'],
+                        'cloudinary_public_id' => $attachmentResult['public_id'],
+                        'cloudinary_secure_url' => $attachmentResult['secure_url'],
+                        'cloudinary_resource_type' => $attachmentResult['resource_type'],
+                        'original_name' => $attachmentResult['original_name'],
+                        'width' => $attachmentResult['width'],
+                        'height' => $attachmentResult['height'],
+                        'folder_path' => $attachmentResult['folder_path'],
+                    ]);
+
+                    $message->load('attachments');
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Attachment upload failed for message', [
+                    'message_id' => $message->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Update conversation last message timestamp
         $conversation->update(['last_message_at' => now()]);
 
         // Auto-track first response for support cases

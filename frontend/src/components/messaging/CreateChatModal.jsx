@@ -270,23 +270,25 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const uploadAttachmentToCloudinary = async (file) => {
-    // TODO: Implement Cloudinary upload
-    // Placeholder - returns mock URL for now
-    console.log('[Cloudinary Upload Placeholder]', {
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type,
-      timestamp: new Date().toISOString(),
-    });
+  const uploadAttachmentToCloudinary = async (file, caseId = null) => {
+    if (caseId) {
+      const { default: attachmentService } = await import('../../services/attachmentService');
+      const res = await attachmentService.uploadCaseAttachment(file, caseId);
+      return {
+        url: res.data.data.cloudinary_secure_url,
+        public_id: res.data.data.cloudinary_public_id,
+        resource_type: res.data.data.cloudinary_resource_type,
+        format: file.name.split('.').pop().toLowerCase(),
+        bytes: res.data.data.file_size,
+        secure_url: res.data.data.cloudinary_secure_url,
+        attachment_id: res.data.data.id,
+      };
+    }
     
-    // Simulate upload delay
-    await new Promise(r => setTimeout(r, 800));
-    
-    // Return mock data structure - replace with actual Cloudinary response
+    console.warn('[Attachment] No caseId provided, using placeholder');
     return {
       url: `https://res.cloudinary.com/demo/image/upload/${Date.now()}_${file.name}`,
-      public_id: `attachments/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9]/g, '_')}`,
+      public_id: `temp/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9]/g, '_')}`,
       resource_type: file.type.startsWith('image/') ? 'image' : 'raw',
       format: file.name.split('.').pop().toLowerCase(),
       bytes: file.size,
@@ -324,19 +326,7 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
     try {
       let attachmentData = null;
       
-      // Upload attachment to Cloudinary if present
-      if (attachment) {
-        setUploadingAttachment(true);
-        try {
-          attachmentData = await uploadAttachmentToCloudinary(attachment);
-        } catch (uploadErr) {
-          setError('Failed to upload attachment. Please try again.');
-          setUploadingAttachment(false);
-          setLoading(false);
-          return;
-        }
-        setUploadingAttachment(false);
-      }
+      // Attachment will be uploaded after case creation with proper case_id folder
 
       // Step 1: Create or get the support conversation
       const convPayload = {
@@ -360,32 +350,32 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
       const conversation = convRes.data.data;
 
       // Step 2: Create the case IN the conversation (this creates messages too)
-      const casePayload = {
-        case_type: selectedCaseType,
-        subject: caseForm.subject,
-        description: caseForm.description,
-        priority: caseForm.priority,
-        ...(selectedCaseType === 'order_issue' && caseForm.order_number && {
-          purchase_id: caseForm.order_number,
-        }),
-        ...(!user && {
-          guest_name: guestName.trim(),
-          guest_email: guestEmail.trim(),
-          ...(guestPhone.trim() && { guest_phone: guestPhone.trim() }),
-        }),
-        ...(attachmentData && {
-          attachment: {
-            url: attachmentData.secure_url,
-            public_id: attachmentData.public_id,
-            name: attachment.name,
-            type: attachment.type,
-            size: attachment.size,
-            resource_type: attachmentData.resource_type,
-          }
-        }),
-      };
+      const caseFormData = new FormData();
+      caseFormData.append('case_type', selectedCaseType);
+      caseFormData.append('subject', caseForm.subject);
+      caseFormData.append('description', caseForm.description);
+      caseFormData.append('priority', caseForm.priority);
+      if (selectedCaseType === 'order_issue' && caseForm.order_number) {
+        caseFormData.append('purchase_id', caseForm.order_number);
+      }
+      if (!user) {
+        caseFormData.append('guest_name', guestName.trim());
+        caseFormData.append('guest_email', guestEmail.trim());
+        if (guestPhone.trim()) caseFormData.append('guest_phone', guestPhone.trim());
+      }
+      if (attachment) {
+        caseFormData.append('attachment_file', attachment);
+        caseFormData.append('attachment[name]', attachment.name);
+        caseFormData.append('attachment[type]', attachment.type);
+        caseFormData.append('attachment[size]', attachment.size);
+      }
 
-      const caseRes = await api.post(`/conversations/${conversation.id}/cases`, casePayload, { headers });
+      const caseRes = await api.post(`/conversations/${conversation.id}/cases`, caseFormData, {
+        headers: {
+          ...headers,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       
       // Merge conversation with case messages for immediate display
       const conversationWithMessages = {

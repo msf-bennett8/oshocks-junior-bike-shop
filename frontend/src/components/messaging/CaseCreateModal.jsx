@@ -106,17 +106,27 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const uploadAttachmentToCloudinary = async (file) => {
-    // TODO: Implement Cloudinary upload
-    console.log('[Cloudinary Upload Placeholder]', {
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type,
-    });
-    await new Promise(r => setTimeout(r, 800));
+  const uploadAttachmentToCloudinary = async (file, caseId = null) => {
+    // If we have a caseId, upload via backend to proper case folder
+    if (caseId) {
+      const { default: attachmentService } = await import('../../services/attachmentService');
+      const res = await attachmentService.uploadCaseAttachment(file, caseId);
+      return {
+        url: res.data.data.cloudinary_secure_url,
+        public_id: res.data.data.cloudinary_public_id,
+        resource_type: res.data.data.cloudinary_resource_type,
+        format: file.name.split('.').pop().toLowerCase(),
+        bytes: res.data.data.file_size,
+        secure_url: res.data.data.cloudinary_secure_url,
+        attachment_id: res.data.data.id,
+      };
+    }
+    
+    // Fallback: direct upload (should not happen in normal flow)
+    console.warn('[Attachment] No caseId provided, using placeholder');
     return {
       url: `https://res.cloudinary.com/demo/image/upload/${Date.now()}_${file.name}`,
-      public_id: `attachments/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9]/g, '_')}`,
+      public_id: `temp/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9]/g, '_')}`,
       resource_type: file.type.startsWith('image/') ? 'image' : 'raw',
       format: file.name.split('.').pop().toLowerCase(),
       bytes: file.size,
@@ -180,18 +190,8 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
         console.log('[CaseCreateModal] Generated guest name:', anonName);
       }
       let attachmentData = null;
-      if (attachment) {
-        setUploadingAttachment(true);
-        try {
-          attachmentData = await uploadAttachmentToCloudinary(attachment);
-        } catch (uploadErr) {
-          alert('Failed to upload attachment. Please try again.');
-          setUploadingAttachment(false);
-          setLoading(false);
-          return;
-        }
-        setUploadingAttachment(false);
-      }
+      // Note: We upload after case creation to have the case_id for folder organization
+      // The attachment will be passed in payload and backend handles the upload
 
       const payload = {
         case_type: type,
@@ -214,25 +214,38 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
         payload.purchase_id = trimmedOrder;
       }
 
-      if (attachmentData) {
-        payload.attachment = {
-          url: attachmentData.secure_url,
-          public_id: attachmentData.public_id,
-          name: attachment.name,
-          type: attachment.type,
-          size: attachment.size,
-          resource_type: attachmentData.resource_type,
-        };
+      // We need to use FormData to send the file
+      const formData = new FormData();
+      formData.append('case_type', type);
+      formData.append('subject', subject.trim());
+      formData.append('description', description.trim());
+      formData.append('priority', priority);
+      if (trimmedOrder) formData.append('purchase_id', trimmedOrder);
+      if (!isAuthenticated) {
+        formData.append('guest_name', guestName.trim());
+        formData.append('guest_email', guestEmail.trim());
+        if (guestPhone.trim()) formData.append('guest_phone', guestPhone.trim());
       }
+      if (attachment) {
+        formData.append('attachment_file', attachment);
+        formData.append('attachment[name]', attachment.name);
+        formData.append('attachment[type]', attachment.type);
+        formData.append('attachment[size]', attachment.size);
+      }
+
+      console.log('[CaseCreateModal] Sending POST to /conversations/' + conversationId + '/cases with FormData');
+      console.log('[CaseCreateModal] API baseURL:', api.defaults.baseURL);
+
+      const response = await api.post(`/conversations/${conversationId}/cases`, formData, {
+        headers: {
+          'X-Guest-Session-ID': guestId,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
       console.log('[CaseCreateModal] Sending POST to /conversations/' + conversationId + '/cases with payload:', payload);
       console.log('[CaseCreateModal] API baseURL:', api.defaults.baseURL);
 
-      const response = await api.post(`/conversations/${conversationId}/cases`, payload, {
-        headers: {
-          'X-Guest-Session-ID': guestId,
-        },
-      });
       console.log('[CaseCreateModal] API response:', response);
       console.log('[CaseCreateModal] Response data:', response.data);
 

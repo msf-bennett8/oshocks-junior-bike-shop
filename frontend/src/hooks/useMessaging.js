@@ -27,17 +27,39 @@ class MessageQueue {
       const msg = this.queue[0];
       try {
         // Attempt send — api interceptor handles auth headers automatically
-        const url = msg.caseId 
+      const url = msg.caseId
           ? `/conversations/${msg.conversationId}/cases/${msg.caseId}/messages`
           : `/conversations/${msg.conversationId}/messages`;
-        const res = await api.post(url, {
-          body: msg.body,
-          type: msg.type,
-          metadata: msg.metadata,
-          reply_to: msg.replyTo,
-          sender_name: msg.senderName,
-          sender_email: msg.senderEmail,
-        });
+
+        let requestData;
+        let requestHeaders = {};
+
+        if (msg.attachments && msg.attachments.length > 0) {
+          // Use FormData for file uploads
+          requestData = new FormData();
+          requestData.append('body', msg.body);
+          requestData.append('type', msg.type);
+          if (msg.metadata) requestData.append('metadata', JSON.stringify(msg.metadata));
+          if (msg.replyTo) requestData.append('reply_to', msg.replyTo);
+          if (msg.senderName) requestData.append('sender_name', msg.senderName);
+          if (msg.senderEmail) requestData.append('sender_email', msg.senderEmail);
+          if (msg.caseId) requestData.append('case_id', msg.caseId);
+          msg.attachments.forEach((file, idx) => {
+            requestData.append('attachment_file', file);
+          });
+          requestHeaders['Content-Type'] = 'multipart/form-data';
+        } else {
+          requestData = {
+            body: msg.body,
+            type: msg.type,
+            metadata: msg.metadata,
+            reply_to: msg.replyTo,
+            sender_name: msg.senderName,
+            sender_email: msg.senderEmail,
+          };
+        }
+
+        const res = await api.post(url, requestData, { headers: requestHeaders });
         
         msg.onSuccess?.(res.data.data);
         this.queue.shift(); // Remove on success
@@ -213,6 +235,7 @@ export const useMessaging = (userId) => {
           type,
           metadata,
           replyTo,
+          attachments, // Pass attachments for backend processing
           senderName: profile.name,
           senderEmail: profile.email,
           guestSessionId: getGuestSessionId(), // Include for guest auth

@@ -41,12 +41,10 @@ class CaseThreadController extends Controller
                 'guest_email' => ['nullable', 'email', 'max:255'],
                 'guest_phone' => ['nullable', 'string', 'max:20'],
                 'attachment' => ['nullable', 'array'],
-                'attachment.url' => ['nullable', 'url', 'max:500'],
-                'attachment.public_id' => ['nullable', 'string', 'max:255'],
                 'attachment.name' => ['nullable', 'string', 'max:255'],
                 'attachment.type' => ['nullable', 'string', 'max:100'],
                 'attachment.size' => ['nullable', 'integer'],
-                'attachment.resource_type' => ['nullable', 'string', 'max:50'],
+                'attachment_file' => ['nullable', 'file', 'max:10240'], // Actual file upload
             ]);
 
             // Authorization
@@ -108,6 +106,41 @@ class CaseThreadController extends Controller
                 ], $validated['attachment'] ? ['attachment' => $validated['attachment']] : []),
             ]);
 
+            // ─── HANDLE ATTACHMENT UPLOAD ───
+            $attachmentRecord = null;
+            if (!empty($validated['attachment'])) {
+                try {
+                    $uploadService = app(\App\Services\AttachmentUploadService::class);
+                    $attachmentResult = $uploadService->uploadCaseAttachment(
+                        $request->file('attachment_file'), // File sent separately
+                        $supportCase->case_id
+                    );
+
+                    if ($attachmentResult['success']) {
+                        $attachmentRecord = \App\Models\MessageAttachment::create([
+                            'message_id' => null, // Will link after message creation
+                            'file_name' => $attachmentResult['original_name'],
+                            'file_path' => $attachmentResult['secure_url'],
+                            'file_type' => $attachmentResult['resource_type'] === 'image' ? 'image' : 'document',
+                            'mime_type' => $attachmentResult['mime_type'],
+                            'file_size' => $attachmentResult['file_size'],
+                            'cloudinary_public_id' => $attachmentResult['public_id'],
+                            'cloudinary_secure_url' => $attachmentResult['secure_url'],
+                            'cloudinary_resource_type' => $attachmentResult['resource_type'],
+                            'original_name' => $attachmentResult['original_name'],
+                            'width' => $attachmentResult['width'],
+                            'height' => $attachmentResult['height'],
+                            'folder_path' => $attachmentResult['folder_path'],
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('Attachment upload failed during case creation', [
+                        'case_id' => $supportCase->case_id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
             // Build system message with order info if applicable
             $orderDisplay = $order?->order_display ?? $order?->order_number ?? null;
             $systemMessageBody = $orderDisplay
@@ -150,6 +183,12 @@ class CaseThreadController extends Controller
             // Broadcast
             broadcast(new \App\Events\SupportCaseUpdated($supportCase, 'created_in_thread', $user?->id));
 
+            // Link attachment to user message if exists
+            if ($attachmentRecord && $userMessage) {
+                $attachmentRecord->update(['message_id' => $userMessage->id]);
+                $userMessage->load('attachments');
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Case created in conversation.',
@@ -157,6 +196,7 @@ class CaseThreadController extends Controller
                     'support_case' => $supportCase->fresh(['user', 'order']),
                     'system_message' => $systemMessage,
                     'user_message' => $userMessage,
+                    'attachment' => $attachmentRecord,
                 ],
                 'case_id' => $supportCase->case_id,
             ], 201);

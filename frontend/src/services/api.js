@@ -433,6 +433,12 @@ export const messagingAPI = {
   searchMessages: (query) => {
     return api.get('/conversations/search/messages', { params: { q: query } });
   },
+
+  uploadAttachment: (conversationId, caseId, formData) => {
+    return api.post(`/conversations/${conversationId}/cases/${caseId}/attachments`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 export const callAPI = {
