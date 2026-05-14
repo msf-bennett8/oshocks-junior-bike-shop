@@ -52,6 +52,7 @@ const AdminUsersPage = () => {
       case 'seller': return 'bg-blue-100 text-blue-800';
       case 'pending_seller': return 'bg-yellow-100 text-yellow-800';
       case 'buyer': return 'bg-gray-100 text-gray-800';
+      case 'service_agent': return 'bg-teal-100 text-teal-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -60,6 +61,7 @@ const AdminUsersPage = () => {
     switch (role) {
       case 'super_admin': return 'Super Admin';
       case 'pending_seller': return 'Pending Seller';
+      case 'service_agent': return 'Service Agent';
       default: return role.charAt(0).toUpperCase() + role.slice(1);
     }
   };
@@ -110,6 +112,22 @@ const AdminUsersPage = () => {
       case 'remove_seller':
         newRole = 'buyer';
         confirmMessage = 'Remove seller privileges from this user?';
+        break;
+      case 'make_service_agent':
+        if (currentUser.role !== 'super_admin') {
+          alert('Only super admins can promote users to service agent');
+          return;
+        }
+        newRole = 'service_agent';
+        confirmMessage = 'Promote this user to service agent?';
+        break;
+      case 'remove_service_agent':
+        if (currentUser.role !== 'super_admin') {
+          alert('Only super admins can demote service agents');
+          return;
+        }
+        newRole = 'buyer';
+        confirmMessage = 'Demote this service agent to regular buyer?';
         break;
       case 'make_admin':
         if (currentUser.role !== 'super_admin') {
@@ -238,6 +256,7 @@ const AdminUsersPage = () => {
     { label: 'Total Users', value: users.length, icon: Shield, color: 'bg-blue-500' },
     { label: 'Buyers', value: users.filter(u => u.role === 'buyer').length, icon: User, color: 'bg-green-500' },
     { label: 'Sellers', value: users.filter(u => u.role === 'seller').length, icon: Store, color: 'bg-purple-500' },
+    { label: 'Service Agents', value: users.filter(u => u.role === 'service_agent').length, icon: UserPlus, color: 'bg-teal-500' },
     { label: 'Pending', value: users.filter(u => u.role === 'pending_seller').length, icon: Calendar, color: 'bg-yellow-500' }
   ];
 
@@ -302,6 +321,7 @@ const AdminUsersPage = () => {
                 <option value="buyer">Buyers</option>
                 <option value="seller">Sellers</option>
                 <option value="pending_seller">Pending Sellers</option>
+                <option value="service_agent">Service Agents</option>
                 <option value="admin">Admins</option>
               </select>
               <select
@@ -428,6 +448,26 @@ const AdminUsersPage = () => {
                               >
                                 <Shield size={16} className="text-purple-600" />
                                 <span className="text-purple-600">Make Admin</span>
+                              </button>
+                            )}
+
+                            {(user.role === 'buyer' || user.role === 'seller') && currentUser.role === 'super_admin' && (
+                              <button
+                                onClick={() => handleRoleChange(user.id, user.role, 'make_service_agent')}
+                                className="w-full flex items-center gap-3 px-4 py-2 hover:bg-teal-50 transition text-left"
+                              >
+                                <UserPlus size={16} className="text-teal-600" />
+                                <span className="text-teal-600">Make Service Agent</span>
+                              </button>
+                            )}
+
+                            {user.role === 'service_agent' && currentUser.role === 'super_admin' && (
+                              <button
+                                onClick={() => handleRoleChange(user.id, user.role, 'remove_service_agent')}
+                                className="w-full flex items-center gap-3 px-4 py-2 hover:bg-red-50 transition text-left"
+                              >
+                                <X size={16} className="text-red-600" />
+                                <span className="text-red-600">Remove Service Agent</span>
                               </button>
                             )}
 

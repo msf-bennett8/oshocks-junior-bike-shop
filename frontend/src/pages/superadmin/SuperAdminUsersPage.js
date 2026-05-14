@@ -63,6 +63,7 @@ const SuperAdminAdminUsersPage = () => {
       case 'pending_seller': return 'bg-yellow-100 text-yellow-800';
       case 'delivery_agent': return 'bg-green-100 text-green-800';
       case 'shop_attendant': return 'bg-cyan-100 text-cyan-800';
+      case 'service_agent': return 'bg-teal-100 text-teal-800';
       case 'buyer': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -74,6 +75,7 @@ const SuperAdminAdminUsersPage = () => {
       case 'pending_seller': return 'Pending Seller';
       case 'delivery_agent': return 'Delivery Agent';
       case 'shop_attendant': return 'Shop Attendant';
+      case 'service_agent': return 'Service Agent';
       default: return role.charAt(0).toUpperCase() + role.slice(1);
     }
   };
@@ -280,10 +282,12 @@ const handleRoleElevation = async (userId, rolesToAdd) => {
       'make_seller': { roles: ['seller'], confirm: 'Add seller role to this user?' },
       'make_delivery_agent': { roles: ['delivery_agent'], confirm: 'Add delivery agent role to this user?' },
       'make_shop_attendant': { roles: ['shop_attendant'], confirm: 'Add shop attendant role to this user?' },
+      'make_service_agent': { roles: ['service_agent'], confirm: 'Add service agent role to this user?' },
       'make_admin': { roles: ['admin'], confirm: 'Promote this user to admin?' },
       'remove_seller': { role: 'seller', isRemoval: true },
       'remove_delivery_agent': { role: 'delivery_agent', isRemoval: true },
       'remove_shop_attendant': { role: 'shop_attendant', isRemoval: true },
+      'remove_service_agent': { role: 'service_agent', isRemoval: true },
       'remove_admin': { role: 'admin', isRemoval: true },
     };
 
@@ -319,6 +323,7 @@ const handleRoleElevation = async (userId, rolesToAdd) => {
     { label: 'Total Users', value: users.length, icon: Shield, color: 'bg-blue-500' },
     { label: 'Buyers', value: users.filter(u => u.role === 'buyer').length, icon: User, color: 'bg-green-500' },
     { label: 'Sellers', value: users.filter(u => u.role === 'seller').length, icon: Store, color: 'bg-purple-500' },
+    { label: 'Service Agents', value: users.filter(u => u.role === 'service_agent').length, icon: UserPlus, color: 'bg-teal-500' },
     { label: 'Pending', value: users.filter(u => u.role === 'pending_seller').length, icon: Calendar, color: 'bg-yellow-500' }
   ];
 
@@ -383,6 +388,7 @@ const handleRoleElevation = async (userId, rolesToAdd) => {
                 <option value="buyer">Buyers</option>
                 <option value="seller">Sellers</option>
                 <option value="pending_seller">Pending Sellers</option>
+                <option value="service_agent">Service Agents</option>
                 <option value="admin">Admins</option>
               </select>
               <select
@@ -510,6 +516,16 @@ const handleRoleElevation = async (userId, rolesToAdd) => {
                               </button>
                             )}
 
+                            {!user.all_roles?.includes('service_agent') && (
+                              <button
+                                onClick={() => handleRoleChange(user.id, user.role, 'make_service_agent')}
+                                className="w-full flex items-center gap-3 px-4 py-2 hover:bg-teal-50 transition text-left"
+                              >
+                                <UserPlus size={16} className="text-teal-600" />
+                                <span className="text-teal-600">Add Service Agent Role</span>
+                              </button>
+                            )}
+
                             {!user.all_roles?.includes('admin') && currentUser.role === 'super_admin' && (
                               <button
                                 onClick={() => handleRoleChange(user.id, user.role, 'make_admin')}
@@ -553,6 +569,16 @@ const handleRoleElevation = async (userId, rolesToAdd) => {
                                   >
                                     <X size={16} className="text-orange-600" />
                                     <span className="text-orange-600">Remove Shop Attendant</span>
+                                  </button>
+                                )}
+
+                                {user.all_roles.includes('service_agent') && user.role !== 'service_agent' && (
+                                  <button
+                                    onClick={() => handleRoleChange(user.id, user.role, 'remove_service_agent')}
+                                    className="w-full flex items-center gap-3 px-4 py-2 hover:bg-orange-50 transition text-left"
+                                  >
+                                    <X size={16} className="text-orange-600" />
+                                    <span className="text-orange-600">Remove Service Agent</span>
                                   </button>
                                 )}
 

@@ -191,6 +191,7 @@ class BookingService
             $booking->confirmed_time = $data['confirmed_time'] ?? null;
             $booking->assigned_mechanic_id = $data['assigned_mechanic_id'] ?? $staff->id;
             $booking->seller_id = $data['seller_id'] ?? $booking->seller_id;
+            $booking->service_agent_id = $data['assigned_mechanic_id'] ?? $staff->id;
             $booking->staff_notes = $data['staff_notes'] ?? null;
             $booking->final_price = $data['final_price'] ?? $booking->estimated_price;
             $booking->save();

@@ -171,6 +171,11 @@ class User extends Authenticatable
         return $this->role === 'shop_attendant';
     }
 
+    public function isServiceAgent()
+    {
+        return $this->role === 'service_agent';
+    }
+
     public function canRecordPayments()
     {
         return in_array($this->role, ['delivery_agent', 'shop_attendant', 'seller', 'admin', 'super_admin']);
@@ -181,7 +186,7 @@ class User extends Authenticatable
      */
     public function canHandleSupportCases(): bool
     {
-        return in_array($this->role, ['admin', 'super_admin', 'owner', 'support_agent']);
+        return in_array($this->role, ['admin', 'super_admin', 'owner', 'support_agent', 'service_agent']);
     }
 
     /**

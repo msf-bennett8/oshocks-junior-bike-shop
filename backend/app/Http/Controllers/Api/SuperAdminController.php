@@ -16,7 +16,7 @@ class SuperAdminController extends Controller
     public function changeUserRole(Request $request, $userId)
     {
         $validator = Validator::make($request->all(), [
-            'role' => 'required|in:customer,seller,pending_seller,admin,super_admin,payment_recorder',
+            'role' => 'required|in:customer,seller,pending_seller,service_agent,admin,super_admin,payment_recorder',
             'reason' => 'required|string|min:5',
         ]);
 
@@ -79,7 +79,7 @@ class SuperAdminController extends Controller
         }
 
         $user = User::findOrFail($userId);
-        
+
         // Get current permissions (assuming stored as JSON or pivot table)
         $currentPermissions = $user->permissions ?? [];
         $permissionsAdded = $request->permissions_added ?? [];
@@ -118,7 +118,7 @@ class SuperAdminController extends Controller
     public function startImpersonation(Request $request, $userId)
     {
         $targetUser = User::findOrFail($userId);
-        
+
         // Prevent impersonating self
         if ($targetUser->id === auth()->id()) {
             return response()->json([
@@ -168,7 +168,7 @@ class SuperAdminController extends Controller
     public function stopImpersonation(Request $request)
     {
         $impersonation = session()->get('impersonation');
-        
+
         if (!$impersonation) {
             return response()->json([
                 'success' => false,
@@ -243,7 +243,7 @@ class SuperAdminController extends Controller
     public function toggleUserStatus(Request $request, $userId)
     {
         $user = User::findOrFail($userId);
-        
+
         // Prevent self-deactivation
         if ($user->id === auth()->id()) {
             return response()->json([

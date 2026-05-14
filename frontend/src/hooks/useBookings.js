@@ -96,9 +96,10 @@ export const useBookings = () => {
   const fetchMechanics = useCallback(async () => {
     try {
       const res = await bookingService.getMechanics();
+      console.log('🔧 fetchMechanics response:', res.data);
       return res.data?.data || [];
     } catch (err) {
-      console.error('Failed to fetch mechanics:', err);
+      console.error('🔧 Failed to fetch mechanics:', err);
       return [];
     }
   }, []);

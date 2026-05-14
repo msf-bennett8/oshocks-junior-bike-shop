@@ -7,6 +7,7 @@ use App\Http\Requests\StoreServiceBookingRequest;
 use App\Http\Requests\ConfirmBookingRequest;
 use App\Models\ServiceBooking;
 use App\Models\SupportCase;
+use App\Models\User;
 use App\Services\BookingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -216,9 +217,9 @@ class ServiceBookingController extends Controller
     {
         try {
             $result = $this->bookingService->confirmBooking(
-                caseId: $caseId,
-                data: $request->validated(),
-                staff: auth()->user()
+                $caseId,
+                $request->validated(),
+                auth()->user()
             );
 
             // ─── Send notification to customer ───
@@ -500,7 +501,7 @@ class ServiceBookingController extends Controller
      */
     public function getMechanics(Request $request): JsonResponse
     {
-        $mechanics = User::whereIn('role', ['mechanic', 'service_agent', 'support_agent', 'admin', 'super_admin'])
+        $mechanics = User::whereIn('role', ['service_agent', 'support_agent', 'admin', 'super_admin'])
             ->where('is_active', true)
             ->select(['id', 'name', 'email', 'phone', 'role'])
             ->orderBy('name')

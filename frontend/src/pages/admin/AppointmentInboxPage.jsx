@@ -121,6 +121,7 @@ const AppointmentInboxPage = () => {
       
       // Also load mechanics
       const mechanicsData = await fetchMechanics();
+      console.log('🔧 mechanicsData:', mechanicsData);
       setMechanics(mechanicsData);
     } catch (err) {
       console.error('Failed to fetch sellers:', err);
@@ -172,7 +173,8 @@ const AppointmentInboxPage = () => {
   const handleConfirm = async () => {
     if (!selectedBooking || !confirmData.confirmed_date) return;
     setActionLoading(true);
-    const res = await confirmBooking(selectedBooking.case_id, {
+    const bookingId = selectedBooking.case_id || selectedBooking.id;
+    const res = await confirmBooking(bookingId, {
       confirmed_date: confirmData.confirmed_date,
       confirmed_time: confirmData.confirmed_time || '09:00',
       staff_notes: confirmData.staff_notes,
@@ -918,10 +920,12 @@ const AppointmentInboxPage = () => {
                     <option value="">Select a shop...</option>
                     {loadingSellers ? (
                       <option disabled>Loading shops...</option>
+                    ) : sellers.length === 0 ? (
+                      <option disabled>No approved shops available</option>
                     ) : (
                       sellers.map(seller => (
                         <option key={seller.id} value={seller.id}>
-                          {seller.shop_name || seller.name}
+                          {seller.business_name || seller.name || 'Unnamed Shop'}
                         </option>
                       ))
                     )}
@@ -930,9 +934,9 @@ const AppointmentInboxPage = () => {
                 </div>
                 {selectedSeller && (
                   <div className="mt-2 p-2 bg-emerald-50 rounded-lg text-xs text-emerald-800">
-                    <span className="font-medium">{selectedSeller.shop_name || selectedSeller.name}</span>
-                    {selectedSeller.phone && <span> • {selectedSeller.phone}</span>}
-                    {selectedSeller.location && <span> • {selectedSeller.location}</span>}
+                    <span className="font-medium">{selectedSeller.business_name || selectedSeller.name || 'Unnamed Shop'}</span>
+                    {selectedSeller.business_phone && <span> • {selectedSeller.business_phone}</span>}
+                    {selectedSeller.business_address && <span> • {selectedSeller.business_address}</span>}
                   </div>
                 )}
               </div>
@@ -949,7 +953,9 @@ const AppointmentInboxPage = () => {
                     }}
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 appearance-none bg-white"
                   >
-                    <option value="">Select a mechanic...</option>
+                    <option value="">
+                      {mechanics.length === 0 ? 'No mechanics available' : 'Select a mechanic...'}
+                    </option>
                     {mechanics.map(mechanic => (
                       <option key={mechanic.id} value={mechanic.id}>
                         {mechanic.name} {mechanic.role !== 'mechanic' ? `(${mechanic.role})` : ''}
@@ -959,7 +965,7 @@ const AppointmentInboxPage = () => {
                   <Users className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
               </div>
-              
+
               {/* Confirmed Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Confirmed Date *</label>

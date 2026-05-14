@@ -79,25 +79,25 @@ class UserManagementController extends Controller
     {
         $request->validate([
             'roles' => 'required|array',
-            'roles.*' => 'in:seller,delivery_agent,shop_attendant,admin',
+            'roles.*' => 'in:seller,delivery_agent,shop_attendant,service_agent,admin',
         ]);
 
         $user = User::findOrFail($id);
-        
+
         DB::beginTransaction();
         try {
             $addedRoles = [];
-            
+
             foreach ($request->roles as $role) {
                 if (!$user->hasRole($role)) {
                     $user->addRole($role);
                     $addedRoles[] = $role;
-                    
+
                     // Auto-create required profiles
                     if ($role === 'seller' && !$user->sellerProfile) {
                         $this->createSellerProfile($user);
                     }
-                    
+
                     if (in_array($role, ['delivery_agent', 'shop_attendant']) && !$user->paymentRecorder) {
                         $this->createPaymentRecorder($user, $role);
                     }
@@ -142,11 +142,11 @@ class UserManagementController extends Controller
     public function removeRole(Request $request, $id)
     {
         $request->validate([
-            'role' => 'required|in:seller,delivery_agent,shop_attendant,admin',
+            'role' => 'required|in:seller,delivery_agent,shop_attendant,service_agent,admin',
         ]);
 
         $user = User::findOrFail($id);
-        
+
         if ($user->role === $request->role) {
             return response()->json([
                 'success' => false,
@@ -196,7 +196,7 @@ class UserManagementController extends Controller
         $lastCode = PaymentRecorder::where('recorder_code', 'like', "{$prefix}%")
             ->orderBy('recorder_code', 'desc')
             ->first();
-        
+
         $number = $lastCode ? (int)substr($lastCode->recorder_code, 2) + 1 : 1;
         $recorderCode = $prefix . str_pad($number, 3, '0', STR_PAD_LEFT);
 
@@ -334,7 +334,7 @@ class UserManagementController extends Controller
         $lastCode = PaymentRecorder::where('recorder_code', 'like', "{$prefix}%")
             ->orderBy('recorder_code', 'desc')
             ->first();
-        
+
         $number = $lastCode ? (int)substr($lastCode->recorder_code, 2) + 1 : 1;
         $recorderCode = $prefix . str_pad($number, 3, '0', STR_PAD_LEFT);
 
