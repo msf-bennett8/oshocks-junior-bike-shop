@@ -22,6 +22,9 @@ class SupportCase extends Model
         'conversation_id',
         'user_id',
         'guest_session_id',
+        'guest_name',
+        'guest_email',
+        'guest_phone',
         'case_type',
         'status',
         'priority',
@@ -168,6 +171,27 @@ class SupportCase extends Model
     {
         if (!$this->resolved_at || !$this->created_at) return null;
         return $this->created_at->diffForHumans($this->resolved_at, true);
+    }
+
+    /**
+     * Get guest contact info or fallback to user
+     */
+    public function getGuestContactAttribute(): array
+    {
+        if ($this->user_id && $this->user) {
+            return [
+                'name' => $this->user->name,
+                'email' => $this->user->email,
+                'phone' => $this->user->phone ?? null,
+                'is_guest' => false,
+            ];
+        }
+        return [
+            'name' => $this->guest_name ?? 'Guest',
+            'email' => $this->guest_email,
+            'phone' => $this->guest_phone,
+            'is_guest' => true,
+        ];
     }
 
     public function getStatusColorAttribute(): string

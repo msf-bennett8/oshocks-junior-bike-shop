@@ -80,6 +80,14 @@ class MessageController extends Controller
             $guestName = $request->header('X-Guest-Name')
                 ?? $validated['sender_name']
                 ?? 'Guest';
+            // Ensure anon prefix for tracking if not already set
+            if ($guestName === 'Guest' && $guestSessionId) {
+                $parts = explode('_', $guestSessionId);
+                $lastPart = end($parts);
+                if (strlen($lastPart) >= 4) {
+                    $guestName = 'anon' . substr($lastPart, 0, 4);
+                }
+            }
         }
 
         $message = Message::create([

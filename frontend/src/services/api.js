@@ -5,6 +5,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { logIntegrationError, logApiRetry, recordServiceSuccess, determineServiceName } from '../utils/auditUtils';
+import { getGuestDisplayName } from '../utils/guestSession';
 
 // Base API URL - Railway backend
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://oshocks-backend-production.up.railway.app/api/v1';
@@ -86,7 +87,7 @@ api.interceptors.request.use(
     
     const token = localStorage.getItem('authToken');
     const guestSessionId = localStorage.getItem('oshocks_guest_session_id');
-    const guestName = localStorage.getItem('oshocks_guest_name');
+    const guestName = getGuestDisplayName();
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -98,12 +99,18 @@ api.interceptors.request.use(
     if (guestSessionId) {
       config.headers['X-Guest-Session-ID'] = guestSessionId;
       console.log('👤 Guest session ID added:', guestSessionId.slice(0, 8) + '...');
-    }
-    
-    // Guest name for display in messages and cases
-    if (guestName && !token) {
-      config.headers['X-Guest-Name'] = guestName;
-      console.log('👤 Guest name added:', guestName);
+      
+      // Guest name for display in messages and cases — ALWAYS send with guest session
+      // so backend can track anonXXXX identifiers for support cases and messages
+      let displayName = guestName;
+      if (!displayName || displayName === 'Guest') {
+        // Extract last 4 hex chars from UUID portion for consistent anon ID
+        const uuidPart = guestSessionId.replace('guest_', '');
+        const anonId = uuidPart.replace(/-/g, '').slice(0, 4);
+        displayName = `anon${anonId}`;
+      }
+      config.headers['X-Guest-Name'] = displayName;
+      console.log('👤 Guest name added:', displayName);
     }
     
     // ============================================================================

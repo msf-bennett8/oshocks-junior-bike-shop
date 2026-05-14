@@ -122,6 +122,18 @@ class Message extends Model
         if ($this->sender) {
             return $this->sender->name;
         }
+        // For guest messages, show anonXXXX or stored sender_name
+        if ($this->sender_name && str_starts_with($this->sender_name, 'anon')) {
+            return $this->sender_name;
+        }
+        // Extract anon ID from guest_session_id if available
+        if ($this->guest_session_id) {
+            $parts = explode('_', $this->guest_session_id);
+            $lastPart = end($parts);
+            if (strlen($lastPart) >= 4) {
+                return 'anon' . substr($lastPart, 0, 4);
+            }
+        }
         return $this->sender_name ?? 'Guest';
     }
 

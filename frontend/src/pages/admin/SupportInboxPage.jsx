@@ -219,7 +219,10 @@ const SupportInboxPage = () => {
       c.case_id?.toLowerCase().includes(query) ||
       c.subject?.toLowerCase().includes(query) ||
       c.user?.name?.toLowerCase().includes(query) ||
-      c.user?.email?.toLowerCase().includes(query)
+      c.user?.email?.toLowerCase().includes(query) ||
+      c.guest_name?.toLowerCase().includes(query) ||
+      c.guest_email?.toLowerCase().includes(query) ||
+      c.guest_phone?.toLowerCase().includes(query)
     );
   });
 
@@ -373,12 +376,25 @@ const SupportInboxPage = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
-                            {supportCase.user?.name?.[0]?.toUpperCase() || 'G'}
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ${
+                            supportCase.user_id 
+                              ? 'bg-gradient-to-br from-blue-400 to-blue-600' 
+                              : 'bg-gradient-to-br from-amber-400 to-orange-500'
+                          }`}>
+                            {(supportCase.user?.name?.[0] || supportCase.guest_name?.[0] || 'G')?.toUpperCase()}
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{supportCase.user?.name || 'Guest'}</p>
-                            <p className="text-xs text-gray-500">{supportCase.user?.email || 'No email'}</p>
+                            <p className="text-sm font-medium text-gray-900">
+                              {supportCase.user?.name || supportCase.guest_name || 'Guest'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {supportCase.user?.email || supportCase.guest_email || 'No email'}
+                            </p>
+                            {!supportCase.user_id && supportCase.guest_phone && (
+                              <p className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
+                                <Phone className="w-3 h-3" /> {supportCase.guest_phone}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -846,24 +862,65 @@ const DetailsTab = ({ caseData, isAgent, isAssigned, onClaim, onResolve, onEscal
           <User className="w-3 h-3" /> Customer Information
         </h4>
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500">Name</span>
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-gray-900">{caseData.user?.name || 'Guest'}</span>
-              {caseData.user?.name && <CopyButton text={caseData.user.name} field="user_name" />}
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500">Email</span>
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-gray-900">{caseData.user?.email || 'N/A'}</span>
-              {caseData.user?.email && <CopyButton text={caseData.user.email} field="user_email" />}
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500">User ID</span>
-            <span className="text-sm font-mono text-gray-900">{caseData.user_id || 'Guest'}</span>
-          </div>
+          {caseData.user_id && caseData.user ? (
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Name</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm text-gray-900">{caseData.user.name || 'Unknown'}</span>
+                  {caseData.user.name && <CopyButton text={caseData.user.name} field="user_name" />}
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Email</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm text-gray-900">{caseData.user.email || 'N/A'}</span>
+                  {caseData.user.email && <CopyButton text={caseData.user.email} field="user_email" />}
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">User ID</span>
+                <span className="text-sm font-mono text-gray-900">{caseData.user_id}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Guest user */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Name</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm text-gray-900">{caseData.guest_name || 'Guest'}</span>
+                  {caseData.guest_name && <CopyButton text={caseData.guest_name} field="guest_name" />}
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Email</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm text-gray-900">{caseData.guest_email || 'N/A'}</span>
+                  {caseData.guest_email && <CopyButton text={caseData.guest_email} field="guest_email" />}
+                </div>
+              </div>
+              {caseData.guest_phone && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Phone</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-gray-900">{caseData.guest_phone}</span>
+                    <CopyButton text={caseData.guest_phone} field="guest_phone" />
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Guest Session</span>
+                <span className="text-sm font-mono text-gray-900">{caseData.guest_session_id?.slice(0, 16) || 'N/A'}...</span>
+              </div>
+              <div className="mt-2 p-2 bg-amber-100 rounded-lg">
+                <p className="text-xs text-amber-800 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  Guest user — not registered
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

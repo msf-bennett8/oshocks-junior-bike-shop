@@ -29,6 +29,11 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
     order_number: '',
     priority: 'medium',
   });
+
+  // Guest contact fields
+  const [guestName, setGuestName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
   const [validatingOrder, setValidatingOrder] = useState(false);
   const [orderValid, setOrderValid] = useState(null);
   const [orderData, setOrderData] = useState(null);
@@ -62,6 +67,9 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
       setSupportStep('select');
       setSelectedCaseType(null);
       setCaseForm({ subject: '', description: '', order_number: '', priority: 'medium' });
+      setGuestName('');
+      setGuestEmail('');
+      setGuestPhone('');
       setOrderValid(null);
       setOrderData(null);
       setError(null);
@@ -360,6 +368,11 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
         ...(selectedCaseType === 'order_issue' && caseForm.order_number && {
           purchase_id: caseForm.order_number,
         }),
+        ...(!user && {
+          guest_name: guestName.trim(),
+          guest_email: guestEmail.trim(),
+          ...(guestPhone.trim() && { guest_phone: guestPhone.trim() }),
+        }),
         ...(attachmentData && {
           attachment: {
             url: attachmentData.secure_url,
@@ -648,6 +661,52 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
                     {selectedCaseType === 'other' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold"><HelpCircle className="w-3.5 h-3.5" /> Other</div>}
                   </div>
 
+                  {/* Guest Contact Info */}
+                  {!user && (
+                    <div className="space-y-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                      <div className="flex items-center gap-2 mb-1">
+                        <User className="w-4 h-4 text-amber-600" />
+                        <span className="text-sm font-semibold text-amber-800">Your Contact Info</span>
+                        <span className="text-xs text-amber-600 ml-auto">Required for guest support</span>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
+                        <input
+                          type="text"
+                          value={guestName}
+                          onChange={(e) => setGuestName(e.target.value)}
+                          placeholder="Your full name"
+                          required={!user}
+                          className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Email *</label>
+                        <input
+                          type="email"
+                          value={guestEmail}
+                          onChange={(e) => setGuestEmail(e.target.value)}
+                          placeholder="your@email.com"
+                          required={!user}
+                          className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Phone (optional)</label>
+                        <input
+                          type="tel"
+                          value={guestPhone}
+                          onChange={(e) => setGuestPhone(e.target.value)}
+                          placeholder="+254 712 345 678"
+                          className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   {/* Subject */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Subject *</label>
@@ -821,7 +880,7 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
                   {/* Submit */}
                   <button
                     onClick={handleCreateSupportCase}
-                    disabled={loading || uploadingAttachment || !caseForm.subject.trim() || ((selectedCaseType === 'order_issue' || selectedCaseType === 'returns_refund' || selectedCaseType === 'payment_billing') && orderValid !== true)}
+                    disabled={loading || uploadingAttachment || !caseForm.subject.trim() || (!user && (!guestName.trim() || !guestEmail.trim())) || ((selectedCaseType === 'order_issue' || selectedCaseType === 'returns_refund' || selectedCaseType === 'payment_billing') && orderValid !== true)}
                     className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold text-sm hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (

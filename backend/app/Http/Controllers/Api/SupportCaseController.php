@@ -174,7 +174,7 @@ class SupportCaseController extends Controller
                 'title' => $conversationTitle,
                 'created_by' => $createdBy,
                 'guest_session_id' => $guestSessionId,
-                'guest_name' => $guestSessionId ? 'Guest User' : null,
+                'guest_name' => $request->guest_name ?? 'Guest User',
                 'order_id' => $orderId,
                 'status' => 'active',
                 'priority' => $request->priority ?? 'medium',
@@ -194,6 +194,9 @@ class SupportCaseController extends Controller
                 'conversation_id' => $conversation->id,
                 'user_id' => $user?->id,
                 'guest_session_id' => $guestSessionId,
+                'guest_name' => !$user ? $request->guest_name : null,
+                'guest_email' => !$user ? $request->guest_email : null,
+                'guest_phone' => !$user ? $request->guest_phone : null,
                 'case_type' => $request->case_type,
                 'status' => 'new',
                 'priority' => $request->priority ?? 'medium',
@@ -274,7 +277,7 @@ class SupportCaseController extends Controller
                 'data' => [
                     'conversation' => $conversation->fresh(['participants', 'messages.sender', 'messages.supportCase']),
                     'support_case' => $supportCase->fresh(['tags', 'caseMessages']),
-                    'initial_message' => $message,
+                    'initial_message' => $initialMessage,
                 ],
                 'case_id' => $supportCase->case_id,
             ], 201);

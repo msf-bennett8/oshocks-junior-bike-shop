@@ -37,6 +37,9 @@ class CaseThreadController extends Controller
                 'priority' => ['nullable', 'in:low,medium,high,urgent'],
                 'order_number' => ['nullable', 'string', 'max:50'],
                 'purchase_id' => ['nullable', 'string', 'max:50'],
+                'guest_name' => ['nullable', 'string', 'max:255'],
+                'guest_email' => ['nullable', 'email', 'max:255'],
+                'guest_phone' => ['nullable', 'string', 'max:20'],
                 'attachment' => ['nullable', 'array'],
                 'attachment.url' => ['nullable', 'url', 'max:500'],
                 'attachment.public_id' => ['nullable', 'string', 'max:255'],
@@ -88,6 +91,9 @@ class CaseThreadController extends Controller
                 'conversation_id' => $conversation->id,
                 'user_id' => $user?->id,
                 'guest_session_id' => $guestSessionId,
+                'guest_name' => !$user ? ($validated['guest_name'] ?? null) : null,
+                'guest_email' => !$user ? ($validated['guest_email'] ?? null) : null,
+                'guest_phone' => !$user ? ($validated['guest_phone'] ?? null) : null,
                 'case_type' => $validated['case_type'],
                 'status' => 'new',
                 'priority' => $validated['priority'] ?? 'medium',
@@ -136,6 +142,9 @@ class CaseThreadController extends Controller
             \Log::info('Case created successfully in thread', [
                 'case_id' => $supportCase->case_id,
                 'conversation_id' => $conversation->id,
+                'guest_name' => $supportCase->guest_name,
+                'guest_email' => $supportCase->guest_email,
+                'guest_phone' => $supportCase->guest_phone,
             ]);
 
             // Broadcast

@@ -31,7 +31,14 @@ const supportCaseService = {
   handleEscalation: (caseId, action, data = {}) => api.post(`/super-admin/support/${caseId}/handle-escalation`, { action, ...data }),
 
   // Case threading (hybrid conversational ticketing)
-  createCaseInConversation: (conversationId, data) => api.post(`/conversations/${conversationId}/cases`, data),
+  createCaseInConversation: (conversationId, data) => {
+    const guestId = localStorage.getItem('oshocks_guest_session_id');
+    const headers = {};
+    if (guestId) {
+      headers['X-Guest-Session-ID'] = guestId;
+    }
+    return api.post(`/conversations/${conversationId}/cases`, data, { headers });
+  },
   getConversationCases: (conversationId) => api.get(`/conversations/${conversationId}/cases`),
   getCaseMessages: (conversationId, caseId, includeFullConversation = false) => 
     api.get(`/conversations/${conversationId}/cases/${caseId}/messages`, {

@@ -232,7 +232,7 @@ const MessageThread = ({
           
           <div className="min-w-0">
             <h3 className="font-semibold text-gray-900 text-sm truncate">
-              {otherParticipant?.name || conversation?.title || 'Support'}
+              {otherParticipant?.name || conversation?.guest_name || conversation?.title || 'Support'}
             </h3>
             <p className="text-xs text-gray-500">
               {isOnline ? (

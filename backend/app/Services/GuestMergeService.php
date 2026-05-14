@@ -45,6 +45,9 @@ class GuestMergeService
             }
 
             // ─── 2. Merge Messages ───
+            // NOTE: Messages are already merged via Conversation::linkGuestSessions()
+            // which updates messages by conversation_id. We only catch any stray
+            // messages that weren't linked to a conversation.
             $messages = Message::where('guest_session_id', $guestSessionId)
                 ->whereNull('sender_id')
                 ->get();
@@ -53,7 +56,6 @@ class GuestMergeService
                 $message->sender_id = $userId;
                 $message->guest_session_id = null;
                 $message->sender_name = null;
-                $message->sender_email = null;
                 $message->save();
                 $stats['messages']++;
             }

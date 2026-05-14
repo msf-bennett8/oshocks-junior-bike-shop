@@ -254,18 +254,63 @@ class Conversation extends Model
 
     /**
      * Link guest session conversations to a user account
+     * Merges into existing user conversations to prevent duplicates
      */
     public static function linkGuestSessions(string $guestSessionId, User $user): int
     {
         $linkedCount = 0;
 
-        // Find all guest conversations for this session that are support chats
-        $conversations = self::where('guest_session_id', $guestSessionId)
+        // Find all guest conversations for this session
+        $guestConversations = self::where('guest_session_id', $guestSessionId)
             ->whereNull('created_by')
             ->get();
 
-        foreach ($conversations as $conversation) {
-            // Update conversation ownership
+        // Check if user already has a general support conversation
+        $existingSupportConv = self::whereIn('type', ['support', 'order_support'])
+            ->where(function ($q) use ($user) {
+                $q->where('created_by', $user->id)
+                  ->orWhereHas('participants', function ($pq) use ($user) {
+                      $pq->where('user_id', $user->id);
+                  });
+            })
+            ->whereNull('order_id') // General support, not order-specific
+            ->first();
+
+        foreach ($guestConversations as $conversation) {
+            // For general support chats, merge into existing conversation if available
+            if (
+                in_array($conversation->type, ['support', 'order_support']) &&
+                !$conversation->order_id &&
+                $existingSupportConv &&
+                $existingSupportConv->id !== $conversation->id
+            ) {
+                // Move messages from guest conv to existing user conv
+                $conversation->messages()->update([
+                    'conversation_id' => $existingSupportConv->id,
+                    'sender_id' => $user->id,
+                    'guest_session_id' => null,
+                    'sender_name' => null,
+                ]);
+
+                // Move support cases to existing conversation
+                \App\Models\SupportCase::where('conversation_id', $conversation->id)
+                    ->update(['conversation_id' => $existingSupportConv->id]);
+
+                // Update last_message_at on existing conv if guest had newer messages
+                $latestGuestMsg = $conversation->messages()->latest()->first();
+                if ($latestGuestMsg && (!$existingSupportConv->last_message_at || $latestGuestMsg->created_at > $existingSupportConv->last_message_at)) {
+                    $existingSupportConv->update(['last_message_at' => $latestGuestMsg->created_at]);
+                }
+
+                // Delete the now-empty guest conversation
+                $conversation->participants()->detach();
+                $conversation->delete();
+
+                $linkedCount++;
+                continue;
+            }
+
+            // Standard link for non-merged conversations
             $conversation->update([
                 'created_by' => $user->id,
                 'guest_session_id' => null,

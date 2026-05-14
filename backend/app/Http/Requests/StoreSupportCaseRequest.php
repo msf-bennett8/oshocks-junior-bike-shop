@@ -36,6 +36,11 @@ class StoreSupportCaseRequest extends FormRequest
             'attachment.type' => ['nullable', 'string', 'max:100'],
             'attachment.size' => ['nullable', 'integer'],
             'attachment.resource_type' => ['nullable', 'string', 'max:50'],
+
+            // Guest contact info (nullable — frontend handles required state)
+            'guest_name' => ['nullable', 'string', 'max:255'],
+            'guest_email' => ['nullable', 'email', 'max:255'],
+            'guest_phone' => ['nullable', 'string', 'max:20'],
         ];
     }
 

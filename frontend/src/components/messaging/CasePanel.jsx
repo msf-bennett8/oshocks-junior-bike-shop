@@ -298,12 +298,51 @@ const DetailsTab = ({ supportCase, isStaff, getTypeConfig, getPriorityConfig }) 
           <User className="w-4 h-4" /> Customer
         </h3>
         <div className="space-y-2">
-          <InfoRow label="Name" value={supportCase.user?.name || 'Guest'} icon={User} />
-          {supportCase.user?.email && (
-            <InfoRow label="Email" value={supportCase.user.email} icon={Mail} copyable={supportCase.user.email} field="email" />
-          )}
-          {supportCase.user?.phone && (
-            <InfoRow label="Phone" value={supportCase.user.phone} icon={Phone} copyable={supportCase.user.phone} field="phone" />
+          {/* Authenticated user */}
+          {supportCase.user_id && supportCase.user ? (
+            <>
+              <InfoRow label="Name" value={supportCase.user.name || 'Unknown'} icon={User} />
+              {supportCase.user.email && (
+                <InfoRow label="Email" value={supportCase.user.email} icon={Mail} copyable={supportCase.user.email} field="email" />
+              )}
+              {supportCase.user.phone && (
+                <InfoRow label="Phone" value={supportCase.user.phone} icon={Phone} copyable={supportCase.user.phone} field="phone" />
+              )}
+            </>
+          ) : (
+            <>
+              {/* Guest user - show captured contact info */}
+              <InfoRow 
+                label="Name" 
+                value={supportCase.guest_name || 'Guest'} 
+                icon={User} 
+                copyable={supportCase.guest_name || 'Guest'} 
+                field="guest_name" 
+              />
+              {supportCase.guest_email && (
+                <InfoRow 
+                  label="Email" 
+                  value={supportCase.guest_email} 
+                  icon={Mail} 
+                  copyable={supportCase.guest_email} 
+                  field="guest_email" 
+                />
+              )}
+              {supportCase.guest_phone && (
+                <InfoRow 
+                  label="Phone" 
+                  value={supportCase.guest_phone} 
+                  icon={Phone} 
+                  copyable={supportCase.guest_phone} 
+                  field="guest_phone" 
+                />
+              )}
+              <InfoRow 
+                label="Guest Session" 
+                value={<span className="font-mono text-xs">{supportCase.guest_session_id?.slice(0, 16) || 'N/A'}...</span>} 
+                icon={MapPin} 
+              />
+            </>
           )}
         </div>
       </div>

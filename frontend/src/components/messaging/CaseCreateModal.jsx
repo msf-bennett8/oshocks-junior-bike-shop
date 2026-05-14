@@ -23,6 +23,19 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
   const [priority, setPriority] = useState('medium');
   const [orderNumber, setOrderNumber] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Guest contact fields
+  const [guestName, setGuestName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
+
+  // Check if user is authenticated (try multiple possible token keys)
+  const isAuthenticated = !!(
+    localStorage.getItem('token') || 
+    localStorage.getItem('auth_token') || 
+    localStorage.getItem('access_token') ||
+    localStorage.getItem('user')
+  );
   
   // Attachment state
   const [attachment, setAttachment] = useState(null);
@@ -187,6 +200,15 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
         priority,
       };
 
+      // Add guest contact info for anonymous users
+      if (!isAuthenticated) {
+        payload.guest_name = guestName.trim();
+        payload.guest_email = guestEmail.trim();
+        if (guestPhone.trim()) {
+          payload.guest_phone = guestPhone.trim();
+        }
+      }
+
       const trimmedOrder = orderNumber.trim();
       if (trimmedOrder) {
         payload.purchase_id = trimmedOrder;
@@ -304,6 +326,54 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
             </select>
           </div>
 
+          
+
+          {/* Guest Contact Info */}
+          {!isAuthenticated && (
+            <div className="space-y-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+              <div className="flex items-center gap-2 mb-2">
+                <User className="w-4 h-4 text-amber-600" />
+                <span className="text-sm font-semibold text-amber-800">Your Contact Info</span>
+                <span className="text-xs text-amber-600 ml-auto">Required for guest support</span>
+              </div>
+              
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  placeholder="Your full name"
+                  required={!isAuthenticated}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Email *</label>
+                <input
+                  type="email"
+                  value={guestEmail}
+                  onChange={(e) => setGuestEmail(e.target.value)}
+                  placeholder="bennett@example.com"
+                  required={!isAuthenticated}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Phone (optional)</label>
+                <input
+                  type="tel"
+                  value={guestPhone}
+                  onChange={(e) => setGuestPhone(e.target.value)}
+                  placeholder="+254 712 345 678"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Purchase ID / Order Lookup (optional) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Purchase ID (optional)</label>
@@ -389,7 +459,7 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
             </button>
             <button
               type="submit"
-              disabled={!type || !subject.trim() || loading || uploadingAttachment}
+              disabled={!type || !subject.trim() || loading || uploadingAttachment || (!isAuthenticated && (!guestName.trim() || !guestEmail.trim()))}
               className="flex-1 py-2.5 bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
             >
               {loading ? (

@@ -121,7 +121,14 @@ export const initializeGuestSession = () => {
  */
 export const getGuestDisplayName = () => {
   const profile = getGuestProfile();
-  return profile.name || generateAnonName();
+  // Ensure we always return a consistent anon name, never regenerate
+  if (profile.name && profile.name.startsWith('anon')) {
+    return profile.name;
+  }
+  // If no valid name stored, generate and save it
+  const anonName = generateAnonName();
+  setGuestProfile(anonName, profile.email);
+  return anonName;
 };
 
 export default {

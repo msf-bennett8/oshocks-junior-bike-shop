@@ -179,7 +179,7 @@ const ConversationList = ({
                 <div className="relative flex-shrink-0">
                   <Avatar
                     src={conv.avatar || conv.other_participant?.avatar}
-                    name={conv.title || conv.other_participant?.name || 'Support'}
+                    name={conv.title || conv.other_participant?.name || conv.guest_name || 'Support'}
                     size={48}
                   />
                   {conv.other_participant?.is_online && (
@@ -198,7 +198,7 @@ const ConversationList = ({
                       <h4 className={`text-sm font-medium truncate ${
                         hasUnread ? 'text-gray-900 font-semibold' : 'text-gray-700'
                       }`}>
-                        {conv.title || conv.other_participant?.name || 'Support'}
+                        {conv.title || conv.other_participant?.name || conv.guest_name || 'Support'}
                       </h4>
                       {/* Support Case Badge */}
                       {conv.support_case && (

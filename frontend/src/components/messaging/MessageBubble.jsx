@@ -54,7 +54,7 @@ const MessageBubble = ({
           <div className={`mb-1 px-3 py-1.5 rounded-t-lg text-xs ${
             isOwn ? 'bg-blue-700 text-blue-100' : 'bg-gray-200 text-gray-600'
           }`}>
-            <p className="font-medium truncate">{replyToMessage.sender?.name || 'Guest'}</p>
+            <p className="font-medium truncate">{replyToMessage.sender?.name || replyToMessage.sender_name || 'Guest'}</p>
             <p className="truncate opacity-75">{replyToMessage.body}</p>
           </div>
         )}

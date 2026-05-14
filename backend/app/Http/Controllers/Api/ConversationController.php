@@ -55,6 +55,8 @@ class ConversationController extends Controller
 
         // Add computed fields
         $conversations->transform(function ($conv) use ($user) {
+            // Include guest_name in response for guest conversations
+            $conv->guest_name = $conv->guest_name ?? null;
             $conv->unread_count = $user
                 ? Message::where('conversation_id', $conv->id)
                     ->whereNull('read_at')
