@@ -229,9 +229,10 @@ class BookingService
                 $this->notifyBookingConfirmedStandalone($booking, $staff);
             }
 
-            // Log appointment history (use booking.id as case_id for standalone)
+            // Log appointment history
             AppointmentHistory::create([
-                'case_id' => $booking->case_id ?? $booking->id,
+                'case_id' => $case?->case_id,                    // NULL for standalone bookings
+                'booking_id' => !$case ? $booking->id : null,   // Booking ID for standalone
                 'changed_by' => $staff->id,
                 'from_status' => $oldStatus,
                 'to_status' => 'confirmed',

@@ -14,6 +14,7 @@ class AppointmentHistory extends Model
 
     protected $fillable = [
         'case_id',
+        'booking_id',
         'changed_by',
         'from_status',
         'to_status',
@@ -34,6 +35,11 @@ class AppointmentHistory extends Model
         'from_date' => 'datetime',
         'to_date' => 'datetime',
     ];
+
+    public function serviceBooking(): BelongsTo
+    {
+        return $this->belongsTo(ServiceBooking::class, 'booking_id', 'id');
+    }
 
     public function supportCase(): BelongsTo
     {
