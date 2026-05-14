@@ -529,6 +529,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
             Route::get('/stats', [ServiceBookingController::class, 'stats']);
             Route::get('/my-bookings', [ServiceBookingController::class, 'myBookings']);
             Route::get('/sellers', [ServiceBookingController::class, 'availableSellers']);
+            Route::get('/mechanics', [ServiceBookingController::class, 'getMechanics']);
 
             // ─── Scheduled Deletion (super admin only) ───
             // MUST come before /{caseId} catch-all!

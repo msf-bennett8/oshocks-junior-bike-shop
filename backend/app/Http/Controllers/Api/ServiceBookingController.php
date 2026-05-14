@@ -495,6 +495,24 @@ class ServiceBookingController extends Controller
     }
 
     /**
+     * Get available mechanics/service agents
+     * GET /api/v1/service-bookings/mechanics
+     */
+    public function getMechanics(Request $request): JsonResponse
+    {
+        $mechanics = User::whereIn('role', ['mechanic', 'service_agent', 'support_agent', 'admin', 'super_admin'])
+            ->where('is_active', true)
+            ->select(['id', 'name', 'email', 'phone', 'role'])
+            ->orderBy('name')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $mechanics,
+        ]);
+    }
+
+    /**
      * Get my bookings (customer view - auth + guest)
      * GET /api/v1/service-bookings/my-bookings
      */

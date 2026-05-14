@@ -92,6 +92,17 @@ export const useBookings = () => {
     }
   }, []);
 
+  /** Fetch available mechanics */
+  const fetchMechanics = useCallback(async () => {
+    try {
+      const res = await bookingService.getMechanics();
+      return res.data?.data || [];
+    } catch (err) {
+      console.error('Failed to fetch mechanics:', err);
+      return [];
+    }
+  }, []);
+
   /** Confirm booking (staff) */
   const confirmBooking = useCallback(async (caseId, data) => {
     setLoading(true);
@@ -275,6 +286,7 @@ export const useBookings = () => {
     restoreFromScheduled,
     permanentDelete,
     fetchStats,
+    fetchMechanics,
   };
 };
 

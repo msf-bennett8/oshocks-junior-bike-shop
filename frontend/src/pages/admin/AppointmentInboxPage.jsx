@@ -28,6 +28,7 @@ const AppointmentInboxPage = () => {
     restoreFromScheduled,
     permanentDelete,
     fetchStats,
+    fetchMechanics,
   } = useBookings();
 
   const [filter, setFilter] = useState('all');
@@ -58,6 +59,7 @@ const AppointmentInboxPage = () => {
     assigned_mechanic_id: '',
   });
   const [sellers, setSellers] = useState([]);
+  const [mechanics, setMechanics] = useState([]);
   const [selectedSeller, setSelectedSeller] = useState(null);
   const [sellerAvailability, setSellerAvailability] = useState([]);
   const [loadingSellers, setLoadingSellers] = useState(false);
@@ -116,6 +118,10 @@ const AppointmentInboxPage = () => {
     try {
       const res = await api.get('/service-bookings/sellers');
       setSellers(res.data?.data || []);
+      
+      // Also load mechanics
+      const mechanicsData = await fetchMechanics();
+      setMechanics(mechanicsData);
     } catch (err) {
       console.error('Failed to fetch sellers:', err);
     } finally {
@@ -893,15 +899,15 @@ const AppointmentInboxPage = () => {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Confirm Appointment</h3>
             <div className="space-y-4">
-              {/* Seller / Mechanic Selection */}
+              {/* Seller Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assign Seller / Mechanic *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Assign Shop / Seller</label>
                 <div className="relative">
                   <select
                     value={confirmData.seller_id}
                     onChange={(e) => {
                       const sellerId = e.target.value;
-                      setConfirmData(prev => ({ ...prev, seller_id: sellerId, assigned_mechanic_id: '' }));
+                      setConfirmData(prev => ({ ...prev, seller_id: sellerId }));
                       setSelectedSeller(sellers.find(s => s.id === parseInt(sellerId)) || null);
                       if (sellerId && confirmData.confirmed_date) {
                         fetchSellerAvailability(sellerId, confirmData.confirmed_date);
@@ -909,13 +915,13 @@ const AppointmentInboxPage = () => {
                     }}
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 appearance-none bg-white"
                   >
-                    <option value="">Select a seller/mechanic...</option>
+                    <option value="">Select a shop...</option>
                     {loadingSellers ? (
-                      <option disabled>Loading sellers...</option>
+                      <option disabled>Loading shops...</option>
                     ) : (
                       sellers.map(seller => (
                         <option key={seller.id} value={seller.id}>
-                          {seller.shop_name || seller.name} {seller.specialty ? `(${seller.specialty})` : ''}
+                          {seller.shop_name || seller.name}
                         </option>
                       ))
                     )}
@@ -931,6 +937,29 @@ const AppointmentInboxPage = () => {
                 )}
               </div>
 
+              {/* Mechanic Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Assign Mechanic / Agent *</label>
+                <div className="relative">
+                  <select
+                    value={confirmData.assigned_mechanic_id}
+                    onChange={(e) => {
+                      const mechanicId = e.target.value;
+                      setConfirmData(prev => ({ ...prev, assigned_mechanic_id: mechanicId }));
+                    }}
+                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 appearance-none bg-white"
+                  >
+                    <option value="">Select a mechanic...</option>
+                    {mechanics.map(mechanic => (
+                      <option key={mechanic.id} value={mechanic.id}>
+                        {mechanic.name} {mechanic.role !== 'mechanic' ? `(${mechanic.role})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <Users className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+              
               {/* Confirmed Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Confirmed Date *</label>

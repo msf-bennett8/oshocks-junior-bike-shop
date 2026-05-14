@@ -12,6 +12,9 @@ const bookingService = {
   /** Get available sellers/shops */
   getAvailableSellers: () => api.get('/service-bookings/sellers'),
 
+  /** Get available mechanics/service agents */
+  getMechanics: () => api.get('/service-bookings/mechanics'),
+
   /** Get single booking */
   getBooking: (caseId) => api.get(`/service-bookings/${caseId}`),
 

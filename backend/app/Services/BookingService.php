@@ -168,41 +168,69 @@ class BookingService
 
     /**
      * Confirm a booking (staff action)
+     * Supports both case-linked and standalone bookings.
      */
-    public function confirmBooking(string $caseId, array $data, User $staff): array
+    public function confirmBooking(string $bookingId, array $data, User $staff): array
     {
-        return DB::transaction(function () use ($caseId, $data, $staff) {
-            $case = SupportCase::where('case_id', $caseId)
-                ->where('case_type', 'services_booking')
-                ->firstOrFail();
+        return DB::transaction(function () use ($bookingId, $data, $staff) {
+            // Try to find booking by ID first (standalone), then by case_id (legacy)
+            $booking = ServiceBooking::where('id', $bookingId)
+                ->orWhere('case_id', $bookingId)
+                ->first();
 
-            $booking = $case->serviceBooking;
             if (!$booking) {
-                throw new \Exception('Service booking not found for this case.');
+                throw new \Exception('Service booking not found.');
             }
 
-            $oldStatus = $case->appointment_status;
-
-            // Update case
-            $case->appointment_status = 'confirmed';
-            $case->staff_confirmed_at = now();
-            $case->status = 'open';
-            $case->assigned_to = $staff->id;
-            $case->service_agent_id = $data['assigned_mechanic_id'] ?? $staff->id;
-            $case->save();
+            $case = $booking->supportCase; // null for standalone bookings
+            $oldStatus = $booking->status;
 
             // Update booking
             $booking->status = 'confirmed';
             $booking->confirmed_date = $data['confirmed_date'];
             $booking->confirmed_time = $data['confirmed_time'] ?? null;
             $booking->assigned_mechanic_id = $data['assigned_mechanic_id'] ?? $staff->id;
+            $booking->seller_id = $data['seller_id'] ?? $booking->seller_id;
             $booking->staff_notes = $data['staff_notes'] ?? null;
             $booking->final_price = $data['final_price'] ?? $booking->estimated_price;
             $booking->save();
 
-            // Log appointment history
+            // Update support case if exists
+            if ($case) {
+                $case->appointment_status = 'confirmed';
+                $case->staff_confirmed_at = now();
+                $case->status = 'open';
+                $case->assigned_to = $staff->id;
+                $case->service_agent_id = $data['assigned_mechanic_id'] ?? $staff->id;
+                $case->save();
+
+                // System message in conversation
+                $systemMessage = Message::create([
+                    'conversation_id' => $case->conversation_id,
+                    'sender_id' => null,
+                    'body' => "✅ Appointment Confirmed\n\nDate: {$data['confirmed_date']}\n" .
+                             (!empty($data['confirmed_time']) ? "Time: {$data['confirmed_time']}\n" : '') .
+                             "Staff: {$staff->name}\n\nPlease arrive 10 minutes early.",
+                    'type' => 'system',
+                    'metadata' => [
+                        'event_type' => 'booking_confirmed',
+                        'case_id' => $case->case_id,
+                        'confirmed_date' => $data['confirmed_date'],
+                    ],
+                    'case_id' => $case->case_id,
+                ]);
+
+                broadcast(new SupportCaseUpdated($case, 'booking_confirmed', $staff->id))->toOthers();
+                $this->notifyBookingConfirmed($case, $booking);
+            } else {
+                // Standalone booking — no conversation, just email notification
+                $systemMessage = null;
+                $this->notifyBookingConfirmedStandalone($booking, $staff);
+            }
+
+            // Log appointment history (use booking.id as case_id for standalone)
             AppointmentHistory::create([
-                'case_id' => $case->case_id,
+                'case_id' => $booking->case_id ?? $booking->id,
                 'changed_by' => $staff->id,
                 'from_status' => $oldStatus,
                 'to_status' => 'confirmed',
@@ -220,34 +248,42 @@ class BookingService
                 ],
             ]);
 
-            // Create system message
-            $systemMessage = Message::create([
-                'conversation_id' => $case->conversation_id,
-                'sender_id' => null,
-                'body' => "✅ Appointment Confirmed\n\nDate: {$data['confirmed_date']}\n" .
-                         (!empty($data['confirmed_time']) ? "Time: {$data['confirmed_time']}\n" : '') .
-                         "Staff: {$staff->name}\n\nPlease arrive 10 minutes early.",
-                'type' => 'system',
-                'metadata' => [
-                    'event_type' => 'booking_confirmed',
-                    'case_id' => $case->case_id,
-                    'confirmed_date' => $data['confirmed_date'],
-                ],
-                'case_id' => $case->case_id,
-            ]);
-
-            // Broadcast
-            broadcast(new SupportCaseUpdated($case, 'booking_confirmed', $staff->id))->toOthers();
-
-            // Notify customer
-            $this->notifyBookingConfirmed($case, $booking);
-
             return [
-                'support_case' => $case->fresh(),
+                'support_case' => $case?->fresh(),
                 'service_booking' => $booking->fresh(),
                 'system_message' => $systemMessage,
             ];
         });
+    }
+
+    /**
+     * Notify customer of standalone booking confirmation (no case)
+     */
+    protected function notifyBookingConfirmedStandalone(ServiceBooking $booking, User $staff): void
+    {
+        try {
+            $user = $booking->mergedToUser ?? User::where('email', $booking->customer_email)->first();
+
+            \App\Services\NotificationService::sendGuestNotification(
+                $user,
+                $booking->customer_email,
+                $booking->customer_phone,
+                'booking_confirmed_standalone',
+                [
+                    'booking_id' => $booking->id,
+                    'service_type' => $booking->service_type,
+                    'confirmed_date' => $booking->confirmed_date?->format('M j, Y g:i A'),
+                    'shop_location' => $booking->shop_location,
+                    'customer_name' => $booking->customer_name,
+                    'staff_name' => $staff->name,
+                ]
+            );
+        } catch (\Exception $e) {
+            Log::error('Failed to send standalone booking confirmation notification', [
+                'booking_id' => $booking->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
