@@ -106,33 +106,16 @@ class CaseThreadController extends Controller
                 ], $validated['attachment'] ? ['attachment' => $validated['attachment']] : []),
             ]);
 
-            // ─── HANDLE ATTACHMENT UPLOAD ───
-            $attachmentRecord = null;
+            // ─── DEFER ATTACHMENT UPLOAD ───
+            // Upload to Cloudinary now, but create DB record AFTER message exists
+            $attachmentUploadResult = null;
             if (!empty($validated['attachment'])) {
                 try {
                     $uploadService = app(\App\Services\AttachmentUploadService::class);
-                    $attachmentResult = $uploadService->uploadCaseAttachment(
-                        $request->file('attachment_file'), // File sent separately
+                    $attachmentUploadResult = $uploadService->uploadCaseAttachment(
+                        $request->file('attachment_file'),
                         $supportCase->case_id
                     );
-
-                    if ($attachmentResult['success']) {
-                        $attachmentRecord = \App\Models\MessageAttachment::create([
-                            'message_id' => null, // Will link after message creation
-                            'file_name' => $attachmentResult['original_name'],
-                            'file_path' => $attachmentResult['secure_url'],
-                            'file_type' => $attachmentResult['resource_type'] === 'image' ? 'image' : 'document',
-                            'mime_type' => $attachmentResult['mime_type'],
-                            'file_size' => $attachmentResult['file_size'],
-                            'cloudinary_public_id' => $attachmentResult['public_id'],
-                            'cloudinary_secure_url' => $attachmentResult['secure_url'],
-                            'cloudinary_resource_type' => $attachmentResult['resource_type'],
-                            'original_name' => $attachmentResult['original_name'],
-                            'width' => $attachmentResult['width'],
-                            'height' => $attachmentResult['height'],
-                            'folder_path' => $attachmentResult['folder_path'],
-                        ]);
-                    }
                 } catch (\Exception $e) {
                     \Log::warning('Attachment upload failed during case creation', [
                         'case_id' => $supportCase->case_id,
@@ -183,9 +166,23 @@ class CaseThreadController extends Controller
             // Broadcast
             broadcast(new \App\Events\SupportCaseUpdated($supportCase, 'created_in_thread', $user?->id));
 
-            // Link attachment to user message if exists
-            if ($attachmentRecord && $userMessage) {
-                $attachmentRecord->update(['message_id' => $userMessage->id]);
+            // Create attachment record NOW that we have a valid message_id
+            if ($attachmentUploadResult && $attachmentUploadResult['success'] && $userMessage) {
+                $attachmentRecord = \App\Models\MessageAttachment::create([
+                    'message_id' => $userMessage->id,
+                    'file_name' => $attachmentUploadResult['original_name'],
+                    'file_path' => $attachmentUploadResult['secure_url'],
+                    'file_type' => $attachmentUploadResult['resource_type'] === 'image' ? 'image' : 'document',
+                    'mime_type' => $attachmentUploadResult['mime_type'],
+                    'file_size' => $attachmentUploadResult['file_size'],
+                    'cloudinary_public_id' => $attachmentUploadResult['public_id'],
+                    'cloudinary_secure_url' => $attachmentUploadResult['secure_url'],
+                    'cloudinary_resource_type' => $attachmentUploadResult['resource_type'],
+                    'original_name' => $attachmentUploadResult['original_name'],
+                    'width' => $attachmentUploadResult['width'],
+                    'height' => $attachmentUploadResult['height'],
+                    'folder_path' => $attachmentUploadResult['folder_path'],
+                ]);
                 $userMessage->load('attachments');
             }
 
@@ -196,7 +193,7 @@ class CaseThreadController extends Controller
                     'support_case' => $supportCase->fresh(['user', 'order']),
                     'system_message' => $systemMessage,
                     'user_message' => $userMessage,
-                    'attachment' => $attachmentRecord,
+                    'attachment' => $attachmentRecord ?? null,
                 ],
                 'case_id' => $supportCase->case_id,
             ], 201);

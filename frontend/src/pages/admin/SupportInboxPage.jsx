@@ -5,6 +5,7 @@ import supportCaseService from '../../services/supportCaseService';
 import api from '../../services/api';
 import { CaseStatusChip } from '../../components/messaging/CaseStatusChip';
 import { SystemMessage } from '../../components/messaging/SystemMessage';
+import AttachmentViewerModal from '../../components/messaging/AttachmentViewerModal';
 import {
   Inbox, AlertTriangle, CheckCircle, Clock, TrendingUp,
   Search, Filter, RefreshCw, ChevronDown, Eye, UserCheck,
@@ -1253,6 +1254,8 @@ const ConversationTab = ({ caseData, user }) => {
   const [loading, setLoading] = useState(true);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [viewingAttachment, setViewingAttachment] = useState(null);
+  const [viewingAttachmentMessage, setViewingAttachmentMessage] = useState(null);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -1398,6 +1401,46 @@ const ConversationTab = ({ caseData, user }) => {
                     <p className="text-[10px] font-medium text-gray-500 mb-0.5">{msg.sender?.name || msg.sender_name || 'Guest'}</p>
                   )}
                   <p className="text-sm whitespace-pre-wrap">{msg.body}</p>
+                  
+                  {/* Attachments */}
+                  {msg.attachments?.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      {msg.attachments.map(att => (
+                        <button
+                          key={att.id}
+                          onClick={() => {
+                            setViewingAttachment(att);
+                            setViewingAttachmentMessage(msg);
+                          }}
+                          className={`w-full flex items-center gap-2 p-2 rounded-lg text-left transition-colors ${
+                            isOwn 
+                              ? 'bg-blue-700 hover:bg-blue-600' 
+                              : 'bg-white hover:bg-gray-50 border border-gray-200'
+                          }`}
+                        >
+                          {att.is_image || att.file_type === 'image' ? (
+                            <img
+                              src={att.cloudinary_secure_url || att.file_path}
+                              alt=""
+                              className="w-8 h-8 rounded object-cover flex-shrink-0"
+                            />
+                          ) : (
+                            <FileText className={`w-4 h-4 flex-shrink-0 ${isOwn ? 'text-blue-200' : 'text-gray-500'}`} />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-medium truncate">{att.original_name || att.file_name}</p>
+                            <p className="text-[10px] opacity-75">{att.human_readable_size || att.file_size}</p>
+                          </div>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                            isOwn ? 'bg-blue-800 text-blue-100' : 'bg-gray-200 text-gray-600'
+                          }`}>
+                            View
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
                   <div className={`flex items-center gap-1 mt-1 ${isOwn ? 'justify-end' : ''}`}>
                     <span className={`text-[10px] ${isOwn ? 'text-blue-200' : 'text-gray-400'}`}>{formatTime(msg.created_at)}</span>
                     {isOwn && (
@@ -1454,6 +1497,18 @@ const ConversationTab = ({ caseData, user }) => {
 
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Attachment Viewer Modal */}
+      {viewingAttachment && (
+        <AttachmentViewerModal
+          attachment={viewingAttachment}
+          message={viewingAttachmentMessage}
+          onClose={() => {
+            setViewingAttachment(null);
+            setViewingAttachmentMessage(null);
+          }}
+        />
+      )}
 
       {/* Input */}
       <div className="p-4 border-t border-gray-200 bg-white">

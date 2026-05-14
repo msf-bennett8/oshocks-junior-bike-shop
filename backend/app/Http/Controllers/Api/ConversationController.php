@@ -204,7 +204,7 @@ class ConversationController extends Controller
             'data' => $conversation->load([
                 'participants',
                 'messages' => function ($q) {
-                    $q->with(['sender', 'reactions'])->orderBy('created_at', 'desc')->limit(50);
+                    $q->with(['sender', 'reactions', 'attachments'])->orderBy('created_at', 'desc')->limit(50);
                 }
             ]),
         ]);
@@ -520,7 +520,7 @@ class ConversationController extends Controller
 
         $perPage = $request->get('per_page', 50);
         $messages = $conversation->messages()
-            ->with('sender')
+            ->with(['sender', 'attachments'])
             ->orderBy('created_at', 'desc')
             ->paginate($perPage);
 

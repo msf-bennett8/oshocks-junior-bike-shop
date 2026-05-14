@@ -50,7 +50,7 @@ class MessageAttachment extends Model
         return $this->thumbnail_path ? \Storage::url($this->thumbnail_path) : null;
     }
 
-    public function getHumanReadableSize(): string
+    public function getHumanReadableSizeAttribute(): string
     {
         $bytes = $this->file_size;
         $units = ['B', 'KB', 'MB', 'GB'];

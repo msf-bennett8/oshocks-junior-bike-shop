@@ -22,7 +22,7 @@ class MessageController extends Controller
         }
 
         $messages = $conversation->messages()
-            ->with('sender')
+            ->with(['sender', 'attachments'])
             ->orderBy('created_at', 'desc')
             ->cursorPaginate(50);
 

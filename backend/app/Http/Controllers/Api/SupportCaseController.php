@@ -210,33 +210,15 @@ class SupportCaseController extends Controller
             ], $request->has('attachment') ? ['attachment' => $request->attachment] : []),
             ]);
 
-            // ─── HANDLE ATTACHMENT UPLOAD ───
-            $attachmentRecord = null;
+            // ─── HANDLE ATTACHMENT UPLOAD (deferred — will create after message exists) ───
+            $attachmentUploadResult = null;
             if ($request->hasFile('attachment_file')) {
                 try {
                     $uploadService = app(\App\Services\AttachmentUploadService::class);
-                    $attachmentResult = $uploadService->uploadCaseAttachment(
+                    $attachmentUploadResult = $uploadService->uploadCaseAttachment(
                         $request->file('attachment_file'),
                         $supportCase->case_id
                     );
-
-                    if ($attachmentResult['success']) {
-                        $attachmentRecord = \App\Models\MessageAttachment::create([
-                            'message_id' => null,
-                            'file_name' => $attachmentResult['original_name'],
-                            'file_path' => $attachmentResult['secure_url'],
-                            'file_type' => $attachmentResult['resource_type'] === 'image' ? 'image' : 'document',
-                            'mime_type' => $attachmentResult['mime_type'],
-                            'file_size' => $attachmentResult['file_size'],
-                            'cloudinary_public_id' => $attachmentResult['public_id'],
-                            'cloudinary_secure_url' => $attachmentResult['secure_url'],
-                            'cloudinary_resource_type' => $attachmentResult['resource_type'],
-                            'original_name' => $attachmentResult['original_name'],
-                            'width' => $attachmentResult['width'],
-                            'height' => $attachmentResult['height'],
-                            'folder_path' => $attachmentResult['folder_path'],
-                        ]);
-                    }
                 } catch (\Exception $e) {
                     \Log::warning('Attachment upload failed during support case creation', [
                         'case_id' => $supportCase->case_id,
@@ -270,7 +252,7 @@ class SupportCaseController extends Controller
             $initialMessage = null;
             if ($request->description) {
                 $messageBody = "Subject: {$request->subject}\n" .
-                    "Date: " . now()->format('M j, Y') . "\n" .
+                    "Date: " . now()->format('F j, Y') . "\n" .
                     "Description:\n{$request->description}";
 
                 $initialMessage = Message::create([
@@ -290,9 +272,23 @@ class SupportCaseController extends Controller
                     ]),
                 ]);
 
-                // Link attachment to initial message
-                if ($attachmentRecord) {
-                    $attachmentRecord->update(['message_id' => $initialMessage->id]);
+                // Create attachment record NOW that we have a valid message_id
+                if ($attachmentUploadResult && $attachmentUploadResult['success']) {
+                    $attachmentRecord = \App\Models\MessageAttachment::create([
+                        'message_id' => $initialMessage->id,
+                        'file_name' => $attachmentUploadResult['original_name'],
+                        'file_path' => $attachmentUploadResult['secure_url'],
+                        'file_type' => $attachmentUploadResult['resource_type'] === 'image' ? 'image' : 'document',
+                        'mime_type' => $attachmentUploadResult['mime_type'],
+                        'file_size' => $attachmentUploadResult['file_size'],
+                        'cloudinary_public_id' => $attachmentUploadResult['public_id'],
+                        'cloudinary_secure_url' => $attachmentUploadResult['secure_url'],
+                        'cloudinary_resource_type' => $attachmentUploadResult['resource_type'],
+                        'original_name' => $attachmentUploadResult['original_name'],
+                        'width' => $attachmentUploadResult['width'],
+                        'height' => $attachmentUploadResult['height'],
+                        'folder_path' => $attachmentUploadResult['folder_path'],
+                    ]);
                     $initialMessage->load('attachments');
                 }
             }
@@ -319,7 +315,7 @@ class SupportCaseController extends Controller
                     'conversation' => $conversation->fresh(['participants', 'messages.sender', 'messages.attachments', 'messages.supportCase']),
                     'support_case' => $supportCase->fresh(['tags', 'caseMessages']),
                     'initial_message' => $initialMessage?->load('attachments'),
-                    'attachment' => $attachmentRecord,
+                    'attachment' => $attachmentRecord ?? null,
                 ],
                 'case_id' => $supportCase->case_id,
             ], 201);
