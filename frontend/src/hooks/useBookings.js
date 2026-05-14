@@ -189,6 +189,17 @@ export const useBookings = () => {
     }
   }, []);
 
+  /** Fetch booking stats for inbox tabs */
+  const fetchStats = useCallback(async () => {
+    if (!user) return;
+    try {
+      const res = await bookingService.getStats();
+      return { success: true, data: res.data?.data || {} };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.message };
+    }
+  }, [user]);
+
   // ─── Scheduled Deletion (super admin only) ───
 
   /** Fetch bookings scheduled for deletion */
@@ -263,6 +274,7 @@ export const useBookings = () => {
     scheduleDelete,
     restoreFromScheduled,
     permanentDelete,
+    fetchStats,
   };
 };
 

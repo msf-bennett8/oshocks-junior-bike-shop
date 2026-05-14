@@ -518,31 +518,47 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
         Route::post('/impersonate/stop', [\App\Http\Controllers\Api\SuperAdminController::class, 'stopImpersonation']);
     });
 
-    // ============================================================================
-    // PHASE 10: BUSINESS OPERATIONS (Main Protected Group)
-    // ============================================================================
+        // ============================================================================
+        // PHASE 10: BUSINESS OPERATIONS (Main Protected Group)
+        // ============================================================================
 
-    // Service Bookings (Phase 10 - Hybrid Conversational)
-    Route::prefix('service-bookings')->group(function () {
-        Route::post('/', [ServiceBookingController::class, 'store']); // Guest + auth (handled in controller)
-        Route::get('/', [ServiceBookingController::class, 'index']);
-        Route::get('/my-bookings', [ServiceBookingController::class, 'myBookings']);
-        Route::get('/sellers', [ServiceBookingController::class, 'availableSellers']);
-        Route::get('/{caseId}', [ServiceBookingController::class, 'show']);
-        Route::post('/{caseId}/confirm', [ServiceBookingController::class, 'confirm']);
-        Route::post('/{caseId}/reschedule', [ServiceBookingController::class, 'reschedule']);
-        Route::post('/{caseId}/complete', [ServiceBookingController::class, 'complete']);
-        Route::post('/{caseId}/cancel', [ServiceBookingController::class, 'cancel']);
-        Route::post('/{id}/no-show', [\App\Http\Controllers\Api\ServiceBookingController::class, 'markNoShow']);
+        // Service Bookings (Phase 10 - Hybrid Conversational)
+        Route::prefix('service-bookings')->group(function () {
+            Route::post('/', [ServiceBookingController::class, 'store']); // Guest + auth (handled in controller)
+            Route::get('/', [ServiceBookingController::class, 'index']);
+            Route::get('/stats', [ServiceBookingController::class, 'stats']);
+            Route::get('/my-bookings', [ServiceBookingController::class, 'myBookings']);
+            Route::get('/sellers', [ServiceBookingController::class, 'availableSellers']);
 
-        // ─── Appointment Notes & History (New) ───
-        Route::get('/{caseId}/notes', [ServiceBookingController::class, 'getNotes']);
-        Route::post('/{caseId}/notes', [ServiceBookingController::class, 'addNote']);
-        Route::get('/{caseId}/history', [ServiceBookingController::class, 'getHistory']);
-        Route::get('/user/{userId}/all', [ServiceBookingController::class, 'getUserAppointments']);
-    });
+            // ─── Scheduled Deletion (super admin only) ───
+            // MUST come before /{caseId} catch-all!
+            Route::get('/scheduled', [\App\Http\Controllers\Api\ServiceBookingController::class, 'scheduled'])->middleware('role:super_admin');
+            Route::post('/{id}/schedule', [\App\Http\Controllers\Api\ServiceBookingController::class, 'scheduleForDeletion'])->middleware('role:super_admin');
+            Route::post('/{id}/restore', [\App\Http\Controllers\Api\ServiceBookingController::class, 'restoreFromScheduled'])->middleware('role:super_admin');
+            Route::delete('/{id}/permanent', [\App\Http\Controllers\Api\ServiceBookingController::class, 'permanentDelete'])->middleware('role:super_admin');
 
-    // Reviews (User actions - already defined above, but helpful votes here)
+            Route::get('/{caseId}', [ServiceBookingController::class, 'show']);
+            Route::post('/{caseId}/confirm', [ServiceBookingController::class, 'confirm']);
+            Route::post('/{caseId}/reschedule', [ServiceBookingController::class, 'reschedule']);
+            Route::post('/{caseId}/complete', [ServiceBookingController::class, 'complete']);
+            Route::post('/{caseId}/cancel', [ServiceBookingController::class, 'cancel']);
+            Route::post('/{id}/no-show', [\App\Http\Controllers\Api\ServiceBookingController::class, 'markNoShow']);
+
+            // ─── Appointment Notes & History (New) ───
+            Route::get('/{caseId}/notes', [ServiceBookingController::class, 'getNotes']);
+            Route::post('/{caseId}/notes', [ServiceBookingController::class, 'addNote']);
+            Route::get('/{caseId}/history', [ServiceBookingController::class, 'getHistory']);
+            Route::get('/user/{userId}/all', [ServiceBookingController::class, 'getUserAppointments']);
+        });
+
+        // Contact Inquiries (Phase 10 - Hybrid Conversational)
+        Route::prefix('contact-inquiries')->group(function () {
+            Route::post('/', [ContactInquiryController::class, 'store']); // Guest + auth (handled in controller)
+            Route::get('/my-inquiries', [ContactInquiryController::class, 'myInquiries']);
+            Route::get('/queue', [ContactInquiryController::class, 'queue']);
+        });
+
+        // Reviews (User actions - already defined above, but helpful votes here)
     Route::post('/reviews/{id}/helpful', [\App\Http\Controllers\Api\ReviewController::class, 'markHelpful']);
 
     // Referrals
@@ -658,15 +674,6 @@ Route::prefix('v1/support-cases')->middleware(['auth:sanctum', 'audit'])->group(
     Route::post('/{caseId}/restore', [\App\Http\Controllers\Api\CaseThreadController::class, 'restore']);
 });
 
-    // ============================================================================
-    // SERVICE BOOKINGS & CONTACT INQUIRIES (Phase 10 - Hybrid Conversational)
-    // ============================================================================
-    Route::prefix('contact-inquiries')->group(function () {
-        Route::post('/', [ContactInquiryController::class, 'store']); // Guest + auth
-        Route::get('/my-inquiries', [ContactInquiryController::class, 'myInquiries']);
-        Route::get('/queue', [ContactInquiryController::class, 'queue']);
-    });
-
 // ============================================================================
 // CASE THREAD ROUTES (Hybrid Conversational Ticketing — New)
 // ============================================================================
@@ -709,14 +716,6 @@ Route::prefix('v1/support-queue')->middleware(['auth:sanctum', 'audit'])->group(
     Route::delete('/{caseId}/schedule', [\App\Http\Controllers\Api\SupportQueueController::class, 'scheduleForDeletion']);
     Route::post('/{caseId}/restore', [\App\Http\Controllers\Api\SupportQueueController::class, 'restoreFromScheduled']);
     Route::delete('/{caseId}/permanent', [\App\Http\Controllers\Api\SupportQueueController::class, 'permanentDelete']);
-});
-
-// Service Bookings — Scheduled Deletion (super admin only)
-Route::middleware(['auth:sanctum'])->prefix('service-bookings')->group(function () {
-    Route::get('/scheduled', [\App\Http\Controllers\Api\ServiceBookingController::class, 'scheduled'])->middleware('role:super_admin');
-    Route::post('/{id}/schedule', [\App\Http\Controllers\Api\ServiceBookingController::class, 'scheduleForDeletion'])->middleware('role:super_admin');
-    Route::post('/{id}/restore', [\App\Http\Controllers\Api\ServiceBookingController::class, 'restoreFromScheduled'])->middleware('role:super_admin');
-    Route::delete('/{id}/permanent', [\App\Http\Controllers\Api\ServiceBookingController::class, 'permanentDelete'])->middleware('role:super_admin');
 });
 
 // Super Admin escalation review

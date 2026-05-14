@@ -155,14 +155,12 @@ const SupportInboxPage = () => {
     setActionLoading(true);
     try {
       await claimCase(caseId);
+      setShowDetailDrawer(false); // CLOSE PANEL
+      setSelectedCase(null);      // CLEAR SELECTION
       await loadData();
-      // Refresh selected case if open
-      if (selectedCase?.case_id === caseId) {
-        const refreshed = await supportCaseService.getCase(caseId);
-        setSelectedCase(refreshed.data.data);
-      }
     } catch (err) {
       console.error('Claim failed:', err);
+      alert(err.response?.data?.message || 'Failed to claim case');
     } finally {
       setActionLoading(false);
     }
@@ -170,18 +168,21 @@ const SupportInboxPage = () => {
 
   const handleResolve = async (caseId) => {
     if (!resolutionNotes.trim()) return;
+    if (resolutionNotes.trim().length < 10) {
+      alert('Resolution notes must be at least 10 characters.');
+      return;
+    }
     setActionLoading(true);
     try {
       await resolveCase(caseId, resolutionNotes);
       setShowResolveModal(false);
       setResolutionNotes('');
+      setShowDetailDrawer(false); // CLOSE PANEL
+      setSelectedCase(null);      // CLEAR SELECTION
       await loadData();
-      if (selectedCase?.case_id === caseId) {
-        const refreshed = await supportCaseService.getCase(caseId);
-        setSelectedCase(refreshed.data.data);
-      }
     } catch (err) {
       console.error('Resolve failed:', err);
+      alert(err.response?.data?.message || 'Failed to resolve case');
     } finally {
       setActionLoading(false);
     }
@@ -197,13 +198,12 @@ const SupportInboxPage = () => {
       await escalateCase(caseId, escalationReason);
       setShowEscalateModal(false);
       setEscalationReason('');
+      setShowDetailDrawer(false); // CLOSE PANEL
+      setSelectedCase(null);      // CLEAR SELECTION
       await loadData();
-      if (selectedCase?.case_id === caseId) {
-        const refreshed = await supportCaseService.getCase(caseId);
-        setSelectedCase(refreshed.data.data);
-      }
     } catch (err) {
       console.error('Escalation failed:', err);
+      alert(err.response?.data?.message || 'Failed to escalate case');
     } finally {
       setActionLoading(false);
     }
@@ -213,13 +213,12 @@ const SupportInboxPage = () => {
     setActionLoading(true);
     try {
       await closeCase(caseId);
+      setShowDetailDrawer(false); // CLOSE PANEL
+      setSelectedCase(null);      // CLEAR SELECTION
       await loadData();
-      if (selectedCase?.case_id === caseId) {
-        const refreshed = await supportCaseService.getCase(caseId);
-        setSelectedCase(refreshed.data.data);
-      }
     } catch (err) {
       console.error('Close failed:', err);
+      alert(err.response?.data?.message || 'Failed to close case');
     } finally {
       setActionLoading(false);
     }
@@ -281,13 +280,12 @@ const SupportInboxPage = () => {
       await reopenCase(caseId, reopenReason);
       setShowReopenModal(false);
       setReopenReason('');
+      setShowDetailDrawer(false); // CLOSE PANEL
+      setSelectedCase(null);      // CLEAR SELECTION
       await loadData();
-      if (selectedCase?.case_id === caseId) {
-        const refreshed = await supportCaseService.getCase(caseId);
-        setSelectedCase(refreshed.data.data);
-      }
     } catch (err) {
       console.error('Reopen failed:', err);
+      alert(err.response?.data?.message || 'Failed to reopen case');
     } finally {
       setActionLoading(false);
     }
@@ -708,10 +706,31 @@ const SupportInboxPage = () => {
             <textarea
               value={resolutionNotes}
               onChange={(e) => setResolutionNotes(e.target.value)}
-              placeholder="Describe how this case was resolved..."
+              placeholder="Describe how this case was resolved (min 10 characters)..."
               rows={4}
-              className="w-full px-4 py-3 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none mb-4"
+              className={`w-full px-4 py-3 bg-gray-100 rounded-xl text-sm focus:outline-none focus:ring-2 resize-none mb-1 ${
+                resolutionNotes.length > 0 && resolutionNotes.trim().length < 10
+                  ? 'focus:ring-red-500 border-red-300'
+                  : 'focus:ring-green-500'
+              }`}
             />
+            <div className="flex items-center justify-between mb-4">
+              <span className={`text-xs ${
+                resolutionNotes.length > 0 && resolutionNotes.trim().length < 10
+                  ? 'text-red-500 font-medium'
+                  : 'text-gray-400'
+              }`}>
+                {resolutionNotes.length > 0 && resolutionNotes.trim().length < 10
+                  ? `Minimum 10 characters required (${resolutionNotes.trim().length}/10)`
+                  : `${resolutionNotes.trim().length} characters`
+                }
+              </span>
+              {resolutionNotes.trim().length >= 10 && (
+                <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                  <Check className="w-3 h-3" /> Ready to resolve
+                </span>
+              )}
+            </div>
             <div className="flex gap-3">
               <button
                 onClick={() => { setShowResolveModal(false); setResolutionNotes(''); }}
@@ -721,7 +740,7 @@ const SupportInboxPage = () => {
               </button>
               <button
                 onClick={() => handleResolve(selectedCase.case_id)}
-                disabled={!resolutionNotes.trim() || actionLoading}
+                disabled={!resolutionNotes.trim() || resolutionNotes.trim().length < 10 || actionLoading}
                 className="flex-1 py-2.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
                 {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}

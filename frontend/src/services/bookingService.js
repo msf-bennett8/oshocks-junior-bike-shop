@@ -51,6 +51,9 @@ const bookingService = {
   // ─── User Appointments (for History tab) ───
   getUserAppointments: (userId) => api.get(`/service-bookings/user/${userId}/all`),
 
+  // ─── Stats ───
+  getStats: () => api.get('/service-bookings/stats'),
+
   // ─── Scheduled Deletion (super admin only) ───
   getScheduled: (params = {}) => api.get('/service-bookings/scheduled', { params }),
   scheduleDelete: (bookingId, reason = '') => api.post(`/service-bookings/${bookingId}/schedule`, { reason }),

@@ -103,6 +103,11 @@ class ServiceBookingController extends Controller
             $query->where('cancellation_request_status', $request->input('cancellation_status'));
         }
 
+        // Exclude scheduled-for-deletion from normal views unless explicitly requested
+        if (!$request->has('include_scheduled')) {
+            $query->whereNull('scheduled_for_deletion_at');
+        }
+
         // Date range
         if ($request->has('from_date')) {
             $query->whereDate('requested_date', '>=', $request->input('from_date'));
@@ -117,6 +122,55 @@ class ServiceBookingController extends Controller
         return response()->json([
             'success' => true,
             'data' => $bookings,
+        ]);
+    }
+
+    /**
+     * Get booking stats for inbox tabs
+     * GET /api/v1/service-bookings/stats
+     */
+    public function stats(Request $request): JsonResponse
+    {
+        $user = auth()->user();
+
+        // Base query with same role-based filtering as index()
+        $baseQuery = ServiceBooking::query();
+
+        if ($user->role === 'seller') {
+            $sellerProfile = $user->sellerProfile;
+            if ($sellerProfile) {
+                $baseQuery->where('seller_id', $sellerProfile->id);
+            }
+        } elseif (!in_array($user->role, ['admin', 'super_admin', 'support_agent'])) {
+            $baseQuery->whereHas('supportCase', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        }
+
+        // Count by status
+        $statuses = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'];
+        $counts = [];
+        foreach ($statuses as $status) {
+            $counts[$status] = (clone $baseQuery)->where('status', $status)->whereNull('scheduled_for_deletion_at')->count();
+        }
+
+        // Pending cancellation requests
+        $counts['pending_review'] = (clone $baseQuery)
+            ->where('cancellation_request_status', 'pending_review')
+            ->whereNull('scheduled_for_deletion_at')
+            ->count();
+
+        // Scheduled for deletion (super admin only)
+        $counts['scheduled'] = $user->hasSuperAdminAccess()
+            ? (clone $baseQuery)->whereNotNull('scheduled_for_deletion_at')->count()
+            : 0;
+
+        // Total active (not scheduled for deletion)
+        $counts['all'] = (clone $baseQuery)->whereNull('scheduled_for_deletion_at')->count();
+
+        return response()->json([
+            'success' => true,
+            'data' => $counts,
         ]);
     }
 

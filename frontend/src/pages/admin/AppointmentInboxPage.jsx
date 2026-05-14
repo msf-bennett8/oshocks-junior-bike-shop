@@ -27,11 +27,13 @@ const AppointmentInboxPage = () => {
     scheduleDelete,
     restoreFromScheduled,
     permanentDelete,
+    fetchStats,
   } = useBookings();
 
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [loadAll, setLoadAll] = useState(false);
+  const [stats, setStats] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [paginationMeta, setPaginationMeta] = useState(null);
@@ -69,7 +71,16 @@ const AppointmentInboxPage = () => {
   useEffect(() => {
     loadData();
     fetchSellersList();
+    loadStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, loadAll, currentPage]);
+
+  const loadStats = async () => {
+    const res = await fetchStats();
+    if (res?.success) {
+      setStats(res.data);
+    }
+  };
 
   const loadData = useCallback(async () => {
     const params = {};
@@ -141,15 +152,15 @@ const AppointmentInboxPage = () => {
     return matchesFilter && matchesSearch;
   });
 
-  const statusCounts = {
-    all: bookings.length,
-    pending: bookings.filter(b => b.status === 'pending').length,
-    confirmed: bookings.filter(b => b.status === 'confirmed').length,
-    in_progress: bookings.filter(b => b.status === 'in_progress').length,
-    completed: bookings.filter(b => b.status === 'completed').length,
-    cancelled: bookings.filter(b => b.status === 'cancelled').length,
-    pending_review: bookings.filter(b => b.cancellation_request_status === 'pending_review').length,
-    scheduled: bookings.filter(b => b.scheduled_for_deletion_at).length,
+  const statusCounts = stats || {
+    all: 0,
+    pending: 0,
+    confirmed: 0,
+    in_progress: 0,
+    completed: 0,
+    cancelled: 0,
+    pending_review: 0,
+    scheduled: 0,
   };
 
   const handleConfirm = async () => {
@@ -167,6 +178,9 @@ const AppointmentInboxPage = () => {
       setShowConfirmModal(false);
       setSelectedBooking(null);
       setConfirmData({ confirmed_date: '', confirmed_time: '', staff_notes: '' });
+      setIsPanelOpen(false);   // CLOSE PANEL
+      setPanelBooking(null);   // CLEAR SELECTION
+      await loadData();
     }
   };
 
@@ -185,6 +199,9 @@ const AppointmentInboxPage = () => {
     setActionLoading(false);
     setShowCompleteModal(false);
     setCompleteTarget(null);
+    setIsPanelOpen(false);   // CLOSE PANEL
+    setPanelBooking(null);   // CLEAR SELECTION
+    await loadData();
   };
 
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -205,6 +222,9 @@ const AppointmentInboxPage = () => {
     setShowCancelModal(false);
     setCancelTarget(null);
     setCancelReason('');
+    setIsPanelOpen(false);   // CLOSE PANEL
+    setPanelBooking(null);   // CLEAR SELECTION
+    await loadData();
   };
 
     const handleApproveCancellation = async () => {
@@ -215,6 +235,9 @@ const AppointmentInboxPage = () => {
     if (res.success) {
       setShowApproveCancelModal(false);
       setSelectedBooking(null);
+      setIsPanelOpen(false);   // CLOSE PANEL
+      setPanelBooking(null);   // CLEAR SELECTION
+      await loadData();
     }
   };
 
@@ -227,6 +250,9 @@ const AppointmentInboxPage = () => {
       setShowDenyCancelModal(false);
       setSelectedBooking(null);
       setDenialReason('');
+      setIsPanelOpen(false);   // CLOSE PANEL
+      setPanelBooking(null);   // CLEAR SELECTION
+      await loadData();
     }
   };
 

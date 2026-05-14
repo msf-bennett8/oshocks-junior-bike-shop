@@ -24,8 +24,12 @@ class SupportQueueController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
         }
 
-        $query = SupportCase::with(['user', 'order', 'conversation'])
-                            ->whereIn('status', ['new', 'open', 'in_progress', 'pending_user', 'escalated', 'pending']);
+        $query = SupportCase::with(['user', 'order', 'conversation']);
+
+        // Default: exclude resolved/closed unless explicitly filtered
+        if (!$request->status || !in_array($request->status, ['resolved', 'closed'])) {
+            $query->whereIn('status', ['new', 'open', 'in_progress', 'pending_user', 'escalated', 'pending']);
+        }
         // Filter by case type queue
         if ($request->queue) {
             $query->where('case_type', $request->queue);
