@@ -25,6 +25,9 @@ class SupportCase extends Model
         'guest_name',
         'guest_email',
         'guest_phone',
+        'scheduled_for_deletion_at',
+        'deleted_by',
+        'deletion_reason',
         'case_type',
         'status',
         'priority',
@@ -119,6 +122,11 @@ class SupportCase extends Model
         return $this->belongsTo(User::class, 'closed_by');
     }
 
+    public function deletedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }
+
     /**
      * Messages belonging to this case
      */
@@ -153,6 +161,16 @@ class SupportCase extends Model
     public function scopeHistory($query)
     {
         return $query->whereIn('status', ['resolved', 'closed']);
+    }
+
+    public function scopeScheduledForDeletion($query)
+    {
+        return $query->whereNotNull('scheduled_for_deletion_at')->whereNull('deleted_at');
+    }
+
+    public function scopeNotScheduledForDeletion($query)
+    {
+        return $query->whereNull('scheduled_for_deletion_at');
     }
 
     // Accessors
@@ -253,6 +271,31 @@ class SupportCase extends Model
     public function canBeDeleted(): bool
     {
         return $this->status === 'new' && is_null($this->assigned_to);
+    }
+
+    /**
+     * Check if resolved case can be scheduled for deletion
+     */
+    public function canBeScheduledForDeletion(): bool
+    {
+        return in_array($this->status, ['resolved', 'closed']) && is_null($this->scheduled_for_deletion_at);
+    }
+
+    /**
+     * Get days remaining before permanent deletion
+     */
+    public function getDaysUntilDeletionAttribute(): ?int
+    {
+        if (!$this->scheduled_for_deletion_at) return null;
+        return max(0, now()->diffInDays($this->scheduled_for_deletion_at, false));
+    }
+
+    /**
+     * Check if case is in grace period (can be restored)
+     */
+    public function getIsInGracePeriodAttribute(): bool
+    {
+        return $this->scheduled_for_deletion_at !== null && $this->scheduled_for_deletion_at->isFuture();
     }
 
     /**

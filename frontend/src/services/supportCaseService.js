@@ -49,6 +49,12 @@ const supportCaseService = {
   restoreCase: (caseId) => api.post(`/support-cases/${caseId}/restore`),
   getUserCaseHistory: () => api.get('/user/case-history'),
 
+  // Scheduled deletion (super admin only)
+  getScheduled: (params = {}) => api.get('/support-queue/scheduled', { params }),
+  scheduleDelete: (caseId, reason = '') => api.delete(`/support-queue/${caseId}/schedule`, { data: { reason } }),
+  restoreFromScheduled: (caseId) => api.post(`/support-queue/${caseId}/restore`),
+  permanentDelete: (caseId) => api.delete(`/support-queue/${caseId}/permanent`),
+
   // ─── Service Bookings ───
   getBookings: (params = {}) => api.get('/service-bookings', { params }),
   getMyBookings: () => api.get('/service-bookings/my-bookings'),

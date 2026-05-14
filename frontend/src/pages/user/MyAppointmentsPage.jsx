@@ -29,6 +29,10 @@ const MyAppointmentsPage = () => {
 
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [loadAll, setLoadAll] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [paginationMeta, setPaginationMeta] = useState(null);
   const [expandedBooking, setExpandedBooking] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
@@ -41,8 +45,25 @@ const MyAppointmentsPage = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   useEffect(() => {
-    fetchMyBookings();
-  }, [fetchMyBookings]);
+    const params = {};
+    if (!loadAll) {
+      params.per_page = 25;
+      params.page = currentPage;
+    } else {
+      params.per_page = 'all';
+    }
+    if (filter !== 'all') {
+      params.status = filter;
+    }
+    fetchMyBookings(params).then(res => {
+      setPaginationMeta(res?.data);
+      setTotalPages(res?.data?.last_page || 1);
+    }).catch(() => {
+      setPaginationMeta(null);
+      setTotalPages(1);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, loadAll, currentPage]);
 
   const filteredBookings = myBookings.filter(b => {
     const matchesFilter = filter === 'all' || b.status === filter;
@@ -175,7 +196,7 @@ const MyAppointmentsPage = () => {
           ].map(stat => (
             <button
               key={stat.key}
-              onClick={() => setFilter(stat.key)}
+              onClick={() => { setFilter(stat.key); setCurrentPage(1); }}
               className={`p-3 rounded-xl text-left transition-all border ${
                 filter === stat.key
                   ? 'bg-white border-emerald-300 ring-2 ring-emerald-100 shadow-sm'
@@ -186,6 +207,20 @@ const MyAppointmentsPage = () => {
               <p className="text-xs font-medium text-gray-500">{stat.label}</p>
             </button>
           ))}
+        </div>
+
+        {/* Load All / Paginated Toggle */}
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={() => { setLoadAll(!loadAll); setCurrentPage(1); }}
+            className={`px-3 py-2 rounded-xl text-sm font-medium border transition-all ${
+              loadAll 
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {loadAll ? 'Paginated' : 'Load All'}
+          </button>
         </div>
 
         {/* Search */}
@@ -445,6 +480,30 @@ const MyAppointmentsPage = () => {
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {!loadAll && totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4 px-2">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-gray-500">
+            Page {currentPage} of {totalPages}
+            {paginationMeta?.total && ` (${paginationMeta.total} total)`}
+          </span>
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {/* Appointment Panel */}
       <AppointmentPanel

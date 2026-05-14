@@ -664,6 +664,142 @@ class ServiceBookingController extends Controller
     }
 
     /**
+     * Get bookings scheduled for deletion (super admin only)
+     * GET /api/v1/service-bookings/scheduled
+     */
+    public function scheduled(Request $request): JsonResponse
+    {
+        $user = auth()->user();
+        if (!$user->hasSuperAdminAccess()) {
+            return response()->json(['success' => false, 'message' => 'Super admin access required.'], 403);
+        }
+
+        $query = ServiceBooking::with(['supportCase', 'seller', 'assignedMechanic', 'deletedByUser'])
+            ->scheduledForDeletion()
+            ->orderBy('scheduled_for_deletion_at', 'asc');
+
+        $bookings = $request->per_page === 'all'
+            ? $query->get()
+            : $query->paginate($request->per_page ?? 25);
+
+        return response()->json([
+            'success' => true,
+            'data' => $bookings,
+        ]);
+    }
+
+    /**
+     * Schedule a completed/cancelled booking for deletion (super admin only)
+     * POST /api/v1/service-bookings/{id}/schedule
+     */
+    public function scheduleForDeletion(Request $request, string $id): JsonResponse
+    {
+        $user = auth()->user();
+        if (!$user->hasSuperAdminAccess()) {
+            return response()->json(['success' => false, 'message' => 'Super admin access required.'], 403);
+        }
+
+        $request->validate([
+            'reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $booking = ServiceBooking::findOrFail($id);
+
+        if (!$booking->canBeScheduledForDeletion()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only completed, cancelled, or no-show bookings can be scheduled for deletion.',
+            ], 422);
+        }
+
+        $booking->update([
+            'scheduled_for_deletion_at' => now()->addDays(30),
+            'deleted_by' => $user->id,
+            'deletion_reason' => $request->reason,
+        ]);
+
+        \Log::info('Booking scheduled for deletion', [
+            'booking_id' => $booking->id,
+            'scheduled_by' => $user->id,
+            'deletion_date' => $booking->scheduled_for_deletion_at,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Booking scheduled for deletion in 30 days.',
+            'data' => $booking->fresh(),
+        ]);
+    }
+
+    /**
+     * Restore a booking from scheduled deletion (super admin only)
+     * POST /api/v1/service-bookings/{id}/restore
+     */
+    public function restoreFromScheduled(string $id): JsonResponse
+    {
+        $user = auth()->user();
+        if (!$user->hasSuperAdminAccess()) {
+            return response()->json(['success' => false, 'message' => 'Super admin access required.'], 403);
+        }
+
+        $booking = ServiceBooking::findOrFail($id);
+
+        if (!$booking->scheduled_for_deletion_at) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Booking is not scheduled for deletion.',
+            ], 422);
+        }
+
+        $booking->update([
+            'scheduled_for_deletion_at' => null,
+            'deleted_by' => null,
+            'deletion_reason' => null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Booking restored from scheduled deletion.',
+            'data' => $booking->fresh(),
+        ]);
+    }
+
+    /**
+     * Permanently delete a scheduled booking (super admin only)
+     * DELETE /api/v1/service-bookings/{id}/permanent
+     */
+    public function permanentDelete(string $id): JsonResponse
+    {
+        $user = auth()->user();
+        if (!$user->hasSuperAdminAccess()) {
+            return response()->json(['success' => false, 'message' => 'Super admin access required.'], 403);
+        }
+
+        $booking = ServiceBooking::withTrashed()->findOrFail($id);
+
+        if (!$booking->scheduled_for_deletion_at) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Booking must be scheduled for deletion before permanent deletion.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($booking) {
+            // Delete appointment notes
+            $booking->appointmentNotes()->delete();
+            // Delete appointment history
+            $booking->appointmentHistory()->delete();
+            // Force delete the booking
+            $booking->forceDelete();
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Booking permanently deleted.',
+        ]);
+    }
+
+    /**
      * Mark booking as no-show (staff only)
      * POST /api/v1/service-bookings/{id}/no-show
      */

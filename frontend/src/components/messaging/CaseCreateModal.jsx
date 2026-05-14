@@ -252,7 +252,7 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 animate-fade-in max-h-[85vh] flex flex-col">
         <div className="flex items-center justify-between mb-5">
           <h3 className="font-bold text-gray-900 text-lg">New Support Case</h3>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
@@ -260,7 +260,7 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto flex-1 pr-1">
           {/* Case Type */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Case Type *</label>

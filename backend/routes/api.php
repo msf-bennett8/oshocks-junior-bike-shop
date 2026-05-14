@@ -703,6 +703,20 @@ Route::prefix('v1/support-queue')->middleware(['auth:sanctum', 'audit'])->group(
     Route::post('/{caseId}/restore', [\App\Http\Controllers\Api\SupportQueueController::class, 'restore']);
     Route::get('/my-full-history', [\App\Http\Controllers\Api\SupportQueueController::class, 'getMyFullHistory']);
     Route::get('/history', [\App\Http\Controllers\Api\SupportQueueController::class, 'getHistory']);
+
+    // Scheduled deletion (super admin only)
+    Route::get('/scheduled', [\App\Http\Controllers\Api\SupportQueueController::class, 'scheduled']);
+    Route::delete('/{caseId}/schedule', [\App\Http\Controllers\Api\SupportQueueController::class, 'scheduleForDeletion']);
+    Route::post('/{caseId}/restore', [\App\Http\Controllers\Api\SupportQueueController::class, 'restoreFromScheduled']);
+    Route::delete('/{caseId}/permanent', [\App\Http\Controllers\Api\SupportQueueController::class, 'permanentDelete']);
+});
+
+// Service Bookings — Scheduled Deletion (super admin only)
+Route::middleware(['auth:sanctum'])->prefix('service-bookings')->group(function () {
+    Route::get('/scheduled', [\App\Http\Controllers\Api\ServiceBookingController::class, 'scheduled'])->middleware('role:super_admin');
+    Route::post('/{id}/schedule', [\App\Http\Controllers\Api\ServiceBookingController::class, 'scheduleForDeletion'])->middleware('role:super_admin');
+    Route::post('/{id}/restore', [\App\Http\Controllers\Api\ServiceBookingController::class, 'restoreFromScheduled'])->middleware('role:super_admin');
+    Route::delete('/{id}/permanent', [\App\Http\Controllers\Api\ServiceBookingController::class, 'permanentDelete'])->middleware('role:super_admin');
 });
 
 // Super Admin escalation review

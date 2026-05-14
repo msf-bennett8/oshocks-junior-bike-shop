@@ -6,19 +6,19 @@ import api from '../../services/api';
 import { CaseStatusChip } from '../../components/messaging/CaseStatusChip';
 import { SystemMessage } from '../../components/messaging/SystemMessage';
 import {
-  Inbox, Users, AlertTriangle, CheckCircle, Clock, TrendingUp,
+  Inbox, AlertTriangle, CheckCircle, Clock, TrendingUp,
   Search, Filter, RefreshCw, ChevronDown, Eye, UserCheck,
-  ArrowRightCircle, XCircle, MessageSquare, Package, Mail,
-  AlertCircle, Truck, Loader2, Copy, Check, ClipboardCopy,
-  Send, ArrowLeft, Phone, Video, MoreVertical, Paperclip, Smile,
-  X, Reply, Pencil, Trash2, CheckCheck, Headphones, ShoppingBag,
-  Pin, Archive, Star, History, StickyNote, User, Calendar,
-  DollarSign, CreditCard, MapPin, FileText, Tag, ChevronRight,
-  RotateCcw, Lock, Unlock, Plus, Save, CornerUpLeft,
+  XCircle, MessageSquare, Package,
+  AlertCircle, Truck, Loader2, Copy, Check,
+  Send, Phone,
+  X, Trash2, CheckCheck, Headphones, ShoppingBag,
+  History, StickyNote, User, Calendar,
+  CreditCard, FileText, Tag, ChevronRight,
+  RotateCcw, Lock, Unlock, Plus,
   Wrench, Cpu, HelpCircle
 } from 'lucide-react';
 
-const TABS = [
+const TABS_BASE = [
   { key: 'unclaimed', label: 'Unclaimed', icon: Inbox, color: 'text-gray-600' },
   { key: 'my-cases', label: 'My Cases', icon: UserCheck, color: 'text-blue-600' },
   { key: 'escalated', label: 'Escalated', icon: AlertTriangle, color: 'text-red-600' },
@@ -26,6 +26,8 @@ const TABS = [
   { key: 'all', label: 'All Active', icon: Clock, color: 'text-amber-600' },
   { key: 'history', label: 'History', icon: History, color: 'text-slate-600' },
 ];
+
+const TAB_SCHEDULED = { key: 'scheduled', label: 'Scheduled', icon: Trash2, color: 'text-red-400' };
 
 const TYPE_FILTERS = [
   { key: 'all', label: 'All Types', icon: MessageSquare },
@@ -56,11 +58,19 @@ const SupportInboxPage = () => {
     reopenCase,
     escalateCase,
     fetchHistory,
+    fetchScheduled,
+    scheduleDelete,
+    restoreFromScheduled,
+    permanentDelete,
   } = useSupportCases();
 
   const [activeTab, setActiveTab] = useState('unclaimed');
   const [typeFilter, setTypeFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loadAll, setLoadAll] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [paginationMeta, setPaginationMeta] = useState(null);
   const [selectedCase, setSelectedCase] = useState(null);
   const [showDetailDrawer, setShowDetailDrawer] = useState(false);
   const [showResolveModal, setShowResolveModal] = useState(false);
@@ -72,24 +82,62 @@ const SupportInboxPage = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    variant: 'danger',
+    onConfirm: null,
+  });
+
+  const openConfirm = (config) => {
+    setConfirmModal({ ...config, isOpen: true });
+  };
+
+  const closeConfirm = () => {
+    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+  };
+
   const canHandleCases = user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'support_agent';
 
   const loadData = useCallback(async () => {
     const params = {};
+    if (!loadAll) {
+      params.per_page = 25;
+      params.page = currentPage;
+    } else {
+      params.per_page = 'all';
+    }
+    
     if (activeTab === 'unclaimed') params.unclaimed = true;
     if (activeTab === 'my-cases') params.mine = true;
     if (activeTab === 'escalated') params.status = 'escalated';
     if (activeTab === 'resolved') params.status = 'resolved';
     if (activeTab === 'history') {
-      await fetchHistory({ case_type: typeFilter !== 'all' ? typeFilter : undefined });
+      if (typeFilter !== 'all') params.case_type = typeFilter;
+      const res = await fetchHistory(params);
+      setPaginationMeta(res?.data);
+      setTotalPages(res?.data?.last_page || 1);
+      await fetchStats();
+      return;
+    }
+    if (activeTab === 'scheduled') {
+      const res = await fetchScheduled(params);
+      setPaginationMeta(res?.data);
+      setTotalPages(res?.data?.last_page || 1);
       await fetchStats();
       return;
     }
     if (typeFilter !== 'all') params.queue = typeFilter;
 
-    await fetchQueue(params);
+    const res = await fetchQueue(params);
+    setPaginationMeta(res?.data);
+    setTotalPages(res?.data?.last_page || 1);
     await fetchStats();
-  }, [activeTab, typeFilter, fetchQueue, fetchStats, fetchHistory]);
+  }, [activeTab, typeFilter, fetchQueue, fetchStats, fetchHistory, fetchScheduled, loadAll, currentPage]);
 
   useEffect(() => {
     if (canHandleCases) {
@@ -177,6 +225,52 @@ const SupportInboxPage = () => {
     }
   };
 
+  const handleScheduleDelete = async (caseId) => {
+    openConfirm({
+      title: 'Schedule for Deletion',
+      message: 'This case will be scheduled for permanent deletion in 30 days. It can be restored during the grace period.',
+      confirmText: 'Schedule Delete',
+      cancelText: 'Cancel',
+      variant: 'warning',
+      onConfirm: async () => {
+        closeConfirm();
+        setActionLoading(true);
+        try {
+          await scheduleDelete(caseId, 'Manual scheduling by super admin');
+          await loadData();
+        } catch (err) {
+          console.error('Schedule delete failed:', err);
+          alert(err.response?.data?.message || 'Failed to schedule deletion');
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
+  };
+
+  const handleRestore = async (caseId) => {
+    openConfirm({
+      title: 'Restore Case',
+      message: 'Restore this case from scheduled deletion? It will return to its previous resolved/closed status.',
+      confirmText: 'Restore',
+      cancelText: 'Cancel',
+      variant: 'success',
+      onConfirm: async () => {
+        closeConfirm();
+        setActionLoading(true);
+        try {
+          await restoreFromScheduled(caseId);
+          await loadData();
+        } catch (err) {
+          console.error('Restore failed:', err);
+          alert(err.response?.data?.message || 'Failed to restore case');
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
+  };
+
   const handleReopen = async (caseId) => {
     if (!reopenReason.trim()) {
       alert('Please provide a reason for reopening');
@@ -197,6 +291,29 @@ const SupportInboxPage = () => {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handlePermanentDelete = async (caseId) => {
+    openConfirm({
+      title: 'Permanent Deletion',
+      message: 'This action CANNOT be undone. All messages, notes, and history for this case will be lost forever.',
+      confirmText: 'Delete Forever',
+      cancelText: 'Cancel',
+      variant: 'danger',
+      onConfirm: async () => {
+        closeConfirm();
+        setActionLoading(true);
+        try {
+          await permanentDelete(caseId);
+          await loadData();
+        } catch (err) {
+          console.error('Permanent delete failed:', err);
+          alert(err.response?.data?.message || 'Failed to permanently delete');
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
   };
 
   const openCaseDetail = async (supportCase) => {
@@ -286,10 +403,10 @@ const SupportInboxPage = () => {
         {/* Tabs & Filters */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-gray-200 overflow-x-auto">
-            {TABS.map(tab => (
+            {TABS_BASE.map(tab => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => { setActiveTab(tab.key); setCurrentPage(1); }}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
                   activeTab === tab.key
                     ? 'bg-gray-900 text-white shadow-sm'
@@ -300,9 +417,40 @@ const SupportInboxPage = () => {
                 {tab.label}
               </button>
             ))}
+            {user?.role === 'super_admin' && (
+              <button
+                key={TAB_SCHEDULED.key}
+                onClick={() => { setActiveTab(TAB_SCHEDULED.key); setCurrentPage(1); }}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                  activeTab === TAB_SCHEDULED.key
+                    ? 'bg-red-600 text-white shadow-sm'
+                    : 'text-red-400 hover:bg-red-50'
+                }`}
+              >
+                <TAB_SCHEDULED.icon className={`w-4 h-4 ${activeTab === TAB_SCHEDULED.key ? 'text-white' : TAB_SCHEDULED.color}`} />
+                {TAB_SCHEDULED.label}
+                {stats?.scheduled_count > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 bg-red-100 text-red-700 text-xs rounded-full font-bold">
+                    {stats.scheduled_count}
+                  </span>
+                )}
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => { setLoadAll(!loadAll); setCurrentPage(1); }}
+              className={`px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${
+                loadAll 
+                  ? 'bg-orange-50 border-orange-200 text-orange-700' 
+                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+              title={loadAll ? "Switch to paginated view" : "Load all cases at once"}
+            >
+              {loadAll ? 'Paginated' : 'Load All'}
+            </button>
+
             <div className="relative">
               <select
                 value={typeFilter}
@@ -331,7 +479,7 @@ const SupportInboxPage = () => {
         </div>
 
         {/* Cases Table */}
-        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className={`bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm ${loadAll ? 'max-h-[70vh] overflow-y-auto' : ''}`}>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -433,33 +581,72 @@ const SupportInboxPage = () => {
                           >
                             <Eye className="w-4 h-4 text-gray-600" />
                           </button>
-                          {supportCase.status === 'new' && !supportCase.assigned_to && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleClaim(supportCase.case_id); }}
-                              disabled={actionLoading}
-                              className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors"
-                              title="Claim case"
-                            >
-                              <UserCheck className="w-4 h-4 text-blue-600" />
-                            </button>
+                          
+                          {/* Scheduled Deletion Tab Actions (Super Admin Only) */}
+                          {activeTab === 'scheduled' && user?.role === 'super_admin' && (
+                            <>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleRestore(supportCase.case_id); }}
+                                disabled={actionLoading}
+                                className="p-1.5 hover:bg-green-100 rounded-lg transition-colors"
+                                title="Restore case"
+                              >
+                                <RotateCcw className="w-4 h-4 text-green-600" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handlePermanentDelete(supportCase.case_id); }}
+                                disabled={actionLoading}
+                                className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
+                                title="Permanently delete"
+                              >
+                                <Trash2 className="w-4 h-4 text-red-600" />
+                              </button>
+                            </>
                           )}
-                          {['open', 'in_progress', 'pending_user'].includes(supportCase.status) && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setSelectedCase(supportCase); setShowResolveModal(true); }}
-                              className="p-1.5 hover:bg-green-100 rounded-lg transition-colors"
-                              title="Resolve"
-                            >
-                              <CheckCircle className="w-4 h-4 text-green-600" />
-                            </button>
-                          )}
-                          {supportCase.status !== 'escalated' && supportCase.status !== 'closed' && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setSelectedCase(supportCase); setShowEscalateModal(true); }}
-                              className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
-                              title="Escalate"
-                            >
-                              <AlertTriangle className="w-4 h-4 text-red-600" />
-                            </button>
+                          
+                          {/* Normal Tab Actions */}
+                          {activeTab !== 'scheduled' && (
+                            <>
+                              {supportCase.status === 'new' && !supportCase.assigned_to && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleClaim(supportCase.case_id); }}
+                                  disabled={actionLoading}
+                                  className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors"
+                                  title="Claim case"
+                                >
+                                  <UserCheck className="w-4 h-4 text-blue-600" />
+                                </button>
+                              )}
+                              {['open', 'in_progress', 'pending_user'].includes(supportCase.status) && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setSelectedCase(supportCase); setShowResolveModal(true); }}
+                                  className="p-1.5 hover:bg-green-100 rounded-lg transition-colors"
+                                  title="Resolve"
+                                >
+                                  <CheckCircle className="w-4 h-4 text-green-600" />
+                                </button>
+                              )}
+                              {supportCase.status !== 'escalated' && supportCase.status !== 'closed' && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setSelectedCase(supportCase); setShowEscalateModal(true); }}
+                                  className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
+                                  title="Escalate"
+                                >
+                                  <AlertTriangle className="w-4 h-4 text-red-600" />
+                                </button>
+                              )}
+                              {/* Super Admin: Schedule resolved/closed for deletion */}
+                              {user?.role === 'super_admin' && ['resolved', 'closed'].includes(supportCase.status) && !supportCase.scheduled_for_deletion_at && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleScheduleDelete(supportCase.case_id); }}
+                                  disabled={actionLoading}
+                                  className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
+                                  title="Schedule for deletion"
+                                >
+                                  <Trash2 className="w-4 h-4 text-red-400" />
+                                </button>
+                              )}
+                            </>
                           )}
                         </div>
                       </td>
@@ -470,6 +657,30 @@ const SupportInboxPage = () => {
             </table>
           </div>
         </div>
+
+        {/* Pagination Controls */}
+        {!loadAll && activeTab !== 'scheduled' && totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4 px-2">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-gray-500">
+              Page {currentPage} of {totalPages}
+              {paginationMeta?.total && ` (${paginationMeta.total} total)`}
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Detail Drawer */}
@@ -482,6 +693,8 @@ const SupportInboxPage = () => {
           onEscalate={() => { setShowEscalateModal(true); }}
           onCloseCase={() => handleClose(selectedCase.case_id)}
           onReopen={() => { setShowReopenModal(true); }}
+          onRestore={() => handleRestore(selectedCase.case_id)}
+          onPermanentDelete={() => handlePermanentDelete(selectedCase.case_id)}
           user={user}
         />
       )}
@@ -584,6 +797,18 @@ const SupportInboxPage = () => {
           </div>
         </div>
       )}
+
+      {/* Global Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={closeConfirm}
+        onConfirm={() => confirmModal.onConfirm?.()}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        cancelText={confirmModal.cancelText}
+        variant={confirmModal.variant}
+      />
     </div>
   );
 };
@@ -640,7 +865,7 @@ const PriorityBadge = ({ priority }) => {
 // ============================================================================
 // CASE DETAIL DRAWER — Enhanced with all tabs
 // ============================================================================
-const CaseDetailDrawer = ({ supportCase, onClose, onClaim, onResolve, onEscalate, onCloseCase, onReopen, user }) => {
+const CaseDetailDrawer = ({ supportCase, onClose, onClaim, onResolve, onEscalate, onCloseCase, onReopen, onRestore, onPermanentDelete, user }) => {
   const [activeTab, setActiveTab] = useState('details');
   const [caseData, setCaseData] = useState(supportCase);
   const [loading, setLoading] = useState(false);
@@ -708,7 +933,7 @@ const CaseDetailDrawer = ({ supportCase, onClose, onClaim, onResolve, onEscalate
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           {activeTab === 'details' && (
-            <DetailsTab caseData={caseData} isAgent={isAgent} isAssigned={isAssigned} onClaim={onClaim} onResolve={onResolve} onEscalate={onEscalate} onCloseCase={onCloseCase} onReopen={onReopen} />
+            <DetailsTab caseData={caseData} isAgent={isAgent} isAssigned={isAssigned} onClaim={onClaim} onResolve={onResolve} onEscalate={onEscalate} onCloseCase={onCloseCase} onReopen={onReopen} onRestore={onRestore} onPermanentDelete={onPermanentDelete} user={user} />
           )}
           {activeTab === 'conversation' && (
             <ConversationTab caseData={caseData} user={user} />
@@ -728,7 +953,7 @@ const CaseDetailDrawer = ({ supportCase, onClose, onClaim, onResolve, onEscalate
 // ============================================================================
 // DETAILS TAB
 // ============================================================================
-const DetailsTab = ({ caseData, isAgent, isAssigned, onClaim, onResolve, onEscalate, onCloseCase, onReopen }) => {
+const DetailsTab = ({ caseData, isAgent, isAssigned, onClaim, onResolve, onEscalate, onCloseCase, onReopen, onRestore, onPermanentDelete, user }) => {
   const [copiedField, setCopiedField] = useState(null);
 
   const copyToClipboard = (text, field) => {
@@ -760,6 +985,44 @@ const DetailsTab = ({ caseData, isAgent, isAssigned, onClaim, onResolve, onEscal
           <span className="font-mono">{caseData.case_id}<CopyButton text={caseData.case_id} field="case_id" /></span>
         } />
       </div>
+
+      {/* Scheduled Deletion Warning */}
+      {caseData.scheduled_for_deletion_at && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Trash2 className="w-4 h-4 text-red-600" />
+            <h4 className="text-sm font-semibold text-red-800">Scheduled for Deletion</h4>
+          </div>
+          <p className="text-xs text-red-700 mb-2">
+            This case is scheduled for permanent deletion on {new Date(caseData.scheduled_for_deletion_at).toLocaleDateString()}.
+          </p>
+          <div className="w-full bg-red-200 rounded-full h-2 mb-2">
+            <div 
+              className="bg-red-500 h-2 rounded-full transition-all"
+              style={{ width: `${Math.max(0, Math.min(100, (caseData.days_until_deletion / 30) * 100))}%` }}
+            />
+          </div>
+          <p className="text-xs text-red-600 font-medium">
+            {caseData.days_until_deletion} days remaining
+          </p>
+          {user?.role === 'super_admin' && (
+            <div className="flex gap-2 mt-3">
+              <button 
+                onClick={() => onRestore?.()}
+                className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 transition-colors flex items-center gap-1"
+              >
+                <RotateCcw className="w-3 h-3" /> Restore
+              </button>
+              <button 
+                onClick={() => onPermanentDelete?.()}
+                className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition-colors flex items-center gap-1"
+              >
+                <Trash2 className="w-3 h-3" /> Delete Now
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Subject & Description */}
       <div className="bg-gray-50 rounded-xl p-4 space-y-3">
@@ -1580,5 +1843,53 @@ const InfoCard = ({ label, value }) => (
     <div className="text-sm font-medium text-gray-900">{value}</div>
   </div>
 );
+
+// ============================================================================
+// CONFIRM MODAL — Replaces window.confirm()
+// ============================================================================
+const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = 'Confirm', cancelText = 'Cancel', variant = 'danger' }) => {
+  if (!isOpen) return null;
+
+  const variantStyles = {
+    danger: { bg: 'bg-red-600', hover: 'hover:bg-red-700', icon: AlertTriangle, ring: 'focus:ring-red-500' },
+    warning: { bg: 'bg-amber-600', hover: 'hover:bg-amber-700', icon: AlertTriangle, ring: 'focus:ring-amber-500' },
+    success: { bg: 'bg-green-600', hover: 'hover:bg-green-700', icon: CheckCircle, ring: 'focus:ring-green-500' },
+    neutral: { bg: 'bg-gray-600', hover: 'hover:bg-gray-700', icon: AlertCircle, ring: 'focus:ring-gray-500' },
+  };
+
+  const style = variantStyles[variant];
+  const Icon = style.icon;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-scale-in">
+        <div className="flex items-center gap-3 mb-4">
+          <div className={`w-10 h-10 rounded-full ${variant === 'danger' ? 'bg-red-100' : variant === 'warning' ? 'bg-amber-100' : 'bg-gray-100'} flex items-center justify-center`}>
+            <Icon className={`w-5 h-5 ${variant === 'danger' ? 'text-red-600' : variant === 'warning' ? 'text-amber-600' : 'text-gray-600'}`} />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+        </div>
+        
+        <p className="text-sm text-gray-600 mb-6 leading-relaxed">{message}</p>
+        
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+          >
+            {cancelText}
+          </button>
+          <button
+            onClick={onConfirm}
+            className={`flex-1 py-2.5 ${style.bg} text-white rounded-xl font-medium ${style.hover} transition-colors flex items-center justify-center gap-2`}
+          >
+            <Icon className="w-4 h-4" />
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default SupportInboxPage;

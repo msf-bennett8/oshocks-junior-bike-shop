@@ -530,7 +530,146 @@ class SupportQueueController extends Controller
     }
 
     /**
-     * Soft delete a case (admin or case creator only)
+     * Get cases scheduled for deletion (super admin only)
+     */
+    public function scheduled(Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        if (!$user->hasSuperAdminAccess()) {
+            return response()->json(['success' => false, 'message' => 'Super admin access required.'], 403);
+        }
+
+        $query = SupportCase::with(['user', 'assignedAgent', 'resolvedBy', 'deletedByUser'])
+            ->scheduledForDeletion()
+            ->orderBy('scheduled_for_deletion_at', 'asc');
+
+        $cases = $request->per_page === 'all'
+            ? $query->get()
+            : $query->paginate($request->per_page ?? 25);
+
+        return response()->json([
+            'success' => true,
+            'data' => $cases,
+        ]);
+    }
+
+    /**
+     * Schedule a resolved/closed case for deletion (super admin only)
+     */
+    public function scheduleForDeletion(Request $request, string $caseId): JsonResponse
+    {
+        $user = Auth::user();
+        if (!$user->hasSuperAdminAccess()) {
+            return response()->json(['success' => false, 'message' => 'Super admin access required.'], 403);
+        }
+
+        $request->validate([
+            'reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $case = SupportCase::findOrFail($caseId);
+
+        if (!$case->canBeScheduledForDeletion()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only resolved or closed cases can be scheduled for deletion.',
+            ], 422);
+        }
+
+        $case->update([
+            'scheduled_for_deletion_at' => now()->addDays(30),
+            'deleted_by' => $user->id,
+            'deletion_reason' => $request->reason,
+        ]);
+
+        // Log the scheduling
+        \Log::info('Case scheduled for deletion', [
+            'case_id' => $case->case_id,
+            'scheduled_by' => $user->id,
+            'deletion_date' => $case->scheduled_for_deletion_at,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Case scheduled for deletion in 30 days.',
+            'data' => $case->fresh(),
+        ]);
+    }
+
+    /**
+     * Restore a case from scheduled deletion (super admin only)
+     */
+    public function restoreFromScheduled(string $caseId): JsonResponse
+    {
+        $user = Auth::user();
+        if (!$user->hasSuperAdminAccess()) {
+            return response()->json(['success' => false, 'message' => 'Super admin access required.'], 403);
+        }
+
+        $case = SupportCase::findOrFail($caseId);
+
+        if (!$case->scheduled_for_deletion_at) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Case is not scheduled for deletion.',
+            ], 422);
+        }
+
+        $case->update([
+            'scheduled_for_deletion_at' => null,
+            'deleted_by' => null,
+            'deletion_reason' => null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Case restored from scheduled deletion.',
+            'data' => $case->fresh(),
+        ]);
+    }
+
+    /**
+     * Permanently delete a scheduled case (super admin only)
+     */
+    public function permanentDelete(string $caseId): JsonResponse
+    {
+        $user = Auth::user();
+        if (!$user->hasSuperAdminAccess()) {
+            return response()->json(['success' => false, 'message' => 'Super admin access required.'], 403);
+        }
+
+        $case = SupportCase::withTrashed()->findOrFail($caseId);
+
+        // Only allow permanent delete if scheduled for deletion
+        if (!$case->scheduled_for_deletion_at) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Case must be scheduled for deletion before permanent deletion.',
+            ], 422);
+        }
+
+        // Cascade delete related data
+        DB::transaction(function () use ($case) {
+            // Delete messages
+            $case->caseMessages()->delete();
+            // Delete notes
+            $case->notes()->delete();
+            // Delete history
+            $case->history()->delete();
+            // Delete tags
+            $case->tags()->delete();
+            // Force delete the case
+            $case->forceDelete();
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Case permanently deleted.',
+        ]);
+    }
+
+    /**
+     * Soft delete a case (admin or case creator only) — DEPRECATED: use scheduleForDeletion
      */
     public function destroy(string $caseId): JsonResponse
     {

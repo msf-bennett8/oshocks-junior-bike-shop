@@ -15,8 +15,8 @@ class ServiceBooking extends Model
     public $incrementing = false;
 
     protected $fillable = [
-        'id', // <-- ADD THIS (string booking ID, auto-generated)
-        'case_id', // nullable — null for standalone bookings, set for case-linked bookings
+        'id',
+        'case_id',
         'service_type',
         'service_description',
         'estimated_price',
@@ -27,6 +27,9 @@ class ServiceBooking extends Model
         'confirmed_time',
         'completed_date',
         'cancelled_date',
+        'scheduled_for_deletion_at',
+        'deleted_by',
+        'deletion_reason',
         'seller_id',
         'assigned_mechanic_id',
         'customer_name',
@@ -152,6 +155,48 @@ class ServiceBooking extends Model
     }
 
     /**
+     * Check if completed/cancelled booking can be scheduled for deletion
+     */
+    public function canBeScheduledForDeletion(): bool
+    {
+        return in_array($this->status, ['completed', 'cancelled', 'no_show'])
+            && is_null($this->scheduled_for_deletion_at);
+    }
+
+    /**
+     * Get days remaining before permanent deletion
+     */
+    public function getDaysUntilDeletionAttribute(): ?int
+    {
+        if (!$this->scheduled_for_deletion_at) return null;
+        return max(0, now()->diffInDays($this->scheduled_for_deletion_at, false));
+    }
+
+    /**
+     * Check if booking is in grace period (can be restored)
+     */
+    public function getIsInGracePeriodAttribute(): bool
+    {
+        return $this->scheduled_for_deletion_at !== null && $this->scheduled_for_deletion_at->isFuture();
+    }
+
+    /**
+     * Scope: Scheduled for deletion
+     */
+    public function scopeScheduledForDeletion($query)
+    {
+        return $query->whereNotNull('scheduled_for_deletion_at')->whereNull('deleted_at');
+    }
+
+    /**
+     * Scope: Not scheduled for deletion
+     */
+    public function scopeNotScheduledForDeletion($query)
+    {
+        return $query->whereNull('scheduled_for_deletion_at');
+    }
+
+    /**
      * User who requested cancellation
      */
     public function cancellationRequester()
@@ -195,6 +240,14 @@ class ServiceBooking extends Model
     public function appointmentHistory()
     {
         return $this->hasMany(AppointmentHistory::class, 'case_id', 'case_id')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * User who scheduled deletion
+     */
+    public function deletedByUser()
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 
     /**

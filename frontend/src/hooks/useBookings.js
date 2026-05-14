@@ -189,6 +189,58 @@ export const useBookings = () => {
     }
   }, []);
 
+  // ─── Scheduled Deletion (super admin only) ───
+
+  /** Fetch bookings scheduled for deletion */
+  const fetchScheduled = useCallback(async (params = {}) => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const res = await bookingService.getScheduled(params);
+      const data = res.data?.data?.data || res.data?.data || [];
+      setBookings(Array.isArray(data) ? data : []);
+      setError(null);
+      return res.data;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch scheduled bookings');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  /** Schedule booking for deletion (super admin) */
+  const scheduleDelete = useCallback(async (bookingId, reason = '') => {
+    try {
+      const res = await bookingService.scheduleDelete(bookingId, reason);
+      setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, ...res.data.data } : b));
+      return res.data;
+    } catch (err) {
+      throw err;
+    }
+  }, []);
+
+  /** Restore booking from scheduled deletion (super admin) */
+  const restoreFromScheduled = useCallback(async (bookingId) => {
+    try {
+      const res = await bookingService.restoreFromScheduled(bookingId);
+      setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, scheduled_for_deletion_at: null, deleted_by: null, deletion_reason: null } : b));
+      return res.data;
+    } catch (err) {
+      throw err;
+    }
+  }, []);
+
+  /** Permanently delete scheduled booking (super admin) */
+  const permanentDelete = useCallback(async (bookingId) => {
+    try {
+      await bookingService.permanentDelete(bookingId);
+      setBookings(prev => prev.filter(b => b.id !== bookingId));
+    } catch (err) {
+      throw err;
+    }
+  }, []);
+
   return {
     bookings,
     myBookings,
@@ -207,6 +259,10 @@ export const useBookings = () => {
     addNote,
     fetchHistory,
     fetchUserAppointments,
+    fetchScheduled,
+    scheduleDelete,
+    restoreFromScheduled,
+    permanentDelete,
   };
 };
 

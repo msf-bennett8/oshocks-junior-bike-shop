@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBookings } from '../../hooks/useBookings';
 import api from '../../services/api';
@@ -7,7 +7,8 @@ import {
   Calendar, Clock, Wrench, User, Phone, Mail, MapPin,
   CheckCircle, XCircle, RefreshCw, Loader2, Search,
   Filter, ChevronDown, ChevronUp, Eye, MessageSquare, Users,
-  AlertCircle, Copy, Check, DollarSign, MoreVertical
+  AlertCircle, Copy, Check, DollarSign, MoreVertical,
+  Trash2, RotateCcw
 } from 'lucide-react';
 import AppointmentPanel from '../../components/appointments/AppointmentPanel';
 
@@ -22,15 +23,31 @@ const AppointmentInboxPage = () => {
     rescheduleBooking,
     completeBooking,
     cancelBooking,
+    fetchScheduled,
+    scheduleDelete,
+    restoreFromScheduled,
+    permanentDelete,
   } = useBookings();
 
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [loadAll, setLoadAll] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [paginationMeta, setPaginationMeta] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showApproveCancelModal, setShowApproveCancelModal] = useState(false);
   const [showDenyCancelModal, setShowDenyCancelModal] = useState(false);
   const [denialReason, setDenialReason] = useState('');
+
+  // Scheduled deletion modals
+  const [showScheduleDeleteModal, setShowScheduleDeleteModal] = useState(false);
+  const [scheduleDeleteTarget, setScheduleDeleteTarget] = useState(null);
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [restoreTarget, setRestoreTarget] = useState(null);
+  const [showPermanentDeleteModal, setShowPermanentDeleteModal] = useState(false);
+  const [permanentDeleteTarget, setPermanentDeleteTarget] = useState(null);
   const [confirmData, setConfirmData] = useState({
     confirmed_date: '',
     confirmed_time: '',
@@ -50,9 +67,38 @@ const AppointmentInboxPage = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   useEffect(() => {
-    fetchBookings();
+    loadData();
     fetchSellersList();
-  }, [fetchBookings]);
+  }, [filter, loadAll, currentPage]);
+
+  const loadData = useCallback(async () => {
+    const params = {};
+    if (!loadAll) {
+      params.per_page = 25;
+      params.page = currentPage;
+    } else {
+      params.per_page = 'all';
+    }
+
+    if (filter === 'scheduled') {
+      const res = await fetchScheduled(params);
+      setPaginationMeta(res?.data);
+      setTotalPages(res?.data?.last_page || 1);
+      return;
+    }
+
+    if (filter !== 'all') {
+      params.status = filter;
+    }
+    if (filter === 'pending_review') {
+      delete params.status;
+      params.cancellation_status = 'pending_review';
+    }
+
+    const res = await fetchBookings(params);
+    setPaginationMeta(res?.data);
+    setTotalPages(res?.data?.last_page || 1);
+  }, [filter, loadAll, currentPage, fetchBookings, fetchScheduled]);
 
   const fetchSellersList = async () => {
     setLoadingSellers(true);
@@ -85,7 +131,8 @@ const AppointmentInboxPage = () => {
   const filteredBookings = bookings.filter(b => {
     const matchesFilter = filter === 'all' || 
       b.status === filter || 
-      (filter === 'pending_review' && b.cancellation_request_status === 'pending_review');
+      (filter === 'pending_review' && b.cancellation_request_status === 'pending_review') ||
+      (filter === 'scheduled' && b.scheduled_for_deletion_at);
       const matchesSearch = !search ||
         b.service_type?.toLowerCase().includes(search.toLowerCase()) ||
         b.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -102,6 +149,7 @@ const AppointmentInboxPage = () => {
     completed: bookings.filter(b => b.status === 'completed').length,
     cancelled: bookings.filter(b => b.status === 'cancelled').length,
     pending_review: bookings.filter(b => b.cancellation_request_status === 'pending_review').length,
+    scheduled: bookings.filter(b => b.scheduled_for_deletion_at).length,
   };
 
   const handleConfirm = async () => {
@@ -182,6 +230,69 @@ const AppointmentInboxPage = () => {
     }
   };
 
+  const openScheduleDeleteModal = (bookingId) => {
+    setScheduleDeleteTarget(bookingId);
+    setShowScheduleDeleteModal(true);
+  };
+
+  const submitScheduleDelete = async () => {
+    if (!scheduleDeleteTarget) return;
+    setActionLoading(true);
+    try {
+      await scheduleDelete(scheduleDeleteTarget, 'Manual scheduling by super admin');
+      setShowScheduleDeleteModal(false);
+      setScheduleDeleteTarget(null);
+      await loadData();
+    } catch (err) {
+      console.error('Schedule delete failed:', err);
+      alert(err.response?.data?.message || 'Failed to schedule deletion');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const openRestoreModal = (bookingId) => {
+    setRestoreTarget(bookingId);
+    setShowRestoreModal(true);
+  };
+
+  const submitRestore = async () => {
+    if (!restoreTarget) return;
+    setActionLoading(true);
+    try {
+      await restoreFromScheduled(restoreTarget);
+      setShowRestoreModal(false);
+      setRestoreTarget(null);
+      await loadData();
+    } catch (err) {
+      console.error('Restore failed:', err);
+      alert(err.response?.data?.message || 'Failed to restore booking');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const openPermanentDeleteModal = (bookingId) => {
+    setPermanentDeleteTarget(bookingId);
+    setShowPermanentDeleteModal(true);
+  };
+
+  const submitPermanentDelete = async () => {
+    if (!permanentDeleteTarget) return;
+    setActionLoading(true);
+    try {
+      await permanentDelete(permanentDeleteTarget);
+      setShowPermanentDeleteModal(false);
+      setPermanentDeleteTarget(null);
+      await loadData();
+    } catch (err) {
+      console.error('Permanent delete failed:', err);
+      alert(err.response?.data?.message || 'Failed to permanently delete');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleCopyId = (id) => {
     navigator.clipboard.writeText(id);
     setCopiedId(id);
@@ -224,7 +335,7 @@ const AppointmentInboxPage = () => {
               </div>
             </div>
             <button
-              onClick={() => fetchBookings()}
+              onClick={() => loadData()}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               title="Refresh"
             >
@@ -236,7 +347,7 @@ const AppointmentInboxPage = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 mb-6">
           {[
             { key: 'all', label: 'All', color: 'bg-gray-100 text-gray-700' },
             { key: 'pending', label: 'Pending', color: 'bg-yellow-100 text-yellow-700' },
@@ -245,10 +356,11 @@ const AppointmentInboxPage = () => {
             { key: 'completed', label: 'Completed', color: 'bg-green-100 text-green-700' },
             { key: 'cancelled', label: 'Cancelled', color: 'bg-red-100 text-red-700' },
             { key: 'pending_review', label: 'Cancel Requests', color: 'bg-yellow-100 text-yellow-700' },
+            ...(user?.role === 'super_admin' ? [{ key: 'scheduled', label: 'Scheduled', color: 'bg-red-100 text-red-400' }] : []),
           ].map(stat => (
             <button
               key={stat.key}
-              onClick={() => setFilter(stat.key)}
+              onClick={() => { setFilter(stat.key); setCurrentPage(1); }}
               className={`p-3 rounded-xl text-left transition-all ${
                 filter === stat.key ? `${stat.color} ring-2 ring-offset-1 ring-gray-300` : 'bg-white hover:bg-gray-50'
               }`}
@@ -257,6 +369,20 @@ const AppointmentInboxPage = () => {
               <p className="text-xs font-medium text-gray-500">{stat.label}</p>
             </button>
           ))}
+        </div>
+
+        {/* Load All / Paginated Toggle */}
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={() => { setLoadAll(!loadAll); setCurrentPage(1); }}
+            className={`px-3 py-2 rounded-xl text-sm font-medium border transition-all ${
+              loadAll 
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {loadAll ? 'Paginated' : 'Load All'}
+          </button>
         </div>
 
         {/* Search */}
@@ -302,6 +428,12 @@ const AppointmentInboxPage = () => {
                           appointmentStatus={booking.status}
                           size="sm"
                         />
+                        {booking.scheduled_for_deletion_at && (
+                          <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-lg text-xs font-bold border border-red-200 animate-pulse">
+                            <Trash2 className="w-3 h-3 inline mr-1" />
+                            {booking.days_until_deletion}d until deletion
+                          </span>
+                        )}
                         <button
                           onClick={(e) => { e.stopPropagation(); handleCopyId(booking.case_id || booking.id); }}
                           className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 hover:bg-gray-200 rounded text-xs font-mono text-gray-600 transition-colors"
@@ -376,7 +508,32 @@ const AppointmentInboxPage = () => {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 ml-4">
-                    {booking.cancellation_request_status === 'pending_review' && (
+                    {/* Scheduled Tab Actions (Super Admin Only) */}
+                    {filter === 'scheduled' && user?.role === 'super_admin' && (
+                      <>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openRestoreModal(booking.id); }}
+                          disabled={actionLoading}
+                          className="p-1.5 hover:bg-green-100 rounded-lg transition-colors"
+                          title="Restore booking"
+                        >
+                          <RotateCcw className="w-4 h-4 text-green-600" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openPermanentDeleteModal(booking.id); }}
+                          disabled={actionLoading}
+                          className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
+                          title="Permanently delete"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        </button>
+                      </>
+                    )}
+
+                    {/* Normal Tab Actions */}
+                    {filter !== 'scheduled' && (
+                      <>
+                        {booking.cancellation_request_status === 'pending_review' && (
                       <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-lg text-xs font-bold border border-yellow-300 animate-pulse">
                         Cancel Requested
                       </span>
@@ -438,7 +595,21 @@ const AppointmentInboxPage = () => {
                         </button>
                       )
                     )}
-                                        <button
+                        {/* Super Admin: Schedule completed/cancelled/no_show for deletion */}
+                        {user?.role === 'super_admin' && ['completed', 'cancelled', 'no_show'].includes(booking.status) && !booking.scheduled_for_deletion_at && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); openScheduleDeleteModal(booking.id); }}
+                            disabled={actionLoading}
+                            className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
+                            title="Schedule for deletion"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-400" />
+                          </button>
+                        )}
+                      </>
+                    )}
+
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setPanelBooking(booking);
@@ -646,6 +817,30 @@ const AppointmentInboxPage = () => {
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {!loadAll && totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4 px-2">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-gray-500">
+            Page {currentPage} of {totalPages}
+            {paginationMeta?.total && ` (${paginationMeta.total} total)`}
+          </span>
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {/* Appointment Panel */}
       <AppointmentPanel
@@ -892,6 +1087,118 @@ const AppointmentInboxPage = () => {
               >
                 {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                 Approve Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule for Deletion Modal */}
+      {showScheduleDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Schedule for Deletion</h3>
+                <p className="text-sm text-gray-500">This booking will be permanently deleted after 30 days</p>
+              </div>
+            </div>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-yellow-800">
+                <span className="font-medium">Grace period:</span> You can restore this booking within 30 days. After that, it will be permanently deleted and cannot be recovered.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowScheduleDeleteModal(false); setScheduleDeleteTarget(null); }}
+                className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitScheduleDelete}
+                disabled={actionLoading}
+                className="flex-1 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                Schedule Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restore from Scheduled Deletion Modal */}
+      {showRestoreModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <RotateCcw className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Restore Booking</h3>
+                <p className="text-sm text-gray-500">Cancel the scheduled deletion</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              This booking will be restored to its previous status and will no longer be scheduled for deletion.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowRestoreModal(false); setRestoreTarget(null); }}
+                className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitRestore}
+                disabled={actionLoading}
+                className="flex-1 py-2.5 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                Restore Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Permanent Delete Modal */}
+      {showPermanentDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Permanently Delete</h3>
+                <p className="text-sm text-gray-500">This action cannot be undone</p>
+              </div>
+            </div>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-red-800">
+                <span className="font-medium">Warning:</span> All notes, history, and data associated with this booking will be permanently lost. This action is irreversible.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowPermanentDeleteModal(false); setPermanentDeleteTarget(null); }}
+                className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitPermanentDelete}
+                disabled={actionLoading}
+                className="flex-1 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                Delete Forever
               </button>
             </div>
           </div>

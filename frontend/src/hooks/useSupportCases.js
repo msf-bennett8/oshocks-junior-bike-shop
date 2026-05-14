@@ -123,6 +123,43 @@ export const useSupportCases = () => {
     return res.data;
   }, []);
 
+  // Fetch scheduled for deletion cases (super admin)
+  const fetchScheduled = useCallback(async (params = {}) => {
+    setLoading(true);
+    try {
+      const res = await supportCaseService.getScheduled(params);
+      const data = res.data?.data?.data || res.data?.data;
+      setCases(Array.isArray(data) ? data : []);
+      setError(null);
+      return res.data;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch scheduled cases');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Schedule case for deletion (super admin)
+  const scheduleDelete = useCallback(async (caseId, reason = '') => {
+    const res = await supportCaseService.scheduleDelete(caseId, reason);
+    setCases(prev => prev.map(c => c.case_id === caseId ? { ...c, ...res.data.data } : c));
+    return res.data;
+  }, []);
+
+  // Restore from scheduled deletion (super admin)
+  const restoreFromScheduled = useCallback(async (caseId) => {
+    const res = await supportCaseService.restoreFromScheduled(caseId);
+    setCases(prev => prev.map(c => c.case_id === caseId ? { ...c, scheduled_for_deletion_at: null } : c));
+    return res.data;
+  }, []);
+
+  // Permanently delete scheduled case (super admin)
+  const permanentDelete = useCallback(async (caseId) => {
+    await supportCaseService.permanentDelete(caseId);
+    setCases(prev => prev.filter(c => c.case_id !== caseId));
+  }, []);
+
   // Get full user case history
   const getUserCaseHistory = useCallback(async () => {
     const res = await supportCaseService.getUserCaseHistory();
@@ -198,7 +235,11 @@ export const useSupportCases = () => {
     deleteCase,
     restoreCase,
     getUserCaseHistory,
-    fetchHistory
+    fetchHistory,
+    fetchScheduled,
+    scheduleDelete,
+    restoreFromScheduled,
+    permanentDelete
   };
 };
 
