@@ -103,7 +103,7 @@ class CaseThreadController extends Controller
                     'ip' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                     'created_in_thread' => true,
-                ], $validated['attachment'] ? ['attachment' => $validated['attachment']] : []),
+                ], !empty($validated['attachment']) ? ['attachment' => $validated['attachment']] : []),
             ]);
 
             // ─── DEFER ATTACHMENT UPLOAD ───

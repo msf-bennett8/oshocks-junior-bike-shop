@@ -12,12 +12,15 @@ import {
   Truck, Wrench, MessageSquare, CreditCard, Package, RotateCcw, Cpu, HelpCircle,
   Paperclip, FileText
 } from 'lucide-react';
+import CaseSuccessModal from './CaseSuccessModal';
 
 const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext = null }) => {
   const { user, isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdCaseId, setCreatedCaseId] = useState('');
   const [creatingForUserId, setCreatingForUserId] = useState(null); // Track who we're creating for
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('users'); // 'users' | 'support'
@@ -377,6 +380,10 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
         },
       });
       
+      const newCaseId = caseRes.data.data?.support_case?.case_id || '';
+      setCreatedCaseId(newCaseId);
+      setShowSuccessModal(true);
+
       // Merge conversation with case messages for immediate display
       const conversationWithMessages = {
         ...conversation,
@@ -388,7 +395,6 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
       };
 
       onConversationCreated?.(conversationWithMessages, false, caseRes.data.data.support_case);
-      onClose();
     } catch (err) {
       console.error('Failed to create support case:', err);
       setError(err.response?.data?.message || 'Failed to create support case');
@@ -912,6 +918,24 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
           </p>
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <CaseSuccessModal
+          caseId={createdCaseId}
+          message="Our team will get back to you within 24 hours. Check your messages for updates."
+          onClose={() => {
+            setShowSuccessModal(false);
+            setCreatedCaseId('');
+            onClose();
+          }}
+          onViewChat={() => {
+            setShowSuccessModal(false);
+            setCreatedCaseId('');
+            // Keep modal open for chat continuation
+          }}
+        />
+      )}
     </div>
   );
 };

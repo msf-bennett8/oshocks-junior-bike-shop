@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { X, Package, User, AlertTriangle, Truck, Send, Wrench, MessageSquare, CreditCard, RotateCcw, Cpu, HelpCircle, Paperclip, FileText, Loader2, AlertCircle } from 'lucide-react';
 import api from '../../services/api';
+import CaseSuccessModal from './CaseSuccessModal';
 
 const caseTypes = [
   { value: 'order_issue', label: 'Order Issue', icon: Package, color: 'bg-orange-100 text-orange-700' },
@@ -23,6 +24,8 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
   const [priority, setPriority] = useState('medium');
   const [orderNumber, setOrderNumber] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdCaseId, setCreatedCaseId] = useState('');
 
   // Guest contact fields
   const [guestName, setGuestName] = useState('');
@@ -249,8 +252,10 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
       console.log('[CaseCreateModal] API response:', response);
       console.log('[CaseCreateModal] Response data:', response.data);
 
+      const newCaseId = response.data.data?.support_case?.case_id || '';
+      setCreatedCaseId(newCaseId);
+      setShowSuccessModal(true);
       onCreated?.(response.data.data);
-      onClose();
     } catch (err) {
       console.error('[CaseCreateModal] Case creation failed:', err);
       console.error('[CaseCreateModal] Error response:', err.response);
@@ -485,6 +490,23 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
           </div>
         </form>
       </div>
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <CaseSuccessModal
+          caseId={createdCaseId}
+          message="Our team will get back to you within 24 hours. Check your messages for updates."
+          onClose={() => {
+            setShowSuccessModal(false);
+            setCreatedCaseId('');
+            onClose();
+          }}
+          onViewChat={() => {
+            setShowSuccessModal(false);
+            setCreatedCaseId('');
+            onClose();
+          }}
+        />
+      )}
     </div>
   );
 };

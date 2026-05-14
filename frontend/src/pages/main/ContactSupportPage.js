@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Mail, Phone, MessageCircle, MapPin, Clock, Send, Loader, CheckCircle, 
+import {
+  Mail, Phone, MessageCircle, MapPin, Clock, Send, Loader, CheckCircle,
   AlertCircle, User, HelpCircle, Package, CreditCard, Truck, Shield,
-  ChevronRight, X, Headphones, FileText, ExternalLink, Video
+  ChevronRight, X, Headphones, FileText, ExternalLink, Video,
+  Wrench, MessageSquare, RotateCcw, Cpu, Paperclip, Loader2, Copy
 } from 'lucide-react';
 import ChatDrawer from '../../components/messaging/ChatDrawer';
+import CaseSuccessModal from '../../components/messaging/CaseSuccessModal';
 import CallOverlay from '../../components/messaging/CallOverlay';
 import { useMessaging } from '../../hooks/useMessaging';
 import { useWebRTC } from '../../hooks/useWebRTC';
@@ -32,6 +34,38 @@ const ContactSupportPage = () => {
   const [showGuestForm, setShowGuestForm] = useState(false);
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
+
+  // Priority state
+  const [priority, setPriority] = useState('medium');
+
+  // Success modal state
+  const [createdCaseId, setCreatedCaseId] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  // Order validation state
+  const [validatingOrder, setValidatingOrder] = useState(false);
+  const [orderValid, setOrderValid] = useState(null);
+  const [orderData, setOrderData] = useState(null);
+
+  // Attachment state (same as CaseCreateModal)
+  const [attachment, setAttachment] = useState(null);
+  const [attachmentPreview, setAttachmentPreview] = useState(null);
+  const [attachmentError, setAttachmentError] = useState(null);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const fileInputRef = React.useRef(null);
+
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
+  const ALLOWED_TYPES = [
+    'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+    'application/pdf',
+    'text/plain', 'text/csv',
+    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/zip', 'application/x-zip-compressed',
+    'video/mp4', 'video/webm', 'audio/mpeg', 'audio/wav'
+  ];
+  const BLOCKED_EXTENSIONS = ['.exe', '.dll', '.bat', '.cmd', '.sh', '.php', '.js', '.html', '.htm', '.jar', '.apk', '.ipa'];
   
   // In-app messaging & calls
   const [chatOpen, setChatOpen] = useState(false);
@@ -52,15 +86,18 @@ const ContactSupportPage = () => {
     endCall,
   } = useWebRTC(user?.id);
 
-  const categories = [
-    { value: 'order', label: 'Order Issues', icon: Package },
-    { value: 'payment', label: 'Payment & Billing', icon: CreditCard },
-    { value: 'shipping', label: 'Shipping & Delivery', icon: Truck },
-    { value: 'product', label: 'Product Information', icon: HelpCircle },
-    { value: 'account', label: 'Account & Login', icon: User },
-    { value: 'returns', label: 'Returns & Refunds', icon: Shield },
-    { value: 'technical', label: 'Technical Support', icon: Headphones },
-    { value: 'other', label: 'Other', icon: MessageCircle }
+  const caseTypes = [
+    { value: 'order_issue', label: 'Order Issue', icon: Package, color: 'bg-orange-100 text-orange-700' },
+    { value: 'account_login', label: 'Account & Login', icon: User, color: 'bg-indigo-100 text-indigo-700' },
+    { value: 'report_problem', label: 'Report Problem', icon: AlertCircle, color: 'bg-red-100 text-red-700' },
+    { value: 'shipment_delivery', label: 'Shipment & Delivery', icon: Truck, color: 'bg-cyan-100 text-cyan-700' },
+    { value: 'services_booking', label: 'Services & Booking', icon: Wrench, color: 'bg-emerald-100 text-emerald-700' },
+    { value: 'general_inquiry', label: 'General Inquiry', icon: MessageSquare, color: 'bg-violet-100 text-violet-700' },
+    { value: 'payment_billing', label: 'Payment & Billing', icon: CreditCard, color: 'bg-amber-100 text-amber-700' },
+    { value: 'product_info', label: 'Product Information', icon: Package, color: 'bg-teal-100 text-teal-700' },
+    { value: 'returns_refund', label: 'Returns & Refund', icon: RotateCcw, color: 'bg-pink-100 text-pink-700' },
+    { value: 'technical_support', label: 'Technical Support', icon: Cpu, color: 'bg-slate-100 text-slate-700' },
+    { value: 'other', label: 'Other', icon: HelpCircle, color: 'bg-gray-100 text-gray-700' },
   ];
 
   const faqs = [
@@ -95,6 +132,18 @@ const ContactSupportPage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Autofill form when user is authenticated
+  useEffect(() => {
+    if (user?.id) {
+      setFormData(prev => ({
+        ...prev,
+        name: user.name || prev.name,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone,
+      }));
+    }
+  }, [user]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -104,28 +153,69 @@ const ContactSupportPage = () => {
     }
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setValidationErrors(prev => ({ 
-          ...prev, 
-          attachment: 'File size must be less than 5MB' 
-        }));
-        return;
+  const validateFile = (file) => {
+    if (file.size > MAX_FILE_SIZE) {
+      return `File too large. Maximum size is ${(MAX_FILE_SIZE / 1024 / 1024).toFixed(0)}MB.`;
+    }
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return `File type "${file.type || 'unknown'}" not allowed.`;
+    }
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+    if (BLOCKED_EXTENSIONS.includes(ext)) {
+      return `File extension "${ext}" is blocked for security reasons.`;
+    }
+    const nameParts = file.name.split('.');
+    if (nameParts.length > 2) {
+      const lastTwo = '.' + nameParts.slice(-2).join('.').toLowerCase();
+      if (BLOCKED_EXTENSIONS.some(blocked => lastTwo.includes(blocked))) {
+        return `Suspicious file name detected. Please rename your file.`;
       }
-      
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-      if (!allowedTypes.includes(file.type)) {
-        setValidationErrors(prev => ({ 
-          ...prev, 
-          attachment: 'Only JPG, PNG, and PDF files are allowed' 
-        }));
-        return;
-      }
-      
-      setFormData(prev => ({ ...prev, attachment: file }));
-      setValidationErrors(prev => ({ ...prev, attachment: '' }));
+    }
+    return null;
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAttachmentError(null);
+    const error = validateFile(file);
+    if (error) {
+      setAttachmentError(error);
+      setAttachment(null);
+      setAttachmentPreview(null);
+      return;
+    }
+    setAttachment(file);
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setAttachmentPreview(ev.target.result);
+      reader.readAsDataURL(file);
+    } else {
+      setAttachmentPreview(null);
+    }
+  };
+
+  const handleRemoveAttachment = () => {
+    setAttachment(null);
+    setAttachmentPreview(null);
+    setAttachmentError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const validateOrder = async (orderNumber) => {
+    if (!orderNumber?.trim()) return;
+    setValidatingOrder(true);
+    try {
+      const res = await api.post('/support-cases/validate-order', { purchase_id: orderNumber.trim() });
+      setOrderValid(true);
+      setOrderData(res.data);
+      setValidationErrors(prev => ({ ...prev, orderNumber: '' }));
+    } catch (err) {
+      setOrderValid(false);
+      setOrderData(null);
+      setValidationErrors(prev => ({ ...prev, orderNumber: err.response?.data?.message || 'Invalid order number' }));
+    } finally {
+      setValidatingOrder(false);
     }
   };
 
@@ -147,7 +237,7 @@ const ContactSupportPage = () => {
     }
 
     if (!formData.category) {
-      errors.category = 'Please select a category';
+      errors.category = 'Please select a case type';
     }
 
     if (!formData.subject.trim()) {
@@ -155,7 +245,7 @@ const ContactSupportPage = () => {
     }
 
     if (!formData.message.trim()) {
-      errors.message = 'Message is required';
+      errors.message = 'Description is required';
     } else if (formData.message.trim().length < 20) {
       errors.message = 'Please provide more details (at least 20 characters)';
     }
@@ -172,19 +262,62 @@ const ContactSupportPage = () => {
     }
 
     setIsSubmitting(true);
+    setValidationErrors({});
 
     try {
-      const submitData = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (formData[key]) {
-          submitData.append(key, formData[key]);
+      // Step 1: Get or initialize guest session
+      const getGuestSessionId = () => {
+        let sessionId = localStorage.getItem('oshocks_guest_session_id');
+        if (!sessionId) {
+          sessionId = 'guest_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+          localStorage.setItem('oshocks_guest_session_id', sessionId);
         }
+        return sessionId;
+      };
+
+      const guestId = getGuestSessionId();
+      const headers = { 'X-Guest-Session-ID': guestId };
+
+      // Step 2: Create support conversation (same as CreateChatModal)
+      const convPayload = {
+        type: 'support',
+      };
+
+      const convRes = await api.post('/conversations', convPayload, { headers });
+      const conversation = convRes.data.data;
+
+      // Step 3: Create case within conversation using FormData (same as CaseCreateModal)
+      const caseFormData = new FormData();
+      caseFormData.append('case_type', formData.category);
+      caseFormData.append('subject', formData.subject.trim());
+      caseFormData.append('description', formData.message.trim());
+      caseFormData.append('priority', priority);
+      if (formData.orderNumber.trim()) {
+        caseFormData.append('purchase_id', formData.orderNumber.trim());
+      }
+      caseFormData.append('guest_name', formData.name.trim());
+      caseFormData.append('guest_email', formData.email.trim());
+      if (formData.phone.trim()) caseFormData.append('guest_phone', formData.phone.trim());
+      if (attachment) {
+        caseFormData.append('attachment_file', attachment);
+        caseFormData.append('attachment[name]', attachment.name);
+        caseFormData.append('attachment[type]', attachment.type);
+        caseFormData.append('attachment[size]', attachment.size);
+      }
+
+      const caseRes = await api.post(`/conversations/${conversation.id}/cases`, caseFormData, {
+        headers: {
+          ...headers,
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const newCaseId = caseRes.data.data?.support_case?.case_id || '';
+      setCreatedCaseId(newCaseId);
+      setSuccessMessage(`Support case created successfully! Case ID: ${newCaseId}. Our team will get back to you within 24 hours.`);
+      setShowSuccessModal(true);
 
-      setSuccessMessage('Your message has been sent successfully! Our support team will get back to you within 24 hours.');
-      
+      // Reset form
       setFormData({
         name: '',
         email: '',
@@ -195,13 +328,18 @@ const ContactSupportPage = () => {
         message: '',
         attachment: null
       });
+      setPriority('medium');
+      setAttachment(null);
+      setAttachmentPreview(null);
+      setOrderValid(null);
+      setOrderData(null);
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
     } catch (err) {
       console.error('Support submission error:', err);
       setValidationErrors({
-        general: 'Failed to send your message. Please try again or contact us directly.'
+        general: err.response?.data?.message || 'Failed to create support case. Please try again or contact us directly.'
       });
     } finally {
       setIsSubmitting(false);
@@ -379,19 +517,54 @@ const ContactSupportPage = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Success Banner */}
         {successMessage && (
           <div className="mb-8 bg-green-50 border border-green-200 rounded-lg p-4 flex items-start space-x-3">
             <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-medium text-green-800">{successMessage}</p>
+              {createdCaseId && (
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-xs text-green-600">Case ID:</span>
+                  <code className="text-sm font-mono font-bold text-green-800 bg-green-100 px-2 py-0.5 rounded">{createdCaseId}</code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdCaseId);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                    className="p-1 hover:bg-green-200 rounded transition-colors"
+                    title="Copy Case ID"
+                  >
+                    {copied ? <CheckCircle className="w-3.5 h-3.5 text-green-700" /> : <Copy className="w-3.5 h-3.5 text-green-700" />}
+                  </button>
+                </div>
+              )}
             </div>
-            <button 
-              onClick={() => setSuccessMessage('')}
+            <button
+              onClick={() => {
+                setSuccessMessage('');
+                setCreatedCaseId('');
+                setCopied(false);
+              }}
               className="text-green-600 hover:text-green-800"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
+        )}
+
+        {/* Success Modal */}
+        {showSuccessModal && (
+          <CaseSuccessModal
+            caseId={createdCaseId}
+            message="Our team will get back to you within 24 hours. Check your messages for updates."
+            onClose={() => {
+              setShowSuccessModal(false);
+              // Keep successMessage and createdCaseId for the banner
+              setCopied(false);
+            }}
+          />
         )}
 
         {validationErrors.general && (
@@ -581,45 +754,84 @@ const ContactSupportPage = () => {
 
                   <div>
                     <label htmlFor="orderNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                      Order Number (Optional)
+                      Purchase ID (Optional)
                     </label>
-                    <div className="relative">
-                      <Package className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        id="orderNumber"
-                        name="orderNumber"
-                        type="text"
-                        value={formData.orderNumber}
-                        onChange={handleChange}
-                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="ORD-12345"
-                      />
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Package className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                          id="orderNumber"
+                          name="orderNumber"
+                          type="text"
+                          value={formData.orderNumber}
+                          onChange={(e) => {
+                            setFormData(prev => ({ ...prev, orderNumber: e.target.value }));
+                            setOrderValid(null);
+                            setOrderData(null);
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value.trim().length >= 3) validateOrder(e.target.value.trim());
+                          }}
+                          className={`block w-full pl-10 pr-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            orderValid === true ? 'bg-green-50 border-green-300' :
+                            orderValid === false ? 'bg-red-50 border-red-300' :
+                            'border-gray-300'
+                          }`}
+                          placeholder="e.g. AF7SEIV1U0"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => formData.orderNumber && validateOrder(formData.orderNumber)}
+                        disabled={validatingOrder || !formData.orderNumber.trim()}
+                        className="px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
+                      >
+                        {validatingOrder ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify'}
+                      </button>
                     </div>
+                    {orderValid === true && orderData && (
+                      <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-xl">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-green-500" />
+                          <span className="text-sm font-medium text-green-800">Order validated</span>
+                        </div>
+                        <p className="text-xs text-green-700 mt-1">
+                          Purchase ID {orderData.data?.purchase_id || orderData.purchase_id} • {orderData.data?.status || orderData.status} • ${orderData.data?.total || orderData.total}
+                        </p>
+                      </div>
+                    )}
+                    {orderValid === false && (
+                      <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-500" />
+                        <span className="text-sm text-red-700">Order not found. Please check your Purchase ID.</span>
+                      </div>
+                    )}
+                    {validationErrors.orderNumber && (
+                      <p className="mt-1 text-xs text-red-600">{validationErrors.orderNumber}</p>
+                    )}
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-                    Category *
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Case Type *
                   </label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {categories.map((cat) => {
-                      const Icon = cat.icon;
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {caseTypes.map((t) => {
+                      const Icon = t.icon;
                       return (
                         <button
-                          key={cat.value}
+                          key={t.value}
                           type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, category: cat.value }))}
-                          className={`p-3 border-2 rounded-lg text-left transition-all ${
-                            formData.category === cat.value
-                              ? 'border-blue-600 bg-blue-50'
+                          onClick={() => setFormData(prev => ({ ...prev, category: t.value }))}
+                          className={`p-3 rounded-xl border-2 text-left transition-all ${
+                            formData.category === t.value
+                              ? 'border-orange-500 bg-orange-50'
                               : 'border-gray-200 hover:border-gray-300'
                           }`}
                         >
-                          <Icon className={`w-5 h-5 mb-1 ${
-                            formData.category === cat.value ? 'text-blue-600' : 'text-gray-400'
-                          }`} />
-                          <div className="text-xs font-medium text-gray-900">{cat.label}</div>
+                          <Icon className={`w-5 h-5 mb-1 ${formData.category === t.value ? 'text-orange-600' : 'text-gray-400'}`} />
+                          <span className="text-xs font-medium text-gray-700">{t.label}</span>
                         </button>
                       );
                     })}
@@ -627,6 +839,34 @@ const ContactSupportPage = () => {
                   {validationErrors.category && (
                     <p className="mt-2 text-xs text-red-600">{validationErrors.category}</p>
                   )}
+                </div>
+
+                {/* Priority Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Priority
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { value: 'low', label: 'Low', color: 'bg-green-100 text-green-700 border-green-200' },
+                      { value: 'medium', label: 'Medium', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+                      { value: 'high', label: 'High', color: 'bg-orange-100 text-orange-700 border-orange-200' },
+                      { value: 'urgent', label: 'Urgent', color: 'bg-red-100 text-red-700 border-red-200' },
+                    ].map((p) => (
+                      <button
+                        key={p.value}
+                        type="button"
+                        onClick={() => setPriority(p.value)}
+                        className={`py-2.5 rounded-xl text-xs font-semibold border-2 transition-all ${
+                          priority === p.value
+                            ? `${p.color} ring-2 ring-offset-1 ring-gray-300`
+                            : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div>
@@ -679,53 +919,88 @@ const ContactSupportPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Attachment (Optional)
                   </label>
-                  <div className="flex items-center space-x-4">
-                    <label className="flex-1 cursor-pointer">
-                      <div className={`border-2 border-dashed ${
-                        validationErrors.attachment ? 'border-red-300' : 'border-gray-300'
-                      } rounded-lg p-4 text-center hover:border-blue-400 transition-colors`}>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    accept={ALLOWED_TYPES.join(',')}
+                  />
+
+                  {!attachment ? (
+                    <label className="flex-1 cursor-pointer block">
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-orange-400 transition-colors">
                         <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                         <p className="text-sm text-gray-600">
-                          {formData.attachment ? formData.attachment.name : 'Click to upload (Max 5MB)'}
+                          Click to upload (Max 10MB)
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">JPG, PNG, or PDF</p>
                       </div>
                       <input
                         type="file"
-                        onChange={handleFileChange}
-                        accept=".jpg,.jpeg,.png,.pdf"
+                        onChange={handleFileSelect}
+                        accept={ALLOWED_TYPES.join(',')}
                         className="hidden"
                       />
                     </label>
-                    {formData.attachment && (
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, attachment: null }))}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    )}
-                  </div>
-                  {validationErrors.attachment && (
-                    <p className="mt-1 text-xs text-red-600">{validationErrors.attachment}</p>
+                  ) : (
+                    <div className={`relative p-3 rounded-xl border-2 ${attachmentError ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'}`}>
+                      <div className="flex items-center gap-3">
+                        {attachmentPreview ? (
+                          <img src={attachmentPreview} alt="Preview" className="w-12 h-12 rounded-lg object-cover" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                            <FileText className="w-6 h-6 text-green-600" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{attachment.name}</p>
+                          <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(1)} KB • {attachment.type}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemoveAttachment}
+                          disabled={uploadingAttachment}
+                          className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
+                          title="Remove attachment"
+                        >
+                          <X className="w-4 h-4 text-red-500" />
+                        </button>
+                      </div>
+                      {uploadingAttachment && (
+                        <div className="absolute inset-0 bg-green-50/80 rounded-xl flex items-center justify-center">
+                          <Loader2 className="w-5 h-5 text-green-600 animate-spin" />
+                          <span className="ml-2 text-xs text-green-700 font-medium">Uploading...</span>
+                        </div>
+                      )}
+                    </div>
                   )}
+
+                  {attachmentError && (
+                    <div className="mt-2 flex items-center gap-2 text-xs text-red-600">
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                      {attachmentError}
+                    </div>
+                  )}
+
+                  <p className="mt-2 text-xs text-gray-500 text-center">
+                    Allowed: JPG, PNG, GIF, PDF, DOC, XLS, CSV, TXT, ZIP, MP4, MP3. Max 10MB. No executables.
+                  </p>
                 </div>
 
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  disabled={isSubmitting || !formData.category || !formData.subject.trim() || !formData.name.trim() || !formData.email.trim()}
+                  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {isSubmitting ? (
                     <>
                       <Loader className="animate-spin -ml-1 mr-2 h-5 w-5" />
-                      Sending...
+                      Creating Support Case...
                     </>
                   ) : (
                     <>
-                      <Send className="w-5 h-5 mr-2" />
-                      Send Message
+                      <Headphones className="w-5 h-5 mr-2" />
+                      Create Support Case
                     </>
                   )}
                 </button>
