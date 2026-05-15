@@ -2,7 +2,7 @@
   "name": "oshocks-frontend",
   "version": "1.0.0",
   "private": true,
-  "homepage": ".",
+  "homepage": "/",
   "description": "Oshoks Junior Bike Shop - Frontend",
   "dependencies": {
     "@reduxjs/toolkit": "^2.0.0",

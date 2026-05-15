@@ -6,10 +6,6 @@
 const CACHE_NAME = 'oshocks-v1';
 const STATIC_ASSETS = [
   '/',
-  '/static/js/main.js',
-  '/static/css/main.css',
-  '/icon-192x192.png',
-  '/badge-72x72.png',
   '/manifest.json'
 ];
 

@@ -26,19 +26,19 @@
   
   "icons": [
     {
-      "src": "favicon.svg",
+      "src": "/favicon.svg",
       "type": "image/svg+xml",
       "sizes": "any",
       "purpose": "any maskable"
     },
     {
-      "src": "oshocks-pwa.png",
+      "src": "/oshocks-pwa.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any"
     },
     {
-      "src": "apple-touch-icon.png",
+      "src": "/apple-touch-icon.png",
       "type": "image/png",
       "sizes": "180x180",
       "purpose": "any"
