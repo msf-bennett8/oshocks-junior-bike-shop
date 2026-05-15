@@ -43,7 +43,6 @@ const Navbar = () => {
   const navigate = useNavigate();
   const sidebarRef = useRef(null);
 
-
   const cartItemCount = cartItems?.length || 0;
 
   // Messaging & Calls state

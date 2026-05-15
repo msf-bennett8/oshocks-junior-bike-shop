@@ -32,6 +32,7 @@ const ContactSupportPage = () => {
   const [showFAB, setShowFAB] = useState(false);
   const [isFABOpen, setIsFABOpen] = useState(false);
   const [showGuestForm, setShowGuestForm] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
 
@@ -99,6 +100,8 @@ const ContactSupportPage = () => {
     { value: 'technical_support', label: 'Technical Support', icon: Cpu, color: 'bg-slate-100 text-slate-700' },
     { value: 'other', label: 'Other', icon: HelpCircle, color: 'bg-gray-100 text-gray-700' },
   ];
+
+  const isOrderRelated = ['order_issue', 'returns_refund', 'payment_billing'].includes(formData.category);
 
   const faqs = [
     {
@@ -248,6 +251,10 @@ const ContactSupportPage = () => {
       errors.message = 'Description is required';
     } else if (formData.message.trim().length < 20) {
       errors.message = 'Please provide more details (at least 20 characters)';
+    }
+
+    if (isOrderRelated && orderValid !== true) {
+      errors.orderNumber = 'Please verify your Purchase ID before submitting';
     }
 
     setValidationErrors(errors);
@@ -492,6 +499,35 @@ const ContactSupportPage = () => {
                 <a href="/login" className="text-blue-600 hover:underline">Log in</a>
               </p>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Login Prompt Modal for Guests trying to verify orders */}
+      {showLoginPrompt && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 text-center">
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="w-8 h-8 text-orange-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Log In Required</h3>
+            <p className="text-sm text-gray-600 mb-5">
+              To verify your order and create a case, please log in to your account. This helps us protect your order information.
+            </p>
+            <div className="space-y-2">
+              <a
+                href="/login"
+                className="block w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-red-600 transition-all"
+              >
+                Log In
+              </a>
+              <button
+                onClick={() => setShowLoginPrompt(false)}
+                className="w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+              >
+                Continue as Guest
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -754,7 +790,7 @@ const ContactSupportPage = () => {
 
                   <div>
                     <label htmlFor="orderNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                      Purchase ID (Optional)
+                      Purchase ID {isOrderRelated ? '*' : '(Optional)'}
                     </label>
                     <div className="flex gap-2">
                       <div className="relative flex-1">
@@ -782,7 +818,13 @@ const ContactSupportPage = () => {
                       </div>
                       <button
                         type="button"
-                        onClick={() => formData.orderNumber && validateOrder(formData.orderNumber)}
+                        onClick={() => {
+                          if (!user?.id) {
+                            setShowLoginPrompt(true);
+                            return;
+                          }
+                          if (formData.orderNumber) validateOrder(formData.orderNumber);
+                        }}
                         disabled={validatingOrder || !formData.orderNumber.trim()}
                         className="px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
                       >
@@ -987,9 +1029,20 @@ const ContactSupportPage = () => {
                   </p>
                 </div>
 
+                {isOrderRelated && orderValid !== true && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 mb-4">
+                    <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                    <span className="text-sm text-amber-700">
+                      {!user?.id 
+                        ? 'Please log in to verify your order before submitting.' 
+                        : 'Please click "Verify" to validate your Purchase ID before submitting.'}
+                    </span>
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  disabled={isSubmitting || !formData.category || !formData.subject.trim() || !formData.name.trim() || !formData.email.trim()}
+                  disabled={isSubmitting || !formData.category || !formData.subject.trim() || !formData.name.trim() || !formData.email.trim() || (isOrderRelated && orderValid !== true)}
                   className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {isSubmitting ? (

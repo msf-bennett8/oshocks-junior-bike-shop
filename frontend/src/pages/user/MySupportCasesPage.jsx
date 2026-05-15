@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { CaseStatusChip } from '../../components/messaging/CaseStatusChip';
 import CasePanel from '../../components/messaging/CasePanel';
+import CaseCreateModal from '../../components/messaging/CaseCreateModal';
+import api from '../../services/api';
 
 const TYPE_CONFIG = {
   order_issue: { label: 'Order Issue', color: 'bg-orange-100 text-orange-700 border-orange-200', icon: Tag },
@@ -47,18 +49,28 @@ const MySupportCasesPage = () => {
   const [expandedCase, setExpandedCase] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createConversationId, setCreateConversationId] = useState(null);
   const [panelCase, setPanelCase] = useState(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
 
-  // Create form state
-  const [createForm, setCreateForm] = useState({
-    case_type: 'order_issue',
-    subject: '',
-    description: '',
-    priority: 'medium',
-    order_id: '',
-  });
+  const handleOpenCreateModal = async () => {
+    try {
+      const convPayload = { type: 'support' };
+      const convRes = await api.post('/conversations', convPayload);
+      const conversation = convRes.data.data;
+      setCreateConversationId(conversation.id);
+      setShowCreateModal(true);
+    } catch (err) {
+      console.error('Failed to create conversation:', err);
+      alert('Failed to initialize case creation. Please try again.');
+    }
+  };
+
+  const handleCaseCreated = () => {
+    setShowCreateModal(false);
+    setCreateConversationId(null);
+    fetchMyCases();
+  };
 
   useEffect(() => {
     const params = {};
@@ -107,22 +119,7 @@ const MySupportCasesPage = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleCreateCase = async () => {
-    if (!createForm.subject.trim() || !createForm.description.trim()) return;
-    setActionLoading(true);
-    try {
-      const res = await createCase(createForm);
-      if (res.success) {
-        setShowCreateModal(false);
-        setCreateForm({ case_type: 'order_issue', subject: '', description: '', priority: 'medium', order_id: '' });
-        await fetchMyCases();
-      }
-    } catch (err) {
-      console.error('Create case failed:', err);
-    } finally {
-      setActionLoading(false);
-    }
-  };
+  // handleCreateCase removed — uses CaseCreateModal component instead
 
   const navigateToMessages = (supportCase) => {
     const conversationId = supportCase.conversation_id;
@@ -171,7 +168,7 @@ const MySupportCasesPage = () => {
                 <RefreshCw className={`w-5 h-5 text-gray-600 ${loading ? 'animate-spin' : ''}`} />
               </button>
               <button
-                onClick={() => setShowCreateModal(true)}
+                onClick={handleOpenCreateModal}
                 className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg text-sm font-medium hover:shadow-md transition-all"
               >
                 <Plus className="w-4 h-4" />
@@ -238,7 +235,7 @@ const MySupportCasesPage = () => {
               />
             </div>
             <button
-              onClick={() => setShowCreateModal(true)}
+              onClick={handleOpenCreateModal}
               className="sm:hidden flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg text-sm font-medium"
             >
               <Plus className="w-4 h-4" />
@@ -256,12 +253,12 @@ const MySupportCasesPage = () => {
           <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
             <Inbox className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500 mb-2">No support cases found</p>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="text-orange-600 font-medium hover:underline text-sm"
-            >
-              Create a new case →
-            </button>
+          <button
+            onClick={handleOpenCreateModal}
+            className="text-orange-600 font-medium hover:underline text-sm"
+          >
+            Create a new case →
+          </button>
           </div>
         ) : (
           <div className="space-y-3">
@@ -469,123 +466,16 @@ const MySupportCasesPage = () => {
         </div>
       )}
 
-      {/* Create Case Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                  <Plus className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">New Support Case</h3>
-                  <p className="text-sm text-gray-500">Describe your issue and we'll help you</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <XCircle className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Case Type *</label>
-                <select
-                  value={createForm.case_type}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, case_type: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                >
-                  <option value="order_issue">Order Issue</option>
-                  <option value="account_login">Account & Login</option>
-                  <option value="report_problem">Report Problem</option>
-                  <option value="shipment_delivery">Shipment & Delivery</option>
-                  <option value="services_booking">Services & Booking</option>
-                  <option value="general_inquiry">General Inquiry</option>
-                  <option value="payment_billing">Payment & Billing</option>
-                  <option value="product_info">Product Information</option>
-                  <option value="returns_refund">Returns & Refund</option>
-                  <option value="technical_support">Technical Support</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                <div className="flex gap-2">
-                  {Object.entries(PRIORITY_CONFIG).map(([key, config]) => (
-                    <button
-                      key={key}
-                      onClick={() => setCreateForm(prev => ({ ...prev, priority: key }))}
-                      className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium border-2 transition-all ${
-                        createForm.priority === key
-                          ? `${config.color} ring-2 ring-offset-1 ring-gray-300`
-                          : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
-                      }`}
-                    >
-                      {config.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
-                <input
-                  type="text"
-                  value={createForm.subject}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, subject: e.target.value }))}
-                  placeholder="Brief summary of your issue..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-                <textarea
-                  value={createForm.description}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
-                  rows={4}
-                  placeholder="Please provide details about your issue..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none"
-                />
-              </div>
-
-              {createForm.case_type === 'order_issue' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Order ID (Optional)</label>
-                  <input
-                    type="text"
-                    value={createForm.order_id}
-                    onChange={(e) => setCreateForm(prev => ({ ...prev, order_id: e.target.value }))}
-                    placeholder="e.g., ORD-12345"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  />
-                </div>
-              )}
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateCase}
-                  disabled={!createForm.subject.trim() || !createForm.description.trim() || actionLoading}
-                  className="flex-1 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-medium hover:shadow-md disabled:opacity-50 flex items-center justify-center gap-2 transition-all"
-                >
-                  {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                  Submit Case
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Create Case Modal — Reuses full CaseCreateModal component */}
+      {showCreateModal && createConversationId && (
+        <CaseCreateModal
+          conversationId={createConversationId}
+          onClose={() => {
+            setShowCreateModal(false);
+            setCreateConversationId(null);
+          }}
+          onCreated={handleCaseCreated}
+        />
       )}
 
       {/* Case Panel */}

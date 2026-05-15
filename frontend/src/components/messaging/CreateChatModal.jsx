@@ -20,6 +20,7 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [createdCaseId, setCreatedCaseId] = useState('');
   const [creatingForUserId, setCreatingForUserId] = useState(null); // Track who we're creating for
   const [error, setError] = useState(null);
@@ -742,7 +743,13 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
                           />
                         </div>
                         <button
-                          onClick={() => caseForm.order_number && validateOrder(caseForm.order_number)}
+                          onClick={() => {
+                            if (!user) {
+                              setShowLoginPrompt(true);
+                              return;
+                            }
+                            if (caseForm.order_number) validateOrder(caseForm.order_number);
+                          }}
                           disabled={validatingOrder || !caseForm.order_number.trim()}
                           className="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
                         >
@@ -873,6 +880,18 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
                     </div>
                   </div>
 
+                  {/* Submit helper text for unverified orders */}
+                  {selectedCaseType && ['order_issue', 'returns_refund', 'payment_billing'].includes(selectedCaseType) && orderValid !== true && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                      <span className="text-sm text-amber-700">
+                        {!user 
+                          ? 'Please log in to verify your order before submitting.' 
+                          : 'Please click "Verify" to validate your Purchase ID before submitting.'}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Submit */}
                   <button
                     onClick={handleCreateSupportCase}
@@ -918,6 +937,35 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
           </p>
         </div>
       </div>
+
+      {/* Login Prompt Modal */}
+      {showLoginPrompt && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 text-center">
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="w-8 h-8 text-orange-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Log In Required</h3>
+            <p className="text-sm text-gray-600 mb-5">
+              To verify your order and create a case, please log in to your account. This helps us protect your order information.
+            </p>
+            <div className="space-y-2">
+              <button
+                onClick={() => window.location.href = '/login'}
+                className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-red-600 transition-all"
+              >
+                Log In
+              </button>
+              <button
+                onClick={() => setShowLoginPrompt(false)}
+                className="w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+              >
+                Continue as Guest
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Success Modal */}
       {showSuccessModal && (

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { X, Package, User, AlertTriangle, Truck, Send, Wrench, MessageSquare, CreditCard, RotateCcw, Cpu, HelpCircle, Paperclip, FileText, Loader2, AlertCircle } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import CaseSuccessModal from './CaseSuccessModal';
 
@@ -25,7 +26,14 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
   const [orderNumber, setOrderNumber] = useState('');
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [createdCaseId, setCreatedCaseId] = useState('');
+  
+  // Order validation state
+  const [validatingOrder, setValidatingOrder] = useState(false);
+  const [orderValid, setOrderValid] = useState(null);
+  const [orderData, setOrderData] = useState(null);
+  const [orderError, setOrderError] = useState(null);
 
   // Guest contact fields
   const [guestName, setGuestName] = useState('');
@@ -33,12 +41,9 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
   const [guestPhone, setGuestPhone] = useState('');
 
   // Check if user is authenticated (try multiple possible token keys)
-  const isAuthenticated = !!(
-    localStorage.getItem('token') || 
-    localStorage.getItem('auth_token') || 
-    localStorage.getItem('access_token') ||
-    localStorage.getItem('user')
-  );
+  const isOrderRelated = ['order_issue', 'returns_refund', 'payment_billing'].includes(type);
+  
+  const { user, isAuthenticated } = useAuth();
   
   // Attachment state
   const [attachment, setAttachment] = useState(null);
@@ -135,6 +140,24 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
       bytes: file.size,
       secure_url: `https://res.cloudinary.com/demo/image/upload/${Date.now()}_${file.name}`,
     };
+  };
+
+  const validateOrder = async (purchaseId) => {
+    if (!purchaseId?.trim()) return;
+    setValidatingOrder(true);
+    setOrderError(null);
+    try {
+      const res = await api.post('/support-cases/validate-order', { purchase_id: purchaseId.trim() });
+      setOrderValid(true);
+      setOrderData(res.data);
+      setOrderError(null);
+    } catch (err) {
+      setOrderValid(false);
+      setOrderData(null);
+      setOrderError(err.response?.data?.message || 'Invalid Purchase ID. Please check and try again.');
+    } finally {
+      setValidatingOrder(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -392,17 +415,77 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
             </div>
           )}
 
-          {/* Purchase ID / Order Lookup (optional) */}
+          {/* Purchase ID / Order Lookup (required for order-related cases) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Purchase ID (optional)</label>
-            <input
-              type="text"
-              value={orderNumber}
-              onChange={(e) => setOrderNumber(e.target.value)}
-              placeholder="e.g. AF7SEIV1U0"
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
-            <p className="text-xs text-gray-400 mt-1">Found in your order confirmation email or SMS</p>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Purchase ID {isOrderRelated ? '*' : '(optional)'}
+            </label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={orderNumber}
+                  onChange={(e) => {
+                    setOrderNumber(e.target.value);
+                    setOrderValid(null);
+                    setOrderData(null);
+                    setOrderError(null);
+                  }}
+                  onBlur={(e) => {
+                    if (isOrderRelated && !isAuthenticated && e.target.value.trim().length >= 3) {
+                      setShowLoginPrompt(true);
+                      return;
+                    }
+                    if (isOrderRelated && e.target.value.trim().length >= 3) {
+                      validateOrder(e.target.value.trim());
+                    }
+                  }}
+                  placeholder="e.g. AF7SEIV1U0"
+                  required={isOrderRelated}
+                  className={`w-full pl-9 pr-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
+                    orderValid === true ? 'bg-green-50 border-green-300 focus:ring-green-500' :
+                    orderValid === false ? 'bg-red-50 border-red-300 focus:ring-red-500' :
+                    'border-gray-300 focus:ring-orange-500'
+                  }`}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    setShowLoginPrompt(true);
+                    return;
+                  }
+                  if (orderNumber) validateOrder(orderNumber);
+                }}
+                disabled={validatingOrder || !orderNumber.trim()}
+                className="px-4 py-2.5 bg-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
+              >
+                {validatingOrder ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify'}
+              </button>
+            </div>
+            
+            {orderValid === true && orderData && (
+              <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  <span className="text-sm font-medium text-green-800">Order validated</span>
+                </div>
+                <p className="text-xs text-green-700 mt-1">
+                  Purchase ID {orderData.data?.purchase_id || orderData.purchase_id} • {orderData.data?.status || orderData.status} • ${orderData.data?.total || orderData.total}
+                </p>
+              </div>
+            )}
+            {orderValid === false && (
+              <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 text-red-500" />
+                <span className="text-sm text-red-700">{orderError}</span>
+              </div>
+            )}
+            {isOrderRelated && !orderValid && !orderError && (
+              <p className="text-xs text-amber-600 mt-1">Purchase ID is required for this case type. Please verify your order.</p>
+            )}
           </div>
 
           {/* Attachment Upload */}
@@ -467,6 +550,18 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
             </p>
           </div>
 
+          {/* Submit helper text for unverified orders */}
+          {isOrderRelated && orderValid !== true && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+              <span className="text-sm text-amber-700">
+                {!isAuthenticated 
+                  ? 'Please log in to verify your order before submitting.' 
+                  : 'Please click "Verify" to validate your Purchase ID before submitting.'}
+              </span>
+            </div>
+          )}
+
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -477,7 +572,7 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
             </button>
             <button
               type="submit"
-              disabled={!type || !subject.trim() || loading || uploadingAttachment || (!isAuthenticated && (!guestName.trim() || !guestEmail.trim()))}
+              disabled={!type || !subject.trim() || loading || uploadingAttachment || (!isAuthenticated && (!guestName.trim() || !guestEmail.trim())) || (isOrderRelated && orderValid !== true)}
               className="flex-1 py-2.5 bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
             >
               {loading ? (
@@ -490,6 +585,35 @@ export const CaseCreateModal = ({ conversationId, onClose, onCreated }) => {
           </div>
         </form>
       </div>
+      {/* Login Prompt Modal */}
+      {showLoginPrompt && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 text-center">
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="w-8 h-8 text-orange-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Log In Required</h3>
+            <p className="text-sm text-gray-600 mb-5">
+              To verify your order and create a case, please log in to your account. This helps us protect your order information.
+            </p>
+            <div className="space-y-2">
+              <button
+                onClick={() => window.location.href = '/login'}
+                className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-red-600 transition-all"
+              >
+                Log In
+              </button>
+              <button
+                onClick={() => setShowLoginPrompt(false)}
+                className="w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+              >
+                Continue as Guest
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Success Modal */}
       {showSuccessModal && (
         <CaseSuccessModal
