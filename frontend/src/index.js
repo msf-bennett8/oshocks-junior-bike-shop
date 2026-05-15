@@ -13,6 +13,36 @@ import { Toaster } from 'react-hot-toast';
 import reportWebVitals from './reportWebVitals';
 
 // ============================================================================
+// OSHOCKS CONSOLE BRANDING — Print immediately, before security kills console
+// ============================================================================
+// Detect console theme and apply appropriate colors
+const isDarkConsole = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+console.log(
+  '%cOshocks\n%cSilicon Swimming Ducks Isotope Foundation',
+  'font-size: 36px; font-weight: bold; color: #ff6b35; font-family: monospace; line-height: 1.2; text-shadow: 2px 2px 4px rgba(255,107,53,0.4);',
+  'font-size: 20px; color: #339af0; font-family: monospace; margin-bottom: 20px; font-style: italic; font-weight: 700; text-shadow: 1px 1px 2px rgba(51,154,240,0.2);'
+);
+
+console.log(
+  '%cDeep in the forest, you see deer; \n' +
+  'deep in the ocean, you see whales; \n' +
+  'deep in love, I see you 🥰\n\n' +
+  'When the cart is deep, you find joy;\n' +
+  'when the sale is deep, you find deals;\n' +
+  'when the heart is deep, you find yourself 🥰\n\n' +
+  'Shopping is better than therapy.\n' +
+  'Why window-shop the world when one click ships it?\n\n' +
+  'Scrolling ten thousand products? \n' +
+  'Just add to cart and checkout 🥺\n\n' +
+  "You don't find the perfect product. The perfect product finds you. 👇\n" +
+  'https://oshocks.com',
+  isDarkConsole
+    ? 'font-size: 14px; color: #f8f9fa; font-family: monospace; line-height: 1.8; background: #212529; padding: 16px; border-radius: 8px; border-left: 4px solid #ff6b35;'
+    : 'font-size: 14px; color: #212529; font-family: monospace; line-height: 1.8; background: #f8f9fa; padding: 16px; border-radius: 8px; border-left: 4px solid #ff6b35;'
+);
+
+// ============================================================================
 // ERROR BOUNDARY COMPONENT
 // ============================================================================
 class ErrorBoundary extends React.Component {
@@ -793,11 +823,7 @@ function initializeApp() {
   if (process.env.NODE_ENV === 'development') {
     window.__REDUX_STORE__ = store;
     window.__APP_VERSION__ = process.env.REACT_APP_VERSION || '1.0.0';
-    
-    console.log(
-      '%c🚴‍♂️ Oshocks Junior Bike Shop',
-      'color: #667eea; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);'
-    );
+
     console.log(
       '%cDevelopment Mode Active',
       'color: #28a745; font-size: 14px; font-weight: 600;'
