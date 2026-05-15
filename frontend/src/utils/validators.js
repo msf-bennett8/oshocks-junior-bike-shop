@@ -1,5 +1,13 @@
 // validators.js
-
+/**
+ * Validates a Kenyan phone number.
+ * Accepted formats:
+ * - 0[1728]XXXXXXXX  (e.g., 0123456789, 0723456789, 0223456789, 0823456789)
+ * - 254[1728]XXXXXXXX (e.g., 254123456789, 254723456789, 254223456789, 254823456789)
+ * - +254[1728]XXXXXXXX (e.g., +254123456789, +254723456789, +254223456789, +254823456789)
+ * - [1728]XXXXXXXX (direct, e.g., 123456789, 723456789, 223456789, 823456789)
+ * Where XXXXXXXX = 8 digits
+ */
 // ─────────────────────────────────────────────
 // Config & Constants
 // ─────────────────────────────────────────────
@@ -35,10 +43,10 @@ const CONFIG = {
       countryCode: '254',
       // Mobile prefixes: 1, 7 (Safaricom, Airtel, Telkom)
       // New 01xx prefixes: 0100, 0101, 0102, 0110, 0111 per CA allocation [^9^]
-      mobilePrefixes: ['1', '7'],
-      // National formats: 0[1|7]XXXXXXXX or 01XX XXXXXX (new 10-digit format)
-      nationalPattern: /^0(?:[17]\d{8}|[17]\d{9})$/, // 10 or 11 digits with leading 0
-      intlPattern: /^\+?254[17]\d{8}$/, // +254 or 254 prefix
+      mobilePrefixes: ['1', '7', '2', '8'],
+      // National formats: 0[1|7|2|8]XXXXXXXX or 01XX XXXXXX (new 10-digit format)
+      nationalPattern: /^0(?:[1728]\d{8}|[1728]\d{9})$/, // 10 or 11 digits with leading 0
+      intlPattern: /^\+?254[1728]\d{8}$/, // +254 or 254 prefix
     },
   },
 };
@@ -88,9 +96,10 @@ const extractDigits = (val) => toString(val).replace(/\D/g, '');
 /**
  * Detects if number looks Kenyan based on prefix patterns
  */
-const looksKenyan = (digits) => {
-  // Starts with 254, 0254, +254, or 0[1|7]
-  return /^(?:254|0254|0[17])/.test(digits);
+const looksKenyan = (digits, raw) => {
+  // Check digits-only: starts with 254, 0254, 0[1|7|2|8], or directly [1|7|2|8]
+  // Also check raw input for +254 prefix
+  return /^(?:254|0254|0[1728]|[1728])/.test(digits) || /^\+254/.test(raw);
 };
 
 /**
@@ -106,25 +115,33 @@ const parsePhone = (input) => {
   const hasPlus = raw.startsWith('+') || raw.includes(' +');
   
   // Kenyan number detection & parsing
-  if (looksKenyan(digitsOnly)) {
+  if (looksKenyan(digitsOnly, raw)) {
+    // Format: +2547... (with + prefix)
+    if (/^\+254[1728]\d{8}$/.test(raw.replace(/\s/g, ''))) {
+      return { type: 'kenya-intl-plus', digits: digitsOnly, hasPlus: true, normalized: `+${digitsOnly}` };
+    }
     // Format: 2547... (no +, no 0) → treat as +2547...
-    if (/^254[17]\d{8}$/.test(digitsOnly)) {
+    if (/^254[1728]\d{8}$/.test(digitsOnly)) {
       return { type: 'kenya-intl', digits: digitsOnly, hasPlus: false, normalized: `+${digitsOnly}` };
     }
     // Format: 02547... (with 0 prefix) → invalid, should be 07... or +254...
-    if (/^0254[17]\d{8}$/.test(digitsOnly)) {
+    if (/^0254[1728]\d{8}$/.test(digitsOnly)) {
       return { type: 'kenya-invalid-zero', digits: digitsOnly, hasPlus: false, error: 'Use 07... or +254... format' };
     }
     // Format: 07... or 01... (national)
-    if (/^0[17]\d{8}$/.test(digitsOnly)) {
+    if (/^0[1728]\d{8}$/.test(digitsOnly)) {
       return { type: 'kenya-national', digits: digitsOnly, hasPlus: false, normalized: `+254${digitsOnly.slice(1)}` };
     }
     // Format: 011... (new 10-digit format)
-    if (/^0[17]\d{9}$/.test(digitsOnly)) {
+    if (/^0[1728]\d{9}$/.test(digitsOnly)) {
       return { type: 'kenya-national-new', digits: digitsOnly, hasPlus: false, normalized: `+254${digitsOnly.slice(1)}` };
     }
+    // Format: 7... or 1... or 2... or 8... (no prefix, direct 9 digits)
+    if (/^[1728]\d{8}$/.test(digitsOnly)) {
+      return { type: 'kenya-direct', digits: digitsOnly, hasPlus: false, normalized: `+254${digitsOnly}` };
+    }
     // Partial match - might be Kenyan but wrong length
-    if (/^0[17]/.test(digitsOnly)) {
+    if (/^0[1728]/.test(digitsOnly)) {
       return { type: 'kenya-partial', digits: digitsOnly, hasPlus: false, error: `Kenyan mobile must be 10 digits (got ${digitsOnly.length})` };
     }
   }
@@ -207,10 +224,10 @@ export const validatePhone = (phone) => {
 
   // Format-specific validation
   if (parsed.type.startsWith('kenya')) {
-    // Validate Kenyan prefix is 1 or 7
+    // Validate Kenyan prefix is 1, 7, 2, or 8
     const prefix = parsed.digits.replace(/^0|^254/, '').charAt(0);
     if (!CONFIG.phone.kenya.mobilePrefixes.includes(prefix)) {
-      errors.push('Invalid Kenyan mobile prefix. Must start with 1 or 7');
+      errors.push('Invalid Kenyan mobile prefix. Must start with 1, 7, 2, or 8');
     }
   }
 

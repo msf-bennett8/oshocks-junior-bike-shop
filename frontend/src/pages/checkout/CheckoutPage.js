@@ -227,7 +227,7 @@ const countyInfo = {
     if (!shippingInfo.email.trim()) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(shippingInfo.email)) newErrors.email = 'Email is invalid';
     if (!shippingInfo.phone.trim()) newErrors.phone = 'Phone number is required';
-    else if (!/^(254|0)[17]\d{8}$/.test(shippingInfo.phone.replace(/\s/g, ''))) {
+    else if (!/^(\+?254|0)?[1728]\d{8}$/.test(shippingInfo.phone.replace(/\s/g, ''))) {
       newErrors.phone = 'Enter valid Kenyan phone number';
     }
     if (!shippingInfo.address.trim()) newErrors.address = 'Address is required';
@@ -243,7 +243,7 @@ const countyInfo = {
     
     if (paymentMethod === 'mpesa') {
       if (!mpesaPhone.trim()) newErrors.mpesaPhone = 'M-Pesa number is required';
-      else if (!/^(254|0)[17]\d{8}$/.test(mpesaPhone.replace(/\s/g, ''))) {
+      else if (!/^(\+?254|0)?[1728]\d{8}$/.test(mpesaPhone.replace(/\s/g, ''))) {
         newErrors.mpesaPhone = 'Enter valid M-Pesa number';
       }
         } else if (paymentMethod === 'card') {
@@ -1272,10 +1272,28 @@ const countyInfo = {
                           value={shippingInfo.phone}
                           onChange={(e) => setShippingInfo({...shippingInfo, phone: e.target.value})}
                           className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
-                          placeholder="0712345678 or 254712345678"
+                          placeholder="0712345678, 254712345678, or +254712345678"
                         />
                       </div>
-                      {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                      {errors.phone && (
+                        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                          <p className="text-red-600 text-xs font-semibold mb-1">{errors.phone}</p>
+                          <p className="text-red-500 text-xs mb-1">Accepted formats:</p>
+                          <ul className="text-red-500 text-xs list-disc list-inside space-y-0.5">
+                            <li>0712345678 (0 + prefix + 8 digits)</li>
+                            <li>254712345678 (254 + prefix + 8 digits)</li>
+                            <li>+254712345678 (+254 + prefix + 8 digits)</li>
+                            <li>712345678 (prefix + 8 digits, no 0)</li>
+                          </ul>
+                          <p className="text-red-500 text-xs mt-1">Valid prefixes: 0, 1, 2, 7, 8</p>
+                          <a 
+                            href="/contact-support" 
+                            className="text-orange-600 text-xs font-medium hover:underline mt-1 inline-block"
+                          >
+                            Still stuck? Contact support →
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
                   
@@ -1532,10 +1550,28 @@ const countyInfo = {
                           value={mpesaPhone}
                           onChange={(e) => setMpesaPhone(e.target.value)}
                           className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${errors.mpesaPhone ? 'border-red-500' : 'border-gray-300'}`}
-                          placeholder="0712345678 or 254712345678"
+                          placeholder="0712345678, 254712345678, or +254712345678"
                         />
                       </div>
-                      {errors.mpesaPhone && <p className="text-red-500 text-xs mt-1">{errors.mpesaPhone}</p>}
+                      {errors.mpesaPhone && (
+                        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                          <p className="text-red-600 text-xs font-semibold mb-1">{errors.mpesaPhone}</p>
+                          <p className="text-red-500 text-xs mb-1">Accepted formats:</p>
+                          <ul className="text-red-500 text-xs list-disc list-inside space-y-0.5">
+                            <li>0712345678 (0 + prefix + 8 digits)</li>
+                            <li>254712345678 (254 + prefix + 8 digits)</li>
+                            <li>+254712345678 (+254 + prefix + 8 digits)</li>
+                            <li>712345678 (prefix + 8 digits, no 0)</li>
+                          </ul>
+                          <p className="text-red-500 text-xs mt-1">Valid prefixes: 0, 1, 2, 7, 8</p>
+                          <a 
+                            href="/contact-support" 
+                            className="text-orange-600 text-xs font-medium hover:underline mt-1 inline-block"
+                          >
+                            Still stuck? Contact support →
+                          </a>
+                        </div>
+                      )}
                     </div>
                   )}
                   
