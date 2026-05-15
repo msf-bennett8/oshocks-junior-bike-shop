@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Mail, 
   Phone, 
@@ -16,79 +16,302 @@ import {
   Smartphone,
   HeadphonesIcon,
   Building,
-  Users
+  Users,
+  User,
+  Package,
+  Loader2,
+  FileText,
+  X,
+  Paperclip,
+  Headphones,
+  ChevronRight,
+  ExternalLink
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
+import CaseSuccessModal from '../../components/messaging/CaseSuccessModal';
+
+// ─── CASE TYPES (12 items including new Partnership & Business) ───
+const caseTypes = [
+  { value: 'partnership_business', label: 'Partnership & Business', icon: Building, color: 'bg-purple-100 text-purple-700 border-purple-200', desc: 'Partner with us or business inquiries' },
+  { value: 'order_issue', label: 'Order Issue', icon: Package, color: 'bg-orange-100 text-orange-700 border-orange-200', desc: 'Problem with an order' },
+  { value: 'account_login', label: 'Account & Login', icon: User, color: 'bg-indigo-100 text-indigo-700 border-indigo-200', desc: 'Login or profile issues' },
+  { value: 'report_problem', label: 'Report Problem', icon: AlertCircle, color: 'bg-red-100 text-red-700 border-red-200', desc: 'Bugs or abuse' },
+  { value: 'shipment_delivery', label: 'Shipment & Delivery', icon: MapPin, color: 'bg-cyan-100 text-cyan-700 border-cyan-200', desc: 'Shipping & tracking' },
+  { value: 'services_booking', label: 'Services & Booking', icon: Clock, color: 'bg-emerald-100 text-emerald-700 border-emerald-200', desc: 'Book a service' },
+  { value: 'general_inquiry', label: 'General Inquiry', icon: MessageSquare, color: 'bg-violet-100 text-violet-700 border-violet-200', desc: 'General questions' },
+  { value: 'payment_billing', label: 'Payment & Billing', icon: Mail, color: 'bg-amber-100 text-amber-700 border-amber-200', desc: 'Payment issues' },
+  { value: 'product_info', label: 'Product Information', icon: Package, color: 'bg-teal-100 text-teal-700 border-teal-200', desc: 'Product details' },
+  { value: 'returns_refund', label: 'Returns & Refund', icon: AlertCircle, color: 'bg-pink-100 text-pink-700 border-pink-200', desc: 'Return requests' },
+  { value: 'technical_support', label: 'Technical Support', icon: Smartphone, color: 'bg-slate-100 text-slate-700 border-slate-200', desc: 'Troubleshooting' },
+  { value: 'other', label: 'Other', icon: HeadphonesIcon, color: 'bg-gray-100 text-gray-700 border-gray-200', desc: 'Anything else' },
+];
+
+const priorityOptions = [
+  { value: 'low', label: 'Low', color: 'bg-green-100 text-green-700 border-green-200' },
+  { value: 'medium', label: 'Medium', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+  { value: 'high', label: 'High', color: 'bg-orange-100 text-orange-700 border-orange-200' },
+  { value: 'urgent', label: 'Urgent', color: 'bg-red-100 text-red-700 border-red-200' },
+];
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_TYPES = [
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+  'application/pdf',
+  'text/plain', 'text/csv',
+  'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/zip', 'application/x-zip-compressed',
+  'video/mp4', 'video/webm', 'audio/mpeg', 'audio/wav'
+];
+const BLOCKED_EXTENSIONS = ['.exe', '.dll', '.bat', '.cmd', '.sh', '.php', '.js', '.html', '.htm', '.jar', '.apk', '.ipa'];
 
 const ContactPage = () => {
+  const { user, isAuthenticated } = useAuth();
+
+  // ─── FORM STATE ───
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     subject: '',
-    category: 'general',
-    message: ''
+    category: '',
+    message: '',
+    orderNumber: '',
   });
-
-  const [formStatus, setFormStatus] = useState({
-    type: '', // 'success' or 'error'
-    message: ''
-  });
-
+  const [priority, setPriority] = useState('medium');
+  const [validationErrors, setValidationErrors] = useState({});
+  
+  // ─── UI STATE ───
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdCaseId, setCreatedCaseId] = useState('');
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
+  // ─── ORDER VALIDATION ───
+  const [validatingOrder, setValidatingOrder] = useState(false);
+  const [orderValid, setOrderValid] = useState(null);
+  const [orderData, setOrderData] = useState(null);
+
+  // ─── ATTACHMENT ───
+  const [attachment, setAttachment] = useState(null);
+  const [attachmentPreview, setAttachmentPreview] = useState(null);
+  const [attachmentError, setAttachmentError] = useState(null);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // ─── AUTOFILL FROM AUTH ───
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+      }));
+    }
+  }, [user]);
+
+  const isOrderRelated = ['order_issue', 'returns_refund', 'payment_billing'].includes(formData.category);
+
+  // ─── HANDLERS ───
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setFormStatus({ type: '', message: '' });
-
-    try {
-      const { submitInquiry } = await import('../../services/contactInquiryService');
-      
-      const res = await submitInquiry({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        subject: formData.subject,
-        category: formData.category,
-        message: formData.message,
-        department: 'general',
-      });
-
-      if (res.success) {
-        setFormStatus({
-          type: 'success',
-          message: res.message || 'Thank you for contacting us! We will get back to you within 24 hours.'
-        });
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          subject: '',
-          category: 'general',
-          message: ''
-        });
-      }
-    } catch (err) {
-      setFormStatus({
-        type: 'error',
-        message: err.response?.data?.message || 'Failed to send message. Please try again.'
-      });
-    } finally {
-      setIsSubmitting(false);
-      // Clear message after 8 seconds
-      setTimeout(() => {
-        setFormStatus({ type: '', message: '' });
-      }, 8000);
+    setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear validation error on change
+    if (validationErrors[name]) {
+      setValidationErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
+
+  const handleCategoryChange = (value) => {
+    setFormData(prev => ({ ...prev, category: value }));
+    setOrderValid(null);
+    setOrderData(null);
+    if (validationErrors.category) {
+      setValidationErrors(prev => ({ ...prev, category: '' }));
+    }
+  };
+
+  // ─── ATTACHMENT HANDLERS ───
+  const validateFile = (file) => {
+    if (file.size > MAX_FILE_SIZE) {
+      return `File too large. Maximum size is ${(MAX_FILE_SIZE / 1024 / 1024).toFixed(0)}MB.`;
+    }
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return `File type "${file.type || 'unknown'}" not allowed.`;
+    }
+    const ext = '.' + file.name.split('.').pop().toLowerCase();
+    if (BLOCKED_EXTENSIONS.includes(ext)) {
+      return `File extension "${ext}" is blocked for security reasons.`;
+    }
+    const nameParts = file.name.split('.');
+    if (nameParts.length > 2) {
+      const lastTwo = '.' + nameParts.slice(-2).join('.').toLowerCase();
+      if (BLOCKED_EXTENSIONS.some(blocked => lastTwo.includes(blocked))) {
+        return `Suspicious file name detected. Please rename your file.`;
+      }
+    }
+    return null;
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAttachmentError(null);
+    const error = validateFile(file);
+    if (error) {
+      setAttachmentError(error);
+      setAttachment(null);
+      setAttachmentPreview(null);
+      return;
+    }
+    setAttachment(file);
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setAttachmentPreview(ev.target.result);
+      reader.readAsDataURL(file);
+    } else {
+      setAttachmentPreview(null);
+    }
+  };
+
+  const handleRemoveAttachment = () => {
+    setAttachment(null);
+    setAttachmentPreview(null);
+    setAttachmentError(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // ─── ORDER VALIDATION ───
+  const validateOrder = async (purchaseId) => {
+    if (!purchaseId?.trim()) return;
+    setValidatingOrder(true);
+    setOrderValid(null);
+    try {
+      const res = await api.post('/support-cases/validate-order', { purchase_id: purchaseId.trim() });
+      setOrderValid(true);
+      setOrderData(res.data);
+    } catch (err) {
+      setOrderValid(false);
+      setOrderData(null);
+    } finally {
+      setValidatingOrder(false);
+    }
+  };
+
+  // ─── VALIDATION ───
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.name.trim()) errors.name = 'Full name is required.';
+    if (!formData.email.trim()) {
+      errors.email = 'Email address is required.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address.';
+    }
+    if (!formData.category) errors.category = 'Please select a case type.';
+    if (!formData.subject.trim()) errors.subject = 'Subject is required.';
+    if (!formData.message.trim()) {
+      errors.message = 'Message is required.';
+    } else if (formData.message.trim().length < 20) {
+      errors.message = 'Message must be at least 20 characters.';
+    }
+    if (isOrderRelated && orderValid !== true) {
+      errors.orderNumber = 'Please verify your Purchase ID before submitting.';
+    }
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // ─── SUBMIT ───
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+
+    try {
+      // Get guest session for anonymous users
+      const getGuestSessionId = () => {
+        let sessionId = localStorage.getItem('oshocks_guest_session_id');
+        if (!sessionId) {
+          sessionId = 'guest_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+          localStorage.setItem('oshocks_guest_session_id', sessionId);
+        }
+        return sessionId;
+      };
+
+      const guestId = !isAuthenticated ? getGuestSessionId() : null;
+
+      // Step 1: Create conversation
+      const convPayload = {
+        type: isOrderRelated ? 'order_support' : 'support',
+      };
+      const convRes = await api.post('/conversations', convPayload, {
+        headers: guestId ? { 'X-Guest-Session-ID': guestId } : {}
+      });
+      const conversation = convRes.data.data;
+
+      // Step 2: Create case in conversation
+      const caseFormData = new FormData();
+      caseFormData.append('case_type', formData.category);
+      caseFormData.append('subject', formData.subject.trim());
+      caseFormData.append('description', formData.message.trim());
+      caseFormData.append('priority', priority);
+      if (formData.orderNumber.trim()) {
+        caseFormData.append('purchase_id', formData.orderNumber.trim());
+      }
+      if (!isAuthenticated) {
+        caseFormData.append('guest_name', formData.name.trim());
+        caseFormData.append('guest_email', formData.email.trim());
+        if (formData.phone.trim()) caseFormData.append('guest_phone', formData.phone.trim());
+      }
+      if (attachment) {
+        caseFormData.append('attachment_file', attachment);
+        caseFormData.append('attachment[name]', attachment.name);
+        caseFormData.append('attachment[type]', attachment.type);
+        caseFormData.append('attachment[size]', attachment.size);
+      }
+
+      const caseRes = await api.post(`/conversations/${conversation.id}/cases`, caseFormData, {
+        headers: {
+          ...(guestId ? { 'X-Guest-Session-ID': guestId } : {}),
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const newCaseId = caseRes.data.data?.support_case?.case_id || '';
+      setCreatedCaseId(newCaseId);
+      setShowSuccessModal(true);
+
+      // Reset form
+      setFormData({
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: user?.phone || '',
+        subject: '',
+        category: '',
+        message: '',
+        orderNumber: '',
+      });
+      setPriority('medium');
+      setOrderValid(null);
+      setOrderData(null);
+      setAttachment(null);
+      setAttachmentPreview(null);
+      setValidationErrors({});
+    } catch (err) {
+      console.error('Case creation failed:', err);
+      setValidationErrors(prev => ({
+        ...prev,
+        submit: err.response?.data?.message || 'Failed to create support case. Please try again.'
+      }));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const selectedCaseType = caseTypes.find(t => t.value === formData.category);
 
   const contactMethods = [
     {
@@ -220,115 +443,225 @@ const ContactPage = () => {
                 <p className="text-gray-600">Fill out the form below and our team will get back to you within 24 hours.</p>
               </div>
 
-              {/* Status Message */}
-              {formStatus.message && (
-                <div className={`mb-6 p-4 rounded-lg flex items-start gap-3 ${
-                  formStatus.type === 'success' 
-                    ? 'bg-green-50 border border-green-200' 
-                    : 'bg-red-50 border border-red-200'
-                }`}>
-                  {formStatus.type === 'success' ? (
-                    <CheckCircle className="text-green-600 flex-shrink-0 mt-0.5" size={20} />
-                  ) : (
-                    <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
-                  )}
-                  <p className={formStatus.type === 'success' ? 'text-green-800' : 'text-red-800'}>
-                    {formStatus.message}
-                  </p>
+              {/* Submit Error */}
+              {validationErrors.submit && (
+                <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 flex items-start gap-3">
+                  <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+                  <p className="text-red-800">{validationErrors.submit}</p>
                 </div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Name & Email */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                       Full Name *
                     </label>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-shadow"
-                      placeholder="Zablon Bennett"
-                    />
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        className={`block w-full pl-10 pr-3 py-2.5 border ${
+                          validationErrors.name ? 'border-red-300' : 'border-gray-300'
+                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent`}
+                        placeholder="John Doe"
+                      />
+                    </div>
+                    {validationErrors.name && (
+                      <p className="mt-1 text-xs text-red-600">{validationErrors.name}</p>
+                    )}
                   </div>
 
                   <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                       Email Address *
                     </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-shadow"
-                      placeholder="bennett@example.com"
-                    />
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className={`block w-full pl-10 pr-3 py-2.5 border ${
+                          validationErrors.email ? 'border-red-300' : 'border-gray-300'
+                        } rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent`}
+                        placeholder="you@example.com"
+                      />
+                    </div>
+                    {validationErrors.email && (
+                      <p className="mt-1 text-xs text-red-600">{validationErrors.email}</p>
+                    )}
                   </div>
                 </div>
 
+                {/* Phone & Order Number with Verify */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                      Phone Number
+                      Phone Number (Optional)
                     </label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-
-                                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-shadow"     placeholder="+254 700 000 000"
-                    />
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        placeholder="+254 712 345 678"
+                      />
+                    </div>
                   </div>
 
                   <div>
-                    <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-                      Inquiry Type *
+                    <label htmlFor="orderNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                      Purchase ID {isOrderRelated ? '*' : '(Optional)'}
                     </label>
-                    <select
-                      id="category"
-                      name="category"
-                      value={formData.category}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-shadow"
-                    >
-                      <option value="general">General Inquiry</option>
-                      <option value="product">Product Question</option>
-                      <option value="order">Order Status</option>
-                      <option value="technical">Technical Support</option>
-                      <option value="partnership">Partnership/Business</option>
-                      <option value="feedback">Feedback/Complaint</option>
-                      <option value="wholesale">Wholesale Inquiry</option>
-                      <option value="other">Other</option>
-                    </select>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Package className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                          id="orderNumber"
+                          name="orderNumber"
+                          type="text"
+                          value={formData.orderNumber}
+                          onChange={(e) => {
+                            setFormData(prev => ({ ...prev, orderNumber: e.target.value }));
+                            setOrderValid(null);
+                            setOrderData(null);
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value.trim().length >= 3) validateOrder(e.target.value.trim());
+                          }}
+                          className={`block w-full pl-10 pr-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+                            orderValid === true ? 'bg-green-50 border-green-300' :
+                            orderValid === false ? 'bg-red-50 border-red-300' :
+                            'border-gray-300'
+                          }`}
+                          placeholder="e.g. AF7SEIV1U0"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!isAuthenticated) {
+                            setShowLoginPrompt(true);
+                            return;
+                          }
+                          if (formData.orderNumber) validateOrder(formData.orderNumber);
+                        }}
+                        disabled={validatingOrder || !formData.orderNumber.trim()}
+                        className="px-4 py-2.5 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
+                      >
+                        {validatingOrder ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify'}
+                      </button>
+                    </div>
+                    {orderValid === true && orderData && (
+                      <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-xl">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-green-500" />
+                          <span className="text-sm font-medium text-green-800">Order validated</span>
+                        </div>
+                        <p className="text-xs text-green-700 mt-1">
+                          Purchase ID {orderData.data?.purchase_id || orderData.purchase_id} • {orderData.data?.status || orderData.status} • ${orderData.data?.total || orderData.total}
+                        </p>
+                      </div>
+                    )}
+                    {orderValid === false && (
+                      <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-500" />
+                        <span className="text-sm text-red-700">Order not found. Please check your Purchase ID.</span>
+                      </div>
+                    )}
+                    {validationErrors.orderNumber && (
+                      <p className="mt-1 text-xs text-red-600">{validationErrors.orderNumber}</p>
+                    )}
                   </div>
                 </div>
 
+                {/* Case Type Dropdown */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Case Type *
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={formData.category}
+                      onChange={(e) => handleCategoryChange(e.target.value)}
+                      className={`block w-full px-3 py-2.5 border ${
+                        validationErrors.category ? 'border-red-300' : 'border-gray-300'
+                      } rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white appearance-none`}
+                    >
+                      <option value="">Select a case type...</option>
+                      {caseTypes.map((t) => (
+                        <option key={t.value} value={t.value}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronRight className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 rotate-90 pointer-events-none" />
+                  </div>
+                  {selectedCaseType && (
+                    <p className="mt-1 text-xs text-gray-500">{selectedCaseType.desc}</p>
+                  )}
+                  {validationErrors.category && (
+                    <p className="mt-1 text-xs text-red-600">{validationErrors.category}</p>
+                  )}
+                </div>
+
+                {/* Priority/Severity */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Priority
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {priorityOptions.map((p) => (
+                      <button
+                        key={p.value}
+                        type="button"
+                        onClick={() => setPriority(p.value)}
+                        className={`py-2.5 rounded-xl text-xs font-semibold border-2 transition-all ${
+                          priority === p.value
+                            ? `${p.color} ring-2 ring-offset-1 ring-gray-300`
+                            : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Subject */}
                 <div>
                   <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
                     Subject *
                   </label>
                   <input
-                    type="text"
                     id="subject"
                     name="subject"
+                    type="text"
                     value={formData.subject}
                     onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
-                    placeholder="How can we help you?"
+                    className={`block w-full px-3 py-2.5 border ${
+                      validationErrors.subject ? 'border-red-300' : 'border-gray-300'
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent`}
+                    placeholder="Brief description of your issue"
                   />
+                  {validationErrors.subject && (
+                    <p className="mt-1 text-xs text-red-600">{validationErrors.subject}</p>
+                  )}
                 </div>
 
+                {/* Message */}
                 <div>
                   <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
                     Message *
@@ -336,29 +669,111 @@ const ContactPage = () => {
                   <textarea
                     id="message"
                     name="message"
+                    rows="6"
                     value={formData.message}
                     onChange={handleChange}
-                    required
-                    rows="6"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow resize-none"
-                    placeholder="Tell us more about your inquiry..."
-                  ></textarea>
+                    className={`block w-full px-3 py-2.5 border ${
+                      validationErrors.message ? 'border-red-300' : 'border-gray-300'
+                    } rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none`}
+                    placeholder="Please provide as much detail as possible about your inquiry..."
+                  />
+                  <div className="flex items-center justify-between mt-1">
+                    {validationErrors.message ? (
+                      <p className="text-xs text-red-600">{validationErrors.message}</p>
+                    ) : (
+                      <p className="text-xs text-gray-500">
+                        {formData.message.length} characters (minimum 20)
+                      </p>
+                    )}
+                  </div>
                 </div>
 
+                {/* Attachment Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Attachment (Optional)
+                  </label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    accept={ALLOWED_TYPES.join(',')}
+                  />
+
+                  {!attachment ? (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-500 hover:border-orange-400 hover:text-orange-600 transition-colors"
+                    >
+                      <Paperclip className="w-4 h-4" />
+                      Click to upload file (max 10MB)
+                    </button>
+                  ) : (
+                    <div className={`relative p-3 rounded-xl border-2 ${attachmentError ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'}`}>
+                      <div className="flex items-center gap-3">
+                        {attachmentPreview ? (
+                          <img src={attachmentPreview} alt="Preview" className="w-12 h-12 rounded-lg object-cover" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                            <FileText className="w-6 h-6 text-green-600" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{attachment.name}</p>
+                          <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(1)} KB • {attachment.type}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemoveAttachment}
+                          className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
+                          title="Remove attachment"
+                        >
+                          <X className="w-4 h-4 text-red-500" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {attachmentError && (
+                    <div className="mt-2 flex items-center gap-2 text-xs text-red-600">
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                      {attachmentError}
+                    </div>
+                  )}
+                  <p className="mt-1.5 text-[11px] text-gray-400">
+                    Allowed: JPG, PNG, GIF, PDF, DOC, XLS, CSV, TXT, ZIP, MP4, MP3. Max 10MB. No executables.
+                  </p>
+                </div>
+
+                {/* Order verification warning */}
+                {isOrderRelated && orderValid !== true && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                    <span className="text-sm text-amber-700">
+                      {!isAuthenticated
+                        ? 'Please log in to verify your order before submitting.'
+                        : 'Please click "Verify" to validate your Purchase ID before submitting.'}
+                    </span>
+                  </div>
+                )}
+
+                {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all font-medium text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting || !formData.category || !formData.subject.trim() || !formData.name.trim() || !formData.email.trim() || (isOrderRelated && orderValid !== true)}
+                  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      <span>Sending...</span>
+                      <Loader2 className="animate-spin -ml-1 mr-2 h-5 w-5" />
+                      Creating Support Case...
                     </>
                   ) : (
                     <>
-                      <Send size={20} />
-                      <span>Send Message</span>
+                      <Headphones className="w-5 h-5 mr-2" />
+                      Create Support Case
                     </>
                   )}
                 </button>
@@ -489,6 +904,52 @@ const ContactPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Login Prompt Modal */}
+      {showLoginPrompt && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 text-center">
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="w-8 h-8 text-orange-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Log In Required</h3>
+            <p className="text-sm text-gray-600 mb-5">
+              To verify your order and create a case, please log in to your account. This helps us protect your order information.
+            </p>
+            <div className="space-y-2">
+              <button
+                onClick={() => window.location.href = '/login'}
+                className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-medium hover:from-orange-600 hover:to-red-600 transition-all"
+              >
+                Log In
+              </button>
+              <button
+                onClick={() => setShowLoginPrompt(false)}
+                className="w-full py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+              >
+                Continue as Guest
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <CaseSuccessModal
+          caseId={createdCaseId}
+          message="Our team will get back to you within 24 hours. Check your messages for updates."
+          onClose={() => {
+            setShowSuccessModal(false);
+            setCreatedCaseId('');
+          }}
+          onViewChat={() => {
+            setShowSuccessModal(false);
+            setCreatedCaseId('');
+            // Optionally navigate to messages
+          }}
+        />
+      )}
     </div>
   );
 };

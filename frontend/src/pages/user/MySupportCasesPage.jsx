@@ -135,7 +135,7 @@ const MySupportCasesPage = () => {
     setIsPanelOpen(true);
   };
 
-  const getTypeConfig = (type) => TYPE_CONFIG[type] || TYPE_CONFIG.inquiry;
+  const getTypeConfig = (type) => TYPE_CONFIG[type] || TYPE_CONFIG.general_inquiry || TYPE_CONFIG.other;
   const getPriorityConfig = (priority) => PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium;
 
   return (
@@ -263,8 +263,8 @@ const MySupportCasesPage = () => {
         ) : (
           <div className="space-y-3">
             {filteredCases.map(supportCase => {
-              const typeConfig = getTypeConfig(supportCase.case_type);
-              const TypeIcon = typeConfig.icon;
+            const typeConfig = getTypeConfig(supportCase.case_type);
+            const TypeIcon = typeConfig?.icon || HelpCircle;
               const priorityConfig = getPriorityConfig(supportCase.priority);
               const isExpanded = expandedCase === supportCase.case_id;
 

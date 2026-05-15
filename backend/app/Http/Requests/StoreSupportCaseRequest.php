@@ -14,7 +14,7 @@ class StoreSupportCaseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'case_type' => ['required', 'in:order_issue,account_login,report_problem,shipment_delivery,services_booking,general_inquiry,payment_billing,product_info,returns_refund,technical_support,other'],
+            'case_type' => ['required', 'in:partnership_business,order_issue,account_login,report_problem,shipment_delivery,services_booking,general_inquiry,payment_billing,product_info,returns_refund,technical_support,other'],
             'subject' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
             'purchase_id' => [

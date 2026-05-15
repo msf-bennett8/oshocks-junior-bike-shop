@@ -14,7 +14,7 @@ import {
   MapPin, Tag, CheckCircle, Loader2, Send, ChevronDown,
   ChevronUp, Lock, Unlock, Eye, EyeOff, Plus, Copy, Check,
   ExternalLink, Star, Calendar, ArrowLeft,
-  CreditCard, Package, RotateCcw, Cpu, HelpCircle, Truck, Wrench
+  CreditCard, Package, RotateCcw, Cpu, HelpCircle, Truck, Wrench, Briefcase
 } from 'lucide-react';
 import { CaseStatusChip } from './CaseStatusChip';
 import AttachmentViewerModal from './AttachmentViewerModal';
@@ -27,6 +27,7 @@ const TABS = [
 ];
 
 const TYPE_CONFIG = {
+  partnership_business: { label: 'Partnership & Business', color: 'bg-rose-100 text-rose-700 border-rose-200', icon: Briefcase },
   order_issue: { label: 'Order Issue', color: 'bg-orange-100 text-orange-700 border-orange-200', icon: Tag },
   account_login: { label: 'Account & Login', color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: User },
   report_problem: { label: 'Report Problem', color: 'bg-red-100 text-red-700 border-red-200', icon: AlertTriangle },
@@ -107,7 +108,7 @@ const CasePanel = ({ supportCase, isOpen, onClose, onNavigateToMessages }) => {
 
   if (!isOpen || !supportCase) return null;
 
-  const getTypeConfig = (type) => TYPE_CONFIG[type] || TYPE_CONFIG.inquiry;
+  const getTypeConfig = (type) => TYPE_CONFIG[type] || TYPE_CONFIG.general_inquiry || TYPE_CONFIG.other;
   const getPriorityConfig = (priority) => PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.medium;
 
   return (

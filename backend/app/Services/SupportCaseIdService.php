@@ -26,6 +26,7 @@ class SupportCaseIdService
      * Case type digit mappings
      */
     public const CASE_TYPE_DIGITS = [
+        'partnership_business' => 'B',
         'order_issue'        => '7',
         'account_login'      => '5',
         'report_problem'     => '3',

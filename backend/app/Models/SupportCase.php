@@ -364,6 +364,7 @@ class SupportCase extends Model
     public function getCaseTypeLabelAttribute(): string
     {
         return [
+            'partnership_business' => 'Partnership & Business',
             'order_issue'       => 'Order Issue',
             'account_login'     => 'Account & Login',
             'report_problem'    => 'Report a Problem',

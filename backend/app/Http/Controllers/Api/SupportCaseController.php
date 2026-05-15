@@ -34,7 +34,7 @@ class SupportCaseController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = Auth::user();
-        $query = SupportCase::with(['assignedAgent', 'order', 'conversation']);
+        $query = SupportCase::with(['user', 'assignedAgent', 'order', 'conversation']);
 
         // If user can handle support cases, show all active cases
         if ($user->canHandleSupportCases()) {
@@ -593,7 +593,7 @@ class SupportCaseController extends Controller
     {
         $user = Auth::user();
 
-        $query = SupportCase::with(['assignedAgent', 'order', 'conversation'])
+        $query = SupportCase::with(['user', 'assignedAgent', 'order', 'conversation'])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc');
 

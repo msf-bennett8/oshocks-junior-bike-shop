@@ -10,7 +10,7 @@ import {
   Search, X, MessageCircle, Headphones, User, Mail,
   ShoppingBag, Clock, AlertCircle, ChevronRight, Loader2,
   Truck, Wrench, MessageSquare, CreditCard, Package, RotateCcw, Cpu, HelpCircle,
-  Paperclip, FileText
+  Paperclip, FileText, Briefcase
 } from 'lucide-react';
 import CaseSuccessModal from './CaseSuccessModal';
 
@@ -190,6 +190,7 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
     setSelectedCaseType(type);
     setSupportStep('form');
     const labels = {
+      partnership_business: 'Partnership & Business',
       order_issue: 'Order Issue',
       account_login: 'Account & Login',
       report_problem: 'Report a Problem',
@@ -600,6 +601,7 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
 
                   <div className="grid grid-cols-1 gap-2 max-h-[50vh] overflow-y-auto pr-1">
                     {[
+                      { id: 'partnership_business', icon: Briefcase, label: 'Partnership & Business', desc: 'Business opportunities', color: 'from-rose-500 to-pink-500', bg: 'bg-rose-50', border: 'border-rose-200', hover: 'hover:border-rose-400' },
                       { id: 'order_issue', icon: ShoppingBag, label: 'Order Issue', desc: 'Problem with an order', color: 'from-orange-500 to-red-500', bg: 'bg-orange-50', border: 'border-orange-200', hover: 'hover:border-orange-400' },
                       { id: 'account_login', icon: User, label: 'Account & Login', desc: 'Login or profile issues', color: 'from-indigo-500 to-purple-500', bg: 'bg-indigo-50', border: 'border-indigo-200', hover: 'hover:border-indigo-400' },
                       { id: 'report_problem', icon: AlertCircle, label: 'Report Problem', desc: 'Bugs or abuse', color: 'from-red-500 to-rose-500', bg: 'bg-red-50', border: 'border-red-200', hover: 'hover:border-red-400' },
@@ -645,6 +647,7 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
 
                   {/* Selected case type badge */}
                   <div className="flex items-center gap-2 flex-wrap">
+                    {selectedCaseType === 'partnership_business' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-100 text-rose-700 rounded-full text-xs font-semibold"><Briefcase className="w-3.5 h-3.5" /> Partnership & Business</div>}
                     {selectedCaseType === 'order_issue' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold"><ShoppingBag className="w-3.5 h-3.5" /> Order Issue</div>}
                     {selectedCaseType === 'account_login' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-semibold"><User className="w-3.5 h-3.5" /> Account & Login</div>}
                     {selectedCaseType === 'report_problem' && <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-xs font-semibold"><AlertCircle className="w-3.5 h-3.5" /> Report Problem</div>}

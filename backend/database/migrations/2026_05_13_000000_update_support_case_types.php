@@ -14,6 +14,7 @@ return new class extends Migration
         DB::statement("UPDATE support_cases SET case_type = 'general_inquiry' WHERE case_type = 'inquiry'");
 
         DB::statement("ALTER TABLE support_cases MODIFY COLUMN case_type ENUM(
+            'partnership_business',
             'order_issue',
             'account_login',
             'report_problem',
@@ -31,6 +32,7 @@ return new class extends Migration
     public function down(): void
     {
         DB::statement("ALTER TABLE support_cases MODIFY COLUMN case_type ENUM(
+            'partnership_business',
             'order_issue',
             'account_help',
             'report_problem',

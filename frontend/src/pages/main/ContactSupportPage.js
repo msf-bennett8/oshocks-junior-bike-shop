@@ -3,7 +3,7 @@ import {
   Mail, Phone, MessageCircle, MapPin, Clock, Send, Loader, CheckCircle,
   AlertCircle, User, HelpCircle, Package, CreditCard, Truck, Shield,
   ChevronRight, X, Headphones, FileText, ExternalLink, Video,
-  Wrench, MessageSquare, RotateCcw, Cpu, Paperclip, Loader2, Copy
+  Wrench, MessageSquare, RotateCcw, Cpu, Paperclip, Loader2, Copy, Briefcase, AlertTriangle
 } from 'lucide-react';
 import ChatDrawer from '../../components/messaging/ChatDrawer';
 import CaseSuccessModal from '../../components/messaging/CaseSuccessModal';
@@ -88,17 +88,18 @@ const ContactSupportPage = () => {
   } = useWebRTC(user?.id);
 
   const caseTypes = [
-    { value: 'order_issue', label: 'Order Issue', icon: Package, color: 'bg-orange-100 text-orange-700' },
-    { value: 'account_login', label: 'Account & Login', icon: User, color: 'bg-indigo-100 text-indigo-700' },
-    { value: 'report_problem', label: 'Report Problem', icon: AlertCircle, color: 'bg-red-100 text-red-700' },
-    { value: 'shipment_delivery', label: 'Shipment & Delivery', icon: Truck, color: 'bg-cyan-100 text-cyan-700' },
-    { value: 'services_booking', label: 'Services & Booking', icon: Wrench, color: 'bg-emerald-100 text-emerald-700' },
-    { value: 'general_inquiry', label: 'General Inquiry', icon: MessageSquare, color: 'bg-violet-100 text-violet-700' },
-    { value: 'payment_billing', label: 'Payment & Billing', icon: CreditCard, color: 'bg-amber-100 text-amber-700' },
-    { value: 'product_info', label: 'Product Information', icon: Package, color: 'bg-teal-100 text-teal-700' },
-    { value: 'returns_refund', label: 'Returns & Refund', icon: RotateCcw, color: 'bg-pink-100 text-pink-700' },
-    { value: 'technical_support', label: 'Technical Support', icon: Cpu, color: 'bg-slate-100 text-slate-700' },
-    { value: 'other', label: 'Other', icon: HelpCircle, color: 'bg-gray-100 text-gray-700' },
+    { value: 'partnership_business', label: 'Partnership & Business', icon: Briefcase },
+    { value: 'order_issue', label: 'Order Issue', icon: Package },
+    { value: 'account_login', label: 'Account & Login', icon: User },
+    { value: 'report_problem', label: 'Report Problem', icon: AlertTriangle },
+    { value: 'shipment_delivery', label: 'Shipment & Delivery', icon: Truck },
+    { value: 'services_booking', label: 'Services & Booking', icon: Wrench },
+    { value: 'general_inquiry', label: 'General Inquiry', icon: MessageSquare },
+    { value: 'payment_billing', label: 'Payment & Billing', icon: CreditCard },
+    { value: 'product_info', label: 'Product Information', icon: Package },
+    { value: 'returns_refund', label: 'Returns & Refund', icon: RotateCcw },
+    { value: 'technical_support', label: 'Technical Support', icon: Cpu },
+    { value: 'other', label: 'Other', icon: HelpCircle },
   ];
 
   const isOrderRelated = ['order_issue', 'returns_refund', 'payment_billing'].includes(formData.category);
