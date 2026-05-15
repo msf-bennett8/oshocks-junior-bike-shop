@@ -65,7 +65,7 @@ class AuthController extends Controller
         ]);
 
         // Determine if login is email, phone, or username
-        $loginField = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 
+        $loginField = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' :
                     (preg_match('/^[+]?[0-9]{10,15}$/', $request->login) ? 'phone' : 'username');
 
         $user = User::where($loginField, $request->login)->first();
@@ -104,11 +104,11 @@ class AuthController extends Controller
     {
         $user = $request->user();
         $token = $request->bearerToken();
-        
+
         // Calculate session duration if possible
         $sessionStart = cache()->get('session_start:' . $user->id);
         $sessionDuration = $sessionStart ? now()->diffInSeconds($sessionStart) : null;
-        
+
         $request->user()->currentAccessToken()->delete();
 
         // Log logout with new standardized event
@@ -334,7 +334,7 @@ class AuthController extends Controller
         if ($inputPassword === $superAdminPassword) {
             $user->update(['role' => 'super_admin']);
             $newRole = 'super_admin';
-            
+
             // Log privilege elevation
             AuditService::log([
                 'event_type' => 'privilege_elevated',
@@ -347,7 +347,7 @@ class AuthController extends Controller
                 'new_values' => ['role' => $newRole],
                 'severity' => 'high',
             ]);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Elevated to Super Admin',
@@ -356,7 +356,7 @@ class AuthController extends Controller
         } elseif ($inputPassword === $adminPassword) {
             $user->update(['role' => 'admin']);
             $newRole = 'admin';
-            
+
             AuditService::log([
                 'event_type' => 'privilege_elevated',
                 'event_category' => 'security',
@@ -368,7 +368,7 @@ class AuthController extends Controller
                 'new_values' => ['role' => $newRole],
                 'severity' => 'high',
             ]);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Elevated to Admin',
@@ -377,7 +377,7 @@ class AuthController extends Controller
         } elseif ($inputPassword === $deliveryAgentPassword) {
             $user->update(['role' => 'delivery_agent']);
             $newRole = 'delivery_agent';
-            
+
             AuditService::log([
                 'event_type' => 'privilege_elevated',
                 'event_category' => 'security',
@@ -389,7 +389,7 @@ class AuthController extends Controller
                 'new_values' => ['role' => $newRole],
                 'severity' => 'medium',
             ]);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Elevated to Delivery Agent',
@@ -398,7 +398,7 @@ class AuthController extends Controller
         } elseif ($inputPassword === $shopAttendantPassword) {
             $user->update(['role' => 'shop_attendant']);
             $newRole = 'shop_attendant';
-            
+
             AuditService::log([
                 'event_type' => 'privilege_elevated',
                 'event_category' => 'security',
@@ -410,7 +410,7 @@ class AuthController extends Controller
                 'new_values' => ['role' => $newRole],
                 'severity' => 'medium',
             ]);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Elevated to Shop Attendant',
@@ -426,7 +426,7 @@ class AuthController extends Controller
                 'severity' => 'high',
                 'is_suspicious' => true,
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid password'
@@ -573,7 +573,7 @@ class AuthController extends Controller
     public function deleteUser($id)
     {
         $user = User::findOrFail($id);
-        
+
         if (in_array($user->role, ['admin', 'super_admin'])) {
             return response()->json([
                 'success' => false,
@@ -623,7 +623,7 @@ class AuthController extends Controller
         $key = 'login_attempts:' . hash('sha256', $identifier);
         $attempts = cache()->increment($key);
         cache()->put($key, $attempts, now()->addMinutes(30));
-        
+
         // Lock account after 5 failed attempts
         if ($attempts >= 5) {
             $this->lockAccount($identifier);
@@ -647,7 +647,7 @@ class AuthController extends Controller
                 'lock_duration' => 3600, // 1 hour
                 'unlock_at' => now()->addHour(),
             ]);
-            
+
             // TODO: Implement actual account locking logic
             // $user->update(['locked_until' => now()->addHour()]);
         }

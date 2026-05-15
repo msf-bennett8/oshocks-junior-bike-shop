@@ -19,7 +19,7 @@ class AuditMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $startTime = microtime(true);
-        
+
         // Generate correlation ID if not present
         if (!$request->hasHeader('X-Correlation-ID')) {
             $correlationId = (string) \Illuminate\Support\Str::uuid();
@@ -40,12 +40,16 @@ class AuditMiddleware
 
         // Calculate duration
         $duration = round((microtime(true) - $startTime) * 1000, 2); // milliseconds
-        
+
         // Update context with duration
         AuditContextService::set('request_duration_ms', $duration);
 
         // Add audit headers to response
-        $response->headers->set('X-Correlation-ID', $request->header('X-Correlation-ID'));
+        $correlationId = $request->header('X-Correlation-ID');
+        if ($correlationId) {
+            $correlationId = str_replace(["\r\n", "\n", "\r", "\0"], '', $correlationId);
+            $response->headers->set('X-Correlation-ID', $correlationId);
+        }
         $response->headers->set('X-Request-ID', $request->attributes->get('request_id'));
         $response->headers->set('X-Response-Time', $duration . 'ms');
 
@@ -68,7 +72,7 @@ class AuditMiddleware
         try {
             $user = \Illuminate\Support\Facades\Auth::user();
             $statusCode = $response->getStatusCode();
-            
+
             // Determine severity based on response status
             $severity = match(true) {
                 $statusCode >= 500 => 'high',
@@ -84,7 +88,7 @@ class AuditMiddleware
                 'user/stats',
                 'dashboard',
             ];
-            
+
             $path = $request->path();
             foreach ($samplingPaths as $samplingPath) {
                 if (str_contains($path, $samplingPath) && $severity === 'low') {
@@ -178,11 +182,11 @@ class AuditMiddleware
         // DEDUPLICATION: Check if we've already logged this exact request recently
         $requestFingerprint = $this->getRequestFingerprint($request);
         $cacheKey = "audit:req:{$requestFingerprint}";
-        
+
         if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
             return true;
         }
-        
+
         // Mark as logged for 60 seconds (longer cooldown for same requests)
         \Illuminate\Support\Facades\Cache::put($cacheKey, true, 60);
 
@@ -202,12 +206,12 @@ class AuditMiddleware
         $userId = \Illuminate\Support\Facades\Auth::id() ?? 'guest';
         $path = $request->path();
         $method = $request->method();
-        
+
         // For GET requests, include query params in fingerprint
-        $queryHash = $method === 'GET' 
-            ? md5(serialize($request->query())) 
+        $queryHash = $method === 'GET'
+            ? md5(serialize($request->query()))
             : '';
-            
+
         return md5("{$userId}:{$method}:{$path}:{$queryHash}");
     }
 

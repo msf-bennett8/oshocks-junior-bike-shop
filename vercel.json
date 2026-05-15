@@ -9,13 +9,65 @@
       }
     }
   ],
+  "cleanUrls": true,
+  "trailingSlash": false,
   "routes": [
     {
+      "src": "/static/(.*)",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      },
+      "continue": true
+    },
+    {
+      "src": "/(.*\\.(js|css|png|svg|jpg|jpeg|gif|ico|woff|woff2|ttf|eot|json|webmanifest|txt|xml))",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      },
+      "continue": true
+    },
+    {
+      "src": "/service-worker.js",
+      "headers": {
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Service-Worker-Allowed": "/"
+      },
+      "continue": true
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/frontend/$1"
+      "dest": "/index.html",
+      "status": 200
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
     }
   ],
   "env": {
-    "REACT_APP_API_URL": "https://oshocks-backend-production.up.railway.app/api/v1"
+    "REACT_APP_API_URL": "https://oshocks-backend-production.up.railway.app/api/v1",
+    "REACT_APP_REVERB_HOST": "oshocks-backend-production.up.railway.app",
+    "REACT_APP_REVERB_PORT": "443",
+    "REACT_APP_REVERB_SCHEME": "https",
+    "REACT_APP_REVERB_APP_KEY": "oshocks-prod-key-cea0630445322dca",
+    "REACT_APP_PAYSTACK_PUBLIC_KEY": "pk_test_86651a777c8e46ac67f37b02ecf3ec310e4dec08"
   }
 }
