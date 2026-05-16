@@ -56,11 +56,20 @@ Broadcast::channel('presence.users', function ($user) {
     ];
 });
 
-// Support Case Channels
+// Support Case Channels — enhanced with role-based access
 Broadcast::channel('support-case.{caseId}', function ($user, $caseId) {
-    $case = \App\Models\SupportCase::find($caseId);
+    $case = \App\Models\SupportCase::where('case_id', $caseId)->first();
+
     if (!$case) return false;
-    return $user->id === $case->user_id || $user->canHandleSupportCases();
+
+    // Case owner
+    if ($case->user_id === $user->id) return true;
+
+    // Assigned agent
+    if ($case->assigned_to === $user->id) return true;
+
+    // Admin/support agents
+    return in_array($user->role, ['admin', 'super_admin', 'support_agent']);
 });
 
 Broadcast::channel('support-queue', function ($user) {

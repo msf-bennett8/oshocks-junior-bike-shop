@@ -34,6 +34,7 @@ const ConversationList = ({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const filtered = useMemo(() => {
+    if (!conversations?.length) return [];
     let result = conversations.filter(c => {
       const name = c.title || c.other_participant?.name || '';
       const matchesSearch = name.toLowerCase().includes(search.toLowerCase());
@@ -150,7 +151,7 @@ const ConversationList = ({
       )}
 
       {/* Conversation List */}
-      <div className="flex-1 overflow-y-auto" onClick={closeContextMenu}>
+      <div className="flex-1 overflow-y-auto overscroll-contain" onClick={closeContextMenu}>
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-gray-400">
             <Inbox className="w-12 h-12 mb-3 opacity-30" />

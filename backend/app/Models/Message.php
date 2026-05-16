@@ -10,6 +10,20 @@ class Message extends Model
 {
     use HasFactory;
 
+    protected $keyType = 'string';
+    public $incrementing = false;
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->{$model->getKeyName()})) {
+                $model->{$model->getKeyName()} = (string) \Illuminate\Support\Str::uuid7();
+            }
+        });
+    }
+
     protected $fillable = [
         'conversation_id',
         'case_id',
@@ -20,6 +34,7 @@ class Message extends Model
         'read_at',
         'delivered_at',
         'reply_to',
+        'status',
         'edited_at',
         'is_edited',
         'deleted_at',
@@ -39,6 +54,28 @@ class Message extends Model
         'is_edited' => 'boolean',
         'is_deleted' => 'boolean',
     ];
+
+    protected $attributes = [
+        'status' => 'sent',
+        'is_deleted' => false,
+    ];
+
+    // Scopes
+    public function scopeUnread($query, $userId)
+    {
+        return $query->whereNull('read_at')
+            ->where('sender_id', '!=', $userId);
+    }
+
+    public function scopeDelivered($query)
+    {
+        return $query->whereNotNull('delivered_at');
+    }
+
+    public function scopeNotDeleted($query)
+    {
+        return $query->where('is_deleted', false);
+    }
 
     public function conversation(): BelongsTo
     {
@@ -99,6 +136,23 @@ class Message extends Model
     public function reactions()
     {
         return $this->hasMany(MessageReaction::class);
+    }
+
+    public function readReceipts()
+    {
+        return $this->hasMany(MessageReadReceipt::class, 'message_id', 'id');
+    }
+
+    public function readers()
+    {
+        return $this->belongsToMany(User::class, 'message_read_receipts', 'message_id', 'user_id')
+            ->withPivot('read_at')
+            ->withTimestamps();
+    }
+
+    public function deliveryStatuses()
+    {
+        return $this->hasMany(MessageDeliveryStatus::class, 'message_id', 'id');
     }
 
     public function attachments()

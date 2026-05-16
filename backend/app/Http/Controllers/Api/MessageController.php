@@ -207,4 +207,119 @@ class MessageController extends Controller
 
         return $conversation->guest_session_id === $guestSessionId;
     }
+
+        /**
+     * Mark message as delivered
+     */
+    public function markDelivered(Request $request, Message $message)
+    {
+        $userId = auth()->id() ?? $request->header('X-Guest-Session-ID');
+
+        if (!$userId) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        // Update message status if not already delivered
+        if (!$message->delivered_at) {
+            $message->update([
+                'status' => 'delivered',
+                'delivered_at' => now(),
+            ]);
+        }
+
+        // Create or update delivery status record
+        MessageDeliveryStatus::updateOrCreate(
+            ['message_id' => $message->id, 'user_id' => $userId],
+            ['status' => 'delivered', 'delivered_at' => now()]
+        );
+
+        // Broadcast delivery status to sender
+        broadcast(new \App\Events\MessageDelivered($message, $userId))->toOthers();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Mark message as read
+     */
+    public function markRead(Request $request, Message $message)
+    {
+        $userId = auth()->id() ?? $request->header('X-Guest-Session-ID');
+
+        if (!$userId) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        // Prevent sender from marking their own message as read
+        if ($message->sender_id == $userId) {
+            return response()->json(['error' => 'Cannot mark own message as read'], 400);
+        }
+
+        // Update message read status
+        if (!$message->read_at) {
+            $message->update([
+                'status' => 'read',
+                'read_at' => now(),
+            ]);
+        }
+
+        // Create read receipt
+        MessageReadReceipt::firstOrCreate(
+            ['message_id' => $message->id, 'user_id' => $userId],
+            ['read_at' => now()]
+        );
+
+        // Update delivery status
+        MessageDeliveryStatus::updateOrCreate(
+            ['message_id' => $message->id, 'user_id' => $userId],
+            ['status' => 'read', 'read_at' => now()]
+        );
+
+        // Broadcast read receipt to sender
+        broadcast(new \App\Events\MessageRead($message, $userId))->toOthers();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Mark multiple messages as read (batch)
+     */
+    public function markMultipleRead(Request $request, Conversation $conversation)
+    {
+        $userId = auth()->id() ?? $request->header('X-Guest-Session-ID');
+        $messageIds = $request->input('message_ids', []);
+
+        if (empty($messageIds)) {
+            return response()->json(['error' => 'No message IDs provided'], 400);
+        }
+
+        $messages = Message::whereIn('id', $messageIds)
+            ->where('conversation_id', $conversation->id)
+            ->where('sender_id', '!=', $userId)
+            ->whereNull('read_at')
+            ->get();
+
+        $now = now();
+        $updated = 0;
+
+        foreach ($messages as $message) {
+            $message->update([
+                'status' => 'read',
+                'read_at' => $now,
+            ]);
+
+            MessageReadReceipt::firstOrCreate(
+                ['message_id' => $message->id, 'user_id' => $userId],
+                ['read_at' => $now]
+            );
+
+            broadcast(new \App\Events\MessageRead($message, $userId))->toOthers();
+            $updated++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'updated_count' => $updated,
+        ]);
+    }
 }

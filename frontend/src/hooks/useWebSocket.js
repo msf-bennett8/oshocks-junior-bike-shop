@@ -160,16 +160,36 @@ export const useWebSocket = (userId) => {
     return subscribeToChannel(`private-user.${userId}`, '.call.initiated', callback);
   }, [userId, subscribeToChannel]);
 
-  const subscribeToConversation = useCallback((conversationId, callback) => {
+  const subscribeToConversation = useCallback((conversationId, onMessageSent, onMessageDelivered, onMessageRead) => {
     if (!echoRef.current) return null;
-    // MUST use private- prefix for Laravel private channels
-    return subscribeToChannel(`private-conversation.${conversationId}`, '.message.sent', callback);
+
+    const unsubscribers = [];
+
+    // Listen for new messages
+    if (onMessageSent) {
+      unsubscribers.push(subscribeToChannel(`private-conversation.${conversationId}`, '.message.sent', onMessageSent));
+    }
+
+    // Listen for delivery confirmations
+    if (onMessageDelivered) {
+      unsubscribers.push(subscribeToChannel(`private-conversation.${conversationId}`, '.message.delivered', onMessageDelivered));
+    }
+
+    // Listen for read receipts
+    if (onMessageRead) {
+      unsubscribers.push(subscribeToChannel(`private-conversation.${conversationId}`, '.message.read', onMessageRead));
+    }
+
+    return () => {
+      unsubscribers.forEach(unsub => unsub && unsub());
+    };
   }, [subscribeToChannel]);
 
   return {
     isConnected,
     connectionError,
     reconnectAttempt,
+    connectionState: isConnected ? 'connected' : connectionError ? 'error' : reconnectAttempt > 0 ? 'reconnecting' : 'disconnected',
     echo: echoRef.current,
     subscribeToChannel,
     subscribeToUser,

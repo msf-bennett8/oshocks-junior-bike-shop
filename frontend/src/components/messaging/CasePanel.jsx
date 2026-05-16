@@ -481,11 +481,18 @@ const ConversationTab = ({ supportCase, user, messages, msgLoading, sending, fet
   const caseId = supportCase.case_id;
 
   useEffect(() => {
+    let cancelled = false;
     if (conversationId && caseId) {
-      fetchCaseMessages(conversationId, caseId, showFullConversation);
+      fetchCaseMessages(conversationId, caseId, showFullConversation).then(() => {
+        if (!cancelled) {
+          // Scroll to bottom after load
+          const container = document.querySelector('.case-panel-messages');
+          if (container) container.scrollTop = container.scrollHeight;
+        }
+      });
     }
-    return () => setMessages([]);
-  }, [conversationId, caseId, showFullConversation, fetchCaseMessages, setMessages]);
+    return () => { cancelled = true; };
+  }, [conversationId, caseId, showFullConversation, fetchCaseMessages]);
 
   const handleSend = async () => {
     if (!input.trim() || sending || !conversationId || !caseId) return;
@@ -512,7 +519,7 @@ const ConversationTab = ({ supportCase, user, messages, msgLoading, sending, fet
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="case-panel-messages flex-1 overflow-y-auto p-4 space-y-3 overscroll-contain">
         {msgLoading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="w-6 h-6 text-orange-500 animate-spin" />

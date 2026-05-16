@@ -2,8 +2,9 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
+use App\Models\Message;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -13,29 +14,26 @@ class MessageRead implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
-        public int $conversationId,
-        public int $messageId,
-        public ?int $readByUserId,
-        public ?string $readByGuestSessionId,
-        public string $readAt,
+        public Message $message,
+        public int|string $userId,
     ) {
     }
 
     public function broadcastOn(): array
     {
         return [
-            new Channel('conversation.' . $this->conversationId),
+            new PrivateChannel('conversation.' . $this->message->conversation_id),
         ];
     }
 
     public function broadcastWith(): array
     {
         return [
-            'conversation_id' => $this->conversationId,
-            'message_id' => $this->messageId,
-            'read_by_user_id' => $this->readByUserId,
-            'read_by_guest_session_id' => $this->readByGuestSessionId,
-            'read_at' => $this->readAt,
+            'message_id' => $this->message->id,
+            'user_id' => $this->userId,
+            'read_at' => now()->toIso8601String(),
+            'status' => 'read',
+            'conversation_id' => $this->message->conversation_id,
         ];
     }
 
@@ -44,3 +42,4 @@ class MessageRead implements ShouldBroadcastNow
         return 'message.read';
     }
 }
+

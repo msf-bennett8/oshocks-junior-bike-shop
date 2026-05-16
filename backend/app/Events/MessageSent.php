@@ -14,8 +14,13 @@ class MessageSent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public Message $message)
+    public $message;
+    public $eventType; // sent | delivered | read | typing | reaction
+
+    public function __construct(Message $message, string $eventType = 'sent')
     {
+        $this->message = $message;
+        $this->eventType = $eventType;
     }
 
     /**
@@ -26,11 +31,16 @@ class MessageSent implements ShouldBroadcastNow
         return 'default';
     }
 
-    public function broadcastOn(): array
+    public function broadcastOn()
     {
         return [
             new PrivateChannel('conversation.' . $this->message->conversation_id),
         ];
+    }
+
+    public function broadcastAs()
+    {
+        return 'message.' . $this->eventType;
     }
 
     public function broadcastWith(): array
@@ -45,18 +55,17 @@ class MessageSent implements ShouldBroadcastNow
             'guest_session_id' => $this->message->guest_session_id,
             'body' => $this->message->body,
             'type' => $this->message->type,
+            'status' => $this->message->status,
             'metadata' => $this->message->metadata,
+            'reply_to' => $this->message->reply_to,
+            'case_id' => $this->message->case_id,
             'created_at' => $this->message->created_at->toIso8601String(),
+            'event_type' => $this->eventType,
             'sender' => $sender ? [
                 'id' => $sender->id,
                 'name' => $sender->name,
                 'avatar' => $sender->avatar,
             ] : null,
         ];
-    }
-
-    public function broadcastAs(): string
-    {
-        return 'message.sent';
     }
 }

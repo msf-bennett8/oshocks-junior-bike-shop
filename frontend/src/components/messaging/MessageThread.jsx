@@ -80,10 +80,34 @@ const MessageThread = ({
     if (!isMobile) inputRef.current?.focus();
   }, [conversation?.id, isMobile]);
 
-  // Auto-scroll to bottom
+  // Smart auto-scroll: only if user is near bottom (~150px)
+  const [isNearBottom, setIsNearBottom] = useState(true);
+  const [showNewMessagesBadge, setShowNewMessagesBadge] = useState(false);
+
+  const handleScroll = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    const threshold = 150;
+    const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+    setIsNearBottom(nearBottom);
+    if (nearBottom) setShowNewMessagesBadge(false);
+  }, []);
+
   useEffect(() => {
-    messagesEndRef?.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, typingUsers, messagesEndRef]);
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
+  useEffect(() => {
+    if (isNearBottom && messagesEndRef?.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    } else if (messages.length > 0) {
+      // User scrolled up, show badge
+      setShowNewMessagesBadge(true);
+    }
+  }, [messages, typingUsers, messagesEndRef, isNearBottom]);
 
   // Mark messages as read when visible
   useEffect(() => {
@@ -110,16 +134,20 @@ const MessageThread = ({
   // Close case actions dropdown on click outside
   useEffect(() => {
     if (!showCaseActions) return;
-    const handleClick = () => setShowCaseActions(false);
-    setTimeout(() => document.addEventListener('click', handleClick), 0);
-    return () => document.removeEventListener('click', handleClick);
+    const handleClick = (e) => {
+      if (!e.target.closest('.case-actions-dropdown')) {
+        setShowCaseActions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
   }, [showCaseActions]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
     if (!input.trim() || sending) return;
-    
+
     if (editingMessage) {
       // TODO: Implement edit API
       onSendMessage(input.trim(), null, [], editingMessage.id);
@@ -127,10 +155,10 @@ const MessageThread = ({
     } else {
       onSendMessage(input.trim(), replyTo?.id);
     }
-    
+
     setInput('');
     setReplyTo(null);
-  };
+  }, [input, sending, editingMessage, replyTo, onSendMessage]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -363,7 +391,7 @@ const MessageThread = ({
                 </button>
                 
                 {showCaseActions && (
-                  <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-30 min-w-[140px] py-1">
+                  <div className="case-actions-dropdown absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-30 min-w-[140px] py-1">
                     {conversation.support_case.status === 'new' && !conversation.support_case.assigned_to && (
                       <button
                         onClick={() => { onClaimCase?.(conversation.support_case.case_id); setShowCaseActions(false); }}
@@ -633,6 +661,20 @@ const MessageThread = ({
 
         <div ref={messagesEndRef} />
       </div>
+
+      {/* New Messages Floating Badge */}
+      {showNewMessagesBadge && (
+        <button
+          onClick={() => {
+            setIsNearBottom(true);
+            setShowNewMessagesBadge(false);
+            messagesEndRef?.current?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-medium px-4 py-2 rounded-full shadow-lg hover:bg-blue-700 transition-all animate-bounce z-20"
+        >
+          ↓ New messages
+        </button>
+      )}
 
       {/* ─── REPLY / EDIT PREVIEW ─── */}
       {(replyTo || editingMessage) && (

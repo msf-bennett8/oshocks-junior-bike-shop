@@ -208,6 +208,7 @@ export const useMessaging = (userId) => {
       created_at: now,
       read_at: null,
       delivered_at: null,
+      status: 'sending',
       is_edited: false,
       is_deleted: false,
       sender: userId ? null : { name: profile.name || 'Guest', avatar: null },
@@ -240,9 +241,9 @@ export const useMessaging = (userId) => {
           senderEmail: profile.email,
           guestSessionId: getGuestSessionId(), // Include for guest auth
           onSuccess: (serverMessage) => {
-        // Replace optimistic with real message
+        // Replace optimistic with real message, preserve status
         setMessages(prev => prev.map(m => 
-          m.id === optimisticId ? { ...serverMessage, _pending: false, _optimistic: false } : m
+          m.id === optimisticId ? { ...serverMessage, _pending: false, _optimistic: false, status: serverMessage.status || 'sent' } : m
         ));
         setSending(false);
       },
@@ -326,15 +327,40 @@ export const useMessaging = (userId) => {
 
     const markAsRead = useCallback(async (conversationId) => {
     try {
+      // Mark conversation as read (batch operation)
       await api.post(`/conversations/${conversationId}/read`);
+      
+      // Also mark all visible messages as read individually for real-time sync
+      const unreadMessages = messages.filter(m => 
+        m.conversation_id === conversationId && 
+        !m.read_at && 
+        m.sender_id !== userId &&
+        !m._optimistic
+      );
+      
+      // Batch mark messages as read
+      if (unreadMessages.length > 0) {
+        const messageIds = unreadMessages.map(m => m.id).filter(id => id && !id.startsWith('opt-'));
+        if (messageIds.length > 0) {
+          await api.post(`/conversations/${conversationId}/messages/read`, { message_ids: messageIds });
+        }
+      }
+
       setConversations(prev => prev.map(c =>
         c.id === conversationId ? { ...c, unread_count: 0 } : c
       ));
       setUnreadTotal(prev => Math.max(0, prev - (conversations.find(c => c.id === conversationId)?.unread_count || 0)));
+      
+      // Update local message statuses
+      setMessages(prev => prev.map(m =>
+        m.conversation_id === conversationId && m.sender_id !== userId
+          ? { ...m, status: 'read', read_at: new Date().toISOString() }
+          : m
+      ));
     } catch (err) {
       console.error('Failed to mark as read:', err);
     }
-  }, [conversations]);
+  }, [conversations, messages, userId]);
 
   const pinConversation = useCallback(async (conversationId) => {
     try {
@@ -424,45 +450,59 @@ export const useMessaging = (userId) => {
 
     // Prevent duplicate subscriptions for same conversation
     const convId = activeConversation.id;
-    const unsubscribe = subscribeToConversation(convId, (event) => {
-      const messageData = event.message || event;
-      console.log('📥 Broadcast received:', { id: messageData.id, body: messageData.body, sender_id: messageData.sender_id });
+    const unsubscribe = subscribeToConversation(
+      convId,
+      (event) => { // onMessageSent
+        const messageData = event.message || event;
+        console.log('📥 Message sent:', { id: messageData.id, body: messageData.body?.substring(0, 50), sender_id: messageData.sender_id });
 
-      setMessages(prev => {
-        // Deduplication: check by real ID or by optimistic match
-        const hasById = prev.some(m => m.id === messageData.id);
-        if (hasById) return prev;
+        setMessages(prev => {
+          // Deduplication: check by real ID
+          const hasById = prev.some(m => m.id === messageData.id);
+          if (hasById) return prev;
 
-        // Check if there's a pending optimistic message from same sender with same body
-        const optimisticIndex = prev.findIndex(m => 
-          m._optimistic && 
-          m.body === messageData.body && 
-          m.sender_id === messageData.sender_id &&
-          m._pending === true
-        );
+          // Check if there's a pending optimistic message from same sender with same body
+          const optimisticIndex = prev.findIndex(m => 
+            m._optimistic && 
+            m.body === messageData.body && 
+            m.sender_id === messageData.sender_id &&
+            m._pending === true
+          );
 
-        if (optimisticIndex !== -1) {
-          // Replace the optimistic message with the real one
-          const next = [...prev];
-          next[optimisticIndex] = { ...messageData, _pending: false, _optimistic: false };
-          return next;
+          if (optimisticIndex !== -1) {
+            const next = [...prev];
+            next[optimisticIndex] = { ...messageData, _pending: false, _optimistic: false, status: messageData.status || 'delivered' };
+            return next;
+          }
+
+          // New message from other user — append it
+          return [...prev, { ...messageData, _pending: false, _optimistic: false, status: messageData.status || 'delivered' }];
+        });
+
+        // Only scroll if message is from someone else
+        if (messageData.sender_id !== userId) {
+          scrollToBottom();
         }
 
-        // New message from other user — append it
-        return [...prev, { ...messageData, _pending: false, _optimistic: false }];
-      });
-
-      // Only scroll if message is from someone else (sender already scrolled on send)
-      if (messageData.sender_id !== userId) {
-        scrollToBottom();
+        setConversations(prev => prev.map(c =>
+          c.id === convId
+            ? { ...c, last_message: messageData.body, last_message_at: messageData.created_at, unread_count: (c.unread_count || 0) + (messageData.sender_id !== userId ? 1 : 0) }
+            : c
+        ));
+      },
+      (event) => { // onMessageDelivered
+        console.log('📬 Delivered:', event.message_id);
+        setMessages(prev => prev.map(m =>
+          m.id === event.message_id ? { ...m, status: 'delivered', delivered_at: event.delivered_at } : m
+        ));
+      },
+      (event) => { // onMessageRead
+        console.log('👁️ Read:', event.message_id);
+        setMessages(prev => prev.map(m =>
+          m.id === event.message_id ? { ...m, status: 'read', read_at: event.read_at } : m
+        ));
       }
-
-      setConversations(prev => prev.map(c =>
-        c.id === convId
-          ? { ...c, last_message: messageData.body, last_message_at: messageData.created_at }
-          : c
-      ));
-    });
+    );
 
     return () => {
       if (unsubscribe) unsubscribe();

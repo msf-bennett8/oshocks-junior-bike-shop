@@ -643,6 +643,9 @@ Route::prefix('v1')->middleware(['api', 'optional', 'audit'])->group(function ()
     // Enhanced messaging features — routed to correct controllers
     Route::get('/conversations/{conversation}/messages', [MessageController::class, 'index']);
     Route::post('/conversations/{conversation}/messages', [MessageController::class, 'store']);
+    Route::post('/messages/{message}/delivered', [MessageController::class, 'markDelivered']);
+    Route::post('/messages/{message}/read', [MessageController::class, 'markRead']);
+    Route::post('/conversations/{conversation}/messages/read', [MessageController::class, 'markMultipleRead']);
     Route::post('/conversations/{conversation}/typing', [ConversationController::class, 'typing']);
     Route::post('/conversations/{conversation}/messages/{message}/react', [ConversationController::class, 'react']);
 

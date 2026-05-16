@@ -68,6 +68,19 @@ class Conversation extends Model
         return $this->hasMany(Message::class)->orderBy('created_at', 'asc');
     }
 
+    public function lastMessage()
+    {
+        return $this->hasOne(Message::class)->latest();
+    }
+
+    public function unreadMessagesCount($userId)
+    {
+        return $this->messages()
+            ->whereNull('read_at')
+            ->where('sender_id', '!=', $userId)
+            ->count();
+    }
+
     public function latestMessage(): HasMany
     {
         return $this->hasMany(Message::class)->latest()->limit(1);

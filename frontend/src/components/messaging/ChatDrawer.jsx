@@ -329,11 +329,11 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
     }
   }, [activeConversation?.id, isMobile]);
 
-  const handleSend = (body, replyTo = null, attachments = []) => {
+  const handleSend = useCallback((body, replyTo = null, attachments = []) => {
     if (activeConversation?.id) {
       sendMessage(activeConversation.id, body, 'text', null, replyTo, attachments);
     }
-  };
+  }, [activeConversation?.id, sendMessage]);
 
   const handleStartCall = (type) => {
     if (!activeConversation || !onStartCall) return;
@@ -554,7 +554,6 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
               onDelete={onDelete}
               compact={true}
               entryPoint={entryPoint}
-              key={`conv-list-${activeConversation?.id || 'none'}`}
             />
           </div>
           
@@ -633,7 +632,7 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
 
   // ─── MOBILE: WHATSAPP-STYLE LAYOUT ───
   const MobileLayout = () => (
-    <div className={`fixed inset-0 z-50 bg-white transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+    <div className={`fixed inset-0 z-50 bg-white transition-transform duration-300 ease-out will-change-transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
       {view === 'list' ? (
         /* Conversation List View */
         <div className="flex flex-col h-full">
