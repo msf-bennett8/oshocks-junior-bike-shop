@@ -37,7 +37,7 @@ class MessageAttachment extends Model
 
     public function message(): BelongsTo
     {
-        return $this->belongsTo(Message::class);
+        return $this->belongsTo(Message::class, 'message_id', 'id');
     }
 
     public function getFileUrl(): string

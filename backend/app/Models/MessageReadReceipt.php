@@ -21,7 +21,7 @@ class MessageReadReceipt extends Model
 
     public function message()
     {
-        return $this->belongsTo(Message::class);
+        return $this->belongsTo(Message::class, 'message_id', 'id');
     }
 
     public function user()

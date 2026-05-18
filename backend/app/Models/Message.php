@@ -10,16 +10,19 @@ class Message extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'id';
     protected $keyType = 'string';
     public $incrementing = false;
+    // Using native auto-increment bigint id as primary key
+    // uuid column is auto-generated for legacy compatibility and future use
 
     protected static function boot()
     {
         parent::boot();
 
         static::creating(function ($model) {
-            if (empty($model->{$model->getKeyName()})) {
-                $model->{$model->getKeyName()} = (string) \Illuminate\Support\Str::uuid7();
+            if (empty($model->uuid)) {
+                $model->uuid = (string) \Illuminate\Support\Str::uuid7();
             }
         });
     }
@@ -136,7 +139,7 @@ class Message extends Model
 
     public function reactions()
     {
-        return $this->hasMany(MessageReaction::class);
+        return $this->hasMany(MessageReaction::class, 'message_id', 'id');
     }
 
     public function readReceipts()
@@ -158,7 +161,7 @@ class Message extends Model
 
     public function attachments()
     {
-        return $this->hasMany(MessageAttachment::class);
+        return $this->hasMany(MessageAttachment::class, 'message_id', 'id');
     }
 
     public function replyToMessage()

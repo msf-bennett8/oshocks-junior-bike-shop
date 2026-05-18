@@ -24,6 +24,7 @@ class MessageController extends Controller
         $messages = $conversation->messages()
             ->with(['sender', 'attachments'])
             ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
             ->cursorPaginate(50);
 
         return response()->json([
