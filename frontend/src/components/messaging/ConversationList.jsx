@@ -215,66 +215,61 @@ const ConversationList = ({
                   )}
                 </div>
                 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      {(() => {
-                        const isSupportChat = conv.type === 'support' || conv.type === 'order_support' || conv.is_support_case;
-                        const displayName = (isSupportChat && isStaff && conv.last_sender)
-                          ? conv.last_sender.name
-                          : (conv.title || conv.other_participant?.name || conv.guest_name || 'Support');
-                        const displayUser = (isSupportChat && isStaff && conv.last_sender) ? conv.last_sender : null;
+                <div className="flex-1 min-w-0 relative">
+                  <div className="flex items-center gap-1.5 min-w-0 pr-10">
+                    {(() => {
+                      const isSupportChat = conv.type === 'support' || conv.type === 'order_support' || conv.is_support_case;
+                      const displayName = (isSupportChat && isStaff && conv.last_sender)
+                        ? conv.last_sender.name
+                        : (conv.title || conv.other_participant?.name || conv.guest_name || 'Support');
+                      const displayUser = (isSupportChat && isStaff && conv.last_sender) ? conv.last_sender : null;
 
-                        const nameEl = (
-                          <h4 className={`text-sm font-medium truncate ${
-                            hasUnread ? 'text-gray-900 font-semibold' : 'text-gray-700'
-                          }`}>
-                            {isSupportChat && isStaff ? (
-                              <span className="flex items-center gap-1.5">
-                                <span className="text-gray-400 text-xs font-normal">Oshocks Support</span>
-                                <span className="text-gray-300">•</span>
-                                <span>{displayName}</span>
-                              </span>
-                            ) : displayName}
-                          </h4>
-                        );
-
-                        return displayUser ? (
-                          <ProfilePreviewModal user={displayUser}>
-                            {nameEl}
-                          </ProfilePreviewModal>
-                        ) : nameEl;
-                      })()}
-                      {/* Support Case Badge */}
-                      {conv.support_case && (
-                        <span className={`flex-shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
-                          conv.support_case.status === 'escalated' ? 'bg-red-100 text-red-700' :
-                          conv.support_case.status === 'resolved' ? 'bg-green-100 text-green-700' :
-                          conv.support_case.status === 'closed' ? 'bg-slate-100 text-slate-600' :
-                          conv.support_case.status === 'in_progress' ? 'bg-amber-100 text-amber-700' :
-                          'bg-blue-100 text-blue-700'
+                      const nameEl = (
+                        <h4 className={`text-sm font-medium truncate ${
+                          hasUnread ? 'text-gray-900 font-semibold' : 'text-gray-700'
                         }`}>
-                          {conv.support_case.case_type === 'order_issue' && <ShoppingBag className="w-2.5 h-2.5" />}
-                          {conv.support_case.case_type === 'account_login' && <Mail className="w-2.5 h-2.5" />}
-                          {conv.support_case.case_type === 'report_problem' && <AlertCircle className="w-2.5 h-2.5" />}
-                          {conv.support_case.case_type === 'shipment_delivery' && <Truck className="w-2.5 h-2.5" />}
-                          {conv.support_case.case_type === 'services_booking' && <Wrench className="w-2.5 h-2.5" />}
-                          {conv.support_case.case_type === 'general_inquiry' && <MessageSquare className="w-2.5 h-2.5" />}
-                          {conv.support_case.case_type === 'payment_billing' && <CreditCard className="w-2.5 h-2.5" />}
-                          {conv.support_case.case_type === 'product_info' && <Package className="w-2.5 h-2.5" />}
-                          {conv.support_case.case_type === 'returns_refund' && <RotateCcw className="w-2.5 h-2.5" />}
-                          {conv.support_case.case_type === 'technical_support' && <Cpu className="w-2.5 h-2.5" />}
-                          {conv.support_case.case_type === 'other' && <HelpCircle className="w-2.5 h-2.5" />}
-                          {conv.support_case.case_id?.slice(-6)}
-                        </span>
-                      )}
-                    </div>
-                    <span className={`text-[11px] flex-shrink-0 ${hasUnread ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>
-                      {formatTime(conv.last_message_at)}
-                    </span>
+                          {isSupportChat && isStaff ? (
+                            <span className="flex items-center gap-1.5">
+                              <span className="text-gray-400 text-xs font-normal">Oshocks Support</span>
+                              <span className="text-gray-300">•</span>
+                              <span>{displayName}</span>
+                            </span>
+                          ) : displayName}
+                        </h4>
+                      );
+
+                      return displayUser ? (
+                        <ProfilePreviewModal user={displayUser}>
+                          {nameEl}
+                        </ProfilePreviewModal>
+                      ) : nameEl;
+                    })()}
+                    {/* Support Case Badge */}
+                    {conv.support_case && (
+                      <span className={`flex-shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                        conv.support_case.status === 'escalated' ? 'bg-red-100 text-red-700' :
+                        conv.support_case.status === 'resolved' ? 'bg-green-100 text-green-700' :
+                        conv.support_case.status === 'closed' ? 'bg-slate-100 text-slate-600' :
+                        conv.support_case.status === 'in_progress' ? 'bg-amber-100 text-amber-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>
+                        {conv.support_case.case_type === 'order_issue' && <ShoppingBag className="w-2.5 h-2.5" />}
+                        {conv.support_case.case_type === 'account_login' && <Mail className="w-2.5 h-2.5" />}
+                        {conv.support_case.case_type === 'report_problem' && <AlertCircle className="w-2.5 h-2.5" />}
+                        {conv.support_case.case_type === 'shipment_delivery' && <Truck className="w-2.5 h-2.5" />}
+                        {conv.support_case.case_type === 'services_booking' && <Wrench className="w-2.5 h-2.5" />}
+                        {conv.support_case.case_type === 'general_inquiry' && <MessageSquare className="w-2.5 h-2.5" />}
+                        {conv.support_case.case_type === 'payment_billing' && <CreditCard className="w-2.5 h-2.5" />}
+                        {conv.support_case.case_type === 'product_info' && <Package className="w-2.5 h-2.5" />}
+                        {conv.support_case.case_type === 'returns_refund' && <RotateCcw className="w-2.5 h-2.5" />}
+                        {conv.support_case.case_type === 'technical_support' && <Cpu className="w-2.5 h-2.5" />}
+                        {conv.support_case.case_type === 'other' && <HelpCircle className="w-2.5 h-2.5" />}
+                        {conv.support_case.case_id?.slice(-6)}
+                      </span>
+                    )}
                   </div>
                   
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 mt-0.5">
                     {conv.last_message_sender_id === conv.other_participant?.id && hasUnread && (
                       <span className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />
                     )}
@@ -293,6 +288,11 @@ const ConversationList = ({
                       </span>
                     )}
                   </div>
+
+                  {/* Timestamp — bottom right */}
+                  <span className={`absolute right-0 bottom-0 text-[10px] ${hasUnread ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>
+                    {formatTime(conv.last_message_at)}
+                  </span>
                 </div>
 
                 {/* More options button */}
