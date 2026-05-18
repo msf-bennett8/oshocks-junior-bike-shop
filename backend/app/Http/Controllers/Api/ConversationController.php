@@ -66,7 +66,8 @@ class ConversationController extends Controller
                 ->where('id', '!=', $user?->id)
                 ->first();
 
-            $conv->last_message = $conv->lastMessage?->body ?? $conv->last_message;
+            $lastMessageBody = $conv->lastMessage?->body;
+            $conv->last_message = is_string($lastMessageBody) ? $lastMessageBody : null;
             $conv->last_message_at = $conv->lastMessage?->created_at ?? $conv->last_message_at ?? $conv->updated_at;
             // Load support case with order relationship
             $supportCase = $conv->supportCase;

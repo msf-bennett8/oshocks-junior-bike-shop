@@ -238,10 +238,10 @@ const ConversationList = ({
                       hasUnread ? 'text-gray-800 font-medium' : 'text-gray-500'
                     }`}>
                       {conv.is_typing ? (
-                        <span className="text-blue-600 italic">typing...</span>
-                      ) : (
-                        conv.last_message || 'Start a conversation...'
-                      )}
+                      <span className="text-blue-600 italic">typing...</span>
+                    ) : (
+                      (typeof conv.last_message === 'string' ? conv.last_message : null) || 'Start a conversation...'
+                    )}
                     </p>
                     {hasUnread && (
                       <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ml-1">

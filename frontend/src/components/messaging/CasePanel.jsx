@@ -539,7 +539,7 @@ const ConversationTab = ({ supportCase, user, messages, msgLoading, sending, fet
               return (
                 <div key={msg.id} className="flex justify-center my-2">
                   <div className="bg-gray-100 border border-gray-200 rounded-full px-4 py-1.5 flex items-center gap-2">
-                    <span className="text-xs text-gray-600">{msg.body}</span>
+                    <span className="text-xs text-gray-600">{typeof msg.body === 'string' ? msg.body : String(msg.body ?? '')}</span>
                     <span className="text-[10px] text-gray-400">{formatTime(msg.created_at)}</span>
                   </div>
                 </div>
@@ -563,7 +563,7 @@ const ConversationTab = ({ supportCase, user, messages, msgLoading, sending, fet
                       {msg.sender?.name || msg.sender_name || 'Guest'}
                     </p>
                   )}
-                  <p className="text-sm whitespace-pre-wrap">{msg.body}</p>
+                  <p className="text-sm whitespace-pre-wrap">{typeof msg.body === 'string' ? msg.body : String(msg.body ?? '')}</p>
                   
                   {/* Attachments in Case Panel */}
                   {msg.attachments?.map(att => (

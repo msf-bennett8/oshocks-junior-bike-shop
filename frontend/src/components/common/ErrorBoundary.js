@@ -153,7 +153,7 @@ class ErrorBoundary extends React.Component {
   logErrorToAuditService = async (errorDetails) => {
     // Log to backend audit system
     try {
-      const response = await fetch('/api/v1/audit-logs', {
+      const response = await fetch('/api/v1/audit-logs/frontend', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

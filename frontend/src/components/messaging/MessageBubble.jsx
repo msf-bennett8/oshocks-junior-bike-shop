@@ -56,7 +56,7 @@ const MessageBubble = React.memo(({
             isOwn ? 'bg-blue-700 text-blue-100' : 'bg-gray-200 text-gray-600'
           }`}>
         <p className="font-medium truncate">{replyToMessage.sender?.name || replyToMessage.sender_name || 'Guest'}</p>
-        <p className="truncate opacity-75">{replyToMessage.body}</p>
+        <p className="truncate opacity-75">{typeof replyToMessage.body === 'string' ? replyToMessage.body : String(replyToMessage.body ?? '')}</p>
           </div>
         )}
         
@@ -94,12 +94,12 @@ const MessageBubble = React.memo(({
           ) : (
             <>
               <p className="whitespace-pre-wrap break-words">
-                {message.body?.split(/(\*\*.*?\*\*)/g).map((part, i) => {
+                {typeof message.body === 'string' ? message.body.split(/(\*\*.*?\*\*)/g).map((part, i) => {
                   if (part.startsWith('**') && part.endsWith('**')) {
                     return <strong key={i} className={isOwn ? 'text-blue-100' : 'text-gray-900'}>{part.slice(2, -2)}</strong>;
                   }
                   return <span key={i}>{part}</span>;
-                })}
+                }) : <span className="text-red-400 text-xs">[Invalid message: {JSON.stringify(message.body)}]</span>}
               </p>
               
               {/* Attachments preview */}

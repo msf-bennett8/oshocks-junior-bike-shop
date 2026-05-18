@@ -53,6 +53,7 @@ class Message extends Model
         'deleted_at' => 'datetime',
         'is_edited' => 'boolean',
         'is_deleted' => 'boolean',
+        'body' => 'string',
     ];
 
     protected $attributes = [

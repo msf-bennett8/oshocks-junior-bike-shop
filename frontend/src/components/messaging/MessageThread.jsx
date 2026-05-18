@@ -530,16 +530,16 @@ const MessageThread = ({
                               : 'bg-gray-50 border-gray-200'
                       }`}>
                         <span className={`
-                          ${msg.body?.includes('New Case Created') || msg.body?.includes('New Service Booking') ? 'text-orange-500' : ''}
-                          ${msg.body?.includes('Confirmed') || msg.body?.includes('Completed') ? 'text-emerald-500' : ''}
-                          ${msg.body?.includes('Cancelled') || msg.body?.includes('Rescheduled') ? 'text-red-500' : ''}
-                          ${!msg.body?.includes('New Case Created') && !msg.body?.includes('New Service Booking') && !msg.body?.includes('Confirmed') && !msg.body?.includes('Completed') && !msg.body?.includes('Cancelled') && !msg.body?.includes('Rescheduled') ? 'text-gray-400' : ''}
+                          ${String(msg.body ?? '').includes('New Case Created') || String(msg.body ?? '').includes('New Service Booking') ? 'text-orange-500' : ''}
+                          ${String(msg.body ?? '').includes('Confirmed') || String(msg.body ?? '').includes('Completed') ? 'text-emerald-500' : ''}
+                          ${String(msg.body ?? '').includes('Cancelled') || String(msg.body ?? '').includes('Rescheduled') ? 'text-red-500' : ''}
+                          ${!String(msg.body ?? '').includes('New Case Created') && !String(msg.body ?? '').includes('New Service Booking') && !String(msg.body ?? '').includes('Confirmed') && !String(msg.body ?? '').includes('Completed') && !String(msg.body ?? '').includes('Cancelled') && !String(msg.body ?? '').includes('Rescheduled') ? 'text-gray-400' : ''}
                         `}>
-                          {msg.body?.includes('New Case Created') || msg.body?.includes('New Service Booking') ? (
+                          {String(msg.body ?? '').includes('New Case Created') || String(msg.body ?? '').includes('New Service Booking') ? (
                             <Zap className="w-3.5 h-3.5" />
-                          ) : msg.body?.includes('Confirmed') || msg.body?.includes('Completed') ? (
+                          ) : String(msg.body ?? '').includes('Confirmed') || String(msg.body ?? '').includes('Completed') ? (
                             <CheckCheck className="w-3.5 h-3.5" />
-                          ) : msg.body?.includes('Cancelled') || msg.body?.includes('Rescheduled') ? (
+                          ) : String(msg.body ?? '').includes('Cancelled') || String(msg.body ?? '').includes('Rescheduled') ? (
                             <AlertCircle className="w-3.5 h-3.5" />
                           ) : (
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -548,11 +548,11 @@ const MessageThread = ({
                           )}
                         </span>
                         <span className={`text-xs ${
-                          msg.body?.includes('New Case Created') || msg.body?.includes('New Service Booking') ? 'text-orange-700 font-medium' :
-                          msg.body?.includes('Confirmed') || msg.body?.includes('Completed') ? 'text-emerald-700 font-medium' :
-                          msg.body?.includes('Cancelled') || msg.body?.includes('Rescheduled') ? 'text-red-700 font-medium' :
+                          String(msg.body ?? '').includes('New Case Created') || String(msg.body ?? '').includes('New Service Booking') ? 'text-orange-700 font-medium' :
+                          String(msg.body ?? '').includes('Confirmed') || String(msg.body ?? '').includes('Completed') ? 'text-emerald-700 font-medium' :
+                          String(msg.body ?? '').includes('Cancelled') || String(msg.body ?? '').includes('Rescheduled') ? 'text-red-700 font-medium' :
                           'text-gray-500'
-                        }`}>{msg.body}</span>
+                        }`}>{typeof msg.body === 'string' ? msg.body : String(msg.body ?? '')}</span>
                         <span className="text-[10px] text-gray-400">{formatTime(msg.created_at)}</span>
                       </div>
                     </div>
@@ -685,7 +685,7 @@ const MessageThread = ({
               <p className="text-xs text-blue-600 font-medium">
                 {editingMessage ? 'Editing message' : `Replying to ${replyTo?.sender?.name || 'Guest'}`}
               </p>
-              <p className="text-xs text-gray-500 truncate">{editingMessage?.body || replyTo?.body}</p>
+              <p className="text-xs text-gray-500 truncate">{(typeof editingMessage?.body === 'string' ? editingMessage.body : null) || (typeof replyTo?.body === 'string' ? replyTo.body : null)}</p>
             </div>
           </div>
           <button onClick={cancelReply} className="p-1 hover:bg-blue-100 rounded-full flex-shrink-0">

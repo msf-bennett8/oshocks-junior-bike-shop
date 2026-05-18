@@ -79,6 +79,48 @@ class MessageQueue {
   }
 }
 
+// Sanitize incoming message data — ensure body is always a string
+const sanitizeMessage = (msg) => {
+  if (!msg || typeof msg !== 'object') return msg;
+
+  const sanitized = { ...msg };
+
+  // Ensure body is always a string
+  if (sanitized.body !== undefined && typeof sanitized.body !== 'string') {
+    console.warn('Message body was not a string, converting:', sanitized.body);
+    sanitized.body = sanitized.body === null ? ''
+      : typeof sanitized.body === 'object' ? JSON.stringify(sanitized.body)
+      : String(sanitized.body);
+  }
+
+  // Ensure sender is always a valid object or null
+  if (sanitized.sender !== undefined && sanitized.sender !== null && typeof sanitized.sender !== 'object') {
+    sanitized.sender = null;
+  }
+
+  // Ensure last_message is always a string if present
+  if (sanitized.last_message !== undefined && typeof sanitized.last_message !== 'string') {
+    sanitized.last_message = null;
+  }
+  
+  // Ensure sender_name is a string
+  if (sanitized.sender_name !== undefined && typeof sanitized.sender_name !== 'string') {
+    sanitized.sender_name = String(sanitized.sender_name);
+  }
+  
+  // Ensure type is a string
+  if (sanitized.type !== undefined && typeof sanitized.type !== 'string') {
+    sanitized.type = String(sanitized.type);
+  }
+  
+  // Ensure case_id is a string or null
+  if (sanitized.case_id !== undefined && sanitized.case_id !== null && typeof sanitized.case_id !== 'string') {
+    sanitized.case_id = String(sanitized.case_id);
+  }
+  
+  return sanitized;
+};
+
 const messageQueue = new MessageQueue();
 
 export const useMessaging = (userId) => {
@@ -152,7 +194,9 @@ export const useMessaging = (userId) => {
       const res = await api.get(url);
       // Handle both paginated and direct array responses
       const responseData = res.data.data || res.data || [];
-      const newMessages = Array.isArray(responseData) ? responseData : responseData.data || [];
+      const rawMessages = Array.isArray(responseData) ? responseData : responseData.data || [];
+      // Sanitize: ensure body is always a string
+      const newMessages = rawMessages.map(sanitizeMessage);
       setMessages(prev => cursor ? [...newMessages, ...prev] : newMessages);
     } catch (err) {
       console.error('Failed to fetch messages:', err);
@@ -170,7 +214,8 @@ export const useMessaging = (userId) => {
         params: { include_full_conversation: includeFullConversation }
       });
       const responseData = res.data.data || [];
-      const newMessages = Array.isArray(responseData) ? responseData : responseData.data || [];
+      const rawMessages = Array.isArray(responseData) ? responseData : responseData.data || [];
+      const newMessages = rawMessages.map(sanitizeMessage);
       setMessages(prev => newMessages);
     } catch (err) {
       console.error('Failed to fetch case messages:', err);
@@ -242,8 +287,9 @@ export const useMessaging = (userId) => {
           guestSessionId: getGuestSessionId(), // Include for guest auth
           onSuccess: (serverMessage) => {
         // Replace optimistic with real message, preserve status
+        const cleanMessage = sanitizeMessage(serverMessage);
         setMessages(prev => prev.map(m => 
-          m.id === optimisticId ? { ...serverMessage, _pending: false, _optimistic: false, status: serverMessage.status || 'sent' } : m
+          m.id === optimisticId ? { ...cleanMessage, _pending: false, _optimistic: false, status: cleanMessage.status || 'sent' } : m
         ));
         setSending(false);
       },
@@ -453,8 +499,9 @@ export const useMessaging = (userId) => {
     const unsubscribe = subscribeToConversation(
       convId,
       (event) => { // onMessageSent
-        const messageData = event.message || event;
-        console.log('📥 Message sent:', { id: messageData.id, body: messageData.body?.substring(0, 50), sender_id: messageData.sender_id });
+        const rawData = event.message || event;
+        const messageData = sanitizeMessage(rawData);
+        console.log('📥 Message sent:', { id: messageData.id, body: String(messageData.body).substring(0, 50), sender_id: messageData.sender_id });
 
         setMessages(prev => {
           // Deduplication: check by real ID
