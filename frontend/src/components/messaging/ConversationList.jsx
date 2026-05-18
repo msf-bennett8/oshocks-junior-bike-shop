@@ -5,6 +5,8 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Archive, Pin, MoreVertical, Trash2, Phone, Video, Inbox, Headphones, AlertCircle, ShoppingBag, Mail, Clock, Truck, Wrench, MessageSquare, CreditCard, Package, RotateCcw, Cpu, HelpCircle } from 'lucide-react';
 import Avatar from '../common/Avatar';
+import ProfilePreviewModal from '../common/ProfilePreviewModal';
+import { useAuth } from '../../context/AuthContext';
 
 const FILTERS = [
   { key: 'all', label: 'All' },
@@ -26,6 +28,8 @@ const ConversationList = ({
   compact = false,
   entryPoint = 'support',
 }) => {
+  const { user, hasAnyRole } = useAuth();
+  const isStaff = hasAnyRole(['admin', 'super_admin', 'support_agent', 'service_agent']);
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [contextMenu, setContextMenu] = useState(null); // { convId, x, y }
@@ -127,28 +131,27 @@ const ConversationList = ({
       </div>
 
       {/* Filter Tabs */}
-      {!compact && (
-        <div className="flex items-center gap-1 px-3 py-2 overflow-x-auto scrollbar-hide bg-white border-b border-gray-100">
-          {FILTERS.map(filter => (
-            <button
-              key={filter.key}
-              onClick={() => setActiveFilter(filter.key)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                activeFilter === filter.key
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-500 hover:bg-gray-100'
-              }`}
-            >
-              {filter.label}
-              {filter.key === 'unread' && unreadTotal > 0 && (
-                <span className="ml-1 bg-white text-blue-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                  {unreadTotal}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className={`flex items-center overflow-x-auto scrollbar-hide bg-white border-b border-gray-100 ${compact ? 'gap-[2px] px-1.5 py-1' : 'gap-1 px-3 py-2'}`}>
+        {FILTERS.map(filter => (
+          <button
+            key={filter.key}
+            onClick={() => setActiveFilter(filter.key)}
+            title={filter.label}
+            className={`rounded-md font-semibold whitespace-nowrap transition-colors flex-shrink-0 leading-none ${
+              compact 
+                ? `px-[5px] py-[3px] text-[9px] ${activeFilter === filter.key ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`
+                : `px-3 py-1.5 text-xs ${activeFilter === filter.key ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`
+            }`}
+          >
+            {compact ? filter.label.slice(0, 2) : filter.label}
+            {filter.key === 'unread' && unreadTotal > 0 && (
+              <span className={`bg-white text-blue-600 font-bold rounded-full inline-block ${compact ? 'ml-[1px] text-[8px] px-[2px] py-0 min-w-[10px]' : 'ml-1 text-[10px] px-1.5 py-0.5'}`}>
+                {unreadTotal}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
 
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto overscroll-contain" onClick={closeContextMenu}>
@@ -176,13 +179,32 @@ const ConversationList = ({
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSelect(conv); }}
               >
-                {/* Avatar with online indicator */}
+                {/* Avatar with online indicator — STAFF sees last sender for support chats */}
                 <div className="relative flex-shrink-0">
-                  <Avatar
-                    src={conv.avatar || conv.other_participant?.avatar}
-                    name={conv.title || conv.other_participant?.name || conv.guest_name || 'Support'}
-                    size={48}
-                  />
+                  {(() => {
+                    const isSupportChat = conv.type === 'support' || conv.type === 'order_support' || conv.is_support_case;
+                    const displayUser = (isSupportChat && isStaff && conv.last_sender)
+                      ? conv.last_sender
+                      : (conv.other_participant || { name: conv.guest_name || conv.title || 'Support', avatar: conv.avatar });
+                    
+                    const avatarEl = (
+                      <Avatar
+                        src={displayUser.avatar}
+                        name={displayUser.name}
+                        size={48}
+                      />
+                    );
+
+                    // Staff hovering over support chat avatar → show profile preview
+                    if (isSupportChat && isStaff && conv.last_sender) {
+                      return (
+                        <ProfilePreviewModal user={conv.last_sender}>
+                          {avatarEl}
+                        </ProfilePreviewModal>
+                      );
+                    }
+                    return avatarEl;
+                  })()}
                   {conv.other_participant?.is_online && (
                     <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
                   )}
@@ -196,11 +218,33 @@ const ConversationList = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <h4 className={`text-sm font-medium truncate ${
-                        hasUnread ? 'text-gray-900 font-semibold' : 'text-gray-700'
-                      }`}>
-                        {conv.title || conv.other_participant?.name || conv.guest_name || 'Support'}
-                      </h4>
+                      {(() => {
+                        const isSupportChat = conv.type === 'support' || conv.type === 'order_support' || conv.is_support_case;
+                        const displayName = (isSupportChat && isStaff && conv.last_sender)
+                          ? conv.last_sender.name
+                          : (conv.title || conv.other_participant?.name || conv.guest_name || 'Support');
+                        const displayUser = (isSupportChat && isStaff && conv.last_sender) ? conv.last_sender : null;
+
+                        const nameEl = (
+                          <h4 className={`text-sm font-medium truncate ${
+                            hasUnread ? 'text-gray-900 font-semibold' : 'text-gray-700'
+                          }`}>
+                            {isSupportChat && isStaff ? (
+                              <span className="flex items-center gap-1.5">
+                                <span className="text-gray-400 text-xs font-normal">Oshocks Support</span>
+                                <span className="text-gray-300">•</span>
+                                <span>{displayName}</span>
+                              </span>
+                            ) : displayName}
+                          </h4>
+                        );
+
+                        return displayUser ? (
+                          <ProfilePreviewModal user={displayUser}>
+                            {nameEl}
+                          </ProfilePreviewModal>
+                        ) : nameEl;
+                      })()}
                       {/* Support Case Badge */}
                       {conv.support_case && (
                         <span className={`flex-shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${

@@ -9,6 +9,7 @@ import MessageBubble from './MessageBubble';
 import CaseThreadHeader from './CaseThreadHeader';
 import CaseCreateModal from './CaseCreateModal';
 import AttachmentViewerModal from './AttachmentViewerModal';
+import ProfilePreviewModal from '../common/ProfilePreviewModal';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -40,7 +41,8 @@ const MessageThread = ({
   onMessagesAppended,
   onLoadFullConversation,
 }) => {
-  const { user } = useAuth();
+  const { user, hasAnyRole } = useAuth();
+  const isStaff = hasAnyRole(['admin', 'super_admin', 'support_agent', 'service_agent']);
   const [input, setInput] = useState('');
   const [replyTo, setReplyTo] = useState(null);
   const [editingMessage, setEditingMessage] = useState(null);
@@ -261,34 +263,73 @@ const MessageThread = ({
             </button>
           )}
           
-          <div className="relative flex-shrink-0">
-            <Avatar
-              src={otherParticipant?.avatar}
-              name={otherParticipant?.name}
-              size={40}
-            />
-            {isOnline && (
-              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
-            )}
-          </div>
-          
-          <div className="min-w-0">
-            <h3 className="font-semibold text-gray-900 text-sm truncate">
-              {otherParticipant?.name || conversation?.guest_name || conversation?.title || 'Support'}
-            </h3>
-            <p className="text-xs text-gray-500">
-              {isOnline ? (
-                <span className="text-green-600 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                  Online
-                </span>
-              ) : lastSeen ? (
-                `Last seen ${formatLastSeen(lastSeen)}`
-              ) : (
-                'Offline'
-              )}
-            </p>
-          </div>
+                    {(() => {
+            // Determine who to show in header based on role + conversation type
+            const isSupportChat = conversation?.type === 'support' || conversation?.type === 'order_support' || conversation?.is_support_case;
+            let headerUser = otherParticipant;
+            
+            if (isSupportChat) {
+              if (isStaff && conversation?.last_sender) {
+                // Staff sees the actual sender (customer/guest)
+                headerUser = conversation.last_sender;
+              } else if (!isStaff && conversation?.assigned_agent) {
+                // User sees their assigned support agent
+                headerUser = conversation.assigned_agent;
+              }
+              // Fallback: keep otherParticipant (Oshocks Support)
+            }
+
+            const avatarEl = (
+              <div className="relative flex-shrink-0">
+                <Avatar
+                  src={headerUser?.avatar}
+                  name={headerUser?.name}
+                  size={40}
+                />
+                {isOnline && (
+                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
+                )}
+              </div>
+            );
+
+            return (
+              <>
+                {isSupportChat && headerUser ? (
+                  <ProfilePreviewModal user={headerUser}>
+                    {avatarEl}
+                  </ProfilePreviewModal>
+                ) : avatarEl}
+
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-gray-900 text-sm truncate">
+                    {isSupportChat && isStaff && conversation?.last_sender ? (
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-gray-400 font-normal">Oshocks Support</span>
+                        <span className="text-gray-300">•</span>
+                        <span>{headerUser?.name}</span>
+                      </span>
+                    ) : (
+                      headerUser?.name || conversation?.guest_name || conversation?.title || 'Support'
+                    )}
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    {isOnline ? (
+                      <span className="text-green-600 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                        Online
+                      </span>
+                    ) : lastSeen ? (
+                      `Last seen ${formatLastSeen(lastSeen)}`
+                    ) : headerUser?.role ? (
+                      <span className="text-blue-500">{headerUser.role.replace('_', ' ')}</span>
+                    ) : (
+                      'Offline'
+                    )}
+                  </p>
+                </div>
+              </>
+            );
+          })()}
         </div>
         
         <div className="flex items-center gap-1 flex-shrink-0">

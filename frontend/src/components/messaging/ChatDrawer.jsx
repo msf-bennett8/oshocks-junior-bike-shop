@@ -536,10 +536,10 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
           /* Wide: Split pane view */
         <div className="flex flex-1 overflow-hidden">
           {/* Conversation List — Responsive width based on chat panel size */}
-          <div 
+          <div
             className="border-r border-gray-100 flex-shrink-0 transition-all duration-200"
-            style={{ 
-              width: chatWidth < 550 ? '200px' : '256px',
+            style={{
+              width: chatWidth < 550 ? '260px' : '320px',
               display: chatWidth < 400 ? 'none' : 'block'
             }}
           >

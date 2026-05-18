@@ -66,6 +66,47 @@ class ConversationController extends Controller
                 ->where('id', '!=', $user?->id)
                 ->first();
 
+            // ─── LAST SENDER INFO (for support chat headers) ───
+            $lastMsg = $conv->lastMessage;
+            $conv->last_sender = null;
+            if ($lastMsg && $lastMsg->sender_id) {
+                $conv->last_sender = [
+                    'id' => $lastMsg->sender_id,
+                    'name' => $lastMsg->sender?->name ?? $lastMsg->sender_name ?? 'Guest',
+                    'avatar' => $lastMsg->sender?->avatar ?? null,
+                    'email' => $lastMsg->sender?->email ?? null,
+                    'phone' => $lastMsg->sender?->phone ?? null,
+                    'role' => $lastMsg->sender?->role ?? null,
+                    'is_guest' => false,
+                ];
+            } elseif ($lastMsg && $lastMsg->guest_session_id) {
+                $conv->last_sender = [
+                    'id' => null,
+                    'name' => $lastMsg->sender_name ?? 'Guest',
+                    'avatar' => null,
+                    'email' => null,
+                    'phone' => null,
+                    'role' => null,
+                    'is_guest' => true,
+                ];
+            }
+
+            // ─── ASSIGNED AGENT INFO (for user view of support chats) ───
+            $conv->assigned_agent = null;
+            if ($conv->support_case?->assigned_to) {
+                $agent = $conv->support_case->assignedAgent;
+                if ($agent) {
+                    $conv->assigned_agent = [
+                        'id' => $agent->id,
+                        'name' => $agent->name,
+                        'avatar' => $agent->avatar,
+                        'email' => $agent->email,
+                        'phone' => $agent->phone,
+                        'role' => $agent->role,
+                    ];
+                }
+            }
+
             $lastMessageBody = $conv->lastMessage?->body;
             $conv->last_message = is_string($lastMessageBody) ? $lastMessageBody : null;
             $conv->last_message_at = $conv->lastMessage?->created_at ?? $conv->last_message_at ?? $conv->updated_at;
