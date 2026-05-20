@@ -10,7 +10,8 @@ return new class extends Migration
     {
         // Fix message_attachments
         Schema::table('message_attachments', function (Blueprint $table) {
-            $table->dropForeign(['message_id']);
+            // Drop using explicit constraint name pattern Laravel generates
+            $table->dropForeign('message_attachments_message_id_foreign');
             $table->dropColumn('message_id');
         });
         Schema::table('message_attachments', function (Blueprint $table) {
@@ -20,7 +21,7 @@ return new class extends Migration
 
         // Fix message_read_receipts
         Schema::table('message_read_receipts', function (Blueprint $table) {
-            $table->dropForeign(['message_id']);
+            $table->dropForeign('message_read_receipts_message_id_foreign');
             $table->dropColumn('message_id');
         });
         Schema::table('message_read_receipts', function (Blueprint $table) {
@@ -30,7 +31,7 @@ return new class extends Migration
 
         // Fix message_delivery_statuses
         Schema::table('message_delivery_statuses', function (Blueprint $table) {
-            $table->dropForeign(['message_id']);
+            $table->dropForeign('message_delivery_statuses_message_id_foreign');
             $table->dropColumn('message_id');
         });
         Schema::table('message_delivery_statuses', function (Blueprint $table) {
@@ -40,7 +41,7 @@ return new class extends Migration
 
         // Fix message_reactions
         Schema::table('message_reactions', function (Blueprint $table) {
-            $table->dropForeign(['message_id']);
+            $table->dropForeign('message_reactions_message_id_foreign');
             $table->dropColumn('message_id');
         });
         Schema::table('message_reactions', function (Blueprint $table) {
