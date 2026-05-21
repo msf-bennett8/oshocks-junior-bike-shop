@@ -395,15 +395,15 @@ const HomePage = () => {
                 {/* Stats */}
                 <div className="flex gap-8 pt-6 border-t border-white/10">
                   <div>
-                    <div className="text-3xl font-bold text-white">2,500+</div>
+                    <div className="text-3xl font-bold text-white">1,500+</div>
                     <div className="text-sm text-gray-400">Bikes Sold</div>
                   </div>
                   <div>
-                    <div className="text-3xl font-bold text-white">15,000+</div>
+                    <div className="text-3xl font-bold text-white">300+</div>
                     <div className="text-sm text-gray-400">Happy Riders</div>
                   </div>
                   <div>
-                    <div className="text-3xl font-bold text-white">50+</div>
+                    <div className="text-3xl font-bold text-white">10+</div>
                     <div className="text-sm text-gray-400">Expert Mechanics</div>
                   </div>
                 </div>
