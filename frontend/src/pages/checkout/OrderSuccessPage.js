@@ -94,7 +94,7 @@ const OrderSuccessPage = () => {
         name: item.name,
         price: Number(item.price),
         quantity: item.quantity,
-        image: item.thumbnail || item.image || '/api/placeholder/200/200',
+        image: item.thumbnail || item.image || item.product?.images?.[0]?.thumbnail_url || item.product?.images?.[0]?.image_url || '/api/placeholder/200/200',
         seller: 'Oshocks Junior Bike Shop'
       })),
       summary: (() => {
@@ -147,7 +147,7 @@ const OrderSuccessPage = () => {
             name: item.name,
             price: Number(item.price),
             quantity: item.quantity,
-            image: item.thumbnail || item.image || '/api/placeholder/200/200',
+            image: item.thumbnail || item.image || item.product?.images?.[0]?.thumbnail_url || item.product?.images?.[0]?.image_url || '/api/placeholder/200/200',
             seller: 'Oshocks Junior Bike Shop'
           })),
           summary: (() => {

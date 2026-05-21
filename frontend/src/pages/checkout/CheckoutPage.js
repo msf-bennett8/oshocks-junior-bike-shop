@@ -762,14 +762,24 @@ const countyInfo = {
                           deliveryInstructions: createdOrder.delivery_instructions || ''
                         };
                         
+                        // Merge backend order items with frontend cart image data
+                        const itemsWithImages = createdItems.map(item => {
+                          const cartItem = cartItems.find(ci => ci.product_id === item.product_id || ci.id === item.product_id);
+                          return {
+                            id: item.product_id,
+                            name: item.product_name || item.product?.name,
+                            price: item.price,
+                            quantity: item.quantity,
+                            image: cartItem?.image || item.product?.images?.[0]?.image_url || item.product?.images?.[0]?.thumbnail_url || '/api/placeholder/200/200',
+                            thumbnail: cartItem?.thumbnail || item.product?.images?.[0]?.thumbnail_url || item.product?.images?.[0]?.image_url || '/api/placeholder/200/200',
+                            seller: item.seller?.business_name || 'Oshocks Junior Bike Shop'
+                          };
+                        });
+
                         navigate('/order-success', {
                           state: {
                             orderData: successOrderData,
-                            items: createdItems.map(item => ({
-                              ...item.product,
-                              quantity: item.quantity,
-                              price: item.price
-                            })),
+                            items: itemsWithImages,
                             discount: createdOrder.discount
                           }
                         });
@@ -917,14 +927,25 @@ const countyInfo = {
         };
         
         // Navigate to success page with order data
+        // Merge backend order items with frontend cart image data
+        const itemsWithImages = createdItems.map(item => {
+          // Find matching cart item to get image data
+          const cartItem = cartItems.find(ci => ci.product_id === item.product_id || ci.id === item.product_id);
+          return {
+            id: item.product_id,
+            name: item.product_name || item.product?.name,
+            price: item.price,
+            quantity: item.quantity,
+            image: cartItem?.image || item.product?.images?.[0]?.image_url || item.product?.images?.[0]?.thumbnail_url || '/api/placeholder/200/200',
+            thumbnail: cartItem?.thumbnail || item.product?.images?.[0]?.thumbnail_url || item.product?.images?.[0]?.image_url || '/api/placeholder/200/200',
+            seller: item.seller?.business_name || 'Oshocks Junior Bike Shop'
+          };
+        });
+
         navigate('/order-success', {
           state: {
             orderData: successOrderData,
-            items: createdItems.map(item => ({
-              ...item.product,
-              quantity: item.quantity,
-              price: item.price
-            })),
+            items: itemsWithImages,
             discount: createdOrder.discount
           }
         });
