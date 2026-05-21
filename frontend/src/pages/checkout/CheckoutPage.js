@@ -66,6 +66,73 @@ const CheckoutPage = () => {
   
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [errors, setErrors] = useState({});
+
+  // ============================================================================
+  // USER-FRIENDLY ERROR MAPPER
+  // Converts technical backend errors into readable UX messages
+  // ============================================================================
+  const getUserFriendlyError = (errorMessage) => {
+    if (!errorMessage) return 'Something went wrong. Please try again later.';
+
+    const lowerMsg = errorMessage.toLowerCase();
+
+    // M-Pesa / Payment gateway errors
+    if (lowerMsg.includes('ds timeout') || lowerMsg.includes('cannot be reached')) {
+      return 'M-Pesa is temporarily unreachable. Please check your phone signal and try again.';
+    }
+    if (lowerMsg.includes('stk push') && lowerMsg.includes('fail')) {
+      return 'M-Pesa request failed. Please check your phone number and try again.';
+    }
+    if (lowerMsg.includes('payment') && lowerMsg.includes('timeout')) {
+      return 'Payment timed out. Please try again.';
+    }
+    if (lowerMsg.includes('insufficient funds')) {
+      return 'Your M-Pesa balance is insufficient. Please top up and try again.';
+    }
+    if (lowerMsg.includes('cancelled') || lowerMsg.includes('user cancelled')) {
+      return 'You cancelled the M-Pesa prompt. Please try again when ready.';
+    }
+
+    // Stock / Inventory errors
+    if (lowerMsg.includes('insufficient stock')) {
+      // Keep stock messages detailed but friendly
+      const match = errorMessage.match(/Insufficient stock for product: (.+)\. Available: (\d+), Requested: (\d+)/);
+      if (match) {
+        const [, productName, available, requested] = match;
+        return `Only ${available} "${productName}" left in stock (you requested ${requested}). Please reduce the quantity and try again.`;
+      }
+      return 'Some items in your cart are no longer available in the requested quantity. Please adjust and try again.';
+    }
+    if (lowerMsg.includes('out of stock')) {
+      const match = errorMessage.match(/out of stock for product: (.+)/i);
+      if (match) {
+        return `"${match[1]}" is now out of stock. Please remove it from your cart and try again.`;
+      }
+      return 'Some items in your cart are now out of stock. Please remove them and try again.';
+    }
+
+    // Network / Server errors
+    if (lowerMsg.includes('network') || lowerMsg.includes('fetch') || lowerMsg.includes('failed to fetch')) {
+      return 'Connection issue. Please check your internet and try again.';
+    }
+    if (lowerMsg.includes('timeout')) {
+      return 'Request timed out. Please try again in a moment.';
+    }
+    if (lowerMsg.includes('429') || lowerMsg.includes('too many requests')) {
+      return 'Too many requests. Please wait a moment and try again.';
+    }
+    if (lowerMsg.includes('500') || lowerMsg.includes('internal server error')) {
+      return 'Our server is experiencing issues. Please try again in a few minutes.';
+    }
+
+    // Validation errors
+    if (lowerMsg.includes('validation failed')) {
+      return 'Please check your information and try again.';
+    }
+
+    // Default fallback — append "try again" for any unknown error
+    return `${errorMessage}. Please try again.`;
+  };
   
   
   // County/City options with their zones
@@ -490,7 +557,9 @@ const countyInfo = {
           console.error('❌ [DEBUG] Order creation failed!');
           console.error('📊 Status:', response.status);
           console.error('📦 Result:', result);
-          throw new Error(result.message || 'Failed to create order');
+          // Prioritize detailed backend error (e.g., stock issues) over generic message
+          const errorMessage = result.error || result.message || 'Failed to create order';
+          throw new Error(errorMessage);
         }
 
         // Order created successfully
@@ -586,7 +655,7 @@ const countyInfo = {
 
             // Payment successful - continue to success page
             } catch (mpesaError) {
-            setErrors({ submit: mpesaError.message || 'M-Pesa payment failed. Please try again.' });
+            setErrors({ submit: getUserFriendlyError(mpesaError.message) });
             setLoading(false);
             
             // Log payment failed event
@@ -764,7 +833,7 @@ const countyInfo = {
                       }
                     }
                   } catch (cardError) {
-                    setErrors({ submit: cardError.message || 'Card payment failed. Please try again.' });
+                    setErrors({ submit: getUserFriendlyError(cardError.message) });
                     setLoading(false);
                     
                     // Log payment failed event
@@ -865,8 +934,8 @@ const countyInfo = {
         
       } catch (error) {
         console.error('Order creation error:', error);
-        setErrors({ 
-          submit: error.message || 'Failed to create order. Please try again.' 
+        setErrors({
+          submit: getUserFriendlyError(error.message)
         });
         
         // Log order failed event

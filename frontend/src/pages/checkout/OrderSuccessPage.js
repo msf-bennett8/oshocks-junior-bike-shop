@@ -657,19 +657,24 @@ const OrderSuccessPage = () => {
                   className="flex items-center text-sm text-blue-600 hover:text-blue-700"
                 >
                   <Phone className="w-4 h-4 mr-2" />
-                  +254 712 345 678
+                  +254 715 061 213
                 </a>
                 
                 <a
-                  href="mailto:support@oshocksjr.com"
+                  href="mailto:oshocksstores@gmail.com"
                   className="flex items-center text-sm text-blue-600 hover:text-blue-700"
                 >
                   <Mail className="w-4 h-4 mr-2" />
-                  support@oshocksjr.com
+                  oshocksstores@gmail.com
                 </a>
               </div>
               
-              <button className="w-full mt-4 bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center justify-center">
+              <button 
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('open-chat-drawer'));
+                }}
+                className="w-full mt-4 bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center justify-center"
+              >
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Live Chat Support
               </button>
