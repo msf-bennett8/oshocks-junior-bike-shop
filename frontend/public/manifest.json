@@ -2,28 +2,16 @@
   "name": "Oshocks Junior Bike Shop - Kenya's Premier Cycling Marketplace",
   "short_name": "Oshocks",
   "description": "Discover thousands of bicycles, cycling accessories, and spare parts. Kenya's leading online marketplace for cycling enthusiasts with M-Pesa payments, fast nationwide delivery, and quality guaranteed products.",
-  "version": "2.0.0",
-  "manifest_version": 3,
-  
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "portrait-primary",
-  
   "theme_color": "rgb(255, 69, 0)",
   "background_color": "rgb(255, 69, 0)",
-  
-  "categories": [
-    "shopping",
-    "sports",
-    "lifestyle",
-    "business"
-  ],
-  
+  "categories": ["shopping", "sports", "lifestyle", "business"],
   "lang": "en-KE",
   "dir": "ltr",
-  
   "icons": [
     {
       "src": "/favicon.svg",
@@ -44,7 +32,6 @@
       "purpose": "any"
     }
   ],
-  
   "screenshots": [
     {
       "src": "screenshots/desktop-home.png",
@@ -89,7 +76,6 @@
       "label": "Secure Checkout - Multiple payment options"
     }
   ],
-  
   "shortcuts": [
     {
       "name": "Browse All Bikes",
@@ -97,16 +83,8 @@
       "description": "Explore our complete collection of bicycles",
       "url": "/shop?category=bicycles",
       "icons": [
-        {
-          "src": "icons/bike-96.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        },
-        {
-          "src": "icons/bike-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
+        { "src": "icons/bike-96.png", "sizes": "96x96", "type": "image/png" },
+        { "src": "icons/bike-192.png", "sizes": "192x192", "type": "image/png" }
       ]
     },
     {
@@ -115,11 +93,7 @@
       "description": "Browse mountain bikes for all terrains",
       "url": "/shop?category=mountain-bikes",
       "icons": [
-        {
-          "src": "icons/mtb-96.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
+        { "src": "icons/mtb-96.png", "sizes": "96x96", "type": "image/png" }
       ]
     },
     {
@@ -128,16 +102,8 @@
       "description": "View your shopping cart and checkout",
       "url": "/cart",
       "icons": [
-        {
-          "src": "icons/cart-96.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        },
-        {
-          "src": "icons/cart-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
+        { "src": "icons/cart-96.png", "sizes": "96x96", "type": "image/png" },
+        { "src": "icons/cart-192.png", "sizes": "192x192", "type": "image/png" }
       ]
     },
     {
@@ -146,11 +112,7 @@
       "description": "Track and manage your orders",
       "url": "/orders",
       "icons": [
-        {
-          "src": "icons/orders-96.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
+        { "src": "icons/orders-96.png", "sizes": "96x96", "type": "image/png" }
       ]
     },
     {
@@ -159,11 +121,7 @@
       "description": "View your saved favorite items",
       "url": "/wishlist",
       "icons": [
-        {
-          "src": "icons/wishlist-96.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
+        { "src": "icons/wishlist-96.png", "sizes": "96x96", "type": "image/png" }
       ]
     },
     {
@@ -172,11 +130,7 @@
       "description": "Search for bikes, accessories, and parts",
       "url": "/search",
       "icons": [
-        {
-          "src": "icons/search-96.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
+        { "src": "icons/search-96.png", "sizes": "96x96", "type": "image/png" }
       ]
     },
     {
@@ -185,11 +139,7 @@
       "description": "Browse today's special offers and discounts",
       "url": "/deals",
       "icons": [
-        {
-          "src": "icons/deals-96.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
+        { "src": "icons/deals-96.png", "sizes": "96x96", "type": "image/png" }
       ]
     },
     {
@@ -198,15 +148,10 @@
       "description": "Get help and contact customer service",
       "url": "/contact",
       "icons": [
-        {
-          "src": "icons/support-96.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
+        { "src": "icons/support-96.png", "sizes": "96x96", "type": "image/png" }
       ]
     }
   ],
-  
   "share_target": {
     "action": "/share",
     "method": "POST",
@@ -223,7 +168,6 @@
       ]
     }
   },
-  
   "protocol_handlers": [
     {
       "protocol": "web+oshocks",
@@ -234,7 +178,6 @@
       "url": "/cart?action=%s"
     }
   ],
-  
   "file_handlers": [
     {
       "action": "/import",
@@ -244,15 +187,9 @@
       }
     }
   ],
-  
   "launch_handler": {
     "client_mode": ["navigate-existing", "auto"]
   },
-  
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
-  
   "related_applications": [
     {
       "platform": "play",
@@ -265,67 +202,5 @@
     }
   ],
   "prefer_related_applications": false,
-  
-  "iarc_rating_id": "",
-  
-  "serviceworker": {
-    "src": "/service-worker.js",
-    "scope": "/",
-    "use_cache": true
-  },
-  
-  "features": [
-    "Cross-platform PWA support",
-    "Offline browsing capability",
-    "Push notifications for orders and deals",
-    "Background sync for cart and wishlist",
-    "M-Pesa payment integration",
-    "Real-time order tracking",
-    "Product search and filters",
-    "User reviews and ratings",
-    "Live chat support",
-    "Multi-vendor marketplace"
-  ],
-  
-  "gcm_sender_id": "103953800507",
-  
-  "permissions": [
-    "notifications",
-    "geolocation"
-  ],
-  
-  "note_taking": {
-    "new_note_url": "/notes/new"
-  },
-  
-  "handle_links": "preferred",
-  
-  "capture_links": "existing-client-navigate",
-  
-  "url_handlers": [
-    {
-      "origin": "https://oshocks.co.ke"
-    },
-    {
-      "origin": "https://www.oshocks.co.ke"
-    }
-  ],
-  
-  "scope_extensions": [],
-  
-  "display_capture": "fullscreen",
-  
-  "id": "oshocks-bike-shop-kenya",
-  
-  "app": {
-    "background": {
-      "scripts": ["background.js"]
-    },
-    "content_scripts": [
-      {
-        "matches": ["https://oshocks.co.ke/*"],
-        "js": ["content-script.js"]
-      }
-    ]
-  }
+  "id": "oshocks-bike-shop-kenya"
 }
