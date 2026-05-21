@@ -279,7 +279,9 @@ const ConversationList = ({
                       {conv.is_typing ? (
                       <span className="text-blue-600 italic">typing...</span>
                     ) : (
-                      (typeof conv.last_message === 'string' ? conv.last_message : null) || 'Start a conversation...'
+                      (typeof conv.last_message === 'string' ? conv.last_message 
+                        : conv.last_message && typeof conv.last_message === 'object' ? '[Message]'
+                        : null) || 'Start a conversation...'
                     )}
                     </p>
                     {hasUnread && (

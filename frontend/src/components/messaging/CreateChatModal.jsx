@@ -387,13 +387,50 @@ const CreateChatModal = ({ isOpen, onClose, onConversationCreated, orderContext 
       setShowSuccessModal(true);
 
       // Merge conversation with case messages for immediate display
+      // Backend may return messages in different structures — normalize them
+      const rawMessages = [];
+      
+      // Try various backend response structures
+      if (caseRes.data.data.system_message && typeof caseRes.data.data.system_message === 'object') {
+        rawMessages.push(caseRes.data.data.system_message);
+      }
+      if (caseRes.data.data.user_message && typeof caseRes.data.data.user_message === 'object') {
+        rawMessages.push(caseRes.data.data.user_message);
+      }
+      if (caseRes.data.data.initial_message && typeof caseRes.data.data.initial_message === 'object') {
+        rawMessages.push(caseRes.data.data.initial_message);
+      }
+      if (caseRes.data.data.conversation?.messages && Array.isArray(caseRes.data.data.conversation.messages)) {
+        rawMessages.push(...caseRes.data.data.conversation.messages);
+      }
+      
+      // Sanitize: ensure body is always a string, filter out invalid entries
+      const sanitizedMessages = rawMessages
+        .filter(m => m && typeof m === 'object' && m.id)
+        .map(m => ({
+          ...m,
+          body: typeof m.body === 'string' ? m.body 
+            : m.body === null || m.body === undefined ? '' 
+            : typeof m.body === 'object' ? JSON.stringify(m.body) 
+            : String(m.body),
+        }))
+        .filter((m, idx, arr) => 
+          // Deduplicate by id
+          arr.findIndex(other => other.id === m.id) === idx
+        );
+
       const conversationWithMessages = {
         ...conversation,
-        messages: [
-          caseRes.data.data.system_message,
-          caseRes.data.data.user_message,
-        ],
+        messages: sanitizedMessages,
+        last_message: sanitizedMessages.length > 0 
+          ? (typeof sanitizedMessages[sanitizedMessages.length - 1].body === 'string' 
+             ? sanitizedMessages[sanitizedMessages.length - 1].body 
+             : 'New support case created')
+          : 'New support case created',
+        last_message_at: new Date().toISOString(),
         support_case: caseRes.data.data.support_case,
+        is_support_case: true,
+        type: conversation.type || 'support',
       };
 
       onConversationCreated?.(conversationWithMessages, false, caseRes.data.data.support_case);

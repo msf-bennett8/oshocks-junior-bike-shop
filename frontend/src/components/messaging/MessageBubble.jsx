@@ -99,7 +99,11 @@ const MessageBubble = React.memo(({
                     return <strong key={i} className={isOwn ? 'text-blue-100' : 'text-gray-900'}>{part.slice(2, -2)}</strong>;
                   }
                   return <span key={i}>{part}</span>;
-                }) : <span className="text-red-400 text-xs">[Invalid message: {JSON.stringify(message.body)}]</span>}
+                }) : typeof message.body === 'object' && message.body !== null ? (
+                  <span className="text-red-400 text-xs">[Invalid message body: object]</span>
+                ) : (
+                  <span className="text-red-400 text-xs">[Invalid message: {String(message.body ?? '')}]</span>
+                )}
               </p>
               
               {/* Attachments preview */}

@@ -530,15 +530,18 @@ const MessageThread = ({
         {/* Date separator — TODO: group by date */}
         
         {messages.map((msg, idx) => {
+          // Safety: skip invalid messages
+          if (!msg || typeof msg !== 'object' || !msg.id) return null;
+          
           const isOwn = msg.sender_id === user?.id;
           const prevMsg = messages[idx - 1];
           const nextMsg = messages[idx + 1];
           const showAvatar = !prevMsg || prevMsg.sender_id !== msg.sender_id;
           const isLastInGroup = !nextMsg || nextMsg.sender_id !== msg.sender_id;
-          
+
           return (
-            <div 
-              key={msg.id} 
+            <div
+              key={msg.id}
               data-message-id={msg.id}
               className="group relative"
               onContextMenu={(e) => {

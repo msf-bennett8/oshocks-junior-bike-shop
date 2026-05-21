@@ -170,7 +170,18 @@ export const useMessaging = (userId) => {
     setLoading(true);
     try {
       const res = await api.get('/conversations');
-      const data = res.data.data || [];
+      const rawData = res.data.data || [];
+      
+      // Normalize: ensure last_message is always a string
+      const data = rawData.map(conv => ({
+        ...conv,
+        last_message: typeof conv.last_message === 'string' 
+          ? conv.last_message 
+          : conv.last_message && typeof conv.last_message === 'object' && conv.last_message.body
+            ? String(conv.last_message.body)
+            : null,
+      }));
+      
       setConversations(data);
       const total = data.reduce((sum, c) => sum + (c.unread_count || 0), 0);
       setUnreadTotal(total);

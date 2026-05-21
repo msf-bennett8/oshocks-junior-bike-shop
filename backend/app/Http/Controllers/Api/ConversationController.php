@@ -110,6 +110,9 @@ class ConversationController extends Controller
             $lastMessageBody = $conv->lastMessage?->body;
             $conv->last_message = is_string($lastMessageBody) ? $lastMessageBody : null;
             $conv->last_message_at = $conv->lastMessage?->created_at ?? $conv->last_message_at ?? $conv->updated_at;
+
+            // Prevent lastMessage relation from overwriting our computed last_message in JSON
+            $conv->setRelation('lastMessage', null);
             // Load support case with order relationship
             $supportCase = $conv->supportCase;
             if ($supportCase) {
