@@ -208,7 +208,18 @@ export const useMessaging = (userId) => {
       const rawMessages = Array.isArray(responseData) ? responseData : responseData.data || [];
       // Sanitize: ensure body is always a string
       const newMessages = rawMessages.map(sanitizeMessage);
-      setMessages(prev => cursor ? [...newMessages, ...prev] : newMessages);
+      setMessages(prev => {
+        if (cursor) return [...newMessages, ...prev];
+        // Preserve pending optimistic messages for this conversation
+        // but skip any that already exist in the server response
+        const serverIds = new Set(newMessages.map(m => m.id).filter(Boolean));
+        const optimistic = prev.filter(m => 
+          m._optimistic && m._pending && 
+          m.conversation_id === conversationId && 
+          !serverIds.has(m.id)
+        );
+        return [...newMessages, ...optimistic];
+      });
     } catch (err) {
       console.error('Failed to fetch messages:', err);
     } finally {
@@ -275,7 +286,7 @@ export const useMessaging = (userId) => {
     
     setMessages(prev => [...prev, optimisticMessage]);
     setSending(true);
-    scrollToBottom();
+    // scrollToBottom removed — MessageThread handles scrolling via useEffect
 
     // Update conversation preview
     setConversations(prev => prev.map(c => 

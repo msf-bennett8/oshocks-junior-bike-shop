@@ -102,14 +102,20 @@ const MessageThread = ({
     return () => container.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
+  // Track previous message count to only react to truly new messages
+  const prevMessageCountRef = useRef(messages.length);
+
   useEffect(() => {
-    if (isNearBottom && messagesEndRef?.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    } else if (messages.length > 0) {
-      // User scrolled up, show badge
+    const hasNewMessages = messages.length > prevMessageCountRef.current;
+    prevMessageCountRef.current = messages.length;
+
+    if (hasNewMessages && isNearBottom && messagesEndRef?.current) {
+      // Use 'auto' for instant scroll — no jitter from overlapping smooth scrolls
+      messagesEndRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
+    } else if (hasNewMessages && messages.length > 0 && !isNearBottom) {
       setShowNewMessagesBadge(true);
     }
-  }, [messages, typingUsers, messagesEndRef, isNearBottom]);
+  }, [messages, messagesEndRef, isNearBottom]);
 
   // Mark messages as read when visible
   useEffect(() => {

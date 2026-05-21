@@ -302,32 +302,31 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
   }, [isOpen, user?.id, fetchConversations]);
 
   // ─── AUTO-SELECT CONVERSATION WHEN SET FROM OUTSIDE ───
-  // When activeConversation is set (e.g., from CreateChatModal via Navbar),
-  // ensure we fetch messages and mark as read
+  // Single source of truth for fetching when conversation changes.
+  // Use refs to avoid stale closures and unnecessary re-runs.
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
+  const fetchMessagesRef = useRef(fetchMessages);
+  fetchMessagesRef.current = fetchMessages;
+  const markAsReadRef = useRef(markAsRead);
+  markAsReadRef.current = markAsRead;
+
   useEffect(() => {
     if (activeConversation?.id && isOpen) {
-      // Only fetch if we haven't loaded messages for this conversation
-      const hasMessagesForConv = messages.some(m => m.conversation_id === activeConversation.id);
-      if (!hasMessagesForConv || messages.length === 0) {
-        fetchMessages(activeConversation.id);
+      const currentMessages = messagesRef.current;
+      const hasMessagesForConv = currentMessages.some(m => m.conversation_id === activeConversation.id);
+      if (!hasMessagesForConv || currentMessages.length === 0) {
+        fetchMessagesRef.current(activeConversation.id);
       }
-      markAsRead(activeConversation.id);
-      
-      // On mobile, ensure we're in thread view
+      markAsReadRef.current(activeConversation.id);
+
       if (isMobile) {
         setView('thread');
       }
     }
   }, [activeConversation?.id, isOpen, isMobile]);
 
-  // Load messages when conversation selected (mobile only — desktop handles in click)
-  useEffect(() => {
-    if (activeConversation?.id && isMobile) {
-      fetchMessages(activeConversation.id);
-      markAsRead(activeConversation.id);
-      setView('thread');
-    }
-  }, [activeConversation?.id, isMobile]);
+  // Mobile message loading is now handled by the unified activeConversation effect below
 
   const handleSend = useCallback((body, replyTo = null, attachments = []) => {
     if (activeConversation?.id) {
@@ -354,11 +353,10 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
     console.log('[ChatDrawer] Clicked conv:', conv?.id);
     setActiveConversation(conv);
     if (conv?.id) {
-      // Always fetch ALL messages for shared conversations
-      fetchMessages(conv.id);
       markAsRead(conv.id);
+      // fetchMessages is handled exclusively by the activeConversation useEffect
     }
-  }, [setActiveConversation, fetchMessages, markAsRead]);
+  }, [setActiveConversation, markAsRead]);
 
   // Sync body class for z-index management
   useEffect(() => {
@@ -384,11 +382,10 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
     const handleSelectConv = useCallback((conv) => {
       setActiveConversation(conv);
       if (conv?.id) {
-        fetchMessages(conv.id);
+        markAsRead(conv.id);
       }
-      markAsRead(conv.id);
       if (isNarrow) setChatView('thread');
-    }, [setActiveConversation, fetchMessages, markAsRead, isNarrow]);
+    }, [setActiveConversation, markAsRead, isNarrow]);
 
     const handleBackToList = () => {
       setChatView('list');
