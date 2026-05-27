@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  ShoppingCart, 
-  Package, 
-  Wallet, 
-  Zap, 
-  ThumbsUp, 
-  Shield, 
-  Headphones, 
-  BadgeCheck, 
-  Wrench, 
-  Store, 
-  Truck, 
+import {
+  ShoppingCart,
+  Package,
+  Wallet,
+  Zap,
+  ThumbsUp,
+  Shield,
+  Headphones,
+  BadgeCheck,
+  Wrench,
+  Store,
+  Truck,
   CreditCard,
   ArrowRight,
   UserPlus,
@@ -34,6 +34,13 @@ import { useCart } from '../../context/CartContext';
 import ActionModal from '../../components/common/ActionModal';
 import productService from '../../services/productService';
 import { ProductRow } from '../../components/shop';
+
+// === CYCLING FEATURE IMPORTS ===
+import EventsSection from '../../components/cycling/EventsSection';
+import BikeRentalSection from '../../components/bikes/BikeRentalSection';
+import MembershipSection from '../../components/membership/MembershipSection';
+import RideRequestCTA from '../../components/cycling/RideRequestCTA';
+import CommunityPreviewSection from '../../components/community/CommunityPreviewSection';
 
 const HomePage = () => {
   const { toggleWishlist, isInWishlist, addToWishlistWithGuest, mergeGuestWishlist } = useWishlist();
@@ -771,6 +778,18 @@ const HomePage = () => {
           </div>
         </section>
 
+        {/* ===== CYCLING EVENTS SECTION ===== */}
+        <EventsSection onBookNow={(event) => navigate(`/events/${event.slug}/book`)} />
+
+        {/* ===== BIKE RENTAL SECTION ===== */}
+        <BikeRentalSection onRentNow={(bike) => navigate(`/bikes/${bike.slug}/rent`)} />
+
+        {/* ===== MEMBERSHIP SECTION ===== */}
+        <MembershipSection onSubscribe={(plan) => navigate(`/membership/${plan.slug}`)} />
+
+        {/* ===== RIDE REQUEST CTA ===== */}
+        <RideRequestCTA onRequestRide={() => navigate('/ride-request')} />
+
         {/* Services Marquee */}
         <div className="py-6 bg-gray-900 border-t border-white/10 overflow-hidden">
           <div className="flex animate-marquee whitespace-nowrap">
@@ -1178,6 +1197,9 @@ const HomePage = () => {
             opacity: 0;
           }
         `}</style>
+
+        {/* ===== COMMUNITY PREVIEW SECTION ===== */}
+        <CommunityPreviewSection />
 
         {/* Testimonials Section */}
         <section className="py-16 md:py-20 bg-gray-50">

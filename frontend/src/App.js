@@ -150,6 +150,17 @@ const BecomeASeller = lazy(() => import('./pages/seller/BecomeASeller'));
 const PatnerWithUsPage = lazy(() => import('./pages/main/PatnerWithUsPage'));
 const BikeFinder = lazy(() => import('./pages/main/BikeFinder'));
 
+// Cycling Feature Pages
+const EventsPage = lazy(() => import('./pages/events/EventsPage'));
+const EventDetailsPage = lazy(() => import('./pages/events/EventDetailsPage'));
+const EventBookingPage = lazy(() => import('./pages/events/EventBookingPage'));
+const BikesPage = lazy(() => import('./pages/bikes/BikesPage'));
+const BikeDetailsPage = lazy(() => import('./pages/bikes/BikeDetailsPage'));
+const BikeRentalPage = lazy(() => import('./pages/bikes/BikeRentalPage'));
+const RideRequestPage = lazy(() => import('./pages/rides/RideRequestPage'));
+const MembershipPlansPage = lazy(() => import('./pages/membership/MembershipPlansPage'));
+const CommunityFeedPage = lazy(() => import('./pages/community/CommunityFeedPage'));
+
 // Education Pages
 const Careers = lazy(() => import('./pages/education/Careers'));
 const Safety = lazy(() => import('./pages/education/Safety'));
@@ -983,6 +994,19 @@ function App() {
                 <Route path="/warranty-information" element={<WarrantyInformation />} />
                 <Route path="/gift-cards" element={<GiftCards />} />
                 <Route path="/bike-finder" element={<BikeFinder />} />
+
+                {/* ============================================
+                    CYCLING FEATURES
+                    ============================================ */}
+                <Route path="/events" element={<EventsPage />} />
+                <Route path="/events/:slug" element={<EventDetailsPage />} />
+                <Route path="/events/:slug/book" element={<EventBookingPage />} />
+                <Route path="/bikes" element={<BikesPage />} />
+                <Route path="/bikes/:slug" element={<BikeDetailsPage />} />
+                <Route path="/bikes/:slug/rent" element={<BikeRentalPage />} />
+                <Route path="/ride-request" element={<RideRequestPage />} />
+                <Route path="/membership/:planSlug" element={<MembershipPlansPage />} />
+                <Route path="/community" element={<CommunityFeedPage />} />
 
                 {/* ============================================
                     ORDER HISTORY (Protected)
