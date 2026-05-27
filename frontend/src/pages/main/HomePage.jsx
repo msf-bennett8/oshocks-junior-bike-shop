@@ -787,6 +787,9 @@ const HomePage = () => {
         {/* ===== MEMBERSHIP SECTION ===== */}
         <MembershipSection onSubscribe={(plan) => navigate(`/membership/${plan.slug}`)} />
 
+        {/* ===== COMMUNITY PREVIEW SECTION ===== */}
+        <CommunityPreviewSection />
+
         {/* ===== RIDE REQUEST CTA ===== */}
         <RideRequestCTA onRequestRide={() => navigate('/ride-request')} />
 
@@ -1197,9 +1200,6 @@ const HomePage = () => {
             opacity: 0;
           }
         `}</style>
-
-        {/* ===== COMMUNITY PREVIEW SECTION ===== */}
-        <CommunityPreviewSection />
 
         {/* Testimonials Section */}
         <section className="py-16 md:py-20 bg-gray-50">
