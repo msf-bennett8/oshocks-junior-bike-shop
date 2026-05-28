@@ -11,7 +11,7 @@ import { MOCK_EVENTS } from '../../data/cyclingMockData';
 
 const MOODS = [
   { key: 'amazing', label: 'Amazing', emoji: '🤩' },
-  { key: 'good', label: 'Good', label: 'Good', emoji: '😊' },
+  { key: 'good', label: 'Good', emoji: '😊' },
   { key: 'tired', label: 'Tired', emoji: '😅' },
   { key: 'challenging', label: 'Challenging', emoji: '💪' },
   { key: 'epic', label: 'Epic', emoji: '🔥' },
@@ -94,10 +94,47 @@ const CreateCommunityPostPage = () => {
 
   const handlePhotoUpload = (e) => {
     const files = Array.from(e.target.files);
-    const newPreviews = files.map(file => URL.createObjectURL(file));
-    setPhotoPreview(prev => [...prev, ...newPreviews]);
-    setPhotoCaptions(prev => [...prev, ...files.map(() => '')]);
-    setFormData(prev => ({ ...prev, photos: [...prev.photos, ...files] }));
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+    const MAX_IMAGES = 10;
+
+    const validFiles = [];
+    const uploadErrors = [];
+
+    if (photoPreview.length + files.length > MAX_IMAGES) {
+      alert(`Maximum ${MAX_IMAGES} photos allowed. You have ${photoPreview.length} already.`);
+      e.target.value = '';
+      return;
+    }
+
+    files.forEach(file => {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        uploadErrors.push(`${file.name}: Only JPG, PNG, WebP allowed`);
+        return;
+      }
+      if (file.size < 1024 && file.type.startsWith('image/')) {
+        uploadErrors.push(`${file.name}: File appears corrupted (too small)`);
+        return;
+      }
+      if (file.size > MAX_SIZE) {
+        uploadErrors.push(`${file.name}: Exceeds 10MB limit (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+        return;
+      }
+      validFiles.push(file);
+    });
+
+    if (uploadErrors.length > 0) {
+      alert(uploadErrors.join('\n'));
+    }
+
+    if (validFiles.length > 0) {
+      const newPreviews = validFiles.map(file => URL.createObjectURL(file));
+      setPhotoPreview(prev => [...prev, ...newPreviews]);
+      setPhotoCaptions(prev => [...prev, ...validFiles.map(() => '')]);
+      setFormData(prev => ({ ...prev, photos: [...prev.photos, ...validFiles] }));
+    }
+
+    e.target.value = '';
   };
 
   const removePhoto = (index) => {
@@ -113,16 +150,82 @@ const CreateCommunityPostPage = () => {
   const validateStep = (step) => {
     const newErrors = {};
     if (step === 1) {
-      if (!formData.title.trim()) newErrors.title = 'Title is required';
-      if (!formData.ride_date) newErrors.ride_date = 'Ride date is required';
+      if (!formData.title.trim()) {
+        newErrors.title = 'Title is required';
+      } else if (formData.title.trim().length < 5) {
+        newErrors.title = 'Title must be at least 5 characters';
+      } else if (formData.title.trim().length > 100) {
+        newErrors.title = 'Title must be under 100 characters';
+      }
+      
+      if (!formData.ride_date) {
+        newErrors.ride_date = 'Ride date is required';
+      } else {
+        const rideDate = new Date(formData.ride_date);
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+        if (rideDate > today) {
+          newErrors.ride_date = 'Ride date cannot be in the future';
+        }
+      }
     }
     if (step === 2) {
-      if (!formData.ride_distance_km) newErrors.ride_distance_km = 'Distance is required';
-      if (!formData.ride_duration_minutes) newErrors.ride_duration_minutes = 'Duration is required';
+      if (!formData.ride_distance_km) {
+        newErrors.ride_distance_km = 'Distance is required';
+      } else if (Number(formData.ride_distance_km) <= 0) {
+        newErrors.ride_distance_km = 'Distance must be greater than 0';
+      } else if (Number(formData.ride_distance_km) > 500) {
+        newErrors.ride_distance_km = 'Distance seems too high (max 500km)';
+      }
+      
+      if (!formData.ride_duration_minutes) {
+        newErrors.ride_duration_minutes = 'Duration is required';
+      } else if (Number(formData.ride_duration_minutes) <= 0) {
+        newErrors.ride_duration_minutes = 'Duration must be greater than 0';
+      } else if (Number(formData.ride_duration_minutes) > 1440) {
+        newErrors.ride_duration_minutes = 'Duration exceeds 24 hours — did you mean to enter minutes?';
+      }
+      
+      // Sanity: avg speed check
+      if (formData.ride_distance_km && formData.ride_duration_minutes) {
+        const avgSpeed = Number(formData.ride_distance_km) / (Number(formData.ride_duration_minutes) / 60);
+        if (avgSpeed > 60) {
+          newErrors.ride_distance_km = 'That would mean over 60km/h average — please check distance/duration';
+        } else if (avgSpeed < 1 && Number(formData.ride_distance_km) > 1) {
+          newErrors.ride_duration_minutes = 'That seems very slow — please check duration';
+        }
+      }
+      
+      // Max speed vs avg speed
+      if (formData.avg_speed_kmh && formData.max_speed_kmh) {
+        if (Number(formData.max_speed_kmh) < Number(formData.avg_speed_kmh)) {
+          newErrors.max_speed_kmh = 'Max speed cannot be less than average speed';
+        }
+      }
+      
+      // Calories sanity check (rough: ~300-1000 cal/hour for cycling)
+      if (formData.calories_burned) {
+        const cals = Number(formData.calories_burned);
+        if (cals > 20000) {
+          newErrors.calories_burned = 'That seems too high — please check';
+        } else if (cals > 0 && formData.ride_duration_minutes) {
+          const calPerHour = cals / (Number(formData.ride_duration_minutes) / 60);
+          if (calPerHour > 1500) {
+            newErrors.calories_burned = 'Over 1500 cal/hour — please verify';
+          }
+        }
+      }
     }
     if (step === 3) {
-      if (!formData.content.trim()) newErrors.content = 'Story is required';
-      if (photoPreview.length === 0) newErrors.photos = 'At least one photo is required';
+      if (!formData.content.trim()) {
+        newErrors.content = 'Story is required';
+      } else if (formData.content.trim().length < 20) {
+        newErrors.content = 'Story must be at least 20 characters';
+      }
+      
+      if (photoPreview.length === 0) {
+        newErrors.photos = 'At least one photo is required';
+      }
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -143,15 +246,32 @@ const CreateCommunityPostPage = () => {
   const handleSubmit = async () => {
     if (!validateStep(currentStep)) return;
     setIsSubmitting(true);
+
+    // TODO: implement when backend ready — upload photos to Cloudinary/S3 and get URLs
+    // TODO: implement when backend ready — get user_id from auth context
+    // TODO: implement when backend ready — generate slug server-side
+    // TODO: implement when backend ready — POST to /api/community/posts with full payload
+    // TODO: implement when backend ready — server-side created_at timestamp
+
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    console.log('Creating post:', {
+
+    // Auto-set fields that backend will normally handle
+    const finalPayload = {
       ...formData,
       photo_captions: photoCaptions,
-      user_name: user?.name || 'Anonymous',
-      created_at: new Date().toISOString()
-    });
-    
+      user_name: user?.name || user?.username || 'Anonymous',
+      user_id: user?.id || null,        // TODO: backend — from auth context
+      user_avatar: user?.avatar || null, // TODO: backend — from user profile
+      slug: formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''), // TODO: backend — unique check
+      created_at: new Date().toISOString(), // TODO: backend — server timestamp
+      likes_count: 0,
+      comments_count: 0,
+      is_featured: false,
+      // TODO: backend — photos should be array of URLs after upload, not File objects
+    };
+
+    console.log('Creating post:', finalPayload);
+
     setIsSubmitting(false);
     navigate('/community');
   };
@@ -206,11 +326,15 @@ const CreateCommunityPostPage = () => {
           value={formData.title}
           onChange={(e) => updateField('title', e.target.value)}
           placeholder="e.g., Epic Ngong Hills Sunrise Ride!"
+          maxLength={100}
           className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 ${
             errors.title ? 'border-red-300 bg-red-50' : 'border-gray-200'
           }`}
         />
-        {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+        <div className="flex justify-between mt-1">
+          <span className="text-xs text-gray-400">{formData.title.length}/100</span>
+          {errors.title && <span className="text-red-500 text-sm">{errors.title}</span>}
+        </div>
       </div>
 
       <div>
@@ -303,9 +427,12 @@ const CreateCommunityPostPage = () => {
               min="0"
               value={formData.elevation_gain_m}
               onChange={(e) => updateField('elevation_gain_m', e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                errors.elevation_gain_m ? 'border-red-300 bg-red-50' : 'border-gray-200'
+              }`}
             />
           </div>
+          {errors.elevation_gain_m && <p className="text-red-500 text-sm mt-1">{errors.elevation_gain_m}</p>}
         </div>
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Avg Speed (km/h)</label>
@@ -317,9 +444,12 @@ const CreateCommunityPostPage = () => {
               step="0.1"
               value={formData.avg_speed_kmh}
               onChange={(e) => updateField('avg_speed_kmh', e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                errors.avg_speed_kmh ? 'border-red-300 bg-red-50' : 'border-gray-200'
+              }`}
             />
           </div>
+          {errors.avg_speed_kmh && <p className="text-red-500 text-sm mt-1">{errors.avg_speed_kmh}</p>}
         </div>
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Max Speed (km/h)</label>
@@ -331,9 +461,12 @@ const CreateCommunityPostPage = () => {
               step="0.1"
               value={formData.max_speed_kmh}
               onChange={(e) => updateField('max_speed_kmh', e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                errors.max_speed_kmh ? 'border-red-300 bg-red-50' : 'border-gray-200'
+              }`}
             />
           </div>
+          {errors.max_speed_kmh && <p className="text-red-500 text-sm mt-1">{errors.max_speed_kmh}</p>}
         </div>
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Calories Burned</label>
@@ -344,9 +477,12 @@ const CreateCommunityPostPage = () => {
               min="0"
               value={formData.calories_burned}
               onChange={(e) => updateField('calories_burned', e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                errors.calories_burned ? 'border-red-300 bg-red-50' : 'border-gray-200'
+              }`}
             />
           </div>
+          {errors.calories_burned && <p className="text-red-500 text-sm mt-1">{errors.calories_burned}</p>}
         </div>
       </div>
     </div>
@@ -397,9 +533,13 @@ const CreateCommunityPostPage = () => {
             value={formData.bike_used}
             onChange={(e) => updateField('bike_used', e.target.value)}
             placeholder="e.g., Trek Domane AL 2"
-            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+            maxLength={100}
+            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+              errors.bike_used ? 'border-red-300 bg-red-50' : 'border-gray-200'
+            }`}
           />
         </div>
+        {errors.bike_used && <p className="text-red-500 text-sm mt-1">{errors.bike_used}</p>}
       </div>
 
       <div>
@@ -433,7 +573,7 @@ const CreateCommunityPostPage = () => {
           <input
             type="file"
             multiple
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             onChange={handlePhotoUpload}
             className="hidden"
             id="post-photo-upload"
@@ -441,7 +581,7 @@ const CreateCommunityPostPage = () => {
           <label htmlFor="post-photo-upload" className="cursor-pointer">
             <Camera className="w-10 h-10 text-gray-400 mx-auto mb-3" />
             <p className="text-sm font-medium text-gray-700">Click to upload photos</p>
-            <p className="text-xs text-gray-400 mt-1">At least 1 photo required. Max 5MB each.</p>
+            <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP only — max 10MB each. At least 1 photo required.</p>
           </label>
         </div>
         {errors.photos && <p className="text-red-500 text-sm mt-1">{errors.photos}</p>}
@@ -532,66 +672,121 @@ const CreateCommunityPostPage = () => {
     </div>
   );
 
-  const renderStep4 = () => (
-    <div className="space-y-6 animate-fadeIn">
-      <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Smile className="w-5 h-5 text-orange-500" />
-          Post Preview
-        </h3>
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Title</span>
-            <span className="font-semibold text-gray-900">{formData.title || '—'}</span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Date</span>
-            <span className="font-semibold text-gray-900">{formData.ride_date || '—'}</span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Distance</span>
-            <span className="font-semibold text-gray-900">{formData.ride_distance_km ? `${formData.ride_distance_km}km` : '—'}</span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Duration</span>
-            <span className="font-semibold text-gray-900">
-              {formData.ride_duration_minutes ? `${Math.floor(formData.ride_duration_minutes / 60)}h ${formData.ride_duration_minutes % 60}m` : '—'}
-            </span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Mood</span>
-            <span className="font-semibold text-gray-900 capitalize">{formData.mood}</span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Photos</span>
-            <span className="font-semibold text-gray-900">{photoPreview.length} photo{photoPreview.length !== 1 ? 's' : ''}</span>
-          </div>
-          <div className="flex justify-between py-2">
-            <span className="text-gray-500">Visibility</span>
-            <span className="font-semibold text-gray-900 capitalize">{formData.visibility}</span>
-          </div>
-        </div>
-      </div>
+  const renderStep4 = () => {
+    const fmt = (v) => v || '—';
+    const fmtNum = (v) => v ? Number(v).toLocaleString() : '—';
+    const moodEmoji = MOODS.find(m => m.key === formData.mood)?.emoji || '😊';
 
-      {photoPreview.length > 0 && (
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-          {photoPreview.map((preview, i) => (
-            <div key={i} className="aspect-square rounded-lg overflow-hidden border border-gray-200">
-              <img src={preview} alt="" className="w-full h-full object-cover" />
+    return (
+      <div className="space-y-6 animate-fadeIn">
+        {/* FULL POST PREVIEW */}
+        <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Smile className="w-5 h-5 text-orange-500" />
+            Complete Post Summary
+          </h3>
+
+          {/* Step 1: Ride Info */}
+          <div className="mb-6">
+            <h4 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-3">Ride Info</h4>
+            <div className="space-y-2 text-sm bg-white rounded-xl p-4 border border-gray-100">
+              <SummaryRow label="Title" value={fmt(formData.title)} />
+              <SummaryRow label="Ride Date" value={formData.ride_date ? new Date(formData.ride_date).toLocaleDateString('en-KE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : '—'} />
+              <SummaryRow label="Ride Type" value={fmt(formData.ride_type).replace(/_/g, ' ')} />
+              <SummaryRow label="Linked Event" value={formData.event_id ? MOCK_EVENTS.find(e => e.id === Number(formData.event_id))?.title || 'Selected event' : 'None (solo ride)'} />
             </div>
-          ))}
-        </div>
-      )}
+          </div>
 
-      <div className="flex items-start gap-3 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-        <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-medium text-yellow-800">Before Sharing</p>
-          <p className="text-sm text-yellow-700 mt-1">
-            Your post will be visible to the community based on your visibility settings. Make sure you're happy with the photos and story!
-          </p>
+          {/* Step 2: Stats */}
+          <div className="mb-6">
+            <h4 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-3">Ride Stats</h4>
+            <div className="space-y-2 text-sm bg-white rounded-xl p-4 border border-gray-100">
+              <SummaryRow label="Distance" value={formData.ride_distance_km ? `${fmtNum(formData.ride_distance_km)} km` : '—'} />
+              <SummaryRow label="Duration" value={formData.ride_duration_minutes ? `${Math.floor(formData.ride_duration_minutes / 60)}h ${formData.ride_duration_minutes % 60}m` : '—'} />
+              <SummaryRow label="Elevation Gain" value={formData.elevation_gain_m ? `${fmtNum(formData.elevation_gain_m)} m` : '—'} />
+              <SummaryRow label="Avg Speed" value={formData.avg_speed_kmh ? `${fmtNum(formData.avg_speed_kmh)} km/h` : '—'} />
+              <SummaryRow label="Max Speed" value={formData.max_speed_kmh ? `${fmtNum(formData.max_speed_kmh)} km/h` : '—'} />
+              <SummaryRow label="Calories Burned" value={formData.calories_burned ? `${fmtNum(formData.calories_burned)} kcal` : '—'} />
+            </div>
+          </div>
+
+          {/* Step 3: Story & Details */}
+          <div className="mb-6">
+            <h4 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-3">Story & Details</h4>
+            <div className="space-y-2 text-sm bg-white rounded-xl p-4 border border-gray-100">
+              <SummaryRow label="Mood" value={`${moodEmoji} ${fmt(formData.mood).replace(/_/g, ' ')}`} />
+              <SummaryRow label="Story" value={fmt(formData.content)} full />
+              <SummaryRow label="Bike Used" value={fmt(formData.bike_used)} />
+              <SummaryRow label="Gear" value={formData.gear.length > 0 ? formData.gear.join(', ') : '—'} />
+              <SummaryRow label="Tags" value={formData.tags.length > 0 ? formData.tags.map(t => `#${t}`).join(' ') : '—'} />
+              <SummaryRow label="Visibility" value={fmt(formData.visibility).replace(/_/g, ' ')} />
+              <SummaryRow label="Comments" value={formData.allow_comments ? 'Allowed' : 'Disabled'} />
+            </div>
+          </div>
+
+          {/* Step 3: Photos */}
+          <div className="mb-6">
+            <h4 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-3">Photos</h4>
+            <div className="text-sm bg-white rounded-xl p-4 border border-gray-100">
+              <SummaryRow label="Total Photos" value={photoPreview.length > 0 ? `${photoPreview.length} photo${photoPreview.length > 1 ? 's' : ''}` : 'None'} />
+            </div>
+          </div>
+
+          {/* Photo Gallery with Captions */}
+          {photoPreview.length > 0 && (
+            <div className="space-y-3 mt-4">
+              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Photo Previews</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {photoPreview.map((preview, i) => (
+                  <div key={i} className="space-y-1">
+                    <div className="aspect-square rounded-lg overflow-hidden border border-gray-200">
+                      <img src={preview} alt="" className="w-full h-full object-cover" />
+                    </div>
+                    {photoCaptions[i] && (
+                      <p className="text-xs text-gray-500 italic truncate px-1">{photoCaptions[i]}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* System Fields */}
+          <div>
+            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">System Fields</h4>
+            <div className="space-y-2 text-sm bg-gray-100/50 rounded-xl p-4 border border-gray-200">
+              <SummaryRow label="Author" value={user?.name || user?.username || 'Anonymous'} />
+              <SummaryRow label="Likes" value="0 (auto)" />
+              <SummaryRow label="Comments" value="0 (auto)" />
+              <SummaryRow label="Featured" value="false (auto)" />
+              {/* TODO: implement when backend ready: user_id, user_avatar, slug, created_at server-side */}
+              <p className="text-[10px] text-gray-400 italic mt-2">
+                User ID, avatar, slug, and server timestamp will be added when backend integration is complete.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
+          <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-yellow-800">Before Sharing</p>
+            <p className="text-sm text-yellow-700 mt-1">
+              Your post will be visible to the community based on your visibility settings. Make sure you're happy with the photos and story!
+            </p>
+          </div>
         </div>
       </div>
+    );
+  };
+
+  // Helper component for summary rows
+  const SummaryRow = ({ label, value, full }) => (
+    <div className={`flex ${full ? 'flex-col' : 'justify-between'} py-2 border-b border-gray-100 last:border-0`}>
+      <span className="text-gray-500 flex-shrink-0">{label}</span>
+      <span className={`font-semibold text-gray-900 ${full ? 'mt-1 text-sm leading-relaxed' : 'text-right max-w-[60%] break-words'}`}>
+        {value}
+      </span>
     </div>
   );
 

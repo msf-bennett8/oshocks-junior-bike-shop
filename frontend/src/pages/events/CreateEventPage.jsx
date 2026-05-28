@@ -113,6 +113,20 @@ const CreateEventPage = () => {
     
     // Step 5: Photos
     photos: [],
+
+    // Auto-set system fields (backend will normally handle these)
+    // TODO: implement when backend ready — these will come from API response
+    status: 'open',
+    current_participants: 0,
+    rating: 0,
+    review_count: 0,
+    event_code: null,      // TODO: backend — EVT-2026-XXXXX
+    organizer_id: null,    // TODO: backend — from auth context
+    meeting_lat: null,     // TODO: backend — geocode from meeting_point
+    meeting_lng: null,     // TODO: backend — geocode from meeting_point
+    route_gpx_url: null,   // TODO: backend — GPX file upload
+    tags: [],              // TODO: backend — tag input system
+    badge_earned_id: null, // TODO: backend — badge selection
   });
 
   const [certInput, setCertInput] = useState('');
@@ -139,9 +153,52 @@ const CreateEventPage = () => {
 
   const handlePhotoUpload = (e) => {
     const files = Array.from(e.target.files);
-    const newPreviews = files.map(file => URL.createObjectURL(file));
-    setPhotoPreview(prev => [...prev, ...newPreviews]);
-    setFormData(prev => ({ ...prev, photos: [...prev.photos, ...files] }));
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+    const MAX_IMAGES = 10;
+
+    const validFiles = [];
+    const errors = [];
+
+    if (photoPreview.length + files.length > MAX_IMAGES) {
+      alert(`Maximum ${MAX_IMAGES} photos allowed. You have ${photoPreview.length} already.`);
+      e.target.value = '';
+      return;
+    }
+
+    files.forEach(file => {
+      // Check file type
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        errors.push(`${file.name}: Only JPG, PNG, WebP allowed`);
+        return;
+      }
+      
+      // Check for zip bomb / suspiciously small file with large dimensions
+      if (file.size < 1024 && file.type.startsWith('image/')) {
+        errors.push(`${file.name}: File appears corrupted (too small)`);
+        return;
+      }
+
+      // Check max size
+      if (file.size > MAX_SIZE) {
+        errors.push(`${file.name}: Exceeds 10MB limit (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+        return;
+      }
+
+      validFiles.push(file);
+    });
+
+    if (errors.length > 0) {
+      alert(errors.join('\n'));
+    }
+
+    if (validFiles.length > 0) {
+      const newPreviews = validFiles.map(file => URL.createObjectURL(file));
+      setPhotoPreview(prev => [...prev, ...newPreviews]);
+      setFormData(prev => ({ ...prev, photos: [...prev.photos, ...validFiles] }));
+    }
+
+    e.target.value = ''; // Reset input
   };
 
   const removePhoto = (index) => {
@@ -160,19 +217,71 @@ const CreateEventPage = () => {
     }
     if (step === 2) {
       if (!formData.meeting_point.trim()) newErrors.meeting_point = 'Meeting point is required';
-      if (!formData.start_datetime) newErrors.start_datetime = 'Start date is required';
-      if (!formData.end_datetime) newErrors.end_datetime = 'End date is required';
+      if (!formData.start_datetime) newErrors.start_datetime = 'Start date & time is required';
+      if (!formData.end_datetime) newErrors.end_datetime = 'End date & time is required';
       if (!formData.distance_km) newErrors.distance_km = 'Distance is required';
       if (!formData.estimated_duration_hours) newErrors.estimated_duration_hours = 'Duration is required';
       if (formData.start_datetime && formData.end_datetime && new Date(formData.start_datetime) >= new Date(formData.end_datetime)) {
-        newErrors.end_datetime = 'End must be after start';
+        newErrors.end_datetime = 'End date must be after start date';
+      }
+      // Registration deadline must be before event start
+      if (formData.registration_deadline && formData.start_datetime) {
+        if (new Date(formData.registration_deadline) >= new Date(formData.start_datetime)) {
+          newErrors.registration_deadline = 'Registration deadline must be before event starts';
+        }
+      }
+      // Recurring event validation
+      if (formData.is_recurring && !formData.recurrence_pattern.trim()) {
+        newErrors.recurrence_pattern = 'Please describe the recurrence pattern (e.g., Every Saturday)';
       }
     }
     if (step === 3) {
-      if (!formData.max_participants) newErrors.max_participants = 'Max participants required';
-      if (!formData.price_per_person && formData.price_per_person !== 0) newErrors.price_per_person = 'Price is required';
+      if (!formData.max_participants) {
+        newErrors.max_participants = 'Maximum participants is required';
+      } else if (Number(formData.max_participants) < 1) {
+        newErrors.max_participants = 'Must allow at least 1 participant';
+      }
+      
+      if (formData.min_participants && Number(formData.min_participants) > Number(formData.max_participants)) {
+        newErrors.min_participants = 'Minimum cannot exceed maximum participants';
+      }
+      
+      if (!formData.price_per_person && formData.price_per_person !== 0) {
+        newErrors.price_per_person = 'Price per person is required';
+      } else if (Number(formData.price_per_person) < 0) {
+        newErrors.price_per_person = 'Price cannot be negative';
+      }
+      
       if (formData.member_price && Number(formData.member_price) > Number(formData.price_per_person)) {
         newErrors.member_price = 'Member price cannot exceed regular price';
+      }
+      
+      // Early bird must be cheaper than regular price
+      if (formData.early_bird_price && Number(formData.early_bird_price) >= Number(formData.price_per_person)) {
+        newErrors.early_bird_price = 'Early bird price must be less than regular price';
+      }
+      
+      // Early bird deadline must be before event start
+      if (formData.early_bird_price && !formData.early_bird_deadline) {
+        newErrors.early_bird_deadline = 'Early bird deadline is required when early bird price is set';
+      }
+      if (formData.early_bird_deadline && formData.start_datetime) {
+        if (new Date(formData.early_bird_deadline) >= new Date(formData.start_datetime)) {
+          newErrors.early_bird_deadline = 'Early bird deadline must be before event start';
+        }
+      }
+      
+      // Group discount validation
+      if (formData.group_discount_threshold > 0) {
+        if (Number(formData.group_discount_threshold) > Number(formData.max_participants)) {
+          newErrors.group_discount_threshold = 'Group size cannot exceed max participants';
+        }
+        if (!formData.group_discount_percent || Number(formData.group_discount_percent) <= 0) {
+          newErrors.group_discount_percent = 'Discount percentage is required';
+        }
+        if (formData.group_discount_percent > 100) {
+          newErrors.group_discount_percent = 'Discount cannot exceed 100%';
+        }
       }
     }
     if (step === 4) {
@@ -194,22 +303,44 @@ const CreateEventPage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSubmit = async () => {
-    if (!validateStep(currentStep)) return;
-    setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Generate slug from title
-    const slug = formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    
-    // In real implementation: POST /api/events
-    console.log('Creating event:', { ...formData, slug });
-    
-    setIsSubmitting(false);
-    navigate('/events');
-  };
+    const handleSubmit = async () => {
+      if (!validateStep(currentStep)) return;
+      setIsSubmitting(true);
+
+      // TODO: implement when backend ready — generate event_code (EVT-2026-00001 format)
+      // TODO: implement when backend ready — upload photos to Cloudinary/S3 and get URLs
+      // TODO: implement when backend ready — geocode meeting_point to lat/lng
+      // TODO: implement when backend ready — get organizer_id from auth context
+      // TODO: implement when backend ready — POST to /api/events with full payload
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Generate slug from title
+      const slug = formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+      // Auto-set fields that backend will normally handle
+      const finalPayload = {
+        ...formData,
+        slug,
+        status: 'open',
+        current_participants: 0,
+        rating: 0,
+        review_count: 0,
+        // route_description_formatted already has arrows from onChange handler
+        // TODO: implement when backend ready — event_code: 'EVT-2026-XXXXX'
+        // TODO: implement when backend ready — organizer_id: user.id
+        // TODO: implement when backend ready — meeting_lat, meeting_lng
+        // TODO: implement when backend ready — route_gpx_url
+        // TODO: implement when backend ready — tags: []
+        // TODO: implement when backend ready — badge_earned_id: null
+      };
+
+      console.log('Creating event:', finalPayload);
+
+      setIsSubmitting(false);
+      navigate('/events');
+    };
 
   if (!isAuthorized) {
     return (
@@ -264,11 +395,15 @@ const CreateEventPage = () => {
           value={formData.title}
           onChange={(e) => updateField('title', e.target.value)}
           placeholder="e.g., Nairobi City Night Ride"
+          maxLength={100}
           className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all ${
             errors.title ? 'border-red-300 bg-red-50' : 'border-gray-200'
           }`}
         />
-        {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+        <div className="flex justify-between mt-1">
+          <span className="text-xs text-gray-400">{formData.title.length}/100</span>
+          {errors.title && <span className="text-red-500 text-sm">{errors.title}</span>}
+        </div>
       </div>
 
       <div>
@@ -426,11 +561,19 @@ const CreateEventPage = () => {
         <label className="block text-sm font-semibold text-gray-700 mb-2">Route Description</label>
         <textarea
           value={formData.route_description}
-          onChange={(e) => updateField('route_description', e.target.value)}
-          placeholder="Describe the route highlights, landmarks, and what riders will see..."
+          onChange={(e) => {
+            let value = e.target.value;
+            // Auto-replace comma + space/letter with arrow as user types
+            value = value.replace(/,\s*([^,])/g, ' → $1');
+            updateField('route_description', value);
+          }}
+          placeholder="Describe the route: Ngong Road, Kilimani, CBD..."
           rows={3}
           className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
         />
+        <p className="text-xs text-gray-400 mt-1.5">
+          Separate locations by a comma — arrows appear automatically
+        </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -640,8 +783,11 @@ const CreateEventPage = () => {
             value={formData.early_bird_price}
             onChange={(e) => updateField('early_bird_price', e.target.value)}
             placeholder="Optional discount price"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+              errors.early_bird_price ? 'border-red-300 bg-red-50' : 'border-gray-200'
+            }`}
           />
+          {errors.early_bird_price && <p className="text-red-500 text-sm mt-1">{errors.early_bird_price}</p>}
         </div>
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Early Bird Deadline</label>
@@ -649,8 +795,11 @@ const CreateEventPage = () => {
             type="datetime-local"
             value={formData.early_bird_deadline}
             onChange={(e) => updateField('early_bird_deadline', e.target.value)}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+              errors.early_bird_deadline ? 'border-red-300 bg-red-50' : 'border-gray-200'
+            }`}
           />
+          {errors.early_bird_deadline && <p className="text-red-500 text-sm mt-1">{errors.early_bird_deadline}</p>}
         </div>
       </div>
 
@@ -666,8 +815,11 @@ const CreateEventPage = () => {
               min="2"
               value={formData.group_discount_threshold}
               onChange={(e) => updateField('group_discount_threshold', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+              className={`w-full px-3 py-2 border rounded-lg ${
+                errors.group_discount_threshold ? 'border-red-300 bg-red-50' : 'border-gray-200'
+              }`}
             />
+            {errors.group_discount_threshold && <p className="text-red-500 text-xs mt-1">{errors.group_discount_threshold}</p>}
           </div>
           <div>
             <label className="block text-sm text-gray-600 mb-1">Discount %</label>
@@ -677,8 +829,11 @@ const CreateEventPage = () => {
               max="100"
               value={formData.group_discount_percent}
               onChange={(e) => updateField('group_discount_percent', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg"
+              className={`w-full px-3 py-2 border rounded-lg ${
+                errors.group_discount_percent ? 'border-red-300 bg-red-50' : 'border-gray-200'
+              }`}
             />
+            {errors.group_discount_percent && <p className="text-red-500 text-xs mt-1">{errors.group_discount_percent}</p>}
           </div>
         </div>
       </div>
@@ -908,94 +1063,191 @@ const CreateEventPage = () => {
     </div>
   );
 
-  const renderStep5 = () => (
-    <div className="space-y-6 animate-fadeIn">
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-3">Event Photos</label>
-        <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-orange-400 transition-colors">
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handlePhotoUpload}
-            className="hidden"
-            id="photo-upload"
-          />
-          <label htmlFor="photo-upload" className="cursor-pointer">
-            <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-            <p className="text-sm font-medium text-gray-700">Click to upload photos</p>
-            <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB each</p>
-          </label>
-        </div>
-        {photoPreview.length > 0 && (
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4">
-            {photoPreview.map((preview, i) => (
-              <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200">
-                <img src={preview} alt="" className="w-full h-full object-cover" />
-                <button
-                  onClick={() => removePhoto(i)}
-                  className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+  const renderStep5 = () => {
+    // Price tier display helper
+    const getPriceBreakdown = () => {
+      const prices = [];
+      if (formData.early_bird_price && formData.early_bird_deadline) {
+        prices.push({ label: 'Early Bird', price: formData.early_bird_price, deadline: formData.early_bird_deadline });
+      }
+      if (formData.member_price) {
+        prices.push({ label: 'Member', price: formData.member_price });
+      }
+      prices.push({ label: 'Standard', price: formData.price_per_person || '—' });
+      return prices;
+    };
 
-      <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Info className="w-5 h-5 text-orange-500" />
-          Event Preview
-        </h3>
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Title</span>
-            <span className="font-semibold text-gray-900">{formData.title || '—'}</span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Type</span>
-            <span className="font-semibold text-gray-900 capitalize">{formData.event_type.replace(/_/g, ' ')}</span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Difficulty</span>
-            <span className="font-semibold text-gray-900 capitalize">{formData.difficulty}</span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Date</span>
-            <span className="font-semibold text-gray-900">
-              {formData.start_datetime ? new Date(formData.start_datetime).toLocaleDateString('en-KE') : '—'}
-            </span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Price</span>
-            <span className="font-semibold text-gray-900">KSh {formData.price_per_person ? Number(formData.price_per_person).toLocaleString() : '—'}</span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Capacity</span>
-            <span className="font-semibold text-gray-900">{formData.max_participants || '—'} participants</span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Distance</span>
-            <span className="font-semibold text-gray-900">{formData.distance_km ? `${formData.distance_km}km` : '—'}</span>
-          </div>
-          <div className="flex justify-between py-2">
-            <span className="text-gray-500">Meeting Point</span>
-            <span className="font-semibold text-gray-900">{formData.meeting_point || '—'}</span>
-          </div>
-        </div>
-      </div>
+    const formatDate = (d) => d ? new Date(d).toLocaleString('en-KE', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+    const fmt = (v) => v || '—';
+    const fmtNum = (v) => v ? Number(v).toLocaleString() : '—';
+    const fmtBool = (v) => v ? 'Yes' : 'No';
 
-      <div className="flex items-start gap-3 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-        <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+    return (
+      <div className="space-y-6 animate-fadeIn">
+        {/* Photos Upload */}
         <div>
-          <p className="text-sm font-medium text-yellow-800">Before Publishing</p>
-          <p className="text-sm text-yellow-700 mt-1">
-            Review all details carefully. Once published, participants can start booking. You can edit most fields later.
-          </p>
+          <label className="block text-sm font-semibold text-gray-700 mb-3">Event Photos</label>
+          <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-orange-400 transition-colors">
+            <input
+              type="file"
+              multiple
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handlePhotoUpload}
+              className="hidden"
+              id="photo-upload"
+            />
+            <label htmlFor="photo-upload" className="cursor-pointer">
+              <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+              <p className="text-sm font-medium text-gray-700">Click to upload photos</p>
+              <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP only — max 10MB each</p>
+            </label>
+          </div>
+          {photoPreview.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4">
+              {photoPreview.map((preview, i) => (
+                <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200">
+                  <img src={preview} alt="" className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => removePhoto(i)}
+                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* FULL EVENT SUMMARY */}
+        <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Info className="w-5 h-5 text-orange-500" />
+            Complete Event Summary
+          </h3>
+
+          {/* Step 1: Basic Info */}
+          <div className="mb-6">
+            <h4 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-3">Basic Info</h4>
+            <div className="space-y-2 text-sm bg-white rounded-xl p-4 border border-gray-100">
+              <SummaryRow label="Title" value={fmt(formData.title)} />
+              <SummaryRow label="Short Description" value={fmt(formData.short_description)} />
+              <SummaryRow label="Event Type" value={formData.event_type.replace(/_/g, ' ')} />
+              <SummaryRow label="Difficulty" value={fmt(formData.difficulty)} />
+              <SummaryRow label="Terrain" value={fmt(formData.terrain)} />
+              {formData.event_type === 'charity' && <SummaryRow label="Charity" value={fmt(formData.charity_name)} />}
+              {formData.event_type === 'theme' && <SummaryRow label="Theme" value={fmt(formData.theme_name)} />}
+            </div>
+          </div>
+
+          {/* Step 2: Route & Schedule */}
+          <div className="mb-6">
+            <h4 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-3">Route & Schedule</h4>
+            <div className="space-y-2 text-sm bg-white rounded-xl p-4 border border-gray-100">
+              <SummaryRow label="Route Name" value={fmt(formData.route_name)} />
+              <SummaryRow label="Route Description" value={fmt(formData.route_description)} />
+              <SummaryRow label="Distance" value={formData.distance_km ? `${fmtNum(formData.distance_km)} km` : '—'} />
+              <SummaryRow label="Elevation Gain" value={formData.elevation_gain_m ? `${fmtNum(formData.elevation_gain_m)} m` : '—'} />
+              <SummaryRow label="Duration" value={formData.estimated_duration_hours ? `${fmtNum(formData.estimated_duration_hours)} hours` : '—'} />
+              <SummaryRow label="Meeting Point" value={fmt(formData.meeting_point)} />
+              <SummaryRow label="Start" value={formatDate(formData.start_datetime)} />
+              <SummaryRow label="End" value={formatDate(formData.end_datetime)} />
+              <SummaryRow label="Registration Deadline" value={formatDate(formData.registration_deadline)} />
+              <SummaryRow label="Recurring" value={fmtBool(formData.is_recurring)} />
+              {formData.is_recurring && <SummaryRow label="Recurrence" value={fmt(formData.recurrence_pattern)} />}
+            </div>
+          </div>
+
+          {/* Step 3: Pricing & Capacity */}
+          <div className="mb-6">
+            <h4 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-3">Pricing & Capacity</h4>
+            <div className="space-y-2 text-sm bg-white rounded-xl p-4 border border-gray-100">
+              <SummaryRow label="Max Participants" value={fmtNum(formData.max_participants)} />
+              <SummaryRow label="Min Participants" value={fmtNum(formData.min_participants)} />
+              
+              <div className="py-2 border-b border-gray-100">
+                <span className="text-gray-500 block mb-2">Pricing Tiers</span>
+                <div className="space-y-1.5">
+                  {getPriceBreakdown().map((tier, i) => (
+                    <div key={i} className="flex justify-between items-center px-3 py-2 bg-gray-50 rounded-lg">
+                      <span className="text-xs font-medium text-gray-600">{tier.label}</span>
+                      <div className="text-right">
+                        <span className="font-bold text-gray-900">KSh {fmtNum(tier.price)}</span>
+                        {tier.deadline && <span className="block text-[10px] text-gray-400">until {formatDate(tier.deadline)}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {formData.group_discount_threshold > 0 && (
+                <SummaryRow 
+                  label="Group Discount" 
+                  value={`${formData.group_discount_percent}% off for groups of ${formData.group_discount_threshold}+`} 
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Step 4: Guide & Logistics */}
+          <div className="mb-6">
+            <h4 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-3">Guide & Logistics</h4>
+            <div className="space-y-2 text-sm bg-white rounded-xl p-4 border border-gray-100">
+              <SummaryRow label="Guide Included" value={fmtBool(formData.guide_included)} />
+              {formData.guide_included && (
+                <>
+                  <SummaryRow label="Guide Name" value={fmt(formData.guide_name)} />
+                  <SummaryRow label="Guide Bio" value={fmt(formData.guide_bio)} />
+                  <SummaryRow label="Certifications" value={formData.guide_certifications.join(', ') || '—'} />
+                </>
+              )}
+              <SummaryRow label="Bike Included" value={fmtBool(formData.bike_included)} />
+              {formData.bike_included && <SummaryRow label="Bike Category" value={fmt(formData.included_bike_category)} />}
+              <SummaryRow label="Transport Provided" value={fmtBool(formData.transport_provided)} />
+              {formData.transport_provided && <SummaryRow label="Transport Price" value={`KSh ${fmtNum(formData.transport_price)}`} />}
+              <SummaryRow label="Equipment Provided" value={formData.equipment_provided.join(', ') || '—'} />
+              <SummaryRow label="Required Equipment" value={formData.required_equipment.join(', ') || '—'} />
+              <SummaryRow label="Refund Policy" value={fmt(formData.refund_policy)} />
+              <SummaryRow label="Cancellation Policy" value={fmt(formData.cancellation_policy)} />
+              <SummaryRow label="Weather Policy" value={fmt(formData.weather_policy)} />
+            </div>
+          </div>
+
+          {/* System Fields (Auto-set) */}
+          <div>
+            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">System Fields</h4>
+            <div className="space-y-2 text-sm bg-gray-100/50 rounded-xl p-4 border border-gray-200">
+              <SummaryRow label="Status" value="open (auto)" />
+              <SummaryRow label="Current Bookings" value="0 (auto)" />
+              <SummaryRow label="Rating" value="0 (auto)" />
+              <SummaryRow label="Reviews" value="0 (auto)" />
+              {/* TODO: implement when backend ready: event_code, organizer_id, meeting_lat/lng, route_gpx_url, tags, badge_earned_id */}
+              <p className="text-[10px] text-gray-400 italic mt-2">
+                Event code, organizer ID, map coordinates, GPX route, tags, and badges will be added when backend integration is complete.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Publish Warning */}
+        <div className="flex items-start gap-3 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
+          <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-yellow-800">Before Publishing</p>
+            <p className="text-sm text-yellow-700 mt-1">
+              Review all details carefully. Once published, participants can start booking. You can edit most fields later.
+            </p>
+          </div>
         </div>
       </div>
+    );
+  };
+
+  // Helper component for summary rows
+  const SummaryRow = ({ label, value }) => (
+    <div className="flex justify-between py-2 border-b border-gray-100 last:border-0">
+      <span className="text-gray-500">{label}</span>
+      <span className="font-semibold text-gray-900 text-right max-w-[60%] break-words">{value}</span>
     </div>
   );
 

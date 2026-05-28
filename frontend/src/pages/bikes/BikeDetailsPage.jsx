@@ -32,12 +32,16 @@ const BikeDetailsPage = () => {
   const isPlatform = bike.owner_type === 'platform';
   const price = rentalDuration === 'hour' ? bike.hourly_rate : rentalDuration === 'day' ? bike.daily_rate : rentalDuration === 'week' ? bike.weekly_rate : bike.daily_rate;
 
-  const relatedEvents = MOCK_EVENTS.filter(e =>
-    e.bike_included === false &&
-    (e.terrain === 'road' && bike.category === 'road' ||
-     e.terrain === 'mtb_trail' && bike.category === 'mtb' ||
-     e.terrain === 'gravel' && bike.category === 'gravel')
-  ).slice(0, 2);
+  const relatedEvents = MOCK_EVENTS.filter(e => {
+    if (e.bike_included !== false) return false;
+    const terrainMap = {
+      'road': 'road',
+      'mtb_trail': 'mtb',
+      'gravel': 'gravel',
+      'mixed': bike.category
+    };
+    return terrainMap[e.terrain] === bike.category || e.terrain === 'mixed';
+  }).slice(0, 2);
 
   return (
     <>
@@ -120,8 +124,18 @@ const BikeDetailsPage = () => {
                       <Share2 className="w-5 h-5 text-gray-600" />
                       {showShareMenu && (
                         <div className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 p-3 w-48 z-20">
-                          <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">Copy Link</button>
-                          <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">WhatsApp</button>
+                          <button 
+                            onClick={() => { navigator.clipboard.writeText(window.location.href); setShowShareMenu(false); }}
+                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                          >
+                            Copy Link
+                          </button>
+                          <button 
+                            onClick={() => { window.open(`https://wa.me/?text=${encodeURIComponent(window.location.href)}`, '_blank'); setShowShareMenu(false); }}
+                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                          >
+                            WhatsApp
+                          </button>
                         </div>
                       )}
                     </button>
@@ -299,9 +313,13 @@ const BikeDetailsPage = () => {
                     <input
                       type="date"
                       value={startDate}
+                      min={new Date().toISOString().split('T')[0]}
                       onChange={(e) => setStartDate(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                     />
+                    {!startDate && (
+                      <p className="text-xs text-orange-600 mt-1">Please select a start date</p>
+                    )}
                   </div>
 
                   {/* Pickup Info */}

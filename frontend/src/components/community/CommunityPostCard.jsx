@@ -9,7 +9,7 @@ const CommunityPostCard = ({ post, compact = false }) => {
       <Link to={`/community/${post.id}`} className="block bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100 group">
         <div className="relative h-32 overflow-hidden">
           <img 
-            src={post.photos[0]} 
+            src={post.photos?.[0] || '/placeholder-bike.jpg'}
             alt={post.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
@@ -50,7 +50,7 @@ const CommunityPostCard = ({ post, compact = false }) => {
     <Link to={`/community/${post.id}`} className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 group">
       <div className="relative h-48 overflow-hidden">
         <img 
-          src={post.photos[0]} 
+          src={post.photos?.[0] || '/placeholder-bike.jpg'} 
           alt={post.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />

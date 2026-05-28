@@ -123,9 +123,46 @@ const ListBikePage = () => {
 
   const handlePhotoUpload = (e) => {
     const files = Array.from(e.target.files);
-    const newPreviews = files.map(file => URL.createObjectURL(file));
-    setPhotoPreview(prev => [...prev, ...newPreviews]);
-    setFormData(prev => ({ ...prev, photos: [...prev.photos, ...files] }));
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+    const MAX_IMAGES = 10;
+
+    const validFiles = [];
+    const uploadErrors = [];
+
+    if (photoPreview.length + files.length > MAX_IMAGES) {
+      alert(`Maximum ${MAX_IMAGES} photos allowed. You have ${photoPreview.length} already.`);
+      e.target.value = '';
+      return;
+    }
+
+    files.forEach(file => {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        uploadErrors.push(`${file.name}: Only JPG, PNG, WebP allowed`);
+        return;
+      }
+      if (file.size < 1024 && file.type.startsWith('image/')) {
+        uploadErrors.push(`${file.name}: File appears corrupted (too small)`);
+        return;
+      }
+      if (file.size > MAX_SIZE) {
+        uploadErrors.push(`${file.name}: Exceeds 10MB limit (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+        return;
+      }
+      validFiles.push(file);
+    });
+
+    if (uploadErrors.length > 0) {
+      alert(uploadErrors.join('\n'));
+    }
+
+    if (validFiles.length > 0) {
+      const newPreviews = validFiles.map(file => URL.createObjectURL(file));
+      setPhotoPreview(prev => [...prev, ...newPreviews]);
+      setFormData(prev => ({ ...prev, photos: [...prev.photos, ...validFiles] }));
+    }
+
+    e.target.value = '';
   };
 
   const removePhoto = (index) => {
@@ -135,11 +172,21 @@ const ListBikePage = () => {
 
   const validateStep = (step) => {
     const newErrors = {};
+    if (step === 4) {
+      if (photoPreview.length === 0) {
+        newErrors.photos = 'At least one photo is required';
+      }
+    }
     if (step === 1) {
       if (!formData.name.trim()) newErrors.name = 'Bike name is required';
       if (!formData.brand.trim()) newErrors.brand = 'Brand is required';
       if (!formData.model.trim()) newErrors.model = 'Model is required';
       if (!formData.description.trim()) newErrors.description = 'Description is required';
+      const yearNum = Number(formData.year);
+      const currentYear = new Date().getFullYear();
+      if (!yearNum || yearNum < 1990 || yearNum > currentYear + 1) {
+        newErrors.year = `Year must be between 1990 and ${currentYear + 1}`;
+      }
     }
     if (step === 2) {
       if (!formData.daily_rate) newErrors.daily_rate = 'Daily rate is required';
@@ -150,6 +197,9 @@ const ListBikePage = () => {
     }
     if (step === 3) {
       if (!formData.location_address.trim()) newErrors.location_address = 'Location is required';
+      if (formData.pickup_type === 'delivery' && !formData.delivery_fee && formData.delivery_fee !== 0) {
+        newErrors.delivery_fee = 'Delivery fee is required when offering delivery';
+      }
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -167,18 +217,43 @@ const ListBikePage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSubmit = async () => {
-    if (!validateStep(currentStep)) return;
-    setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const slug = `${formData.brand.toLowerCase()}-${formData.model.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now().toString(36)}`;
-    
-    console.log('Listing bike:', { ...formData, slug, owner_type: 'user', owner_id: user?.id });
-    
-    setIsSubmitting(false);
-    navigate('/bikes');
-  };
+    const handleSubmit = async () => {
+      if (!validateStep(currentStep)) return;
+      setIsSubmitting(true);
+
+      // TODO: implement when backend ready — upload photos to Cloudinary/S3 and get URLs
+      // TODO: implement when backend ready — geocode location_address to lat/lng
+      // TODO: implement when backend ready — POST to /api/bikes with full payload
+      // TODO: implement when backend ready — generate unique slug server-side
+      // TODO: implement when backend ready — set owner_id from auth context, owner_name from user profile
+
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const slug = `${formData.brand.toLowerCase()}-${formData.model.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now().toString(36)}`;
+
+      // Auto-set fields that backend will normally handle
+      const finalPayload = {
+        ...formData,
+        slug,
+        owner_type: 'user',
+        owner_id: user?.id || null,
+        owner_name: user?.name || user?.username || 'Anonymous',
+        owner_rating: 0,
+        is_verified: false,
+        is_active: false,
+        total_rentals: 0,
+        rating: 0,
+        review_count: 0,
+        location_lat: null,   // TODO: backend — geocode from location_address
+        location_lng: null,   // TODO: backend — geocode from location_address
+        // TODO: backend — photos should be array of URLs after upload
+      };
+
+      console.log('Listing bike:', finalPayload);
+
+      setIsSubmitting(false);
+      navigate('/bikes');
+    };
 
   if (!isAuthenticated) {
     return (
@@ -270,12 +345,15 @@ const ListBikePage = () => {
           <label className="block text-sm font-semibold text-gray-700 mb-2">Year</label>
           <input
             type="number"
-            min="2010"
+            min="1990"
             max={new Date().getFullYear() + 1}
             value={formData.year}
             onChange={(e) => updateField('year', e.target.value)}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+            className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 ${
+              errors.year ? 'border-red-300 bg-red-50' : 'border-gray-200'
+            }`}
           />
+          {errors.year && <p className="text-red-500 text-sm mt-1">{errors.year}</p>}
         </div>
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
@@ -575,15 +653,18 @@ const ListBikePage = () => {
 
       {formData.pickup_type === 'delivery' && (
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Delivery Fee (KSh)</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Delivery Fee (KSh) *</label>
           <input
             type="number"
             min="0"
             value={formData.delivery_fee}
             onChange={(e) => updateField('delivery_fee', e.target.value)}
             placeholder="What you charge for delivery"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500"
+            className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 ${
+              errors.delivery_fee ? 'border-red-300 bg-red-50' : 'border-gray-200'
+            }`}
           />
+          {errors.delivery_fee && <p className="text-red-500 text-sm mt-1">{errors.delivery_fee}</p>}
         </div>
       )}
 
@@ -654,94 +735,146 @@ const ListBikePage = () => {
     </div>
   );
 
-  const renderStep4 = () => (
-    <div className="space-y-6 animate-fadeIn">
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-3">Bike Photos</label>
-        <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-green-400 transition-colors">
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handlePhotoUpload}
-            className="hidden"
-            id="bike-photo-upload"
-          />
-          <label htmlFor="bike-photo-upload" className="cursor-pointer">
-            <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-            <p className="text-sm font-medium text-gray-700">Click to upload photos</p>
-            <p className="text-xs text-gray-400 mt-1">Upload at least 3 photos. Max 5MB each.</p>
-          </label>
-        </div>
-        {photoPreview.length > 0 && (
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4">
-            {photoPreview.map((preview, i) => (
-              <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200">
-                <img src={preview} alt="" className="w-full h-full object-cover" />
-                <button
-                  onClick={() => removePhoto(i)}
-                  className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-        {photoPreview.length < 3 && (
-          <p className="text-sm text-orange-600 mt-2 flex items-center gap-1">
-            <AlertCircle className="w-4 h-4" />
-            Add at least {3 - photoPreview.length} more photo{photoPreview.length === 2 ? '' : 's'} for better visibility
-          </p>
-        )}
-      </div>
+    const renderStep4 = () => {
+    const fmt = (v) => v || '—';
+    const fmtNum = (v) => v ? Number(v).toLocaleString() : '—';
+    const fmtBool = (v) => v ? 'Yes' : 'No';
 
-      <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Bike className="w-5 h-5 text-green-500" />
-          Listing Preview
-        </h3>
-        <div className="space-y-3 text-sm">
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Name</span>
-            <span className="font-semibold text-gray-900">{formData.name || '—'}</span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Brand / Model</span>
-            <span className="font-semibold text-gray-900">{formData.brand} {formData.model} {formData.year}</span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Category</span>
-            <span className="font-semibold text-gray-900 capitalize">{formData.category}</span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Daily Rate</span>
-            <span className="font-semibold text-gray-900">KSh {formData.daily_rate ? Number(formData.daily_rate).toLocaleString() : '—'}</span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Deposit</span>
-            <span className="font-semibold text-gray-900">KSh {formData.security_deposit ? Number(formData.security_deposit).toLocaleString() : '—'}</span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-gray-200">
-            <span className="text-gray-500">Location</span>
-            <span className="font-semibold text-gray-900">{formData.location_address || '—'}</span>
-          </div>
-          <div className="flex justify-between py-2">
-            <span className="text-gray-500">Pickup</span>
-            <span className="font-semibold text-gray-900 capitalize">{formData.pickup_type.replace(/_/g, ' ')}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-start gap-3 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-        <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+    return (
+      <div className="space-y-6 animate-fadeIn">
+        {/* Photos Upload */}
         <div>
-          <p className="text-sm font-medium text-yellow-800">Before Publishing</p>
-          <p className="text-sm text-yellow-700 mt-1">
-            Your bike will be reviewed within 24 hours. Once approved, it will be visible to all renters. You can edit details anytime from your dashboard.
-          </p>
+          <label className="block text-sm font-semibold text-gray-700 mb-3">Bike Photos</label>
+          <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-green-400 transition-colors">
+            <input
+              type="file"
+              multiple
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handlePhotoUpload}
+              className="hidden"
+              id="bike-photo-upload"
+            />
+            <label htmlFor="bike-photo-upload" className="cursor-pointer">
+              <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+              <p className="text-sm font-medium text-gray-700">Click to upload photos</p>
+              <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP only — max 10MB each. At least 3 photos recommended.</p>
+            </label>
+          </div>
+          {photoPreview.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4">
+              {photoPreview.map((preview, i) => (
+                <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200">
+                  <img src={preview} alt="" className="w-full h-full object-cover" />
+                  <button
+                    onClick={() => removePhoto(i)}
+                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {photoPreview.length < 3 && (
+            <p className="text-sm text-orange-600 mt-2 flex items-center gap-1">
+              <AlertCircle className="w-4 h-4" />
+              Add at least {3 - photoPreview.length} more photo{photoPreview.length === 2 ? '' : 's'} for better visibility
+            </p>
+          )}
+          {errors.photos && <p className="text-red-500 text-sm mt-1">{errors.photos}</p>}
+        </div>
+
+        {/* FULL LISTING PREVIEW */}
+        <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Bike className="w-5 h-5 text-green-500" />
+            Complete Listing Summary
+          </h3>
+
+          {/* Step 1: Basic Info */}
+          <div className="mb-6">
+            <h4 className="text-xs font-bold text-green-600 uppercase tracking-wider mb-3">Basic Info</h4>
+            <div className="space-y-2 text-sm bg-white rounded-xl p-4 border border-gray-100">
+              <SummaryRow label="Name" value={fmt(formData.name)} />
+              <SummaryRow label="Brand / Model / Year" value={`${fmt(formData.brand)} ${fmt(formData.model)} ${fmt(formData.year)}`} />
+              <SummaryRow label="Category" value={fmt(formData.category)} />
+              <SummaryRow label="Frame Size" value={fmt(formData.frame_size).toUpperCase()} />
+              <SummaryRow label="Wheel Size" value={fmt(formData.wheel_size)} />
+              <SummaryRow label="Condition" value={fmt(formData.condition)} />
+              <SummaryRow label="Description" value={fmt(formData.description)} />
+              <SummaryRow label="Features" value={formData.features.join(', ') || '—'} />
+            </div>
+          </div>
+
+          {/* Step 2: Pricing */}
+          <div className="mb-6">
+            <h4 className="text-xs font-bold text-green-600 uppercase tracking-wider mb-3">Pricing</h4>
+            <div className="space-y-2 text-sm bg-white rounded-xl p-4 border border-gray-100">
+              <SummaryRow label="Hourly Rate" value={formData.hourly_rate ? `KSh ${fmtNum(formData.hourly_rate)}` : '—'} />
+              <SummaryRow label="Daily Rate" value={formData.daily_rate ? `KSh ${fmtNum(formData.daily_rate)}` : '—'} />
+              <SummaryRow label="Weekly Rate" value={formData.weekly_rate ? `KSh ${fmtNum(formData.weekly_rate)}` : '—'} />
+              <SummaryRow label="Monthly Rate" value={formData.monthly_rate ? `KSh ${fmtNum(formData.monthly_rate)}` : '—'} />
+              <SummaryRow label="Security Deposit" value={formData.security_deposit ? `KSh ${fmtNum(formData.security_deposit)}` : '—'} />
+              <SummaryRow label="Min Rental" value={`${fmtNum(formData.min_rental_hours)} hours`} />
+              <SummaryRow label="Max Rental" value={`${fmtNum(formData.max_rental_days)} days`} />
+            </div>
+          </div>
+
+          {/* Step 3: Location & Rules */}
+          <div className="mb-6">
+            <h4 className="text-xs font-bold text-green-600 uppercase tracking-wider mb-3">Location & Rules</h4>
+            <div className="space-y-2 text-sm bg-white rounded-xl p-4 border border-gray-100">
+              <SummaryRow label="Location" value={fmt(formData.location_address)} />
+              <SummaryRow label="Pickup Type" value={fmt(formData.pickup_type).replace(/_/g, ' ')} />
+              {formData.pickup_type === 'delivery' && (
+                <SummaryRow label="Delivery Fee" value={formData.delivery_fee ? `KSh ${fmtNum(formData.delivery_fee)}` : '—'} />
+              )}
+              <SummaryRow label="Instant Book" value={fmtBool(formData.instant_book)} />
+              {!formData.instant_book && (
+                <SummaryRow label="Response Time" value={`${fmtNum(formData.response_time_hours)} hours`} />
+              )}
+              <SummaryRow label="Rental Rules" value={fmt(formData.rules)} />
+              <SummaryRow label="Cancellation Policy" value={fmt(formData.cancellation_policy)} />
+              <SummaryRow label="Insurance Included" value={fmtBool(formData.insurance_included)} />
+            </div>
+          </div>
+
+          {/* System Fields */}
+          <div>
+            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">System Fields</h4>
+            <div className="space-y-2 text-sm bg-gray-100/50 rounded-xl p-4 border border-gray-200">
+              <SummaryRow label="Status" value="pending_review (auto)" />
+              <SummaryRow label="Total Rentals" value="0 (auto)" />
+              <SummaryRow label="Rating" value="0 (auto)" />
+              <SummaryRow label="Reviews" value="0 (auto)" />
+              <SummaryRow label="Verified" value="false (auto)" />
+              <SummaryRow label="Active" value="false (auto)" />
+              {/* TODO: implement when backend ready: location_lat, location_lng, owner_id, owner_name, owner_rating, is_verified, is_active */}
+              <p className="text-[10px] text-gray-400 italic mt-2">
+                Map coordinates, owner details, verification status, and approval workflow will be added when backend integration is complete.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
+          <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-yellow-800">Before Publishing</p>
+            <p className="text-sm text-yellow-700 mt-1">
+              Your bike will be reviewed within 24 hours. Once approved, it will be visible to all renters. You can edit details anytime from your dashboard.
+            </p>
+          </div>
         </div>
       </div>
+    );
+  };
+
+  // Helper component for summary rows
+  const SummaryRow = ({ label, value }) => (
+    <div className="flex justify-between py-2 border-b border-gray-100 last:border-0">
+      <span className="text-gray-500">{label}</span>
+      <span className="font-semibold text-gray-900 text-right max-w-[60%] break-words">{value}</span>
     </div>
   );
 

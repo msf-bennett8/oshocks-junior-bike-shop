@@ -122,8 +122,17 @@ const CommunityPostDetailPage = () => {
                 <Share2 className="w-5 h-5 text-gray-600" />
                 {showShareMenu && (
                   <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
-                    <button className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
+                    <button 
+                      onClick={() => { navigator.clipboard.writeText(window.location.href); setShowShareMenu(false); }}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
                       <Share2 className="w-4 h-4" /> Copy Link
+                    </button>
+                    <button 
+                      onClick={() => { window.open(`https://wa.me/?text=${encodeURIComponent(`${post.title} - ${window.location.href}`)}`, '_blank'); setShowShareMenu(false); }}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
+                    >
+                      <Share2 className="w-4 h-4" /> WhatsApp
                     </button>
                     <button className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
                       <Flag className="w-4 h-4" /> Report Post

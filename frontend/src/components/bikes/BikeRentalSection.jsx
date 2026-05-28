@@ -89,7 +89,9 @@ const BikeRentalSection = ({ onRentNow }) => {
               <Star className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-lg font-bold text-gray-900">4.7+</p>
+              <p className="text-lg font-bold text-gray-900">
+                {(MOCK_BIKES.reduce((sum, b) => sum + b.rating, 0) / MOCK_BIKES.length).toFixed(1)}★
+              </p>
               <p className="text-xs text-gray-600">Avg Rating</p>
             </div>
           </div>
@@ -98,7 +100,9 @@ const BikeRentalSection = ({ onRentNow }) => {
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-lg font-bold text-gray-900">100%</p>
+              <p className="text-lg font-bold text-gray-900">
+                {Math.round((MOCK_BIKES.filter(b => b.is_verified).length / MOCK_BIKES.length) * 100)}%
+              </p>
               <p className="text-xs text-gray-600">Verified Bikes</p>
             </div>
           </div>
@@ -107,8 +111,10 @@ const BikeRentalSection = ({ onRentNow }) => {
               <MapPin className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-lg font-bold text-gray-900">Nairobi</p>
-              <p className="text-xs text-gray-600">& Beyond</p>
+              <p className="text-lg font-bold text-gray-900">
+                {[...new Set(MOCK_BIKES.map(b => b.location_address?.split(',')[0]).filter(Boolean))].length}
+              </p>
+              <p className="text-xs text-gray-600">Locations</p>
             </div>
           </div>
         </div>

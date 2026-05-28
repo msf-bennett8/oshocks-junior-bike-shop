@@ -47,7 +47,7 @@ const BikeCard = ({ bike, compact = false, onRentNow }) => {
             <div className="flex items-center gap-2 text-[10px] text-gray-500 mb-2">
               <span className="flex items-center gap-0.5">
                 <MapPin className="w-3 h-3" />
-                {bike.pickup_type === 'shop' ? 'Shop Pickup' : bike.pickup_type === 'delivery' ? 'Delivery' : 'Owner Location'}
+                {bike.location_address ? (bike.location_address.split(',')[0] || bike.location_address) : 'Location TBD'}
               </span>
               <span className="flex items-center gap-0.5">
                 <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
@@ -60,7 +60,7 @@ const BikeCard = ({ bike, compact = false, onRentNow }) => {
                 <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
                   <Bike className="w-3.5 h-3.5 text-gray-600" />
                 </div>
-                <span className="text-[10px] text-gray-600">{bike.category}</span>
+                <span className="text-[10px] text-gray-600">{BIKE_CATEGORY_CONFIG[bike.category]?.label || bike.category}</span>
               </div>
               <span className="text-[10px] text-gray-500">{bike.total_rentals} rentals</span>
             </div>
