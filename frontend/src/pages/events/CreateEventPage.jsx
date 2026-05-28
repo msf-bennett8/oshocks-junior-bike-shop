@@ -7,6 +7,8 @@ import {
   GraduationCap, Building2, Lock, Palette, PartyPopper, AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import eventService from '../../services/eventService';
+import EventActionModal from '../../components/events/EventActionModal';
 import {
   DIFFICULTY_CONFIG, TERRAIN_CONFIG, EVENT_TYPE_CONFIG, BIKE_CATEGORY_CONFIG
 } from '../../data/cyclingMockData';
@@ -58,6 +60,8 @@ const CreateEventPage = () => {
   const { user, getEffectiveRole } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdEventCode, setCreatedEventCode] = useState(null);
   const [photoPreview, setPhotoPreview] = useState([]);
   const [errors, setErrors] = useState({});
 
@@ -114,19 +118,16 @@ const CreateEventPage = () => {
     // Step 5: Photos
     photos: [],
 
-    // Auto-set system fields (backend will normally handle these)
-    // TODO: implement when backend ready — these will come from API response
+    // System fields — backend auto-generates event_code, sets organizer_id, status, etc.
     status: 'open',
     current_participants: 0,
     rating: 0,
     review_count: 0,
-    event_code: null,      // TODO: backend — EVT-2026-XXXXX
-    organizer_id: null,    // TODO: backend — from auth context
-    meeting_lat: null,     // TODO: backend — geocode from meeting_point
-    meeting_lng: null,     // TODO: backend — geocode from meeting_point
-    route_gpx_url: null,   // TODO: backend — GPX file upload
-    tags: [],              // TODO: backend — tag input system
-    badge_earned_id: null, // TODO: backend — badge selection
+    meeting_lat: null,
+    meeting_lng: null,
+    route_gpx_url: null,
+    tags: [],
+    badge_earned_id: null,
   });
 
   const [certInput, setCertInput] = useState('');
@@ -307,39 +308,127 @@ const CreateEventPage = () => {
       if (!validateStep(currentStep)) return;
       setIsSubmitting(true);
 
-      // TODO: implement when backend ready — generate event_code (EVT-2026-00001 format)
-      // TODO: implement when backend ready — upload photos to Cloudinary/S3 and get URLs
-      // TODO: implement when backend ready — geocode meeting_point to lat/lng
-      // TODO: implement when backend ready — get organizer_id from auth context
-      // TODO: implement when backend ready — POST to /api/events with full payload
+      try {
+        // Convert File objects to base64 for upload
+        const photoData = await Promise.all(
+          formData.photos.map(async (photo) => {
+            if (photo instanceof File) {
+              return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(photo);
+              });
+            }
+            return photo;
+          })
+        );
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+        // Build payload — all fields from the 5-step form
+        const payload = {
+          title: formData.title,
+          short_description: formData.short_description || null,
+          description: formData.description || null,
+          event_type: formData.event_type,
+          difficulty: formData.difficulty,
+          terrain: formData.terrain,
+          theme_name: formData.theme_name || null,
+          charity_name: formData.charity_name || null,
+          charity_url: formData.charity_url || null,
+          route_name: formData.route_name || null,
+          route_description: formData.route_description || null,
+          distance_km: Number(formData.distance_km),
+          elevation_gain_m: formData.elevation_gain_m ? Number(formData.elevation_gain_m) : null,
+          estimated_duration_hours: Number(formData.estimated_duration_hours),
+          meeting_point: formData.meeting_point,
+          meeting_lat: formData.meeting_lat || null,
+          meeting_lng: formData.meeting_lng || null,
+          start_datetime: formData.start_datetime,
+          end_datetime: formData.end_datetime,
+          registration_deadline: formData.registration_deadline || null,
+          is_recurring: formData.is_recurring || false,
+          recurrence_pattern: formData.recurrence_pattern || null,
+          max_participants: Number(formData.max_participants),
+          min_participants: formData.min_participants ? Number(formData.min_participants) : null,
+          price_per_person: Number(formData.price_per_person),
+          member_price: formData.member_price ? Number(formData.member_price) : null,
+          early_bird_price: formData.early_bird_price ? Number(formData.early_bird_price) : null,
+          early_bird_deadline: formData.early_bird_deadline || null,
+          group_discount_threshold: formData.group_discount_threshold ? Number(formData.group_discount_threshold) : null,
+          group_discount_percent: formData.group_discount_percent ? Number(formData.group_discount_percent) : null,
+          guide_included: formData.guide_included || false,
+          guide_name: formData.guide_name || null,
+          guide_bio: formData.guide_bio || null,
+          guide_certifications: formData.guide_certifications || [],
+          bike_included: formData.bike_included || false,
+          included_bike_category: formData.included_bike_category || null,
+          transport_provided: formData.transport_provided || false,
+          transport_price: formData.transport_price ? Number(formData.transport_price) : null,
+          equipment_provided: formData.equipment_provided || [],
+          required_equipment: formData.required_equipment || [],
+          refund_policy: formData.refund_policy || null,
+          cancellation_policy: formData.cancellation_policy || null,
+          weather_policy: formData.weather_policy || null,
+          photos: photoData,
+          tags: formData.tags || [],
+          route_gpx_url: formData.route_gpx_url || null,
+          badge_earned_id: formData.badge_earned_id || null,
+        };
 
-      // Generate slug from title
-      const slug = formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        // Call backend API via standalone eventService
+        const response = await eventService.createEvent(payload);
 
-      // Auto-set fields that backend will normally handle
-      const finalPayload = {
-        ...formData,
-        slug,
-        status: 'open',
-        current_participants: 0,
-        rating: 0,
-        review_count: 0,
-        // route_description_formatted already has arrows from onChange handler
-        // TODO: implement when backend ready — event_code: 'EVT-2026-XXXXX'
-        // TODO: implement when backend ready — organizer_id: user.id
-        // TODO: implement when backend ready — meeting_lat, meeting_lng
-        // TODO: implement when backend ready — route_gpx_url
-        // TODO: implement when backend ready — tags: []
-        // TODO: implement when backend ready — badge_earned_id: null
-      };
+        if (response.data?.success) {
+          const eventCode = response.data?.event_code;
+          setCreatedEventCode(eventCode);
+          setShowSuccessModal(true);
+          setIsSubmitting(false);
+        } else {
+          throw new Error(response.data?.message || 'Failed to create event');
+        }
+      } catch (error) {
+        console.error('Event creation error:', error);
+        alert(error.response?.data?.message || error.message || 'Failed to create event. Please try again.');
+        setIsSubmitting(false);
+      }
+    };
 
-      console.log('Creating event:', finalPayload);
-
-      setIsSubmitting(false);
+    const handleCloseModal = () => {
+      setShowSuccessModal(false);
+      setCreatedEventCode(null);
       navigate('/events');
+    };
+
+    const handleCreateAnother = () => {
+      setShowSuccessModal(false);
+      setCreatedEventCode(null);
+      // Reset form to step 1
+      setCurrentStep(1);
+      setFormData({
+        // Step 1: Basic Info
+        title: '', short_description: '', description: '', event_type: 'group_ride',
+        difficulty: 'beginner', terrain: 'road', theme_name: '', charity_name: '', charity_url: '',
+        // Step 2: Route & Schedule
+        route_name: '', route_description: '', distance_km: '', elevation_gain_m: '',
+        estimated_duration_hours: '', meeting_point: '', start_datetime: '', end_datetime: '',
+        registration_deadline: '', is_recurring: false, recurrence_pattern: '',
+        // Step 3: Pricing & Capacity
+        max_participants: '', min_participants: '', price_per_person: '', member_price: '',
+        early_bird_price: '', early_bird_deadline: '', group_discount_threshold: '', group_discount_percent: '',
+        // Step 4: Guide & Logistics
+        guide_included: false, guide_name: '', guide_bio: '', guide_certifications: [],
+        bike_included: false, included_bike_category: '', transport_provided: false, transport_price: '',
+        equipment_provided: [], required_equipment: [],
+        cancellation_policy: '', weather_policy: '', refund_policy: '',
+        // Step 5: Photos
+        photos: [],
+        // System fields
+        status: 'open', current_participants: 0, rating: 0, review_count: 0,
+        meeting_lat: null, meeting_lng: null, route_gpx_url: null, tags: [], badge_earned_id: null,
+      });
+      setPhotoPreview([]);
+      setErrors({});
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
   if (!isAuthorized) {
@@ -1332,6 +1421,16 @@ const CreateEventPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && createdEventCode && (
+        <EventActionModal
+          actionType="event_created"
+          code={createdEventCode}
+          onClose={handleCloseModal}
+          onCreateAnother={handleCreateAnother}
+        />
+      )}
     </>
   );
 };

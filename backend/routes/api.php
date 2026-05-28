@@ -621,6 +621,22 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
     // This MUST come after /orders/pending-payments and other specific routes
     Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
 
+    // ============================================================================
+    // CYCLING EVENTS ROUTES
+    // ============================================================================
+    Route::prefix('events')->group(function () {
+        // Public routes (no auth required)
+        Route::get('/', [\App\Http\Controllers\Api\CyclingEventController::class, 'index']);
+        Route::get('/{eventCode}', [\App\Http\Controllers\Api\CyclingEventController::class, 'show']);
+
+        // Protected routes (auth required)
+        Route::post('/', [\App\Http\Controllers\Api\CyclingEventController::class, 'store']);
+        Route::put('/{eventCode}', [\App\Http\Controllers\Api\CyclingEventController::class, 'update']);
+        Route::delete('/{eventCode}', [\App\Http\Controllers\Api\CyclingEventController::class, 'destroy']);
+        Route::get('/my/events', [\App\Http\Controllers\Api\CyclingEventController::class, 'myEvents']);
+        Route::get('/{eventCode}/stats', [\App\Http\Controllers\Api\CyclingEventController::class, 'stats']);
+    });
+
 }); // End of protected routes group
 
 // ============================================================================
