@@ -137,22 +137,30 @@ const EventBookingPage = () => {
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-6">How many riders?</h2>
 
-                <div className="flex items-center justify-center gap-6 mb-8">
+                <div className="flex items-center justify-center gap-4 mb-8">
                   <button
                     onClick={() => setParticipants(Math.max(1, participants - 1))}
-                    className="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                    disabled={participants <= 1}
+                    className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
                   >
-                    <Minus className="w-5 h-5" />
+                    −
                   </button>
-                  <div className="text-center">
-                    <span className="text-4xl font-bold text-gray-900">{participants}</span>
-                    <p className="text-sm text-gray-500">Rider{participants > 1 ? 's' : ''}</p>
-                  </div>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={participants}
+                    onChange={(e) => {
+                      const val = e.target.value === '' ? 1 : parseInt(e.target.value, 10);
+                      setParticipants(isNaN(val) ? 1 : Math.max(1, val));
+                    }}
+                    className="w-16 h-10 text-center font-bold text-gray-900 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-lg tabular-nums"
+                  />
                   <button
-                    onClick={() => setParticipants(Math.min(event.max_participants - event.current_participants, participants + 1))}
-                    className="w-12 h-12 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                    onClick={() => setParticipants(participants + 1)}
+                    className="w-10 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-all active:scale-95"
                   >
-                    <Plus className="w-5 h-5" />
+                    +
                   </button>
                 </div>
 

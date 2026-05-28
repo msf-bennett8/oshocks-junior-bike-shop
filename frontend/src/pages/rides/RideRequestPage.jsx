@@ -206,16 +206,40 @@ const RideRequestPage = () => {
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Group Size</label>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <input
                         type="range"
                         min="1"
-                        max="50"
                         value={formData.group_size}
                         onChange={(e) => updateField('group_size', parseInt(e.target.value))}
                         className="flex-1"
                       />
-                      <span className="w-12 text-center font-bold text-gray-900">{formData.group_size}</span>
+                      <button
+                        type="button"
+                        onClick={() => updateField('group_size', Math.max(1, formData.group_size - 1))}
+                        disabled={formData.group_size <= 1}
+                        className="w-8 h-8 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all active:scale-95"
+                      >
+                        −
+                      </button>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={formData.group_size}
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? 1 : parseInt(e.target.value, 10);
+                          updateField('group_size', isNaN(val) ? 1 : Math.max(1, val));
+                        }}
+                        className="w-14 h-8 text-center font-bold text-gray-900 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm tabular-nums"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => updateField('group_size', formData.group_size + 1)}
+                        className="w-8 h-8 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-all active:scale-95"
+                      >
+                        +
+                      </button>
                     </div>
                   </div>
                 </div>
