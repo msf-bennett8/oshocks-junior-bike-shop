@@ -4,23 +4,36 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\BikeRental;
-use App\Models\Product;
-use App\Services\BikeListingCodeService;
+use App\Services\BikeImageUploadService;
 use App\Services\CloudinaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Exception;
 
 class BikeRentalController extends Controller
 {
-    private BikeListingCodeService $listingCodeService;
-    private CloudinaryService $cloudinary;
+    protected BikeImageUploadService $imageUploadService;
+    protected CloudinaryService $cloudinary;
 
-    public function __construct(BikeListingCodeService $listingCodeService, CloudinaryService $cloudinary)
-    {
-        $this->listingCodeService = $listingCodeService;
+    public function __construct(
+        BikeImageUploadService $imageUploadService,
+        CloudinaryService $cloudinary
+    ) {
+        $this->imageUploadService = $imageUploadService;
         $this->cloudinary = $cloudinary;
+    }
+
+    /**
+     * Generate unique listing code
+     */
+    protected function generateListingCode(): string
+    {
+        $timestamp = now()->format('Ymd');
+        $random = strtoupper(substr(uniqid(), -6));
+        return "BKE-{$timestamp}-{$random}";
     }
 
     /**
@@ -28,13 +41,13 @@ class BikeRentalController extends Controller
      */
     public function index(Request $request)
     {
-        $query = BikeRental::query()
+        $query = BikeRental::with('owner')
             ->where('listing_status', 'approved')
             ->where('is_active', true);
 
         // Filters
         if ($request->has('category')) {
-            $query->where('category_id', $request->category);
+            $query->where('category', $request->category);
         }
         if ($request->has('condition')) {
             $query->where('bike_condition', $request->condition);
@@ -80,9 +93,11 @@ class BikeRentalController extends Controller
             };
         }
 
-        $bikes = $query->with(['images', 'category', 'owner'])->paginate($request->get('per_page', 12));
+        $perPage = $request->get('per_page', 12);
+        $bikes = $query->paginate($perPage);
 
         return response()->json([
+            'success' => true,
             'data' => $bikes->items(),
             'meta' => [
                 'current_page' => $bikes->currentPage(),
@@ -104,6 +119,7 @@ class BikeRentalController extends Controller
             ->firstOrFail();
 
         return response()->json([
+            'success' => true,
             'data' => $bike,
             'is_available' => $bike->listing_status === 'approved' && $bike->is_active,
         ]);
@@ -116,9 +132,7 @@ class BikeRentalController extends Controller
     {
         $user = Auth::user();
 
-        // Validate
         $validated = $request->validate([
-            // Step 1: Basic Info
             'name' => 'required|string|min:3|max:100',
             'brand' => 'required|string|max:100',
             'model' => 'required|string|max:100',
@@ -128,8 +142,6 @@ class BikeRentalController extends Controller
             'wheel_size' => 'required|string|max:10',
             'bike_condition' => 'required|string|in:new,excellent,good,fair',
             'description' => 'required|string|min:20',
-
-            // Step 2: Pricing
             'hourly_rate' => 'nullable|numeric|min:0',
             'daily_rate' => 'required|numeric|min:0',
             'weekly_rate' => 'nullable|numeric|min:0',
@@ -137,8 +149,6 @@ class BikeRentalController extends Controller
             'security_deposit' => 'required|numeric|min:0',
             'min_rental_hours' => 'required|integer|min:1',
             'max_rental_days' => 'required|integer|min:1',
-
-            // Step 3: Location & Rules
             'location_address' => 'required|string|max:255',
             'location_lat' => 'nullable|numeric|between:-90,90',
             'location_lng' => 'nullable|numeric|between:-180,180',
@@ -149,20 +159,17 @@ class BikeRentalController extends Controller
             'rental_rules' => 'nullable|string',
             'cancellation_policy' => 'nullable|string',
             'insurance_included' => 'boolean',
-
-            // Step 4: Photos & Features
             'photos' => 'required|array|min:1',
-            'photos.*' => 'string', // base64 data URI or URL
+            'photos.*' => 'nullable',
             'bike_features' => 'nullable|array',
             'bike_features.*' => 'string|max:50',
-
-            // System
             'owner_type' => 'nullable|string|in:user,platform',
         ]);
 
-        return DB::transaction(function () use ($validated, $user, $request) {
-            // Generate listing code via Bennett Fibonacci 36th
-            $listingCode = $this->listingCodeService->generate();
+        DB::beginTransaction();
+
+        try {
+            $listingCode = $this->generateListingCode();
 
             // Generate slug
             $slug = Str::slug("{$validated['brand']}-{$validated['model']}-{$validated['year']}");
@@ -172,29 +179,53 @@ class BikeRentalController extends Controller
                 $slug = "{$originalSlug}-" . $counter++;
             }
 
-            // Handle photo uploads to Cloudinary
-            $photoUrls = [];
-            $imageRecords = [];
-            if (!empty($validated['photos'])) {
-                foreach ($validated['photos'] as $idx => $photo) {
-                    if (str_starts_with($photo, 'data:image')) {
-                        $uploadResult = $this->cloudinary->uploadBase64($photo, [
-                            'folder' => 'bike-listings/' . $listingCode,
-                            'resource_type' => 'image',
-                        ]);
-                        $url = $uploadResult['secure_url'] ?? $uploadResult['url'] ?? null;
-                        if ($url) {
-                            $photoUrls[] = $url;
-                            $imageRecords[] = [
-                                'url' => $url,
-                                'public_id' => $uploadResult['public_id'] ?? null,
+            // Handle photo uploads — supports BOTH file uploads (multipart) AND base64
+            $photoData = [];
+            $uploadedPublicIds = [];
+
+            if ($request->hasFile('photos')) {
+                // File uploads via multipart/form-data from listBikeService
+                foreach ($request->file('photos') as $idx => $file) {
+                    $result = $this->imageUploadService->uploadBikeImage($file, $listingCode);
+                    if ($result['success']) {
+                        $photoData[] = [
+                            'public_id' => $result['public_id'],
+                            'url' => $result['secure_url'],
+                            'thumbnail_url' => $result['thumbnail_url'],
+                            'medium_url' => $result['medium_url'],
+                            'width' => $result['width'] ?? null,
+                            'height' => $result['height'] ?? null,
+                            'format' => $result['format'] ?? null,
+                            'file_size' => $result['file_size'] ?? null,
+                            'original_name' => $result['original_name'],
+                            'is_primary' => $idx === 0,
+                            'sort_order' => $idx,
+                        ];
+                        $uploadedPublicIds[] = $result['public_id'];
+                    }
+                }
+            } elseif ($request->has('photos') && is_array($request->photos)) {
+                // Base64 strings or existing URLs
+                foreach ($request->photos as $idx => $photo) {
+                    if (is_string($photo) && str_starts_with($photo, 'data:image')) {
+                        $result = $this->imageUploadService->uploadBase64BikeImage($photo, $listingCode);
+                        if ($result['success']) {
+                            $photoData[] = [
+                                'public_id' => $result['public_id'],
+                                'url' => $result['secure_url'],
+                                'thumbnail_url' => $result['thumbnail_url'],
+                                'medium_url' => $result['medium_url'],
+                                'width' => $result['width'] ?? null,
+                                'height' => $result['height'] ?? null,
+                                'format' => $result['format'] ?? null,
+                                'file_size' => $result['file_size'] ?? null,
                                 'is_primary' => $idx === 0,
                                 'sort_order' => $idx,
                             ];
+                            $uploadedPublicIds[] = $result['public_id'];
                         }
-                    } elseif (str_starts_with($photo, 'http')) {
-                        $photoUrls[] = $photo;
-                        $imageRecords[] = [
+                    } elseif (is_string($photo) && str_starts_with($photo, 'http')) {
+                        $photoData[] = [
                             'url' => $photo,
                             'is_primary' => $idx === 0,
                             'sort_order' => $idx,
@@ -203,19 +234,12 @@ class BikeRentalController extends Controller
                 }
             }
 
-            // Get or create category for rentals
-            $category = \App\Models\Category::firstOrCreate(
-                ['name' => $validated['category']],
-                ['slug' => Str::slug($validated['category']), 'is_active' => true]
-            );
-
-            // Create bike rental listing
             $bikeRental = BikeRental::create([
                 'listing_code' => $listingCode,
-                'seller_id' => $user->sellerProfile?->id, // Link to seller profile if exists
+                'seller_id' => $user->sellerProfile?->id ?? null,
                 'owner_id' => $user->id,
                 'owner_type' => $validated['owner_type'] ?? 'user',
-                'category_id' => $category->id,
+                'category' => $validated['category'],
                 'name' => $validated['name'],
                 'slug' => $slug,
                 'description' => $validated['description'],
@@ -225,8 +249,6 @@ class BikeRentalController extends Controller
                 'frame_size' => $validated['frame_size'],
                 'wheel_size' => $validated['wheel_size'],
                 'bike_condition' => $validated['bike_condition'],
-                'type' => 'rental',
-                'price' => $validated['daily_rate'], // Base price = daily rate
                 'hourly_rate' => $validated['hourly_rate'] ?? null,
                 'daily_rate' => $validated['daily_rate'],
                 'weekly_rate' => $validated['weekly_rate'] ?? null,
@@ -244,6 +266,7 @@ class BikeRentalController extends Controller
                 'rental_rules' => $validated['rental_rules'] ?? null,
                 'cancellation_policy' => $validated['cancellation_policy'] ?? null,
                 'insurance_included' => $validated['insurance_included'] ?? false,
+                'photos' => $photoData,
                 'bike_features' => $validated['bike_features'] ?? [],
                 'listing_status' => 'pending_review',
                 'total_rentals' => 0,
@@ -251,10 +274,10 @@ class BikeRentalController extends Controller
                 'review_count' => 0,
                 'is_verified' => false,
                 'is_active' => false,
+                'owner_rating' => 0,
             ]);
 
-            // Images are stored in JSON photos array, no separate images table needed
-            // Cloudinary URLs already in $bikeRental->photos
+            DB::commit();
 
             return response()->json([
                 'success' => true,
@@ -262,60 +285,182 @@ class BikeRentalController extends Controller
                 'listing_code' => $listingCode,
                 'message' => 'Bike listed successfully. Pending review.',
             ], 201);
-        });
+
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            // Clean up any uploaded images on failure
+            foreach ($uploadedPublicIds ?? [] as $publicId) {
+                $this->cloudinary->deleteFile($publicId, 'image');
+            }
+
+            Log::error('Bike listing creation failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create listing: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
-     * Update my listing (owner only)
+     * Update my listing (owner or admin)
      */
     public function update(Request $request, string $listingCode)
     {
-        $product = BikeRental::where('listing_code', $listingCode)->firstOrFail();
+        $bike = BikeRental::where('listing_code', $listingCode)->firstOrFail();
         $user = Auth::user();
 
-        if ($product->owner_id !== $user->id && !$user->hasAdminAccess()) {
+        if ($bike->owner_id !== $user->id && !$user->hasAdminAccess()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $validated = $request->validate([
             'name' => 'sometimes|string|min:3|max:100',
+            'brand' => 'sometimes|string|max:100',
+            'model' => 'sometimes|string|max:100',
+            'year' => 'sometimes|integer|min:1990|max:' . (now()->year + 1),
+            'category' => 'sometimes|string|max:50',
+            'frame_size' => 'sometimes|string|max:10',
+            'wheel_size' => 'sometimes|string|max:10',
+            'bike_condition' => 'sometimes|string|in:new,excellent,good,fair',
             'description' => 'sometimes|string',
-            'daily_rate' => 'sometimes|numeric|min:0',
             'hourly_rate' => 'nullable|numeric|min:0',
+            'daily_rate' => 'sometimes|numeric|min:0',
             'weekly_rate' => 'nullable|numeric|min:0',
             'monthly_rate' => 'nullable|numeric|min:0',
             'security_deposit' => 'sometimes|numeric|min:0',
+            'min_rental_hours' => 'sometimes|integer|min:1',
+            'max_rental_days' => 'sometimes|integer|min:1',
             'location_address' => 'sometimes|string|max:255',
+            'location_lat' => 'nullable|numeric|between:-90,90',
+            'location_lng' => 'nullable|numeric|between:-180,180',
             'pickup_type' => 'sometimes|string|in:shop,owner_location,delivery',
+            'delivery_fee' => 'nullable|numeric|min:0',
             'instant_book' => 'boolean',
-            'is_active' => 'boolean',
+            'response_time_hours' => 'nullable|integer|min:1|max:72',
+            'rental_rules' => 'nullable|string',
+            'cancellation_policy' => 'nullable|string',
+            'insurance_included' => 'boolean',
+            'bike_features' => 'nullable|array',
+            'bike_features.*' => 'string|max:50',
             'photos' => 'nullable|array',
-            'photos.*' => 'string',
+            'photos.*' => 'nullable',
+            'is_active' => 'sometimes|boolean',
         ]);
 
-        // Handle new photos
-        if (!empty($validated['photos'])) {
-            $existingPhotos = $product->photos ?? [];
-            foreach ($validated['photos'] as $photo) {
-                if (str_starts_with($photo, 'data:image')) {
-                    $uploadResult = $this->cloudinary->uploadBase64($photo, [
-                        'folder' => 'bike-listings/' . $listingCode,
-                    ]);
-                    $existingPhotos[] = $uploadResult['secure_url'] ?? $uploadResult['url'] ?? $photo;
-                } elseif (str_starts_with($photo, 'http')) {
-                    $existingPhotos[] = $photo;
+        DB::beginTransaction();
+
+        try {
+            // Handle photo updates — supports BOTH file uploads AND base64
+            if ($request->has('photos') || $request->hasFile('photos')) {
+                $photoData = [];
+                $newUploads = [];
+
+                // Delete old photos from Cloudinary
+                if (!empty($bike->photos)) {
+                    foreach ($bike->photos as $oldPhoto) {
+                        if (isset($oldPhoto['public_id'])) {
+                            $this->cloudinary->deleteFile($oldPhoto['public_id'], 'image');
+                        }
+                    }
                 }
+
+                // Upload new photos
+                if ($request->hasFile('photos')) {
+                    foreach ($request->file('photos') as $idx => $file) {
+                        $result = $this->imageUploadService->uploadBikeImage($file, $listingCode);
+                        if ($result['success']) {
+                            $photoData[] = [
+                                'public_id' => $result['public_id'],
+                                'url' => $result['secure_url'],
+                                'thumbnail_url' => $result['thumbnail_url'],
+                                'medium_url' => $result['medium_url'],
+                                'width' => $result['width'] ?? null,
+                                'height' => $result['height'] ?? null,
+                                'format' => $result['format'] ?? null,
+                                'file_size' => $result['file_size'] ?? null,
+                                'original_name' => $result['original_name'],
+                                'is_primary' => $idx === 0,
+                                'sort_order' => $idx,
+                            ];
+                            $newUploads[] = $result['public_id'];
+                        }
+                    }
+                } elseif ($request->has('photos') && is_array($request->photos)) {
+                    foreach ($request->photos as $idx => $photo) {
+                        if (is_string($photo) && str_starts_with($photo, 'data:image')) {
+                            $result = $this->imageUploadService->uploadBase64BikeImage($photo, $listingCode);
+                            if ($result['success']) {
+                                $photoData[] = [
+                                    'public_id' => $result['public_id'],
+                                    'url' => $result['secure_url'],
+                                    'thumbnail_url' => $result['thumbnail_url'],
+                                    'medium_url' => $result['medium_url'],
+                                    'width' => $result['width'] ?? null,
+                                    'height' => $result['height'] ?? null,
+                                    'format' => $result['format'] ?? null,
+                                    'file_size' => $result['file_size'] ?? null,
+                                    'is_primary' => $idx === 0,
+                                    'sort_order' => $idx,
+                                ];
+                                $newUploads[] = $result['public_id'];
+                            }
+                        } elseif (is_string($photo) && str_starts_with($photo, 'http')) {
+                            $photoData[] = [
+                                'url' => $photo,
+                                'is_primary' => $idx === 0,
+                                'sort_order' => $idx,
+                            ];
+                        }
+                    }
+                }
+
+                $validated['photos'] = $photoData;
             }
-            $validated['photos'] = $existingPhotos;
+
+            // Regenerate slug if name changed
+            if (isset($validated['name'])) {
+                $slug = Str::slug("{$validated['brand']}-{$validated['model']}-{$validated['year']}");
+                $originalSlug = $slug;
+                $counter = 1;
+                while (BikeRental::where('slug', $slug)->where('id', '!=', $bike->id)->exists()) {
+                    $slug = "{$originalSlug}-" . $counter++;
+                }
+                $validated['slug'] = $slug;
+            }
+
+            $bike->update($validated);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'data' => $bike->fresh(),
+                'message' => 'Listing updated successfully',
+            ]);
+
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            foreach ($newUploads ?? [] as $publicId) {
+                $this->cloudinary->deleteFile($publicId, 'image');
+            }
+
+            Log::error('Bike listing update failed', [
+                'listing_code' => $listingCode,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update listing: ' . $e->getMessage()
+            ], 500);
         }
-
-        $product->update($validated);
-
-        return response()->json([
-            'success' => true,
-            'data' => $product->fresh(),
-            'message' => 'Listing updated successfully',
-        ]);
     }
 
     /**
@@ -323,14 +468,23 @@ class BikeRentalController extends Controller
      */
     public function destroy(string $listingCode)
     {
-        $product = BikeRental::where('listing_code', $listingCode)->firstOrFail();
+        $bike = BikeRental::where('listing_code', $listingCode)->firstOrFail();
         $user = Auth::user();
 
-        if ($product->owner_id !== $user->id && !$user->hasAdminAccess()) {
+        if ($bike->owner_id !== $user->id && !$user->hasAdminAccess()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $product->delete();
+        // Delete photos from Cloudinary
+        if (!empty($bike->photos)) {
+            foreach ($bike->photos as $photo) {
+                if (isset($photo['public_id'])) {
+                    $this->cloudinary->deleteFile($photo['public_id'], 'image');
+                }
+            }
+        }
+
+        $bike->delete();
 
         return response()->json([
             'success' => true,
@@ -345,10 +499,12 @@ class BikeRentalController extends Controller
     {
         $user = Auth::user();
         $listings = BikeRental::where('owner_id', $user->id)
+            ->with('owner')
             ->orderBy('created_at', 'desc')
             ->paginate($request->get('per_page', 12));
 
         return response()->json([
+            'success' => true,
             'data' => $listings->items(),
             'meta' => [
                 'current_page' => $listings->currentPage(),
@@ -364,23 +520,25 @@ class BikeRentalController extends Controller
      */
     public function stats(string $listingCode)
     {
-        $product = BikeRental::where('listing_code', $listingCode)->firstOrFail();
+        $bike = BikeRental::where('listing_code', $listingCode)->firstOrFail();
         $user = Auth::user();
 
-        if ($product->owner_id !== $user->id && !$user->hasAdminAccess()) {
+        if ($bike->owner_id !== $user->id && !$user->hasAdminAccess()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         return response()->json([
+            'success' => true,
             'data' => [
-                'listing_code' => $product->listing_code,
-                'name' => $product->name,
-                'total_rentals' => $product->total_rentals,
-                'rating' => $product->rating,
-                'reviews_count' => $product->reviews_count,
-                'listing_status' => $product->listing_status,
-                'is_active' => $product->is_active,
-                'earnings_estimate' => $product->daily_rate * $product->total_rentals * 0.85,
+                'listing_code' => $bike->listing_code,
+                'name' => $bike->name,
+                'total_rentals' => $bike->total_rentals,
+                'rating' => $bike->rating,
+                'review_count' => $bike->review_count,
+                'listing_status' => $bike->listing_status,
+                'is_active' => $bike->is_active,
+                'is_verified' => $bike->is_verified,
+                'earnings_estimate' => $bike->daily_rate * $bike->total_rentals * 0.85,
             ]
         ]);
     }

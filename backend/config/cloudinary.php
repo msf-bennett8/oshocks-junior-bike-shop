@@ -15,6 +15,9 @@ return [
         'users' => 'oshocks/users',
         'categories' => 'oshocks/categories',
         'cases' => 'oshocks/cases',
+        'bikes' => 'oshocks/bikes/listed_bikes',
+        'events' => 'oshocks/events',
+        'community' => 'oshocks/community/community_events',
     ],
 
     // Image transformation defaults

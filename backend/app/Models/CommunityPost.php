@@ -64,6 +64,17 @@ class CommunityPost extends Model
         return $this->belongsTo(CyclingEvent::class, 'event_id');
     }
 
+    public function images()
+    {
+        return $this->hasMany(CommunityPostImage::class, 'post_code', 'post_code')
+            ->orderBy('display_order');
+    }
+
+    public function getPrimaryImageAttribute()
+    {
+        return $this->images->first();
+    }
+
     public function scopePublic($query)
     {
         return $query->where('visibility', 'public')->where('status', 'active');

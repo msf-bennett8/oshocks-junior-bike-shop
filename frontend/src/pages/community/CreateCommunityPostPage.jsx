@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import communityService from '../../services/communityService';
+import communityEventService from '../../services/communityEventService';
 import EventActionModal from '../../components/events/EventActionModal';
 import { MOCK_EVENTS } from '../../data/cyclingMockData';
 
@@ -252,22 +253,9 @@ const CreateCommunityPostPage = () => {
     setIsSubmitting(true);
 
     try {
-      // Convert File objects to base64 for upload
-      const photoData = await Promise.all(
-        formData.photos.map(async (photo) => {
-          if (photo instanceof File) {
-            return new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result);
-              reader.onerror = reject;
-              reader.readAsDataURL(photo);
-            });
-          }
-          return photo;
-        })
-      );
+      // Separate File objects from other data for multipart upload
+      const photoFiles = formData.photos.filter(p => p instanceof File);
 
-      // Build payload matching backend validation
       // Only send event_id if it's a real value (not empty string from mock data)
       const rawEventId = formData.event_id;
       const eventId = rawEventId && String(rawEventId).trim() !== '' ? Number(rawEventId) : null;
@@ -290,12 +278,10 @@ const CreateCommunityPostPage = () => {
         tags: formData.tags || [],
         visibility: formData.visibility,
         allow_comments: formData.allow_comments,
-        photos: photoData,
-        photo_captions: photoCaptions.map(c => c === null || c === undefined ? '' : String(c)),
       };
 
-      // Call backend API
-      const response = await communityService.createPost(payload);
+      // Use communityEventService for multipart upload with File objects
+      const response = await communityEventService.createPost(payload, photoFiles, photoCaptions);
 
       if (response.data?.success) {
         const postCode = response.data?.post_code;

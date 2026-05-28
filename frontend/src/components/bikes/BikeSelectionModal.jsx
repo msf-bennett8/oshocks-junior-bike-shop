@@ -18,6 +18,7 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
   const [insuranceOptIn, setInsuranceOptIn] = useState(true);
   const [frameSize, setFrameSize] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Determine suitable categories based on event terrain
   const suitableCategories = useMemo(() => {
@@ -72,17 +73,25 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
     if (!frameSize) setFrameSize(bike.frame_size);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!selectedBike) return;
-    const totals = calculateBikeTotal(selectedBike);
-    onSelect({
-      bike: selectedBike,
-      frameSize: frameSize || selectedBike.frame_size,
-      addOns: selectedAddOns,
-      insurance: insuranceOptIn,
-      ...totals
-    });
-    onClose();
+    setIsSubmitting(true);
+    try {
+      const totals = calculateBikeTotal(selectedBike);
+      await onSelect({
+        bike: selectedBike,
+        frameSize: frameSize || selectedBike.frame_size,
+        addOns: selectedAddOns,
+        insurance: insuranceOptIn,
+        ...totals
+      });
+      onClose();
+    } catch (err) {
+      console.error('Bike selection failed:', err);
+      alert('Failed to confirm selection. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const toggleAddOn = (key) => {
@@ -320,6 +329,11 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
                       <option key={size} value={size}>{size.toUpperCase()}</option>
                     ))}
                   </select>
+                  {frameSize && frameSize !== selectedBike.frame_size && (
+                    <p className="text-xs text-orange-600 mt-1">
+                      Note: This bike is size {selectedBike.frame_size.toUpperCase()}. Size {frameSize.toUpperCase()} availability depends on stock.
+                    </p>
+                  )}
                   <p className="text-xs text-gray-500 mt-1">We'll match you with the right size</p>
                 </div>
               </div>
@@ -417,10 +431,22 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
               {/* Confirm Button */}
               <button
                 onClick={handleConfirm}
-                className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                disabled={isSubmitting}
+                className={`w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
+                  isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-0.5'
+                }`}
               >
-                <Check className="w-5 h-5" />
-                Confirm Bike Selection
+                {isSubmitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-5 h-5" />
+                    Confirm Bike Selection
+                  </>
+                )}
               </button>
             </div>
           )}

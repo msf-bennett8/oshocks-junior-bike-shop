@@ -643,32 +643,39 @@ Route::prefix('v1/events')->middleware(['auth:sanctum', 'audit', 'security.monit
     Route::get('/{eventCode}/stats', [\App\Http\Controllers\Api\CyclingEventController::class, 'stats']);
 });
 
-    // ============================================================================
-    // BIKE RENTAL ROUTES
-    // ============================================================================
-    Route::prefix('bike-rentals')->group(function () {
-        // Public routes
-        Route::get('/', [\App\Http\Controllers\Api\BikeRentalController::class, 'index']);
-        Route::get('/{listingCode}', [\App\Http\Controllers\Api\BikeRentalController::class, 'show']);
+// ============================================================================
+// BIKE RENTAL ROUTES — PUBLIC
+// ============================================================================
+Route::prefix('v1/bike-rentals')->middleware(['api', 'audit'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\BikeRentalController::class, 'index']);
+    Route::get('/{listingCode}', [\App\Http\Controllers\Api\BikeRentalController::class, 'show']);
+});
 
-        // Protected routes
-        Route::post('/', [\App\Http\Controllers\Api\BikeRentalController::class, 'store']);
-        Route::put('/{listingCode}', [\App\Http\Controllers\Api\BikeRentalController::class, 'update']);
-        Route::delete('/{listingCode}', [\App\Http\Controllers\Api\BikeRentalController::class, 'destroy']);
-        Route::get('/my/listings', [\App\Http\Controllers\Api\BikeRentalController::class, 'myListings']);
-        Route::get('/{listingCode}/stats', [\App\Http\Controllers\Api\BikeRentalController::class, 'stats']);
-    });
+// ============================================================================
+// BIKE RENTAL ROUTES — PROTECTED
+// ============================================================================
+Route::prefix('v1/bike-rentals')->middleware(['auth:sanctum', 'audit', 'security.monitor'])->group(function () {
+    Route::post('/', [\App\Http\Controllers\Api\BikeRentalController::class, 'store']);
+    Route::post('/{listingCode}', [\App\Http\Controllers\Api\BikeRentalController::class, 'update']); // POST for FormData with _method=PUT
+    Route::put('/{listingCode}', [\App\Http\Controllers\Api\BikeRentalController::class, 'update']);
+    Route::delete('/{listingCode}', [\App\Http\Controllers\Api\BikeRentalController::class, 'destroy']);
+    Route::get('/my/listings', [\App\Http\Controllers\Api\BikeRentalController::class, 'myListings']);
+    Route::get('/{listingCode}/stats', [\App\Http\Controllers\Api\BikeRentalController::class, 'stats']);
+});
 
     // ============================================================================
     // COMMUNITY POSTS ROUTES
     // ============================================================================
-    Route::prefix('community')->group(function () {
-        // Public routes
+    Route::prefix('v1/community')->group(function () {
+        // Public routes (no auth required)
         Route::get('/posts', [\App\Http\Controllers\Api\CommunityPostController::class, 'index']);
         Route::get('/posts/{postCode}', [\App\Http\Controllers\Api\CommunityPostController::class, 'show']);
+    });
 
-        // Protected routes
+    Route::prefix('v1/community')->middleware(['auth:sanctum', 'audit', 'security.monitor'])->group(function () {
+        // Protected routes (auth required)
         Route::post('/posts', [\App\Http\Controllers\Api\CommunityPostController::class, 'store']);
+        Route::post('/posts/{postCode}', [\App\Http\Controllers\Api\CommunityPostController::class, 'update']); // POST for FormData with _method=PUT
         Route::put('/posts/{postCode}', [\App\Http\Controllers\Api\CommunityPostController::class, 'update']);
         Route::delete('/posts/{postCode}', [\App\Http\Controllers\Api\CommunityPostController::class, 'destroy']);
         Route::get('/my/posts', [\App\Http\Controllers\Api\CommunityPostController::class, 'myPosts']);

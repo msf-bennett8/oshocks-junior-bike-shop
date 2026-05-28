@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
 
             // Listing code (Bennett Fibonacci 36th encoded, 12 chars)
-            $table->string('listing_code', 12)->unique();
+            $table->string('listing_code', 20)->unique();
 
             // Step 1: Basic Info
             $table->string('name', 100);
@@ -60,6 +60,9 @@ return new class extends Migration
             $table->integer('review_count')->default(0);
             $table->boolean('is_verified')->default(false);
             $table->boolean('is_active')->default(false);
+
+            // Seller profile link (for commission/payout tracking)
+            $table->foreignId('seller_id')->nullable()->constrained('seller_profiles')->onDelete('set null');
 
             // Owner
             $table->foreignId('owner_id')->constrained('users')->onDelete('cascade');

@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\CommunityPost;
+use App\Models\CommunityPostImage;
 use App\Services\CommunityPostCodeService;
-use App\Services\CloudinaryService;
+use App\Services\CommunityPostCloudinaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,10 +15,12 @@ use Illuminate\Support\Str;
 class CommunityPostController extends Controller
 {
     private CommunityPostCodeService $postCodeService;
-    private CloudinaryService $cloudinary;
+    private CommunityPostCloudinaryService $cloudinary;
 
-    public function __construct(CommunityPostCodeService $postCodeService, CloudinaryService $cloudinary)
-    {
+    public function __construct(
+        CommunityPostCodeService $postCodeService,
+        CommunityPostCloudinaryService $cloudinary
+    ) {
         $this->postCodeService = $postCodeService;
         $this->cloudinary = $cloudinary;
     }
@@ -64,7 +67,7 @@ class CommunityPostController extends Controller
             default => $query->orderBy('created_at', 'desc'),
         };
 
-        $posts = $query->with(['user:id,name,avatar', 'event:event_code,title'])
+        $posts = $query->with(['user:id,name,avatar', 'event:event_code,title', 'images'])
             ->paginate($request->get('per_page', 12));
 
         return response()->json([
@@ -85,7 +88,7 @@ class CommunityPostController extends Controller
     {
         $post = CommunityPost::where('post_code', $postCode)
             ->orWhere('slug', $postCode)
-            ->with(['user:id,name,avatar', 'event:event_code,title,start_datetime'])
+            ->with(['user:id,name,avatar', 'event:event_code,title,start_datetime', 'images'])
             ->firstOrFail();
 
         return response()->json([
@@ -97,6 +100,7 @@ class CommunityPostController extends Controller
 
     /**
      * Create new community post (auth required)
+     * Accepts multipart/form-data with image files
      */
     public function store(Request $request)
     {
@@ -141,9 +145,9 @@ class CommunityPostController extends Controller
             'visibility' => 'required|string|in:public,followers,private',
             'allow_comments' => 'boolean',
 
-            // Step 3: Photos
-            'photos' => 'required|array|min:1',
-            'photos.*' => 'string', // base64 data URI or URL
+            // Photos: Accept file uploads OR base64 strings
+            'images' => 'nullable|array',
+            'images.*' => 'file|mimes:jpeg,png,webp,gif|max:10240', // 10MB max
             'photo_captions' => 'nullable|array',
             'photo_captions.*' => 'nullable|string|max:255',
         ]);
@@ -160,27 +164,7 @@ class CommunityPostController extends Controller
                 $slug = "{$originalSlug}-" . $counter++;
             }
 
-            // Handle photo uploads to Cloudinary
-            $photoUrls = [];
-            $photoCaptions = $validated['photo_captions'] ?? [];
-            if (!empty($validated['photos'])) {
-                foreach ($validated['photos'] as $idx => $photo) {
-                    if (str_starts_with($photo, 'data:image')) {
-                        $uploadResult = $this->cloudinary->uploadBase64($photo, [
-                            'folder' => 'community-posts/' . $postCode,
-                            'resource_type' => 'image',
-                        ]);
-                        $url = $uploadResult['secure_url'] ?? $uploadResult['url'] ?? null;
-                        if ($url) {
-                            $photoUrls[] = $url;
-                        }
-                    } elseif (str_starts_with($photo, 'http')) {
-                        $photoUrls[] = $photo;
-                    }
-                }
-            }
-
-            // Create post
+            // Create post first (without photos)
             $post = CommunityPost::create([
                 'post_code' => $postCode,
                 'slug' => $slug,
@@ -201,8 +185,8 @@ class CommunityPostController extends Controller
                 'tags' => $validated['tags'] ?? [],
                 'visibility' => $validated['visibility'],
                 'allow_comments' => $validated['allow_comments'] ?? true,
-                'photos' => $photoUrls,
-                'photo_captions' => array_slice($photoCaptions, 0, count($photoUrls)),
+                'photos' => [], // Legacy field - kept empty, images stored in separate table
+                'photo_captions' => [],
                 'user_id' => $user->id,
                 'user_name' => $user->name ?? $user->username ?? 'Anonymous',
                 'user_avatar' => $user->avatar ?? null,
@@ -212,10 +196,79 @@ class CommunityPostController extends Controller
                 'status' => 'active',
             ]);
 
+            // Handle image uploads to Cloudinary
+            $uploadedImages = [];
+            $photoCaptions = $request->input('photo_captions', []);
+
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $idx => $imageFile) {
+                    $caption = $photoCaptions[$idx] ?? null;
+
+                    $result = $this->cloudinary->uploadPostImage($imageFile, $postCode, $caption);
+
+                    if ($result['success']) {
+                        $imageRecord = CommunityPostImage::create([
+                            'post_code' => $postCode,
+                            'cloudinary_public_id' => $result['public_id'],
+                            'cloudinary_secure_url' => $result['secure_url'],
+                            'cloudinary_thumbnail_url' => $result['thumbnail_url'],
+                            'cloudinary_medium_url' => $result['medium_url'],
+                            'original_name' => $result['original_name'],
+                            'folder_path' => $result['folder_path'],
+                            'format' => $result['format'],
+                            'width' => $result['width'],
+                            'height' => $result['height'],
+                            'file_size' => $result['file_size'],
+                            'caption' => $caption,
+                            'display_order' => $idx,
+                        ]);
+                        $uploadedImages[] = $imageRecord;
+                    } else {
+                        \Log::warning('Community post image upload failed', [
+                            'post_code' => $postCode,
+                            'error' => $result['error'],
+                            'index' => $idx,
+                        ]);
+                    }
+                }
+            }
+
+            // Handle base64 fallback (from old clients)
+            $base64Photos = $request->input('photos');
+            if (is_array($base64Photos) && empty($uploadedImages)) {
+                foreach ($base64Photos as $idx => $photo) {
+                    if (is_string($photo) && str_starts_with($photo, 'data:image')) {
+                        $caption = $photoCaptions[$idx] ?? null;
+                        $result = $this->cloudinary->uploadBase64PostImage($photo, $postCode, $caption);
+
+                        if ($result['success']) {
+                            CommunityPostImage::create([
+                                'post_code' => $postCode,
+                                'cloudinary_public_id' => $result['public_id'],
+                                'cloudinary_secure_url' => $result['secure_url'],
+                                'cloudinary_thumbnail_url' => $result['thumbnail_url'],
+                                'cloudinary_medium_url' => $result['medium_url'],
+                                'folder_path' => $result['folder_path'],
+                                'format' => $result['format'],
+                                'width' => $result['width'],
+                                'height' => $result['height'],
+                                'file_size' => $result['file_size'],
+                                'caption' => $caption,
+                                'display_order' => $idx,
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            // Refresh post with images
+            $post->load('images');
+
             return response()->json([
                 'success' => true,
                 'data' => $post,
                 'post_code' => $postCode,
+                'images_uploaded' => count($uploadedImages),
                 'message' => 'Ride story shared successfully!',
             ], 201);
         });
@@ -238,31 +291,65 @@ class CommunityPostController extends Controller
             'content' => 'sometimes|string|min:20',
             'visibility' => 'sometimes|string|in:public,followers,private',
             'allow_comments' => 'boolean',
-            'photos' => 'nullable|array',
-            'photos.*' => 'string',
+            'images' => 'nullable|array',
+            'images.*' => 'file|mimes:jpeg,png,webp,gif|max:10240',
+            'photo_captions' => 'nullable|array',
+            'photo_captions.*' => 'nullable|string|max:255',
+            'remove_images' => 'nullable|array',
+            'remove_images.*' => 'string', // public_ids to remove
         ]);
 
-        // Handle new photos
-        if (!empty($validated['photos'])) {
-            $existingPhotos = $post->photos ?? [];
-            foreach ($validated['photos'] as $photo) {
-                if (str_starts_with($photo, 'data:image')) {
-                    $uploadResult = $this->cloudinary->uploadBase64($photo, [
-                        'folder' => 'community-posts/' . $postCode,
+        // Handle new image uploads
+        $newImages = [];
+        if ($request->hasFile('images')) {
+            $photoCaptions = $request->input('photo_captions', []);
+            $currentCount = $post->images()->count();
+
+            foreach ($request->file('images') as $idx => $imageFile) {
+                $caption = $photoCaptions[$idx] ?? null;
+                $result = $this->cloudinary->uploadPostImage($imageFile, $postCode, $caption);
+
+                if ($result['success']) {
+                    $imageRecord = CommunityPostImage::create([
+                        'post_code' => $postCode,
+                        'cloudinary_public_id' => $result['public_id'],
+                        'cloudinary_secure_url' => $result['secure_url'],
+                        'cloudinary_thumbnail_url' => $result['thumbnail_url'],
+                        'cloudinary_medium_url' => $result['medium_url'],
+                        'original_name' => $result['original_name'],
+                        'folder_path' => $result['folder_path'],
+                        'format' => $result['format'],
+                        'width' => $result['width'],
+                        'height' => $result['height'],
+                        'file_size' => $result['file_size'],
+                        'caption' => $caption,
+                        'display_order' => $currentCount + $idx,
                     ]);
-                    $existingPhotos[] = $uploadResult['secure_url'] ?? $uploadResult['url'] ?? $photo;
-                } elseif (str_starts_with($photo, 'http')) {
-                    $existingPhotos[] = $photo;
+                    $newImages[] = $imageRecord;
                 }
             }
-            $validated['photos'] = $existingPhotos;
         }
 
-        $post->update($validated);
+        // Handle image removals
+        $removePublicIds = $request->input('remove_images', []);
+        foreach ($removePublicIds as $publicId) {
+            $this->cloudinary->deletePostImage($publicId);
+            CommunityPostImage::where('cloudinary_public_id', $publicId)->delete();
+        }
+
+        // Update post fields
+        $updateData = collect($validated)->only([
+            'title', 'content', 'visibility', 'allow_comments'
+        ])->toArray();
+
+        $post->update($updateData);
+        $post->load('images');
 
         return response()->json([
             'success' => true,
             'data' => $post,
+            'images_added' => count($newImages),
+            'images_removed' => count($removePublicIds),
             'message' => 'Post updated successfully',
         ]);
     }
@@ -279,6 +366,10 @@ class CommunityPostController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        // Delete all Cloudinary images
+        $this->cloudinary->deleteAllPostImages($postCode);
+
+        // Soft delete the post
         $post->delete();
 
         return response()->json([
@@ -294,6 +385,7 @@ class CommunityPostController extends Controller
     {
         $user = Auth::user();
         $posts = CommunityPost::where('user_id', $user->id)
+            ->with('images')
             ->orderBy('created_at', 'desc')
             ->paginate($request->get('per_page', 12));
 
@@ -317,7 +409,6 @@ class CommunityPostController extends Controller
         $user = Auth::user();
 
         // TODO: implement proper like tracking with pivot table
-        // For now, increment/decrement
         $post->increment('likes_count');
 
         return response()->json([

@@ -8,8 +8,8 @@ const CommunityPostCard = ({ post, compact = false }) => {
     return (
       <Link to={`/community/${post.id}`} className="block bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100 group">
         <div className="relative h-32 overflow-hidden">
-          <img 
-            src={post.photos?.[0] || '/placeholder-bike.jpg'}
+          <img
+            src={post.images?.[0]?.cloudinary_secure_url || post.photos?.[0] || '/placeholder-bike.jpg'}
             alt={post.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
@@ -49,11 +49,11 @@ const CommunityPostCard = ({ post, compact = false }) => {
   return (
     <Link to={`/community/${post.id}`} className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 group">
       <div className="relative h-48 overflow-hidden">
-        <img 
-          src={post.photos?.[0] || '/placeholder-bike.jpg'} 
-          alt={post.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-        />
+          <img
+            src={post.images?.[0]?.cloudinary_secure_url || post.photos?.[0] || '/placeholder-bike.jpg'}
+            alt={post.title}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         <div className="absolute bottom-4 left-4 right-4">
           <h3 className="text-lg font-bold text-white">{post.title}</h3>

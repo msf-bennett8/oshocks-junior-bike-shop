@@ -197,7 +197,7 @@ const CommunityPostDetailPage = () => {
               {/* Main Photo */}
               <div className="relative aspect-video rounded-2xl overflow-hidden bg-gray-900 mb-3">
                 <img
-                  src={post.photos[activePhotoIndex]}
+                  src={post.images?.[activePhotoIndex]?.cloudinary_secure_url || post.photos[activePhotoIndex]}
                   alt={`${post.title} - photo ${activePhotoIndex + 1}`}
                   className="w-full h-full object-contain"
                 />
@@ -232,14 +232,16 @@ const CommunityPostDetailPage = () => {
                         i === activePhotoIndex ? 'border-orange-500 ring-2 ring-orange-200' : 'border-transparent'
                       }`}
                     >
-                      <img src={photo} alt="" className="w-full h-full object-cover" />
+                      <img src={photo.cloudinary_secure_url || photo} alt="" className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
               )}
               {/* Photo Captions */}
-              {post.photo_captions?.[activePhotoIndex] && (
-                <p className="text-sm text-gray-500 mt-2 italic">{post.photo_captions[activePhotoIndex]}</p>
+              {(post.images?.[activePhotoIndex]?.caption || post.photo_captions?.[activePhotoIndex]) && (
+                <p className="text-sm text-gray-500 mt-2 italic">
+                  {post.images?.[activePhotoIndex]?.caption || post.photo_captions[activePhotoIndex]}
+                </p>
               )}
             </div>
           )}

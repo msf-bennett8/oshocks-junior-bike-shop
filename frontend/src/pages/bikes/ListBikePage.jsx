@@ -7,7 +7,7 @@ import {
   Tag, Settings, FileText, Image as ImageIcon
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import bikeService from '../../services/bikeService';
+import listBikeService from '../../services/listBikeService';
 import EventActionModal from '../../components/events/EventActionModal';
 import {
   BIKE_CATEGORY_CONFIG, FRAME_SIZE_CONFIG
@@ -226,23 +226,8 @@ const ListBikePage = () => {
       setIsSubmitting(true);
 
       try {
-        // Convert File objects to base64 for upload
-        const photoData = await Promise.all(
-          formData.photos.map(async (photo) => {
-            if (photo instanceof File) {
-              return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(photo);
-              });
-            }
-            return photo;
-          })
-        );
-
-        // Build payload matching backend validation
-        const payload = {
+        // Build flat form data object for listBikeService
+        const listingPayload = {
           name: formData.name,
           brand: formData.brand,
           model: formData.model,
@@ -269,16 +254,17 @@ const ListBikePage = () => {
           rental_rules: formData.rules || null,
           cancellation_policy: formData.cancellation_policy || null,
           insurance_included: formData.insurance_included,
-          photos: photoData,
           bike_features: formData.features || [],
           owner_type: 'user',
         };
 
-        // Call backend API
-        const response = await bikeService.createListing(payload);
+        // Pass File objects directly — listBikeService handles FormData + multipart
+        const photoFiles = formData.photos.filter(p => p instanceof File);
+
+        const response = await listBikeService.createListing(listingPayload, photoFiles);
 
         if (response.data?.success) {
-          const listingCode = response.data?.listing_code;
+          const listingCode = response.data?.listing_code || response.data?.data?.listing_code;
           setCreatedListingCode(listingCode);
           setShowSuccessModal(true);
           setIsSubmitting(false);
