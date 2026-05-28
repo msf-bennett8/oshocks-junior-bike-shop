@@ -154,12 +154,16 @@ const BikeFinder = lazy(() => import('./pages/main/BikeFinder'));
 const EventsPage = lazy(() => import('./pages/events/EventsPage'));
 const EventDetailsPage = lazy(() => import('./pages/events/EventDetailsPage'));
 const EventBookingPage = lazy(() => import('./pages/events/EventBookingPage'));
+const CreateEventPage = lazy(() => import('./pages/events/CreateEventPage'));
 const BikesPage = lazy(() => import('./pages/bikes/BikesPage'));
 const BikeDetailsPage = lazy(() => import('./pages/bikes/BikeDetailsPage'));
 const BikeRentalPage = lazy(() => import('./pages/bikes/BikeRentalPage'));
+const ListBikePage = lazy(() => import('./pages/bikes/ListBikePage'));
 const RideRequestPage = lazy(() => import('./pages/rides/RideRequestPage'));
 const MembershipPlansPage = lazy(() => import('./pages/membership/MembershipPlansPage'));
 const CommunityFeedPage = lazy(() => import('./pages/community/CommunityFeedPage'));
+const CommunityPostDetailPage = lazy(() => import('./pages/community/CommunityPostDetailPage'));
+const CreateCommunityPostPage = lazy(() => import('./pages/community/CreateCommunityPostPage'));
 
 // Education Pages
 const Careers = lazy(() => import('./pages/education/Careers'));
@@ -175,7 +179,7 @@ const ReturnPolicy = lazy(() => import('./pages/legal/ReturnPolicy'));
 
 // Audit Pages
 const AuditLogsPage = lazy(() => import('./pages/audit/AuditLogsPage'));
-const ArchivesPage = lazy(() => import('./pages/archives/ArchivesPage')); 
+const ArchivesPage = lazy(() => import('./pages/archives/ArchivesPage'));
 
 // ============================================================================
 // ROUTE PROTECTION COMPONENTS
@@ -556,7 +560,7 @@ function App() {
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/services" element={<ServicesPage />} />
                 <Route path="/contact-support" element={<ContactSupportPage />} />
-                <Route path="/Contact" element={<ContactPage />} /> 
+                <Route path="/Contact" element={<ContactPage />} />
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/blog/:slug" element={<BlogPostPage />} />
                 <Route path="/faq" element={<FAQPage />} />
@@ -566,7 +570,7 @@ function App() {
                   </ProtectedRoute>
                 } />
                 <Route path="/checkout/payment-callback" element={<PaymentCallback />} />
-                
+
                 {/* ============================================
                     CART & CHECKOUT
                     ============================================ */}
@@ -999,14 +1003,30 @@ function App() {
                     CYCLING FEATURES
                     ============================================ */}
                 <Route path="/events" element={<EventsPage />} />
+                <Route path="/events/create" element={
+                  <AdminRoute>
+                    <CreateEventPage />
+                  </AdminRoute>
+                } />
                 <Route path="/events/:slug" element={<EventDetailsPage />} />
                 <Route path="/events/:slug/book" element={<EventBookingPage />} />
                 <Route path="/bikes" element={<BikesPage />} />
+                <Route path="/list-bike" element={
+                  <ProtectedRoute>
+                    <ListBikePage />
+                  </ProtectedRoute>
+                } />
                 <Route path="/bikes/:slug" element={<BikeDetailsPage />} />
                 <Route path="/bikes/:slug/rent" element={<BikeRentalPage />} />
                 <Route path="/ride-request" element={<RideRequestPage />} />
                 <Route path="/membership/:planSlug" element={<MembershipPlansPage />} />
                 <Route path="/community" element={<CommunityFeedPage />} />
+                <Route path="/community/create" element={
+                  <ProtectedRoute>
+                    <CreateCommunityPostPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/community/:id" element={<CommunityPostDetailPage />} />
 
                 {/* ============================================
                     ORDER HISTORY (Protected)
@@ -1092,11 +1112,11 @@ function App() {
       </div>
 
         {/* ADD THIS: Floating Support Widget - Persists across all pages */}
-        <FloatingSupportWidget 
+        <FloatingSupportWidget
           excludePaths={[
             '/contact-support',
             '/checkout'
-          ]} 
+          ]}
         />
 
         {/* Legal Update Modal */}

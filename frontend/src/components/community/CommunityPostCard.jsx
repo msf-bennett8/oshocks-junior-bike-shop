@@ -1,10 +1,12 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Heart, MessageCircle, MapPin, TrendingUp, Clock } from 'lucide-react';
+import { MOCK_COMMUNITY_POSTS } from '../../data/cyclingMockData';
 
 const CommunityPostCard = ({ post, compact = false }) => {
   if (compact) {
     return (
-      <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100 group">
+      <Link to={`/community/${post.id}`} className="block bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100 group">
         <div className="relative h-32 overflow-hidden">
           <img 
             src={post.photos[0]} 
@@ -40,12 +42,12 @@ const CommunityPostCard = ({ post, compact = false }) => {
             )}
           </div>
         </div>
-      </div>
+      </Link>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 group">
+    <Link to={`/community/${post.id}`} className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 group">
       <div className="relative h-48 overflow-hidden">
         <img 
           src={post.photos[0]} 
@@ -96,7 +98,7 @@ const CommunityPostCard = ({ post, compact = false }) => {
           </button>
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
