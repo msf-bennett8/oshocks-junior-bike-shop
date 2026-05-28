@@ -13,6 +13,32 @@
   "trailingSlash": false,
   "routes": [
     {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/manifest.json",
+      "dest": "/manifest.json",
+      "headers": {
+        "Content-Type": "application/manifest+json",
+        "Cache-Control": "public, max-age=0, must-revalidate"
+      }
+    },
+    {
+      "src": "/service-worker.js",
+      "headers": {
+        "Content-Type": "application/javascript",
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "Service-Worker-Allowed": "/"
+      }
+    },
+    {
+      "src": "/robots.txt",
+      "headers": {
+        "Content-Type": "text/plain",
+        "Cache-Control": "public, max-age=86400"
+      }
+    },
+    {
       "src": "/static/(.*)",
       "headers": {
         "Cache-Control": "public, max-age=31536000, immutable"
@@ -20,22 +46,11 @@
       "continue": true
     },
     {
-      "src": "/(.*\\.(js|css|png|svg|jpg|jpeg|gif|ico|woff|woff2|ttf|eot|json|webmanifest|txt|xml))",
+      "src": "/(.*\\.(js|css|png|svg|jpg|jpeg|gif|ico|woff|woff2|ttf|eot|webmanifest|txt|xml))",
       "headers": {
         "Cache-Control": "public, max-age=31536000, immutable"
       },
       "continue": true
-    },
-    {
-      "src": "/service-worker.js",
-      "headers": {
-        "Cache-Control": "public, max-age=0, must-revalidate",
-        "Service-Worker-Allowed": "/"
-      },
-      "continue": true
-    },
-    {
-      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
@@ -56,8 +71,21 @@
           "value": "DENY"
         },
         {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "geolocation=(), microphone=(), camera=()"
+        }
+      ]
+    },
+    {
+      "source": "/service-worker.js",
+      "headers": [
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
         }
       ]
     }

@@ -57,13 +57,12 @@ const BikeRentalSection = ({ onRentNow }) => {
         </div>
 
         {/* Category Filter */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 mb-8">
-          <Filter className="w-4 h-4 text-gray-400 flex-shrink-0" />
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 sm:-mx-0 sm:px-0 w-full mb-8">
           {categories.map(cat => (
             <button
               key={cat.key}
               onClick={() => setActiveCategory(cat.key)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                 activeCategory === cat.key
                   ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'

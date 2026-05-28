@@ -11,6 +11,56 @@ import { CartProvider } from './context/CartContext';
 import { ToastProvider } from './components/common/ToastContainer';
 import { Toaster } from 'react-hot-toast';
 import reportWebVitals from './reportWebVitals';
+import toast from 'react-hot-toast';
+
+// Global update toast handler
+window.showUpdateToast = (onUpdate) => {
+  toast((t) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <span>🎉 New version available!</span>
+      <button
+        onClick={() => {
+          toast.dismiss(t.id);
+          onUpdate();
+        }}
+        style={{
+          background: '#ff4500',
+          color: 'white',
+          border: 'none',
+          padding: '6px 14px',
+          borderRadius: '6px',
+          fontWeight: 600,
+          cursor: 'pointer',
+          fontSize: '13px'
+        }}
+      >
+        Update
+      </button>
+      <button
+        onClick={() => toast.dismiss(t.id)}
+        style={{
+          background: 'transparent',
+          color: '#666',
+          border: 'none',
+          cursor: 'pointer',
+          fontSize: '13px'
+        }}
+      >
+        Dismiss
+      </button>
+    </div>
+  ), {
+    duration: Infinity,
+    position: 'top-center',
+    style: {
+      background: '#fff',
+      color: '#333',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+      borderRadius: '12px',
+      padding: '16px 20px',
+    }
+  });
+};
 
 // ============================================================================
 // OSHOCKS CONSOLE BRANDING — Print immediately, before security kills console
@@ -432,39 +482,143 @@ function sendMetricToAnalytics(metric) {
   }
 }
 
+// ============================================================================
+// SERVICE WORKER MANAGEMENT — Self-clearing cache with user-friendly updates
+// ============================================================================
+
+let swRegistration = null;
+let updateToastShown = false;
+
 function registerServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker
-        .register('/service-worker.js')
-        .then((registration) => {
-          console.log('✅ Service Worker registered:', registration.scope);
-          
-          // Set up push notification handling
-          setupPushNotifications(registration);
-          
-          // Check for updates every 5 minutes
-          setInterval(() => {
-            registration.update();
-          }, 5 * 60 * 1000);
-          
-          // Handle updates
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                showUpdateNotification();
-              }
-            });
-          });
-        })
-        .catch((error) => {
-          console.error('❌ Service Worker registration failed:', error);
-        });
-    });
+  if (!('serviceWorker' in navigator)) {
+    console.log('Service Workers not supported');
+    return;
   }
+
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/service-worker.js')
+      .then((registration) => {
+        swRegistration = registration;
+        console.log('✅ Service Worker registered:', registration.scope);
+
+        // Set up push notification handling
+        setupPushNotifications(registration);
+
+        // Listen for controller change (Workbox activates immediately)
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('✅ New version activated, reloading...');
+          window.location.reload();
+        });
+
+        // Check for updates every hour
+        setInterval(() => {
+          registration.update().catch(() => {});
+        }, 60 * 60 * 1000);
+
+        // Handle updates (Workbox precache triggers this)
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdatePrompt(newWorker);
+            }
+          });
+        });
+
+        // Check on page visibility change
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden && registration) {
+            registration.update().catch(() => {});
+          }
+        });
+      })
+      .catch((error) => {
+        console.error('❌ Service Worker registration failed:', error);
+      });
+  });
 }
+
+// handleSWMessage removed — Workbox handles activation automatically
+
+function showUpdatePrompt(newWorker) {
+  if (updateToastShown) return;
+  updateToastShown = true;
+
+  // Use react-hot-toast if available, otherwise fallback to confirm
+  const showToast = () => {
+    if (typeof window.showUpdateToast === 'function') {
+      window.showUpdateToast(() => applyUpdate(newWorker));
+    } else {
+      // Fallback to native confirm
+      const shouldUpdate = window.confirm(
+        '🎉 A new version of Oshocks is available!\n\n' +
+        'Update now for the latest features and fixes.'
+      );
+      if (shouldUpdate) {
+        applyUpdate(newWorker);
+      }
+    }
+  };
+
+  // Delay slightly to not interrupt user
+  setTimeout(showToast, 2000);
+}
+
+function applyUpdate(newWorker) {
+  console.log('🔄 Applying update...');
+
+  // Tell SW to skip waiting
+  newWorker.postMessage({ type: 'SKIP_WAITING' });
+
+  // Listen for controller change (new SW activated)
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    console.log('✅ New version activated, reloading...');
+    window.location.reload();
+  });
+}
+
+/**
+ * Manual cache clear — can be called from DevTools console or settings
+ */
+window.clearAppCache = async function() {
+  console.log('🧹 Manual cache clear requested...');
+  
+  try {
+    // Ask SW to clear caches
+    if (swRegistration && swRegistration.active) {
+      swRegistration.active.postMessage({ type: 'CLEAR_ALL_CACHES' });
+    }
+    
+    // Also clear Cache Storage directly
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.map(name => caches.delete(name)));
+    
+    // Unregister SW
+    if (swRegistration) {
+      await swRegistration.unregister();
+    }
+    
+    console.log('✅ Cache cleared. Reloading...');
+    window.location.reload();
+  } catch (err) {
+    console.error('❌ Cache clear failed:', err);
+  }
+};
+
+/**
+ * Check for updates manually
+ */
+window.checkForUpdates = async function() {
+  if (!swRegistration) {
+    console.log('No SW registration found');
+    return;
+  }
+  
+  console.log('🔍 Checking for updates...');
+  await swRegistration.update();
+};
 
 function setupPushNotifications(registration) {
   // Request permission on first user interaction
@@ -518,15 +672,7 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-function showUpdateNotification() {
-  const shouldUpdate = window.confirm(
-    '🎉 A new version of Oshocks is available!\n\nWould you like to update now?'
-  );
-  
-  if (shouldUpdate) {
-    window.location.reload();
-  }
-}
+// showUpdateNotification replaced by showUpdatePrompt + applyUpdate above
 
 function initializeNetworkMonitoring() {
   let onlineStatus = navigator.onLine;

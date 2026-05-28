@@ -654,25 +654,8 @@
       window.addEventListener('load', hideLoadingScreen);
     }
     
-    // Service Worker Registration for PWA
-    if (CONFIG.enableServiceWorker && 'serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker
-          .register('/service-worker.js')
-          .then(registration => {
-            console.log('✅ Service Worker registered:', registration.scope);
-            
-            // Check for updates
-            registration.addEventListener('updatefound', () => {
-              const newWorker = registration.installing;
-              console.log('🔄 Service Worker update found');
-            });
-          })
-          .catch(error => {
-            console.warn('❌ Service Worker registration failed:', error);
-          });
-      });
-    }
+    // Service Worker will be registered by React app (index.js)
+    // This prevents duplicate registration and ensures proper update handling
     
     // Performance Monitoring
     if ('PerformanceObserver' in window) {

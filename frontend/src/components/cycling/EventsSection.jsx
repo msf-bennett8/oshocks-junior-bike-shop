@@ -56,17 +56,16 @@ const EventsSection = ({ onBookNow }) => {
         </div>
 
         {/* Filter Bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
+        <div className="flex flex-col items-start gap-4 mb-8">
           {/* Event Type Filters */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 sm:pb-0">
-            <Filter className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 sm:-mx-0 sm:px-0 w-full">
             {filters.map(f => {
               const Icon = f.icon;
               return (
                 <button
                   key={f.key}
                   onClick={() => setActiveFilter(f.key)}
-                  className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                     activeFilter === f.key
                       ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md'
                       : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
@@ -80,18 +79,21 @@ const EventsSection = ({ onBookNow }) => {
           </div>
 
           {/* Difficulty Filters */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-4 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:-mx-0 sm:px-0 w-full">
             {difficultyFilters.map(df => (
               <button
                 key={df.key}
                 onClick={() => setActiveDifficulty(df.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                className={`relative px-1 py-1.5 text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0 bg-transparent ${
                   activeDifficulty === df.key
-                    ? 'ring-2 ring-offset-1 ring-gray-400 ' + df.color
-                    : df.color + ' opacity-60 hover:opacity-100'
+                    ? 'text-gray-900'
+                    : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
                 {df.label}
+                {activeDifficulty === df.key && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900 rounded-full" />
+                )}
               </button>
             ))}
           </div>
