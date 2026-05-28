@@ -309,22 +309,10 @@ const CreateEventPage = () => {
       setIsSubmitting(true);
 
       try {
-        // Convert File objects to base64 for upload
-        const photoData = await Promise.all(
-          formData.photos.map(async (photo) => {
-            if (photo instanceof File) {
-              return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(photo);
-              });
-            }
-            return photo;
-          })
-        );
-
-        // Build payload — all fields from the 5-step form
+        // Separate image files from other data
+        const imageFiles = formData.photos.filter(p => p instanceof File);
+        
+        // Build plain data payload (no base64 conversion — send files directly)
         const payload = {
           title: formData.title,
           short_description: formData.short_description || null,
@@ -369,14 +357,13 @@ const CreateEventPage = () => {
           refund_policy: formData.refund_policy || null,
           cancellation_policy: formData.cancellation_policy || null,
           weather_policy: formData.weather_policy || null,
-          photos: photoData,
           tags: formData.tags || [],
           route_gpx_url: formData.route_gpx_url || null,
           badge_earned_id: formData.badge_earned_id || null,
         };
 
-        // Call backend API via standalone eventService
-        const response = await eventService.createEvent(payload);
+        // Send FormData with actual File objects
+        const response = await eventService.createEvent(payload, imageFiles);
 
         if (response.data?.success) {
           const eventCode = response.data?.event_code;

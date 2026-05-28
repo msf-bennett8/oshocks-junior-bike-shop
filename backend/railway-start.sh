@@ -62,7 +62,20 @@ echo "=== Generating Key ==="
 php artisan key:generate --force 2>/dev/null || echo "Using existing APP_KEY"
 
 echo "=== Running Migrations ==="
-php artisan migrate --force --no-interaction || echo "Migrations completed with warnings"
+php artisan migrate:status --no-interaction 2>/dev/null || true
+
+php artisan migrate --force --no-interaction
+MIGRATE_EXIT=$?
+
+if [ $MIGRATE_EXIT -ne 0 ]; then
+    echo "❌ Migrations FAILED with exit code $MIGRATE_EXIT"
+    echo "=== Migration Status ==="
+    php artisan migrate:status --no-interaction 2>/dev/null || true
+    echo "=== End Migration Status ==="
+    exit 1
+else
+    echo "✓ Migrations completed successfully"
+fi
 
 echo "=== Starting Reverb Server (background) ==="
 # Use a dedicated internal port, NOT Railway's $PORT

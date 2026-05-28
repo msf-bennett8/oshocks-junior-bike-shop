@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -14,9 +14,12 @@ import {
   TERRAIN_CONFIG,
   EVENT_TYPE_CONFIG
 } from '../../data/cyclingMockData';
+import eventService from '../../services/eventService';
 
 const EventsPage = () => {
   const { user } = useAuth();
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeType, setActiveType] = useState('all');
   const [activeDifficulty, setActiveDifficulty] = useState('all');
@@ -24,6 +27,28 @@ const EventsPage = () => {
   const [priceRange, setPriceRange] = useState('all');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [sortBy, setSortBy] = useState('date');
+
+  // Fetch real events from API
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const response = await eventService.getEvents({
+          per_page: 100,
+          sort: 'start_datetime',
+          order: 'asc',
+        });
+        const apiEvents = response.data?.data || [];
+        setEvents(apiEvents.length > 0 ? apiEvents : MOCK_EVENTS);
+      } catch (error) {
+        console.error('Failed to fetch events:', error);
+        setEvents(MOCK_EVENTS); // Fallback to mock data
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
 
   const eventTypes = [
     { key: 'all', label: 'All Types', icon: Calendar },
@@ -45,7 +70,7 @@ const EventsPage = () => {
     { key: 'over_5000', label: 'Over KSh 5,000' },
   ];
 
-  const filteredEvents = MOCK_EVENTS.filter(event => {
+  const filteredEvents = events.filter(event => {
     const searchMatch = !searchQuery ||
       event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -70,7 +95,7 @@ const EventsPage = () => {
     return 0;
   });
 
-  const upcomingCount = MOCK_EVENTS.filter(e => new Date(e.start_datetime) > new Date()).length;
+  const upcomingCount = events.filter(e => new Date(e.start_datetime) > new Date()).length;
 
   return (
     <>

@@ -7,6 +7,8 @@ import {
   Calendar, Hash, Smile, AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import communityService from '../../services/communityService';
+import EventActionModal from '../../components/events/EventActionModal';
 import { MOCK_EVENTS } from '../../data/cyclingMockData';
 
 const MOODS = [
@@ -40,6 +42,8 @@ const CreateCommunityPostPage = () => {
   const [errors, setErrors] = useState({});
   const [tagInput, setTagInput] = useState('');
   const [gearInput, setGearInput] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdPostCode, setCreatedPostCode] = useState(null);
 
   const [formData, setFormData] = useState({
     // Step 1
@@ -247,33 +251,89 @@ const CreateCommunityPostPage = () => {
     if (!validateStep(currentStep)) return;
     setIsSubmitting(true);
 
-    // TODO: implement when backend ready — upload photos to Cloudinary/S3 and get URLs
-    // TODO: implement when backend ready — get user_id from auth context
-    // TODO: implement when backend ready — generate slug server-side
-    // TODO: implement when backend ready — POST to /api/community/posts with full payload
-    // TODO: implement when backend ready — server-side created_at timestamp
+    try {
+      // Convert File objects to base64 for upload
+      const photoData = await Promise.all(
+        formData.photos.map(async (photo) => {
+          if (photo instanceof File) {
+            return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(photo);
+            });
+          }
+          return photo;
+        })
+      );
 
-    await new Promise(resolve => setTimeout(resolve, 1500));
+      // Build payload matching backend validation
+      // Only send event_id if it's a real value (not empty string from mock data)
+      const rawEventId = formData.event_id;
+      const eventId = rawEventId && String(rawEventId).trim() !== '' ? Number(rawEventId) : null;
 
-    // Auto-set fields that backend will normally handle
-    const finalPayload = {
-      ...formData,
-      photo_captions: photoCaptions,
-      user_name: user?.name || user?.username || 'Anonymous',
-      user_id: user?.id || null,        // TODO: backend — from auth context
-      user_avatar: user?.avatar || null, // TODO: backend — from user profile
-      slug: formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''), // TODO: backend — unique check
-      created_at: new Date().toISOString(), // TODO: backend — server timestamp
-      likes_count: 0,
-      comments_count: 0,
-      is_featured: false,
-      // TODO: backend — photos should be array of URLs after upload, not File objects
-    };
+      const payload = {
+        title: formData.title,
+        event_id: eventId,
+        ride_date: formData.ride_date,
+        ride_type: formData.ride_type,
+        ride_distance_km: formData.ride_distance_km ? Number(formData.ride_distance_km) : null,
+        ride_duration_minutes: formData.ride_duration_minutes ? Number(formData.ride_duration_minutes) : null,
+        elevation_gain_m: formData.elevation_gain_m ? Number(formData.elevation_gain_m) : null,
+        avg_speed_kmh: formData.avg_speed_kmh ? Number(formData.avg_speed_kmh) : null,
+        max_speed_kmh: formData.max_speed_kmh ? Number(formData.max_speed_kmh) : null,
+        calories_burned: formData.calories_burned ? Number(formData.calories_burned) : null,
+        content: formData.content,
+        mood: formData.mood,
+        bike_used: formData.bike_used || null,
+        gear: formData.gear || [],
+        tags: formData.tags || [],
+        visibility: formData.visibility,
+        allow_comments: formData.allow_comments,
+        photos: photoData,
+        photo_captions: photoCaptions.map(c => c === null || c === undefined ? '' : String(c)),
+      };
 
-    console.log('Creating post:', finalPayload);
+      // Call backend API
+      const response = await communityService.createPost(payload);
 
-    setIsSubmitting(false);
+      if (response.data?.success) {
+        const postCode = response.data?.post_code;
+        setCreatedPostCode(postCode);
+        setShowSuccessModal(true);
+        setIsSubmitting(false);
+      } else {
+        throw new Error(response.data?.message || 'Failed to share ride story');
+      }
+    } catch (error) {
+      console.error('Community post creation error:', error);
+      alert(error.response?.data?.message || error.message || 'Failed to share your ride. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowSuccessModal(false);
+    setCreatedPostCode(null);
     navigate('/community');
+  };
+
+  const handleCreateAnother = () => {
+    setShowSuccessModal(false);
+    setCreatedPostCode(null);
+    // Reset form to step 1
+    setCurrentStep(1);
+    setFormData({
+      title: '', event_id: '', ride_date: '', ride_type: 'solo',
+      ride_distance_km: '', ride_duration_minutes: '', elevation_gain_m: '',
+      avg_speed_kmh: '', max_speed_kmh: '', calories_burned: '',
+      content: '', mood: 'good', bike_used: '', gear: [], photos: [], tags: [],
+      visibility: 'public', allow_comments: true,
+    });
+    setPhotoPreview([]);
+    setPhotoCaptions([]);
+    setErrors({});
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (!isAuthenticated) {
@@ -863,6 +923,16 @@ const CreateCommunityPostPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && createdPostCode && (
+        <EventActionModal
+          actionType="community_shared"
+          code={createdPostCode}
+          onClose={handleCloseModal}
+          onCreateAnother={handleCreateAnother}
+        />
+      )}
     </>
   );
 };

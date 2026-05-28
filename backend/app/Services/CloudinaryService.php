@@ -204,6 +204,51 @@ class CloudinaryService
     }
 
     /**
+     * Upload base64 image string to Cloudinary
+     *
+     * @param string $base64String - Base64 data URI (data:image/...)
+     * @param array $options - Upload options
+     * @return array
+     */
+    public function uploadBase64(string $base64String, array $options = []): array
+    {
+        try {
+            $folder = $options['folder'] ?? 'oshocks/general';
+            $resourceType = $options['resource_type'] ?? 'image';
+
+            $uploadOptions = [
+                'folder' => $folder,
+                'resource_type' => $resourceType,
+                'use_filename' => true,
+                'unique_filename' => true,
+                'overwrite' => false,
+            ];
+
+            $result = $this->uploadApi->upload($base64String, $uploadOptions);
+
+            return [
+                'success' => true,
+                'public_id' => $result['public_id'],
+                'url' => $result['secure_url'],
+                'secure_url' => $result['secure_url'],
+                'resource_type' => $result['resource_type'],
+                'format' => $result['format'] ?? null,
+                'bytes' => $result['bytes'],
+                'width' => $result['width'] ?? null,
+                'height' => $result['height'] ?? null,
+                'original_filename' => $result['original_filename'] ?? null,
+            ];
+
+        } catch (\Exception $e) {
+            \Log::error('Cloudinary base64 upload failed: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
      * Delete any file type from Cloudinary
      *
      * @param string $publicId

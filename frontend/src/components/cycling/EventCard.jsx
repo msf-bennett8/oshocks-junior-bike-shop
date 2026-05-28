@@ -23,8 +23,8 @@ const EventCard = ({ event, compact = false, onBookNow }) => {
         <Link to={`/events/${event.slug}`} className="block">
           {/* Image */}
           <div className="relative h-40 overflow-hidden">
-            <img 
-              src={event.photos[0]} 
+            <img
+              src={event.photos?.[0]?.url || event.photos?.[0] || 'https://res.cloudinary.com/demo/image/upload/v1/placeholder-event.jpg'}
               alt={event.title}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             />
@@ -114,8 +114,8 @@ const EventCard = ({ event, compact = false, onBookNow }) => {
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 group">
       <Link to={`/events/${event.slug}`} className="block">
         <div className="relative h-56 overflow-hidden">
-          <img 
-            src={event.photos[0]} 
+          <img
+            src={event.photos?.[0]?.url || event.photos?.[0] || 'https://res.cloudinary.com/demo/image/upload/v1/placeholder-event.jpg'}
             alt={event.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />

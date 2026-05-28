@@ -1,12 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, ChevronRight, Filter, ArrowRight, Users, Trophy, PartyPopper, Heart } from 'lucide-react';
 import EventCard from './EventCard';
 import { MOCK_EVENTS } from '../../data/cyclingMockData';
+import eventService from '../../services/eventService';
 
 const EventsSection = ({ onBookNow }) => {
+  const [events, setEvents] = useState([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeDifficulty, setActiveDifficulty] = useState('all');
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await eventService.getEvents({ per_page: 12 });
+        const apiEvents = response.data?.data || [];
+        setEvents(apiEvents.length > 0 ? apiEvents : MOCK_EVENTS);
+      } catch (error) {
+        setEvents(MOCK_EVENTS);
+      }
+    };
+    fetchEvents();
+  }, []);
 
   const filters = [
     { key: 'all', label: 'All Events', icon: Calendar },
@@ -23,7 +38,7 @@ const EventsSection = ({ onBookNow }) => {
     { key: 'advanced', label: 'Advanced', color: 'bg-red-100 text-red-700' },
   ];
 
-  const filteredEvents = MOCK_EVENTS.filter(event => {
+  const filteredEvents = events.filter(event => {
     const typeMatch = activeFilter === 'all' || event.event_type === activeFilter;
     const diffMatch = activeDifficulty === 'all' || event.difficulty === activeDifficulty;
     return typeMatch && diffMatch;

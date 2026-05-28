@@ -7,6 +7,8 @@ import {
   Tag, Settings, FileText, Image as ImageIcon
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import bikeService from '../../services/bikeService';
+import EventActionModal from '../../components/events/EventActionModal';
 import {
   BIKE_CATEGORY_CONFIG, FRAME_SIZE_CONFIG
 } from '../../data/cyclingMockData';
@@ -68,6 +70,8 @@ const ListBikePage = () => {
   const [photoPreview, setPhotoPreview] = useState([]);
   const [errors, setErrors] = useState({});
   const [featureInput, setFeatureInput] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdListingCode, setCreatedListingCode] = useState(null);
 
   const [formData, setFormData] = useState({
     // Step 1: Basic Info
@@ -221,38 +225,97 @@ const ListBikePage = () => {
       if (!validateStep(currentStep)) return;
       setIsSubmitting(true);
 
-      // TODO: implement when backend ready — upload photos to Cloudinary/S3 and get URLs
-      // TODO: implement when backend ready — geocode location_address to lat/lng
-      // TODO: implement when backend ready — POST to /api/bikes with full payload
-      // TODO: implement when backend ready — generate unique slug server-side
-      // TODO: implement when backend ready — set owner_id from auth context, owner_name from user profile
+      try {
+        // Convert File objects to base64 for upload
+        const photoData = await Promise.all(
+          formData.photos.map(async (photo) => {
+            if (photo instanceof File) {
+              return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(photo);
+              });
+            }
+            return photo;
+          })
+        );
 
-      await new Promise(resolve => setTimeout(resolve, 1500));
+        // Build payload matching backend validation
+        const payload = {
+          name: formData.name,
+          brand: formData.brand,
+          model: formData.model,
+          year: Number(formData.year),
+          category: formData.category,
+          frame_size: formData.frame_size,
+          wheel_size: formData.wheel_size,
+          bike_condition: formData.condition,
+          description: formData.description,
+          hourly_rate: formData.hourly_rate ? Number(formData.hourly_rate) : null,
+          daily_rate: Number(formData.daily_rate),
+          weekly_rate: formData.weekly_rate ? Number(formData.weekly_rate) : null,
+          monthly_rate: formData.monthly_rate ? Number(formData.monthly_rate) : null,
+          security_deposit: Number(formData.security_deposit),
+          min_rental_hours: Number(formData.min_rental_hours),
+          max_rental_days: Number(formData.max_rental_days),
+          location_address: formData.location_address,
+          location_lat: null,
+          location_lng: null,
+          pickup_type: formData.pickup_type,
+          delivery_fee: formData.delivery_fee ? Number(formData.delivery_fee) : null,
+          instant_book: formData.instant_book,
+          response_time_hours: formData.response_time_hours ? Number(formData.response_time_hours) : null,
+          rental_rules: formData.rules || null,
+          cancellation_policy: formData.cancellation_policy || null,
+          insurance_included: formData.insurance_included,
+          photos: photoData,
+          bike_features: formData.features || [],
+          owner_type: 'user',
+        };
 
-      const slug = `${formData.brand.toLowerCase()}-${formData.model.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now().toString(36)}`;
+        // Call backend API
+        const response = await bikeService.createListing(payload);
 
-      // Auto-set fields that backend will normally handle
-      const finalPayload = {
-        ...formData,
-        slug,
-        owner_type: 'user',
-        owner_id: user?.id || null,
-        owner_name: user?.name || user?.username || 'Anonymous',
-        owner_rating: 0,
-        is_verified: false,
-        is_active: false,
-        total_rentals: 0,
-        rating: 0,
-        review_count: 0,
-        location_lat: null,   // TODO: backend — geocode from location_address
-        location_lng: null,   // TODO: backend — geocode from location_address
-        // TODO: backend — photos should be array of URLs after upload
-      };
+        if (response.data?.success) {
+          const listingCode = response.data?.listing_code;
+          setCreatedListingCode(listingCode);
+          setShowSuccessModal(true);
+          setIsSubmitting(false);
+        } else {
+          throw new Error(response.data?.message || 'Failed to list bike');
+        }
+      } catch (error) {
+        console.error('Bike listing error:', error);
+        alert(error.response?.data?.message || error.message || 'Failed to list bike. Please try again.');
+        setIsSubmitting(false);
+      }
+    };
 
-      console.log('Listing bike:', finalPayload);
-
-      setIsSubmitting(false);
+    const handleCloseModal = () => {
+      setShowSuccessModal(false);
+      setCreatedListingCode(null);
       navigate('/bikes');
+    };
+
+    const handleCreateAnother = () => {
+      setShowSuccessModal(false);
+      setCreatedListingCode(null);
+      // Reset form to step 1
+      setCurrentStep(1);
+      setFormData({
+        name: '', brand: '', model: '', year: new Date().getFullYear(),
+        category: 'road', frame_size: 'm', wheel_size: '700c', condition: 'good', description: '',
+        hourly_rate: '', daily_rate: '', weekly_rate: '', monthly_rate: '',
+        security_deposit: '', min_rental_hours: 1, max_rental_days: 7,
+        location_address: '', pickup_type: 'owner_location', delivery_fee: '',
+        instant_book: true, response_time_hours: 2, rules: '',
+        cancellation_policy: 'Full refund if cancelled 24h before pickup. 50% refund within 24h. No refund for no-show.',
+        insurance_included: false, photos: [], features: [],
+      });
+      setPhotoPreview([]);
+      setErrors({});
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
   if (!isAuthenticated) {
@@ -953,6 +1016,16 @@ const ListBikePage = () => {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && createdListingCode && (
+        <EventActionModal
+          actionType="bike_listed"
+          code={createdListingCode}
+          onClose={handleCloseModal}
+          onCreateAnother={handleCreateAnother}
+        />
+      )}
     </>
   );
 };

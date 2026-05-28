@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -14,14 +14,40 @@ import {
   TERRAIN_CONFIG,
   EVENT_TYPE_CONFIG
 } from '../../data/cyclingMockData';
+import eventService from '../../services/eventService';
 
 const EventDetailsPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [showShareMenu, setShowShareMenu] = useState(false);
 
-  const event = MOCK_EVENTS.find(e => e.slug === slug);
+  useEffect(() => {
+    const fetchEvent = async () => {
+      try {
+        setLoading(true);
+        const response = await eventService.getEvent(slug);
+        setEvent(response.data?.data);
+      } catch (error) {
+        // Fallback to mock data for development
+        const mockEvent = MOCK_EVENTS.find(e => e.slug === slug);
+        setEvent(mockEvent);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvent();
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   if (!event) {
     return (
@@ -95,7 +121,7 @@ const EventDetailsPage = () => {
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
                 <div className="relative h-64 md:h-96">
                   <img
-                    src={event.photos[activeImage]}
+                    src={event.photos?.[activeImage]?.url || event.photos?.[activeImage] || 'https://res.cloudinary.com/demo/image/upload/v1/placeholder-event.jpg'}
                     alt={event.title}
                     className="w-full h-full object-cover"
                   />
@@ -119,7 +145,7 @@ const EventDetailsPage = () => {
                   {/* Image Navigation */}
                   {event.photos.length > 1 && (
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                      {event.photos.map((_, idx) => (
+                      {(event.photos || []).map((_, idx) => (
                         <button
                           key={idx}
                           onClick={() => setActiveImage(idx)}
@@ -135,7 +161,7 @@ const EventDetailsPage = () => {
                 {/* Thumbnails */}
                 {event.photos.length > 1 && (
                   <div className="flex gap-2 p-4">
-                    {event.photos.map((photo, idx) => (
+                    {(event.photos || []).map((photo, idx) => (
                       <button
                         key={idx}
                         onClick={() => setActiveImage(idx)}
@@ -143,7 +169,7 @@ const EventDetailsPage = () => {
                           activeImage === idx ? 'border-orange-500' : 'border-transparent'
                         }`}
                       >
-                        <img src={photo} alt="" className="w-full h-full object-cover" />
+                        <img src={photo?.url || photo} alt="" className="w-full h-full object-cover" />
                       </button>
                     ))}
                   </div>

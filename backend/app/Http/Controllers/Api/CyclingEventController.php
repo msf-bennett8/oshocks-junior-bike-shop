@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CyclingEvent;
 use App\Services\EventCodeService;
 use App\Services\CloudinaryService;
+use App\Services\EventImageUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -93,16 +94,16 @@ class CyclingEventController extends Controller
         ]);
     }
 
-    /**
+        /**
      * Create new event (auth required)
+     * Accepts multipart/form-data with 'images[]' files OR JSON with base64 'photos[]'
      */
     public function store(Request $request)
     {
         $user = Auth::user();
 
-        // Comprehensive validation matching frontend form
+        // Comprehensive validation
         $validated = $request->validate([
-            // Step 1: Basic Info
             'title' => 'required|string|min:5|max:100',
             'short_description' => 'nullable|string|max:255',
             'description' => 'nullable|string',
@@ -112,8 +113,6 @@ class CyclingEventController extends Controller
             'theme_name' => 'nullable|string|max:100',
             'charity_name' => 'nullable|string|max:100',
             'charity_url' => 'nullable|url|max:255',
-
-            // Step 2: Route & Schedule
             'route_name' => 'nullable|string|max:100',
             'route_description' => 'nullable|string',
             'distance_km' => 'required|numeric|min:0.1|max:500',
@@ -127,8 +126,6 @@ class CyclingEventController extends Controller
             'registration_deadline' => 'nullable|date|before:start_datetime',
             'is_recurring' => 'boolean',
             'recurrence_pattern' => 'nullable|string|max:100|required_if:is_recurring,true',
-
-            // Step 3: Pricing & Capacity
             'max_participants' => 'required|integer|min:1|max:1000',
             'min_participants' => 'nullable|integer|min:1|lte:max_participants',
             'price_per_person' => 'required|numeric|min:0',
@@ -137,8 +134,6 @@ class CyclingEventController extends Controller
             'early_bird_deadline' => 'nullable|date|before:start_datetime|required_with:early_bird_price',
             'group_discount_threshold' => 'nullable|integer|min:2|lte:max_participants',
             'group_discount_percent' => 'nullable|integer|min:1|max:100|required_with:group_discount_threshold',
-
-            // Step 4: Guide & Logistics
             'guide_included' => 'boolean',
             'guide_name' => 'nullable|string|max:100|required_if:guide_included,true',
             'guide_bio' => 'nullable|string|required_if:guide_included,true',
@@ -155,23 +150,30 @@ class CyclingEventController extends Controller
             'refund_policy' => 'nullable|string|in:full_24h,full_48h,full_anytime,tiered,corporate,no_refund',
             'cancellation_policy' => 'nullable|string',
             'weather_policy' => 'nullable|string',
-
-            // Step 5: Photos (array of base64 or URLs)
             'photos' => 'nullable|array',
-            'photos.*' => 'string', // base64 data URI or existing URL
-
-            // System
+            'photos.*' => 'string',
+            'images' => 'nullable|array',
+            'images.*' => 'file|image|max:10240',
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:30',
             'route_gpx_url' => 'nullable|url|max:255',
             'badge_earned_id' => 'nullable|integer',
         ]);
 
+        // Parse JSON string arrays from FormData if needed
+        $jsonFields = ['guide_certifications', 'equipment_provided', 'required_equipment', 'tags'];
+        foreach ($jsonFields as $field) {
+            if (isset($validated[$field]) && is_string($validated[$field])) {
+                $decoded = json_decode($validated[$field], true);
+                $validated[$field] = is_array($decoded) ? $decoded : [];
+            }
+        }
+
         return DB::transaction(function () use ($validated, $user, $request) {
-            // Generate event code via Bennett Fibonacci 36th
+            // Generate event code
             $eventCode = $this->eventCodeService->generate();
 
-            // Generate slug from title
+            // Generate slug
             $slug = Str::slug($validated['title']);
             $originalSlug = $slug;
             $counter = 1;
@@ -179,20 +181,49 @@ class CyclingEventController extends Controller
                 $slug = "{$originalSlug}-" . $counter++;
             }
 
-            // Handle photo uploads to Cloudinary
-            $photoUrls = [];
+            // Handle image uploads
+            $photoData = [];
+            $uploadService = app(EventImageUploadService::class);
+
+            // 1. Handle multipart file uploads (preferred)
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $imageFile) {
+                    $result = $uploadService->uploadEventImage($imageFile, $eventCode);
+                    if ($result['success']) {
+                        $photoData[] = [
+                            'url' => $result['secure_url'],
+                            'public_id' => $result['public_id'],
+                            'thumbnail_url' => $result['thumbnail_url'],
+                            'medium_url' => $result['medium_url'],
+                            'width' => $result['width'],
+                            'height' => $result['height'],
+                            'format' => $result['format'],
+                            'size' => $result['file_size'],
+                        ];
+                    }
+                }
+            }
+
+            // 2. Handle base64 strings (fallback for JSON API)
             if (!empty($validated['photos'])) {
                 foreach ($validated['photos'] as $photo) {
                     if (str_starts_with($photo, 'data:image')) {
-                        // Base64 upload
-                        $uploadResult = $this->cloudinary->uploadBase64($photo, [
-                            'folder' => 'events/' . $eventCode,
-                            'resource_type' => 'image',
-                        ]);
-                        $photoUrls[] = $uploadResult['secure_url'] ?? $uploadResult['url'] ?? $photo;
+                        $result = $uploadService->uploadBase64EventImage($photo, $eventCode);
+                        if ($result['success']) {
+                            $photoData[] = [
+                                'url' => $result['secure_url'],
+                                'public_id' => $result['public_id'],
+                                'thumbnail_url' => $result['thumbnail_url'],
+                                'medium_url' => $result['medium_url'],
+                                'width' => $result['width'],
+                                'height' => $result['height'],
+                                'format' => $result['format'],
+                                'size' => $result['file_size'],
+                            ];
+                        }
                     } elseif (str_starts_with($photo, 'http')) {
-                        // Already a URL (from mock data or external)
-                        $photoUrls[] = $photo;
+                        // External URL - store as-is (for mock data migration)
+                        $photoData[] = ['url' => $photo];
                     }
                 }
             }
@@ -244,7 +275,7 @@ class CyclingEventController extends Controller
                 'refund_policy' => $validated['refund_policy'] ?? null,
                 'cancellation_policy' => $validated['cancellation_policy'] ?? null,
                 'weather_policy' => $validated['weather_policy'] ?? null,
-                'photos' => $photoUrls,
+                'photos' => $photoData,
                 'status' => 'open',
                 'current_participants' => 0,
                 'rating' => 0.0,
@@ -264,7 +295,7 @@ class CyclingEventController extends Controller
         });
     }
 
-    /**
+        /**
      * Update event (organizer or admin only)
      */
     public function update(Request $request, string $eventCode)
@@ -272,12 +303,10 @@ class CyclingEventController extends Controller
         $event = CyclingEvent::where('event_code', $eventCode)->firstOrFail();
         $user = Auth::user();
 
-        // Authorization: organizer or admin/super_admin
         if ($event->organizer_id !== $user->id && !$user->hasAdminAccess()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        // Can only update if not cancelled/completed
         if (in_array($event->status, ['cancelled', 'completed'])) {
             return response()->json(['error' => 'Cannot update cancelled or completed events'], 400);
         }
@@ -291,23 +320,78 @@ class CyclingEventController extends Controller
             'status' => 'sometimes|string|in:open,closed',
             'photos' => 'nullable|array',
             'photos.*' => 'string',
+            'images' => 'nullable|array',
+            'images.*' => 'file|image|max:10240',
+            'remove_photos' => 'nullable|array',
+            'remove_photos.*' => 'string',
         ]);
 
-        // Handle new photos
-        if (!empty($validated['photos'])) {
-            $photoUrls = $event->photos ?? [];
-            foreach ($validated['photos'] as $photo) {
-                if (str_starts_with($photo, 'data:image')) {
-                    $uploadResult = $this->cloudinary->uploadBase64($photo, [
-                        'folder' => 'events/' . $eventCode,
-                    ]);
-                    $photoUrls[] = $uploadResult['secure_url'] ?? $uploadResult['url'] ?? $photo;
-                } elseif (str_starts_with($photo, 'http')) {
-                    $photoUrls[] = $photo;
+        // Parse JSON string arrays from FormData if needed
+        $jsonFields = ['guide_certifications', 'equipment_provided', 'required_equipment', 'tags'];
+        foreach ($jsonFields as $field) {
+            if (isset($validated[$field]) && is_string($validated[$field])) {
+                $decoded = json_decode($validated[$field], true);
+                $validated[$field] = is_array($decoded) ? $decoded : [];
+            }
+        }
+
+        $uploadService = app(EventImageUploadService::class);
+        $photoData = $event->photos ?? [];
+
+        // Delete removed photos from Cloudinary
+        if (!empty($validated['remove_photos'])) {
+            foreach ($photoData as $idx => $photo) {
+                if (isset($photo['public_id']) && in_array($photo['public_id'], $validated['remove_photos'])) {
+                    $uploadService->deleteEventImage($photo['public_id']);
+                    unset($photoData[$idx]);
                 }
             }
-            $validated['photos'] = $photoUrls;
+            $photoData = array_values($photoData);
         }
+
+        // Handle new multipart uploads
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $imageFile) {
+                $result = $uploadService->uploadEventImage($imageFile, $eventCode);
+                if ($result['success']) {
+                    $photoData[] = [
+                        'url' => $result['secure_url'],
+                        'public_id' => $result['public_id'],
+                        'thumbnail_url' => $result['thumbnail_url'],
+                        'medium_url' => $result['medium_url'],
+                        'width' => $result['width'],
+                        'height' => $result['height'],
+                        'format' => $result['format'],
+                        'size' => $result['file_size'],
+                    ];
+                }
+            }
+        }
+
+        // Handle base64 additions
+        if (!empty($validated['photos'])) {
+            foreach ($validated['photos'] as $photo) {
+                if (str_starts_with($photo, 'data:image')) {
+                    $result = $uploadService->uploadBase64EventImage($photo, $eventCode);
+                    if ($result['success']) {
+                        $photoData[] = [
+                            'url' => $result['secure_url'],
+                            'public_id' => $result['public_id'],
+                            'thumbnail_url' => $result['thumbnail_url'],
+                            'medium_url' => $result['medium_url'],
+                            'width' => $result['width'],
+                            'height' => $result['height'],
+                            'format' => $result['format'],
+                            'size' => $result['file_size'],
+                        ];
+                    }
+                }
+            }
+        }
+
+        $validated['photos'] = $photoData;
+        // Remove non-model keys
+        unset($validated['images'], $validated['remove_photos']);
 
         $event->update($validated);
 
@@ -328,6 +412,14 @@ class CyclingEventController extends Controller
 
         if ($event->organizer_id !== $user->id && !$user->hasAdminAccess()) {
             return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Clean up Cloudinary images
+        $uploadService = app(EventImageUploadService::class);
+        foreach ($event->photos ?? [] as $photo) {
+            if (isset($photo['public_id'])) {
+                $uploadService->deleteEventImage($photo['public_id']);
+            }
         }
 
         $event->delete();

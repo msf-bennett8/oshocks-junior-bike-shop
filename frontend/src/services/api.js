@@ -456,5 +456,51 @@ export const callAPI = {
   },
 };
 
+// ============================================================================
+// EVENTS API ENDPOINTS
+// ============================================================================
+
+export const eventAPI = {
+  getEvents: (params = {}) => {
+    console.log('🚴 Fetching events with params:', params);
+    return api.get('/events', { params });
+  },
+
+  getEvent: (eventCode) => {
+    console.log('🚴 Fetching event:', eventCode);
+    return api.get(`/events/${eventCode}`);
+  },
+
+  createEvent: (formData) => {
+    console.log('🚴 Creating event with FormData');
+    // FormData already contains files — let browser set Content-Type with boundary
+    return api.post('/events', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  updateEvent: (eventCode, formData) => {
+    console.log('🚴 Updating event:', eventCode);
+    return api.post(`/events/${eventCode}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  deleteEvent: (eventCode) => {
+    console.log('🚴 Deleting event:', eventCode);
+    return api.delete(`/events/${eventCode}`);
+  },
+
+  getMyEvents: (params = {}) => {
+    console.log('🚴 Fetching my events');
+    return api.get('/events/my/events', { params });
+  },
+
+  getEventStats: (eventCode) => {
+    console.log('🚴 Fetching event stats:', eventCode);
+    return api.get(`/events/${eventCode}/stats`);
+  },
+};
+
 // Export default api instance — MUST BE LAST
 export default api;

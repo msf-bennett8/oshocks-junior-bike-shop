@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up()
     {
+        if (Schema::hasTable('message_read_receipts')) {
+            return;
+        }
+
         Schema::create('message_read_receipts', function (Blueprint $table) {
             $table->id();
             $table->foreignUuid('message_id')->constrained('messages')->onDelete('cascade');

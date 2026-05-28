@@ -9,30 +9,37 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Step 1: Drop foreign keys that reference messages.id (bigint)
-        // Add your other tables here if they reference messages.id
-        // Schema::table('message_attachments', function (Blueprint $table) {
-        //     $table->dropForeign(['message_id']);
-        // });
+        // Idempotent: skip if messages table already uses UUID primary key
+        $columnType = DB::selectOne(
+            "SELECT DATA_TYPE FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+             AND TABLE_NAME = 'messages'
+             AND COLUMN_NAME = 'id'"
+        );
+
+        if ($columnType && $columnType->DATA_TYPE === 'varchar') {
+            // Already UUID — skip
+            return;
+        }
 
         // Step 2: Rename id -> old_id, uuid -> id
-        Schema::table('messages', function (Blueprint $table) {
-            $table->renameColumn('id', 'old_id');
-        });
+        if (Schema::hasColumn('messages', 'id') && Schema::hasColumn('messages', 'uuid')) {
+            Schema::table('messages', function (Blueprint $table) {
+                $table->renameColumn('id', 'old_id');
+            });
 
-        Schema::table('messages', function (Blueprint $table) {
-            $table->renameColumn('uuid', 'id');
-        });
+            Schema::table('messages', function (Blueprint $table) {
+                $table->renameColumn('uuid', 'id');
+            });
 
-        // Step 3: Make new id (uuid) primary
-        Schema::table('messages', function (Blueprint $table) {
-            $table->primary('id');
-            $table->dropColumn('old_id');
-        });
-
-        // Step 4: Update models to use UUID as primary key (handled in Model boot)
-        // Step 5: Re-add foreign keys from child tables to messages.id (now UUID)
-        // This is already done in migrations 0002 and 0003 above
+            // Step 3: Make new id (uuid) primary
+            Schema::table('messages', function (Blueprint $table) {
+                $table->primary('id');
+                if (Schema::hasColumn('messages', 'old_id')) {
+                    $table->dropColumn('old_id');
+                }
+            });
+        }
     }
 
     public function down(): void
