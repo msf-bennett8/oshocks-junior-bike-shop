@@ -621,7 +621,25 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
     // This MUST come after /orders/pending-payments and other specific routes
     Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
 
+    // ============================================================================
+    // CUSTOM RIDE REQUESTS (Phase 11)
+    // ============================================================================
+    Route::prefix('custom-ride-requests')->group(function () {
+        Route::get('/stats', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'stats']);
+        Route::get('/my-requests', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'myRequests']);
+        Route::post('/{requestId}/status', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'updateStatus']);
+    });
+    Route::apiResource('custom-ride-requests', \App\Http\Controllers\Api\CustomRideRequestController::class)->only(['index', 'store', 'show']);
+
 }); // End of protected routes group
+
+// ============================================================================
+// CUSTOM RIDE REQUESTS — PUBLIC (Guest creation allowed)
+// ============================================================================
+Route::prefix('v1/custom-ride-requests')->middleware(['api', 'audit'])->group(function () {
+    Route::post('/', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'store']);
+    Route::get('/{requestId}', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'show']);
+});
 
 // ============================================================================
 // CYCLING EVENTS ROUTES — PUBLIC (no auth required)

@@ -27,13 +27,11 @@ class BikeRentalController extends Controller
     }
 
     /**
-     * Generate unique listing code
+     * Generate unique listing code via Bennett Fibonacci 36th codec
      */
     protected function generateListingCode(): string
     {
-        $timestamp = now()->format('Ymd');
-        $random = strtoupper(substr(uniqid(), -6));
-        return "BKE-{$timestamp}-{$random}";
+        return app(\App\Services\BikeListingCodeService::class)->generate();
     }
 
     /**
