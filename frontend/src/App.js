@@ -164,7 +164,9 @@ const MembershipPlansPage = lazy(() => import('./pages/membership/MembershipPlan
 const CommunityFeedPage = lazy(() => import('./pages/community/CommunityFeedPage'));
 const CommunityPostDetailPage = lazy(() => import('./pages/community/CommunityPostDetailPage'));
 const CreateCommunityPostPage = lazy(() => import('./pages/community/CreateCommunityPostPage'));
-
+const CommunityModerationPage = lazy(() => import('./pages/admin/CommunityModerationPage'));
+const EventsModerationPage = lazy(() => import('./pages/admin/EventsModerationPage'));
+const BikeListingModerationPage = lazy(() => import('./pages/admin/BikeListingModerationPage'));
 // Education Pages
 const Careers = lazy(() => import('./pages/education/Careers'));
 const Safety = lazy(() => import('./pages/education/Safety'));
@@ -1026,7 +1028,26 @@ function App() {
                     <CreateCommunityPostPage />
                   </ProtectedRoute>
                 } />
-                <Route path="/community/:id" element={<CommunityPostDetailPage />} />
+                <Route path="/community/:postCode" element={<CommunityPostDetailPage />} />
+
+                {/* Community Moderation (Admin/Super Admin) */}
+                <Route path="/admin/community-moderation" element={
+                  <AdminRoute>
+                    <CommunityModerationPage />
+                  </AdminRoute>
+                } />
+
+                <Route path="/admin/bike-listing-moderation" element={
+                  <AdminRoute>
+                    <BikeListingModerationPage />
+                  </AdminRoute>
+                } />
+                
+                <Route path="/admin/events-moderation" element={
+                  <AdminRoute>
+                    <EventsModerationPage />
+                  </AdminRoute>
+                } />
 
                 {/* ============================================
                     ORDER HISTORY (Protected)

@@ -1,15 +1,24 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, MessageCircle, MapPin, TrendingUp, Clock } from 'lucide-react';
-import { MOCK_COMMUNITY_POSTS } from '../../data/cyclingMockData';
 
 const CommunityPostCard = ({ post, compact = false }) => {
+  if (!post) return null;
+
+  // Handle both API structure (images array with objects) and legacy mock structure (photos array of strings)
+  const displayImage = post.images?.[0]?.cloudinary_secure_url 
+    || post.photos?.[0] 
+    || post.images?.[0] 
+    || '/placeholder-bike.jpg';
+  
+  const userName = post.user_name || post.user?.name || 'Anonymous';
+  const userInitials = post.user_initials || userName.split(' ').map(n => n[0]).join('');
   if (compact) {
     return (
-      <Link to={`/community/${post.id}`} className="block bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100 group">
+      <Link to={`/community/${post.post_code || post.id}`} className="block bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100 group">
         <div className="relative h-32 overflow-hidden">
           <img
-            src={post.images?.[0]?.cloudinary_secure_url || post.photos?.[0] || '/placeholder-bike.jpg'}
+            src={displayImage}
             alt={post.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
@@ -21,9 +30,9 @@ const CommunityPostCard = ({ post, compact = false }) => {
         <div className="p-3">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-7 h-7 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-[10px]">
-              {post.user_name.split(' ').map(n => n[0]).join('')}
+              {userInitials}
             </div>
-            <span className="text-xs font-semibold text-gray-800">{post.user_name}</span>
+            <span className="text-xs font-semibold text-gray-800">{userName}</span>
           </div>
           <div className="flex items-center gap-3 text-[10px] text-gray-500">
             <span className="flex items-center gap-0.5">
@@ -47,10 +56,10 @@ const CommunityPostCard = ({ post, compact = false }) => {
   }
 
   return (
-    <Link to={`/community/${post.id}`} className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 group">
+    <Link to={`/community/${post.post_code || post.id}`} className="block bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 group">
       <div className="relative h-48 overflow-hidden">
           <img
-            src={post.images?.[0]?.cloudinary_secure_url || post.photos?.[0] || '/placeholder-bike.jpg'}
+            src={displayImage}
             alt={post.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
@@ -59,9 +68,9 @@ const CommunityPostCard = ({ post, compact = false }) => {
           <h3 className="text-lg font-bold text-white">{post.title}</h3>
           <div className="flex items-center gap-2 mt-1">
             <div className="w-6 h-6 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white font-bold text-[10px]">
-              {post.user_name.split(' ').map(n => n[0]).join('')}
+              {userInitials}
             </div>
-            <span className="text-sm text-white/90">{post.user_name}</span>
+            <span className="text-sm text-white/90">{userName}</span>
           </div>
         </div>
       </div>

@@ -67,11 +67,25 @@ class CommunityPostController extends Controller
             default => $query->orderBy('created_at', 'desc'),
         };
 
-        $posts = $query->with(['user:id,name,avatar', 'event:event_code,title', 'images'])
+        $posts = $query->with(['user:id,name,avatar', 'event:event_code,title', 'postImages'])
             ->paginate($request->get('per_page', 12));
 
+        // Transform items to include flattened frontend-compatible fields
+        $items = $posts->items();
+        $transformed = array_map(function ($post) {
+            $postArray = $post->toArray();
+            // Ensure frontend gets flat photos array (not just relationship objects)
+            $postArray['photos'] = $post->photos;
+            $postArray['images'] = $post->images;
+            $postArray['user_initials'] = $post->user_initials;
+            $postArray['mood_emoji'] = $post->mood_emoji;
+            $postArray['formatted_duration'] = $post->formatted_duration;
+            return $postArray;
+        }, $items);
+
         return response()->json([
-            'data' => $posts->items(),
+            'success' => true,
+            'data' => $transformed,
             'meta' => [
                 'current_page' => $posts->currentPage(),
                 'last_page' => $posts->lastPage(),
@@ -86,15 +100,25 @@ class CommunityPostController extends Controller
      */
     public function show(string $postCode)
     {
+        // Try post_code or slug first, then fallback to numeric id
         $post = CommunityPost::where('post_code', $postCode)
             ->orWhere('slug', $postCode)
-            ->with(['user:id,name,avatar', 'event:event_code,title,start_datetime', 'images'])
+            ->when(is_numeric($postCode), function ($q) use ($postCode) {
+                $q->orWhere('id', $postCode);
+            })
+            ->with(['user:id,name,avatar', 'event:event_code,title,start_datetime', 'postImages'])
             ->firstOrFail();
 
+        $postArray = $post->toArray();
+        $postArray['photos'] = $post->photos;
+        $postArray['images'] = $post->images;
+        $postArray['user_initials'] = $post->user_initials;
+        $postArray['mood_emoji'] = $post->mood_emoji;
+        $postArray['formatted_duration'] = $post->formatted_duration;
+
         return response()->json([
-            'data' => $post,
-            'mood_emoji' => $post->mood_emoji,
-            'formatted_duration' => $post->formatted_duration,
+            'success' => true,
+            'data' => $postArray,
         ]);
     }
 
@@ -262,7 +286,7 @@ class CommunityPostController extends Controller
             }
 
             // Refresh post with images
-            $post->load('images');
+            $post->load('postImages');
 
             return response()->json([
                 'success' => true,
@@ -343,7 +367,7 @@ class CommunityPostController extends Controller
         ])->toArray();
 
         $post->update($updateData);
-        $post->load('images');
+        $post->load('postImages');
 
         return response()->json([
             'success' => true,
@@ -385,12 +409,22 @@ class CommunityPostController extends Controller
     {
         $user = Auth::user();
         $posts = CommunityPost::where('user_id', $user->id)
-            ->with('images')
+            ->with('postImages')
             ->orderBy('created_at', 'desc')
             ->paginate($request->get('per_page', 12));
 
+        $items = $posts->items();
+        $transformed = array_map(function ($post) {
+            $postArray = $post->toArray();
+            $postArray['photos'] = $post->photos;
+            $postArray['images'] = $post->images;
+            $postArray['user_initials'] = $post->user_initials;
+            return $postArray;
+        }, $items);
+
         return response()->json([
-            'data' => $posts->items(),
+            'success' => true,
+            'data' => $transformed,
             'meta' => [
                 'current_page' => $posts->currentPage(),
                 'last_page' => $posts->lastPage(),

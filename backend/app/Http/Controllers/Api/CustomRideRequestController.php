@@ -331,4 +331,98 @@ class CustomRideRequestController extends Controller
             'data' => $counts,
         ]);
     }
+
+    /**
+     * Preview event conversion (admin/staff)
+     * GET /api/v1/custom-ride-requests/{requestId}/conversion-preview
+     */
+    public function conversionPreview(string $requestId): JsonResponse
+    {
+        $user = Auth::user();
+
+        if (!$user || !in_array($user->role, ['admin', 'super_admin', 'owner', 'support_agent'])) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+
+        $rideRequest = CustomRideRequest::with(['images', 'user'])
+            ->where('request_id', $requestId)
+            ->firstOrFail();
+
+        $converter = app(CustomRideToEventConversionService::class);
+        $preview = $converter->preview($rideRequest);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'ride_request' => $rideRequest,
+                'event_preview' => $preview,
+            ],
+        ]);
+    }
+
+    /**
+     * Convert custom ride request to cycling event (admin/staff)
+     * POST /api/v1/custom-ride-requests/{requestId}/convert-to-event
+     */
+    public function convertToEvent(Request $request, string $requestId): JsonResponse
+    {
+        $user = Auth::user();
+
+        if (!$user || !in_array($user->role, ['admin', 'super_admin', 'owner', 'support_agent'])) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+
+        $rideRequest = CustomRideRequest::with(['images', 'user'])
+            ->where('request_id', $requestId)
+            ->firstOrFail();
+
+        // Only allow conversion from certain statuses
+        if (!in_array($rideRequest->status, ['accepted', 'quoted', 'reviewing'])) {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot convert request with status '{$rideRequest->status}'. Must be accepted, quoted, or reviewing.",
+            ], 400);
+        }
+
+        // Already converted?
+        if ($rideRequest->converted_event_code) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This request has already been converted to an event.',
+                'data' => ['event_code' => $rideRequest->converted_event_code],
+            ], 400);
+        }
+
+        try {
+            $converter = app(CustomRideToEventConversionService::class);
+            $event = $converter->convert($rideRequest, $user->id);
+
+            Log::info('Custom ride request converted to event', [
+                'request_id' => $requestId,
+                'event_code' => $event->event_code,
+                'converted_by' => $user->id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Custom ride request converted to event successfully.',
+                'data' => [
+                    'event' => $event,
+                    'event_code' => $event->event_code,
+                    'ride_request' => $rideRequest->fresh(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to convert custom ride request to event', [
+                'request_id' => $requestId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to convert request: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }

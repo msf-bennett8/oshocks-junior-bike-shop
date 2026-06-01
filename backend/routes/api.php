@@ -628,6 +628,8 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
         Route::get('/stats', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'stats']);
         Route::get('/my-requests', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'myRequests']);
         Route::post('/{requestId}/status', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'updateStatus']);
+        Route::get('/{requestId}/conversion-preview', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'conversionPreview']);
+        Route::post('/{requestId}/convert-to-event', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'convertToEvent']);
     });
     Route::apiResource('custom-ride-requests', \App\Http\Controllers\Api\CustomRideRequestController::class)->only(['index', 'store', 'show']);
 
@@ -667,6 +669,8 @@ Route::prefix('v1/events')->middleware(['auth:sanctum', 'audit', 'security.monit
 Route::prefix('v1/bike-rentals')->middleware(['api', 'audit'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Api\BikeRentalController::class, 'index']);
     Route::get('/{listingCode}', [\App\Http\Controllers\Api\BikeRentalController::class, 'show']);
+    Route::get('/{listingCode}/availability', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'checkAvailability']);
+    Route::get('/{listingCode}/calendar', [\App\Http\Controllers\Api\BikeRentalBookingController::class, 'availabilityCalendar']);
 });
 
 // ============================================================================
@@ -679,6 +683,38 @@ Route::prefix('v1/bike-rentals')->middleware(['auth:sanctum', 'audit', 'security
     Route::delete('/{listingCode}', [\App\Http\Controllers\Api\BikeRentalController::class, 'destroy']);
     Route::get('/my/listings', [\App\Http\Controllers\Api\BikeRentalController::class, 'myListings']);
     Route::get('/{listingCode}/stats', [\App\Http\Controllers\Api\BikeRentalController::class, 'stats']);
+});
+
+// ============================================================================
+// BIKE RENTAL BOOKINGS — PROTECTED
+// ============================================================================
+Route::prefix('v1/bike-rental-bookings')->middleware(['auth:sanctum', 'audit', 'security.monitor'])->group(function () {
+    Route::post('/', [\App\Http\Controllers\Api\BikeRentalBookingController::class, 'store']);
+    Route::get('/my-bookings', [\App\Http\Controllers\Api\BikeRentalBookingController::class, 'myBookings']);
+    Route::get('/owner-bookings', [\App\Http\Controllers\Api\BikeRentalBookingController::class, 'ownerBookings']);
+    Route::get('/{bookingCode}', [\App\Http\Controllers\Api\BikeRentalBookingController::class, 'show']);
+    Route::post('/{bookingCode}/status', [\App\Http\Controllers\Api\BikeRentalBookingController::class, 'updateStatus']);
+    Route::post('/{bookingCode}/cancel', [\App\Http\Controllers\Api\BikeRentalBookingController::class, 'cancel']);
+});
+
+// ============================================================================
+// BIKE LISTING MODERATION — ADMIN/SUPER ADMIN ONLY
+// ============================================================================
+Route::prefix('v1/admin/bike-listings')->middleware(['auth:sanctum', 'audit', 'security.monitor'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'index']);
+    Route::get('/stats', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'stats']);
+    Route::post('/{listingCode}/approve', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'approve']);
+    Route::post('/{listingCode}/reject', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'reject']);
+    Route::put('/{listingCode}/edit', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'updateListing']);
+    Route::post('/{listingCode}/pause', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'pause']);
+    Route::post('/{listingCode}/resume', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'resume']);
+    Route::post('/{listingCode}/archive', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'archive']);
+    Route::post('/{listingCode}/restore-archive', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'restoreArchive']);
+    Route::post('/{listingCode}/out-of-service', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'markOutOfService']);
+    Route::post('/{listingCode}/schedule-deletion', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'scheduleForDeletion']);
+    Route::post('/{listingCode}/approve-deletion', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'approveDeletion']);
+    Route::post('/{listingCode}/restore', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'restore']);
+    Route::delete('/{listingCode}/permanent', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'permanentDelete']);
 });
 
     // ============================================================================
@@ -698,6 +734,36 @@ Route::prefix('v1/bike-rentals')->middleware(['auth:sanctum', 'audit', 'security
         Route::delete('/posts/{postCode}', [\App\Http\Controllers\Api\CommunityPostController::class, 'destroy']);
         Route::get('/my/posts', [\App\Http\Controllers\Api\CommunityPostController::class, 'myPosts']);
         Route::post('/posts/{postCode}/like', [\App\Http\Controllers\Api\CommunityPostController::class, 'toggleLike']);
+    });
+
+    // ============================================================================
+    // COMMUNITY POSTS MODERATION ROUTES (Admin/Super Admin only)
+    // ============================================================================
+    Route::prefix('v1/admin/community-posts')->middleware(['auth:sanctum', 'audit', 'security.monitor'])->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\CommunityPostModerationController::class, 'index']);
+        Route::get('/stats', [\App\Http\Controllers\Api\CommunityPostModerationController::class, 'stats']);
+        Route::post('/{postCode}/feature', [\App\Http\Controllers\Api\CommunityPostModerationController::class, 'toggleFeatured']);
+        Route::post('/{postCode}/schedule-deletion', [\App\Http\Controllers\Api\CommunityPostModerationController::class, 'scheduleForDeletion']);
+        Route::post('/{postCode}/approve-deletion', [\App\Http\Controllers\Api\CommunityPostModerationController::class, 'approveDeletion']);
+        Route::post('/{postCode}/restore', [\App\Http\Controllers\Api\CommunityPostModerationController::class, 'restore']);
+        Route::delete('/{postCode}/permanent', [\App\Http\Controllers\Api\CommunityPostModerationController::class, 'permanentDelete']);
+    });
+
+    // ============================================================================
+    // CYCLING EVENTS MODERATION ROUTES (Admin/Super Admin only)
+    // ============================================================================
+    Route::prefix('v1/admin/cycling-events')->middleware(['auth:sanctum', 'audit', 'security.monitor'])->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\CyclingEventModerationController::class, 'index']);
+        Route::get('/stats', [\App\Http\Controllers\Api\CyclingEventModerationController::class, 'stats']);
+        Route::post('/{eventCode}/approve', [\App\Http\Controllers\Api\CyclingEventModerationController::class, 'approve']);
+        Route::post('/{eventCode}/reject', [\App\Http\Controllers\Api\CyclingEventModerationController::class, 'reject']);
+        Route::put('/{eventCode}/edit', [\App\Http\Controllers\Api\CyclingEventModerationController::class, 'updateEvent']);
+        Route::post('/{eventCode}/archive', [\App\Http\Controllers\Api\CyclingEventModerationController::class, 'archive']);
+        Route::post('/{eventCode}/restore-archive', [\App\Http\Controllers\Api\CyclingEventModerationController::class, 'restoreArchive']);
+        Route::post('/{eventCode}/schedule-deletion', [\App\Http\Controllers\Api\CyclingEventModerationController::class, 'scheduleForDeletion']);
+        Route::post('/{eventCode}/approve-deletion', [\App\Http\Controllers\Api\CyclingEventModerationController::class, 'approveDeletion']);
+        Route::post('/{eventCode}/restore', [\App\Http\Controllers\Api\CyclingEventModerationController::class, 'restore']);
+        Route::delete('/{eventCode}/permanent', [\App\Http\Controllers\Api\CyclingEventModerationController::class, 'permanentDelete']);
     });
 
 // ============================================================================

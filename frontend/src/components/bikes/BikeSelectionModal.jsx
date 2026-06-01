@@ -1,12 +1,34 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { X, Search, Filter, MapPin, Star, Shield, Check, Bike, ArrowRight, Heart, Clock, Info } from 'lucide-react';
-import { MOCK_BIKES, BIKE_CATEGORY_CONFIG, FRAME_SIZE_CONFIG } from '../../data/cyclingMockData';
+import bikeService from '../../services/bikeService';
+import { BIKE_CATEGORY_CONFIG, FRAME_SIZE_CONFIG } from '../../data/cyclingMockData';
 
 const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSize, setSelectedCategorySize] = useState('all');
   const [selectedBike, setSelectedBike] = useState(null);
+  const [bikes, setBikes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const fetchBikes = async () => {
+      try {
+        setLoading(true);
+        const response = await bikeService.getBikes({ per_page: 100 });
+        const bikeData = response.data?.data || response.data || [];
+        setBikes(bikeData);
+      } catch (err) {
+        console.error('Failed to fetch bikes:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBikes();
+  }, [isOpen]);
   const [selectedAddOns, setSelectedAddOns] = useState({
     helmet: true,
     lights: false,
@@ -34,7 +56,7 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
 
   // Filter bikes
   const filteredBikes = useMemo(() => {
-    return MOCK_BIKES.filter(bike => {
+    return bikes.filter(bike => {
       const matchesSearch = !searchQuery || 
         bike.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         bike.brand.toLowerCase().includes(searchQuery.toLowerCase());
@@ -226,7 +248,7 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
                       )}
 
                       <div className="relative h-40">
-                        <img src={bike.images[0]} alt={bike.name} className="w-full h-full object-cover" />
+                        <img src={bike.images?.[0] || bike.photos?.[0]?.url || 'https://via.placeholder.com/400x300?text=No+Image'} alt={bike.name} className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                         <div className="absolute bottom-3 left-3 right-3">
                           <div className="flex items-center gap-2">
@@ -296,7 +318,7 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
               {/* Selected Bike Summary */}
               <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <img src={selectedBike.images[0]} alt={selectedBike.name} className="w-16 h-16 rounded-lg object-cover" />
+                  <img src={selectedBike.images?.[0] || selectedBike.photos?.[0]?.url || 'https://via.placeholder.com/400x300?text=No+Image'} alt={selectedBike.name} className="w-16 h-16 rounded-lg object-cover" />
                   <div>
                     <p className="font-bold text-gray-900">{selectedBike.name}</p>
                     <p className="text-sm text-gray-500">{selectedBike.brand} {selectedBike.model}</p>

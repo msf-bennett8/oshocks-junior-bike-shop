@@ -4,15 +4,22 @@ import { MapPin, Clock, Star, Shield, Bike, ArrowRight, Heart } from 'lucide-rea
 import { BIKE_CATEGORY_CONFIG, FRAME_SIZE_CONFIG } from '../../data/cyclingMockData';
 
 const BikeCard = ({ bike, compact = false, onRentNow }) => {
-  const isPlatform = bike.owner_type === 'platform';
+  const isPlatform = bike?.owner_type === 'platform';
+  
+  // Safety check for missing bike data
+  if (!bike) return null;
+  
+  // Ensure images array exists with fallback
+  const images = bike.images || bike.photos?.map(p => p.url || p) || [];
+  const displayImage = images[0] || 'https://via.placeholder.com/400x300?text=No+Image';
 
   if (compact) {
     return (
       <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 group">
         <Link to={`/bikes/${bike.slug}`} className="block">
           <div className="relative h-36 overflow-hidden">
-            <img 
-              src={bike.images[0]} 
+            <img
+              src={displayImage}
               alt={bike.name}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             />
@@ -88,8 +95,8 @@ const BikeCard = ({ bike, compact = false, onRentNow }) => {
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 group">
       <Link to={`/bikes/${bike.slug}`} className="block">
         <div className="relative h-52 overflow-hidden">
-          <img 
-            src={bike.images[0]} 
+          <img
+            src={displayImage}
             alt={bike.name}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
@@ -151,10 +158,10 @@ const BikeCard = ({ bike, compact = false, onRentNow }) => {
           {/* Owner Info */}
           <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-4">
             <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-              {bike.owner_name.split(' ').map(n => n[0]).join('')}
+              {(bike.owner_name || 'O').split(' ').map(n => n[0]).join('')}
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-900">{bike.owner_name}</p>
+              <p className="text-sm font-semibold text-gray-900">{bike.owner_name || 'Unknown Owner'}</p>
               <p className="text-xs text-gray-500">
                 {isPlatform ? 'Official Platform Partner' : `Owner Rating: ${bike.owner_rating}`}
               </p>

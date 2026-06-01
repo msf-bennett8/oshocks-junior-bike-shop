@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -6,7 +6,8 @@ import {
   ChevronRight, ArrowRight, X, Grid3X3, List
 } from 'lucide-react';
 import BikeCard from '../../components/bikes/BikeCard';
-import { MOCK_BIKES, BIKE_CATEGORY_CONFIG } from '../../data/cyclingMockData';
+import bikeService from '../../services/bikeService';
+import { BIKE_CATEGORY_CONFIG } from '../../data/cyclingMockData';
 
 const BikesPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -16,6 +17,31 @@ const BikesPage = () => {
   const [sortBy, setSortBy] = useState('recommended');
   const [viewMode, setViewMode] = useState('grid');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [bikes, setBikes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch bikes from API on mount
+  useEffect(() => {
+    const fetchBikes = async () => {
+      try {
+        setLoading(true);
+        const response = await bikeService.getBikes({
+          per_page: 100, // Get all for client-side filtering
+        });
+        const bikeData = response.data?.data || response.data || [];
+        setBikes(bikeData);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch bikes:', err);
+        setError('Failed to load bikes. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBikes();
+  }, []);
 
   const categories = [
     { key: 'all', label: 'All Bikes' },
@@ -41,7 +67,7 @@ const BikesPage = () => {
     { key: 'over_3000', label: 'Over KSh 3,000/day' },
   ];
 
-  const filteredBikes = MOCK_BIKES.filter(bike => {
+  const filteredBikes = bikes.filter(bike => {
     const searchMatch = !searchQuery ||
       bike.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       bike.brand.toLowerCase().includes(searchQuery.toLowerCase());
@@ -64,8 +90,8 @@ const BikesPage = () => {
     return 0;
   });
 
-  const platformCount = MOCK_BIKES.filter(b => b.owner_type === 'platform').length;
-  const peerCount = MOCK_BIKES.filter(b => b.owner_type === 'user').length;
+  const platformCount = bikes.filter(b => b.owner_type === 'platform').length;
+  const peerCount = bikes.filter(b => b.owner_type === 'user').length;
 
   return (
     <>
@@ -87,7 +113,7 @@ const BikesPage = () => {
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-semibold mb-4 border border-white/20">
                 <Bike className="w-4 h-4 text-orange-400" />
-                {MOCK_BIKES.length}+ Bikes Available
+                {bikes.length}+ Bikes Available
               </div>
               <h1 className="text-4xl md:text-5xl font-bold mb-4">Rent a Bike</h1>
               <p className="text-lg text-gray-300 mb-6">
@@ -162,7 +188,7 @@ const BikesPage = () => {
                           <Star className="w-4 h-4" />
                           {owner.label}
                           <span className="ml-auto text-xs text-gray-400">
-                            {owner.key === 'all' ? MOCK_BIKES.length : owner.key === 'platform' ? platformCount : peerCount}
+                            {owner.key === 'all' ? bikes.length : owner.key === 'platform' ? platformCount : peerCount}
                           </span>
                         </button>
                       ))}
@@ -314,8 +340,31 @@ const BikesPage = () => {
                   </Link>
                 </div>
 
+                {/* Loading State */}
+                {loading && (
+                  <div className="text-center py-16">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                    <p className="text-gray-500">Loading bikes...</p>
+                  </div>
+                )}
+
+                {/* Error State */}
+                {!loading && error && (
+                  <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+                    <Bike className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Error</h3>
+                    <p className="text-gray-500 mb-6">{error}</p>
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg font-bold hover:bg-orange-600 transition-all"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+
                 {/* Bikes Grid/List */}
-                {filteredBikes.length > 0 ? (
+                {!loading && !error && filteredBikes.length > 0 ? (
                   <div className={viewMode === 'grid'
                     ? "grid grid-cols-1 sm:grid-cols-2 gap-6"
                     : "space-y-4"
@@ -329,7 +378,7 @@ const BikesPage = () => {
                       />
                     ))}
                   </div>
-                ) : (
+                ) : !loading && !error && (
                   <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
                     <Bike className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-xl font-bold text-gray-900 mb-2">No bikes found</h3>

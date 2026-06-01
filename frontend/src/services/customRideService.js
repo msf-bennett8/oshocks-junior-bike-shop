@@ -56,6 +56,10 @@ const customRideService = {
   updateStatus: (requestId, status, staffNotes = '') =>
     api.post(`/custom-ride-requests/${requestId}/status`, { status, staff_notes: staffNotes }),
   getStats: () => api.get('/custom-ride-requests/stats'),
+
+  // ─── Conversion to Event ───
+  getConversionPreview: (requestId) => api.get(`/custom-ride-requests/${requestId}/conversion-preview`),
+  convertToEvent: (requestId) => api.post(`/custom-ride-requests/${requestId}/convert-to-event`),
 };
 
 export default customRideService;

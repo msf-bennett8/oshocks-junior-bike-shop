@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -6,11 +6,12 @@ import {
   Clock, TrendingUp, Zap, Flame, Navigation, Bike, Calendar,
   User, Send, MoreHorizontal, Flag, CheckCircle2, X
 } from 'lucide-react';
-import { MOCK_COMMUNITY_POSTS, MOCK_EVENTS } from '../../data/cyclingMockData';
+import communityService from '../../services/communityService';
+import { MOCK_EVENTS } from '../../data/cyclingMockData';
 import CommunityPostCard from '../../components/community/CommunityPostCard';
 
 const CommunityPostDetailPage = () => {
-  const { id } = useParams();
+  const { postCode } = useParams();
   const navigate = useNavigate();
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
@@ -19,21 +20,57 @@ const CommunityPostDetailPage = () => {
   const [comments, setComments] = useState([]);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [post, setPost] = useState(null);
+  const [relatedPosts, setRelatedPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const post = MOCK_COMMUNITY_POSTS.find(p => p.id === Number(id));
+  useEffect(() => {
+    const fetchPost = async () => {
+      try {
+        setLoading(true);
+        const response = await communityService.getPost(postCode);
+        const postData = response.data?.data || response.data;
+        setPost(postData);
+        setLikeCount(postData?.likes_count || 0);
+        setError(null);
+
+        // Fetch related posts by same user
+        if (postData?.user_id) {
+          const relatedResponse = await communityService.getPosts({ user_id: postData.user_id, per_page: 4 });
+          const relatedData = relatedResponse.data?.data || relatedResponse.data || [];
+          setRelatedPosts(relatedData.filter(p => p.post_code !== postData.post_code && p.id !== postData.id).slice(0, 3));
+        }
+      } catch (err) {
+        console.error('Failed to fetch post:', err);
+        setError('Failed to load post details.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPost();
+  }, [postCode]);
+
   const linkedEvent = post?.event_id ? MOCK_EVENTS.find(e => e.id === post.event_id) : null;
 
-  // Related posts (same author or same event)
-  const relatedPosts = MOCK_COMMUNITY_POSTS.filter(p =>
-    p.id !== Number(id) && (p.user_name === post?.user_name || p.event_id === post?.event_id)
-  ).slice(0, 3);
-
-  if (!post) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Post Not Found</h1>
-          <p className="text-gray-500 mb-4">This ride story doesn't exist or was removed.</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading post...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !post) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{error ? 'Error' : 'Post Not Found'}</h1>
+          <p className="text-gray-500 mb-4">{error || 'This ride story doesn\'t exist or was removed.'}</p>
           <Link to="/community" className="text-orange-500 font-semibold hover:underline">
             Back to Community
           </Link>
@@ -154,10 +191,10 @@ const CommunityPostDetailPage = () => {
           {/* Author Header */}
           <div className="flex items-center gap-3 mb-6">
             <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-              {post.user_name.split(' ').map(n => n[0]).join('')}
+              {(post.user_name || 'A').split(' ').map(n => n[0]).join('')}
             </div>
             <div className="flex-1">
-              <h2 className="font-bold text-gray-900">{post.user_name}</h2>
+              <h2 className="font-bold text-gray-900">{post.user_name || 'Anonymous'}</h2>
               <p className="text-sm text-gray-500">{formatTimeAgo(post.created_at)}</p>
             </div>
             {post.visibility === 'public' && (
@@ -192,12 +229,12 @@ const CommunityPostDetailPage = () => {
           )}
 
           {/* Photo Gallery */}
-          {post.photos.length > 0 && (
+          {(post.photos?.length > 0 || post.images?.length > 0) && (
             <div className="mb-8">
               {/* Main Photo */}
               <div className="relative aspect-video rounded-2xl overflow-hidden bg-gray-900 mb-3">
                 <img
-                  src={post.images?.[activePhotoIndex]?.cloudinary_secure_url || post.photos[activePhotoIndex]}
+                  src={post.images?.[activePhotoIndex]?.cloudinary_secure_url || post.photos?.[activePhotoIndex] || '/placeholder-bike.jpg'}
                   alt={`${post.title} - photo ${activePhotoIndex + 1}`}
                   className="w-full h-full object-contain"
                 />
@@ -222,9 +259,9 @@ const CommunityPostDetailPage = () => {
                 </div>
               </div>
               {/* Thumbnails */}
-              {post.photos.length > 1 && (
+              {(post.photos?.length > 1 || post.images?.length > 1) && (
                 <div className="flex gap-2 overflow-x-auto pb-2">
-                  {post.photos.map((photo, i) => (
+                  {(post.images || post.photos || []).map((photo, i) => (
                     <button
                       key={i}
                       onClick={() => setActivePhotoIndex(i)}
@@ -232,7 +269,7 @@ const CommunityPostDetailPage = () => {
                         i === activePhotoIndex ? 'border-orange-500 ring-2 ring-orange-200' : 'border-transparent'
                       }`}
                     >
-                      <img src={photo.cloudinary_secure_url || photo} alt="" className="w-full h-full object-cover" />
+                      <img src={photo?.cloudinary_secure_url || photo?.cloudinary_thumbnail_url || photo} alt="" className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
@@ -240,7 +277,7 @@ const CommunityPostDetailPage = () => {
               {/* Photo Captions */}
               {(post.images?.[activePhotoIndex]?.caption || post.photo_captions?.[activePhotoIndex]) && (
                 <p className="text-sm text-gray-500 mt-2 italic">
-                  {post.images?.[activePhotoIndex]?.caption || post.photo_captions[activePhotoIndex]}
+                  {post.images?.[activePhotoIndex]?.caption || post.photo_captions?.[activePhotoIndex]}
                 </p>
               )}
             </div>
@@ -392,10 +429,10 @@ const CommunityPostDetailPage = () => {
           {/* Related Posts */}
           {relatedPosts.length > 0 && (
             <div className="border-t border-gray-200 pt-8">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">More from {post.user_name}</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-4">More from {post.user_name || 'this rider'}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {relatedPosts.map(p => (
-                  <CommunityPostCard key={p.id} post={p} compact />
+                  <CommunityPostCard key={p.post_code || p.id} post={p} compact />
                 ))}
               </div>
             </div>

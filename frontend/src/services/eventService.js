@@ -5,6 +5,19 @@ const eventService = {
   getEvents: (params = {}) => eventAPI.getEvents(params),
   getEvent: (eventCode) => eventAPI.getEvent(eventCode),
 
+  // ─── Admin Moderation ───
+  getModerationEvents: (params = {}) => api.get('/admin/cycling-events', { params }),
+  getModerationStats: () => api.get('/admin/cycling-events/stats'),
+  approveEvent: (eventCode) => api.post(`/admin/cycling-events/${eventCode}/approve`),
+  rejectEvent: (eventCode, reason) => api.post(`/admin/cycling-events/${eventCode}/reject`, { reason }),
+  updateEventAdmin: (eventCode, data) => api.put(`/admin/cycling-events/${eventCode}/edit`, data),
+  archiveEvent: (eventCode) => api.post(`/admin/cycling-events/${eventCode}/archive`),
+  restoreArchive: (eventCode) => api.post(`/admin/cycling-events/${eventCode}/restore-archive`),
+  scheduleEventDeletion: (eventCode, reason) => api.post(`/admin/cycling-events/${eventCode}/schedule-deletion`, { reason }),
+  approveEventDeletion: (eventCode) => api.post(`/admin/cycling-events/${eventCode}/approve-deletion`),
+  restoreEvent: (eventCode) => api.post(`/admin/cycling-events/${eventCode}/restore`),
+  permanentDeleteEvent: (eventCode) => api.delete(`/admin/cycling-events/${eventCode}/permanent`),
+
   // ─── Protected (auth required) ───
   /**
    * Create event with FormData (supports file uploads)

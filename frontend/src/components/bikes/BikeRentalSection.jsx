@@ -1,11 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Bike, ChevronRight, Filter, ArrowRight, MapPin, Star, Shield } from 'lucide-react';
 import BikeCard from './BikeCard';
-import { MOCK_BIKES } from '../../data/cyclingMockData';
+import bikeService from '../../services/bikeService';
 
 const BikeRentalSection = ({ onRentNow }) => {
   const [activeCategory, setActiveCategory] = useState('all');
+  const [bikes, setBikes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBikes = async () => {
+      try {
+        const response = await bikeService.getBikes({ per_page: 6 });
+        const bikeData = response.data?.data || response.data || [];
+        setBikes(bikeData);
+      } catch (err) {
+        console.error('Failed to fetch bikes:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBikes();
+  }, []);
 
   const categories = [
     { key: 'all', label: 'All Bikes' },
@@ -17,9 +35,9 @@ const BikeRentalSection = ({ onRentNow }) => {
     { key: 'kids', label: 'Kids' },
   ];
 
-  const filteredBikes = activeCategory === 'all' 
-    ? MOCK_BIKES 
-    : MOCK_BIKES.filter(bike => bike.category === activeCategory);
+    const filteredBikes = activeCategory === 'all'
+    ? bikes
+    : bikes.filter(bike => bike.category === activeCategory);
 
   const featuredBikes = filteredBikes.slice(0, 6);
 
@@ -80,7 +98,7 @@ const BikeRentalSection = ({ onRentNow }) => {
               <Bike className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-lg font-bold text-gray-900">{MOCK_BIKES.length}+</p>
+              <p className="text-lg font-bold text-gray-900">{bikes.length}+</p>
               <p className="text-xs text-gray-600">Bikes Available</p>
             </div>
           </div>
@@ -90,7 +108,7 @@ const BikeRentalSection = ({ onRentNow }) => {
             </div>
             <div>
               <p className="text-lg font-bold text-gray-900">
-                {(MOCK_BIKES.reduce((sum, b) => sum + b.rating, 0) / MOCK_BIKES.length).toFixed(1)}★
+                {bikes.length > 0 ? (bikes.reduce((sum, b) => sum + (b.rating || 0), 0) / bikes.length).toFixed(1) : '0.0'}★
               </p>
               <p className="text-xs text-gray-600">Avg Rating</p>
             </div>
@@ -101,7 +119,7 @@ const BikeRentalSection = ({ onRentNow }) => {
             </div>
             <div>
               <p className="text-lg font-bold text-gray-900">
-                {Math.round((MOCK_BIKES.filter(b => b.is_verified).length / MOCK_BIKES.length) * 100)}%
+                {bikes.length > 0 ? Math.round((bikes.filter(b => b.is_verified).length / bikes.length) * 100) : 0}%
               </p>
               <p className="text-xs text-gray-600">Verified Bikes</p>
             </div>
@@ -112,7 +130,7 @@ const BikeRentalSection = ({ onRentNow }) => {
             </div>
             <div>
               <p className="text-lg font-bold text-gray-900">
-                {[...new Set(MOCK_BIKES.map(b => b.location_address?.split(',')[0]).filter(Boolean))].length}
+                {[...new Set(bikes.map(b => b.location_address?.split(',')[0]).filter(Boolean))].length}
               </p>
               <p className="text-xs text-gray-600">Locations</p>
             </div>

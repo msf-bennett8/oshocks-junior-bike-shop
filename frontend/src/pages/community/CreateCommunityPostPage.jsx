@@ -383,19 +383,20 @@ const CreateCommunityPostPage = () => {
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Linked Event (optional)</label>
-        <select
-          value={formData.event_id}
-          onChange={(e) => updateField('event_id', e.target.value)}
-          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-        >
-          <option value="">No event — solo ride</option>
-          {MOCK_EVENTS.map(event => (
-            <option key={event.id} value={event.id}>{event.title}</option>
-          ))}
-        </select>
-      </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Linked Event (optional)</label>
+            <select
+              value={formData.event_id}
+              onChange={(e) => updateField('event_id', e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="">No event — solo ride</option>
+              {/* TODO: Replace with real events from API when events module is live */}
+              {MOCK_EVENTS.map(event => (
+                <option key={event.id} value={event.id}>{event.title}</option>
+              ))}
+            </select>
+          </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>

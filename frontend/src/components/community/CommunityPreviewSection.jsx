@@ -1,11 +1,30 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageCircle, ChevronRight, Camera } from 'lucide-react';
 import CommunityPostCard from './CommunityPostCard';
-import { MOCK_COMMUNITY_POSTS } from '../../data/cyclingMockData';
+import communityService from '../../services/communityService';
 
 const CommunityPreviewSection = () => {
-  const featuredPosts = MOCK_COMMUNITY_POSTS.slice(0, 3);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const response = await communityService.getPosts({ per_page: 3, featured: true });
+        const postData = response.data?.data || response.data || [];
+        setPosts(postData);
+      } catch (err) {
+        console.error('Failed to fetch community posts:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  const featuredPosts = posts.slice(0, 3);
 
   return (
     <section className="py-12 md:py-16 bg-white">
@@ -35,7 +54,7 @@ const CommunityPreviewSection = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {featuredPosts.map(post => (
             <CommunityPostCard 
-              key={post.id} 
+              key={post.post_code || post.id} 
               post={post} 
               compact
             />

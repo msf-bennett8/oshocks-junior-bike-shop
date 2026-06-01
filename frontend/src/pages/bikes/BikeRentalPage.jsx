@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
   ChevronLeft, Calendar, Clock, MapPin, Shield, Check, CreditCard,
   ArrowRight, Bike, User, Phone, Info, AlertTriangle
 } from 'lucide-react';
-import { MOCK_BIKES } from '../../data/cyclingMockData';
+import bikeService from '../../services/bikeService';
 
 const BikeRentalPage = () => {
   const { slug } = useParams();
@@ -18,15 +18,48 @@ const BikeRentalPage = () => {
   const [idVerified, setIdVerified] = useState(false);
   const [insuranceOptIn, setInsuranceOptIn] = useState(true);
   const [deliveryOptIn, setDeliveryOptIn] = useState(false);
+  const [bike, setBike] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const bike = MOCK_BIKES.find(b => b.slug === slug);
+  useEffect(() => {
+    const fetchBike = async () => {
+      try {
+        setLoading(true);
+        const response = await bikeService.getBike(slug);
+        const bikeData = response.data?.data || response.data;
+        setBike(bikeData);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch bike:', err);
+        setError('Failed to load bike details.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (!bike) {
+    fetchBike();
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading bike details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !bike) {
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <Bike className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Bike Not Found</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{error ? 'Error' : 'Bike Not Found'}</h1>
+          <p className="text-gray-500 mb-4">{error || 'This bike is no longer available.'}</p>
           <Link to="/bikes" className="text-orange-600 font-semibold hover:underline">Browse Bikes</Link>
         </div>
       </div>

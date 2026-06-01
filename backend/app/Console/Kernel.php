@@ -21,6 +21,10 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\PurgeScheduledCases::class,
         \App\Console\Commands\ScheduleOldBookings::class,
         \App\Console\Commands\PurgeScheduledBookings::class,
+        \App\Console\Commands\ScheduleOldCommunityPosts::class,
+        \App\Console\Commands\PurgeScheduledCommunityPosts::class,
+        \App\Console\Commands\ScheduleOldCyclingEvents::class,
+        \App\Console\Commands\PurgeScheduledCyclingEvents::class,
     ];
 
     /**
@@ -50,6 +54,18 @@ class Kernel extends ConsoleKernel
         $schedule->command('bookings:schedule-old-completed')->dailyAt('03:30');
         // Auto-purge scheduled bookings after 30-day grace period (daily at 4:30 AM)
         $schedule->command('bookings:purge-scheduled')->dailyAt('04:30');
+
+        // Phase 14: Scheduled Deletion Lifecycle — Community Posts
+        // Auto-schedule posts that are 6+ months old (daily at 5:00 AM)
+        $schedule->command('community-posts:schedule-old')->dailyAt('05:00');
+        // Auto-purge scheduled posts after 30-day grace period (daily at 5:30 AM)
+        $schedule->command('community-posts:purge-scheduled')->dailyAt('05:30');
+
+        // Phase 15: Scheduled Deletion Lifecycle — Cycling Events
+        // Auto-schedule past events that are 6+ months old (daily at 6:00 AM)
+        $schedule->command('cycling-events:schedule-old')->dailyAt('06:00');
+        // Auto-purge scheduled events after 30-day grace period (daily at 6:30 AM)
+        $schedule->command('cycling-events:purge-scheduled')->dailyAt('06:30');
     }
 
     /**

@@ -29,7 +29,7 @@ class CyclingEventController extends Controller
     public function index(Request $request)
     {
         $query = CyclingEvent::query()
-            ->where('status', 'open')
+            ->whereIn('status', ['open', 'pending'])
             ->where('start_datetime', '>=', now());
 
         // Filters
@@ -276,7 +276,10 @@ class CyclingEventController extends Controller
                 'cancellation_policy' => $validated['cancellation_policy'] ?? null,
                 'weather_policy' => $validated['weather_policy'] ?? null,
                 'photos' => $photoData,
-                'status' => 'open',
+                'status' => $user->hasAdminAccess() ? 'open' : 'pending',
+                'approved_by' => $user->hasAdminAccess() ? $user->id : null,
+                'approved_at' => $user->hasAdminAccess() ? now() : null,
+                'submitted_by' => $user->hasAdminAccess() ? 'admin' : 'user',
                 'current_participants' => 0,
                 'rating' => 0.0,
                 'review_count' => 0,

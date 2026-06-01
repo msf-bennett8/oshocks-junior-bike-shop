@@ -94,9 +94,23 @@ class BikeRentalController extends Controller
         $perPage = $request->get('per_page', 12);
         $bikes = $query->paginate($perPage);
 
+        // Transform items to include appended attributes
+        $items = $bikes->items();
+        $transformed = array_map(function ($bike) {
+            $bikeArray = $bike->toArray();
+            // Ensure images are flat URLs (not objects) for frontend
+            $bikeArray['images'] = $bike->images;
+            $bikeArray['condition'] = $bike->condition;
+            $bikeArray['features'] = $bike->features;
+            $bikeArray['owner_name'] = $bike->owner_name;
+            $bikeArray['owner_avatar'] = $bike->owner_avatar;
+            $bikeArray['owner_initials'] = $bike->owner_initials;
+            return $bikeArray;
+        }, $items);
+
         return response()->json([
             'success' => true,
-            'data' => $bikes->items(),
+            'data' => $transformed,
             'meta' => [
                 'current_page' => $bikes->currentPage(),
                 'last_page' => $bikes->lastPage(),
@@ -116,10 +130,18 @@ class BikeRentalController extends Controller
             ->with(['owner'])
             ->firstOrFail();
 
+        $bikeArray = $bike->toArray();
+        $bikeArray['images'] = $bike->images;
+        $bikeArray['condition'] = $bike->condition;
+        $bikeArray['features'] = $bike->features;
+        $bikeArray['owner_name'] = $bike->owner_name;
+        $bikeArray['owner_avatar'] = $bike->owner_avatar;
+        $bikeArray['owner_initials'] = $bike->owner_initials;
+
         return response()->json([
             'success' => true,
-            'data' => $bike,
-            'is_available' => $bike->listing_status === 'approved' && $bike->is_active,
+            'data' => $bikeArray,
+            'is_available' => $bike->is_available,
         ]);
     }
 
@@ -266,12 +288,15 @@ class BikeRentalController extends Controller
                 'insurance_included' => $validated['insurance_included'] ?? false,
                 'photos' => $photoData,
                 'bike_features' => $validated['bike_features'] ?? [],
-                'listing_status' => 'pending_review',
+                'listing_status' => $user->hasAdminAccess() ? 'approved' : 'pending_review',
+                'is_active' => $user->hasAdminAccess() ? true : false,
+                'is_verified' => $user->hasAdminAccess() ? true : false,
+                'approved_by' => $user->hasAdminAccess() ? $user->id : null,
+                'approved_at' => $user->hasAdminAccess() ? now() : null,
+                'submitted_by' => $user->hasAdminAccess() ? 'admin' : 'user',
                 'total_rentals' => 0,
                 'rating' => 0,
                 'review_count' => 0,
-                'is_verified' => false,
-                'is_active' => false,
                 'owner_rating' => 0,
             ]);
 
@@ -501,9 +526,21 @@ class BikeRentalController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate($request->get('per_page', 12));
 
+        $items = $listings->items();
+        $transformed = array_map(function ($bike) {
+            $bikeArray = $bike->toArray();
+            $bikeArray['images'] = $bike->images;
+            $bikeArray['condition'] = $bike->condition;
+            $bikeArray['features'] = $bike->features;
+            $bikeArray['owner_name'] = $bike->owner_name;
+            $bikeArray['owner_avatar'] = $bike->owner_avatar;
+            $bikeArray['owner_initials'] = $bike->owner_initials;
+            return $bikeArray;
+        }, $items);
+
         return response()->json([
             'success' => true,
-            'data' => $listings->items(),
+            'data' => $transformed,
             'meta' => [
                 'current_page' => $listings->currentPage(),
                 'last_page' => $listings->lastPage(),

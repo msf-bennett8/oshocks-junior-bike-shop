@@ -64,7 +64,7 @@ class CommunityPost extends Model
         return $this->belongsTo(CyclingEvent::class, 'event_id');
     }
 
-    public function images()
+    public function postImages()
     {
         return $this->hasMany(CommunityPostImage::class, 'post_code', 'post_code')
             ->orderBy('display_order');
@@ -72,7 +72,7 @@ class CommunityPost extends Model
 
     public function getPrimaryImageAttribute()
     {
-        return $this->images->first();
+        return $this->postImages->first();
     }
 
     public function scopePublic($query)
@@ -121,4 +121,49 @@ class CommunityPost extends Model
             default => '😊',
         };
     }
+
+    /**
+     * Flatten images relationship to photos array for frontend compatibility
+     */
+    public function getPhotosAttribute(): array
+    {
+        return $this->postImages->map(function ($image) {
+            return $image->cloudinary_secure_url;
+        })->toArray();
+    }
+
+    /**
+     * Get full image objects with metadata for frontend gallery
+     */
+    public function getImagesAttribute(): array
+    {
+        return $this->postImages->map(function ($image) {
+            return [
+                'cloudinary_secure_url' => $image->cloudinary_secure_url,
+                'cloudinary_thumbnail_url' => $image->cloudinary_thumbnail_url,
+                'cloudinary_medium_url' => $image->cloudinary_medium_url,
+                'caption' => $image->caption,
+                'public_id' => $image->cloudinary_public_id,
+            ];
+        })->toArray();
+    }
+
+    /**
+     * Get user initials for avatar fallback
+     */
+    public function getUserInitialsAttribute(): string
+    {
+        $name = $this->user_name ?? 'Anonymous';
+        return collect(explode(' ', $name))
+            ->map(fn($n) => $n[0] ?? '')
+            ->join('');
+    }
+
+    protected $appends = [
+        'photos',
+        'images',
+        'user_initials',
+        'mood_emoji',
+        'formatted_duration',
+    ];
 }

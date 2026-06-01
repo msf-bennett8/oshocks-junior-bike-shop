@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -6,12 +6,35 @@ import {
   Clock, Filter, Grid3X3, List, Plus, Search, User, Award
 } from 'lucide-react';
 import CommunityPostCard from '../../components/community/CommunityPostCard';
-import { MOCK_COMMUNITY_POSTS, MOCK_EVENTS } from '../../data/cyclingMockData';
+import communityService from '../../services/communityService';
+import { MOCK_EVENTS } from '../../data/cyclingMockData';
 
 const CommunityFeedPage = () => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('grid');
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const response = await communityService.getPosts({ per_page: 100 });
+        const postData = response.data?.data || response.data || [];
+        setPosts(postData);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch community posts:', err);
+        setError('Failed to load community posts. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
 
   const filters = [
     { key: 'all', label: 'All Posts' },
@@ -21,7 +44,7 @@ const CommunityFeedPage = () => {
     { key: 'tips', label: 'Tips & Advice' },
   ];
 
-  const filteredPosts = MOCK_COMMUNITY_POSTS.filter(post => {
+  const filteredPosts = posts.filter(post => {
     const searchMatch = !searchQuery ||
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -37,9 +60,9 @@ const CommunityFeedPage = () => {
   });
 
   // Stats
-  const totalRides = MOCK_COMMUNITY_POSTS.reduce((sum, p) => sum + (p.ride_distance_km || 0), 0);
-  const totalLikes = MOCK_COMMUNITY_POSTS.reduce((sum, p) => sum + p.likes_count, 0);
-  const featuredCount = MOCK_COMMUNITY_POSTS.filter(p => p.is_featured).length;
+  const totalRides = posts.reduce((sum, p) => sum + (parseFloat(p.ride_distance_km) || 0), 0);
+  const totalLikes = posts.reduce((sum, p) => sum + (p.likes_count || 0), 0);
+  const featuredCount = posts.filter(p => p.is_featured).length;
 
   return (
     <>
@@ -61,7 +84,7 @@ const CommunityFeedPage = () => {
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-semibold mb-4 border border-white/20">
                 <Camera className="w-4 h-4 text-orange-400" />
-                {MOCK_COMMUNITY_POSTS.length}+ Stories Shared
+                {posts.length}+ Stories Shared
               </div>
               <h1 className="text-4xl md:text-5xl font-bold mb-4">Rider Community</h1>
               <p className="text-lg text-gray-300 mb-6">
@@ -91,7 +114,7 @@ const CommunityFeedPage = () => {
                 <Camera className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <p className="text-lg font-bold text-gray-900">{MOCK_COMMUNITY_POSTS.length}</p>
+                <p className="text-lg font-bold text-gray-900">{posts.length}</p>
                 <p className="text-xs text-gray-500">Posts</p>
               </div>
             </div>
@@ -169,21 +192,44 @@ const CommunityFeedPage = () => {
             </div>
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+              <p className="text-gray-500">Loading community posts...</p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {!loading && error && (
+            <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
+              <Camera className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Error</h3>
+              <p className="text-gray-500 mb-6">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-orange-500 text-white rounded-lg font-bold hover:bg-orange-600 transition-all"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
           {/* Posts Grid/List */}
-          {filteredPosts.length > 0 ? (
+          {!loading && !error && filteredPosts.length > 0 ? (
             <div className={viewMode === 'grid'
               ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
               : "space-y-6 max-w-3xl mx-auto"
             }>
               {filteredPosts.map(post => (
                 <CommunityPostCard
-                  key={post.id}
+                  key={post.post_code || post.id}
                   post={post}
                   compact={viewMode === 'grid'}
                 />
               ))}
             </div>
-          ) : (
+          ) : !loading && !error && (
             <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
               <Camera className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-gray-900 mb-2">No posts found</h3>
@@ -198,14 +244,16 @@ const CommunityFeedPage = () => {
           )}
 
           {/* Load More */}
-          <div className="text-center mt-12">
-            <button
-              onClick={() => alert('Demo: Would load more posts from API')}
-              className="px-8 py-3 border-2 border-gray-300 text-gray-700 font-bold rounded-xl hover:border-orange-500 hover:text-orange-600 transition-all"
-            >
-              Load More Posts
-            </button>
-          </div>
+          {!loading && !error && posts.length > 0 && (
+            <div className="text-center mt-12">
+              <button
+                onClick={() => alert('Pagination: Would load more posts from API')}
+                className="px-8 py-3 border-2 border-gray-300 text-gray-700 font-bold rounded-xl hover:border-orange-500 hover:text-orange-600 transition-all"
+              >
+                Load More Posts
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>

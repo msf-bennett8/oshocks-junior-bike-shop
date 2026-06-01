@@ -50,6 +50,7 @@ const Navbar = () => {
   const [showCreateChat, setShowCreateChat] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
   const { incomingCall, dismissIncomingCall, echo, connectionStatus, unreadTotal, setActiveConversation } = useMessaging(user?.id);
+    const [showModerationsMenu, setShowModerationsMenu] = useState(false);
 
     // Listen for open-create-chat-modal event from ChatDrawer
   useEffect(() => {
@@ -366,6 +367,9 @@ const Navbar = () => {
           { name: 'Reports', link: '/super-admin/reports', icon: BarChart3 },
           { name: 'Notification Templates', link: '/super-admin/notification-templates', icon: Bell },
           { name: 'Appointments', link: '/admin/appointments', icon: Calendar },
+          { name: 'Events Moderation', link: '/admin/events-moderation', icon: Calendar },
+          { name: 'Bike Listing Moderation', link: '/admin/bike-listing-moderation', icon: Bike },
+          { name: 'Community Moderation', link: '/admin/community-moderation', icon: MessageCircle },
           { name: 'Settings', link: '/super-admin/settings', icon: Settings },
         ]
       });
@@ -382,7 +386,10 @@ const Navbar = () => {
           { name: 'Reports', link: '/admin/reports', icon: BarChart3 },
           { name: 'Settings', link: '/admin/settings', icon: Settings },
           { name: 'Appointments', link: '/admin/appointments', icon: Calendar },
-        { name: 'Support Queue', link: '/admin/support-inbox', icon: Inbox },
+          { name: 'Support Queue', link: '/admin/support-inbox', icon: Inbox },
+          { name: 'Events Moderation', link: '/admin/events-moderation', icon: Calendar },
+          { name: 'Bike Listing Moderation', link: '/admin/bike-listing-moderation', icon: Bike },
+          { name: 'Community Moderation', link: '/admin/community-moderation', icon: MessageCircle },
         ]
       });
     }
@@ -848,6 +855,74 @@ const Navbar = () => {
                           <p className="text-xs text-gray-500">View alerts & updates</p>
                         </div>
                       </button>
+                    )}
+
+                    {/* Moderations — Collapsible Dropdown */}
+                    {isAuthenticated && (user?.role === 'super_admin' || user?.role === 'admin') && (
+                      <div className="relative">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowModerationsMenu(!showModerationsMenu);
+                          }}
+                          className="flex items-center gap-3 px-4 py-2.5 hover:bg-purple-50 transition-colors w-full text-left"
+                        >
+                          <Shield className="w-5 h-5 text-purple-600" />
+                          <div className="flex-1">
+                            <span className="text-gray-900 font-medium">Moderations</span>
+                            <p className="text-xs text-gray-500">Manage platform content</p>
+                          </div>
+                          <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform ${showModerationsMenu ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {/* Submenu */}
+                        <div className={`bg-gray-50 border-l-2 border-purple-200 ml-4 ${showModerationsMenu ? '' : 'hidden'}`}>
+                          {/* Events Moderation */}
+                          <button
+                            onClick={() => {
+                              setShowQuickActions(false);
+                              navigate('/admin/events-moderation');
+                            }}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-purple-100/50 transition-colors w-full text-left"
+                          >
+                            <Calendar className="w-4 h-4 text-purple-600" />
+                            <div>
+                              <span className="text-sm text-gray-800 font-medium">Events Moderation</span>
+                              <p className="text-[11px] text-gray-500">Approve & manage events</p>
+                            </div>
+                          </button>
+
+                          {/* Bike Listing Moderation */}
+                          <button
+                            onClick={() => {
+                              setShowQuickActions(false);
+                              navigate('/admin/bike-listing-moderation');
+                            }}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-purple-100/50 transition-colors w-full text-left"
+                          >
+                            <Bike className="w-4 h-4 text-purple-600" />
+                            <div>
+                              <span className="text-sm text-gray-800 font-medium">Bike Listing Moderation</span>
+                              <p className="text-[11px] text-gray-500">Approve & manage bike listings</p>
+                            </div>
+                          </button>
+
+                          {/* Community Moderation */}
+                          <button
+                            onClick={() => {
+                              setShowQuickActions(false);
+                              navigate('/admin/community-moderation');
+                            }}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-purple-100/50 transition-colors w-full text-left"
+                          >
+                            <MessageCircle className="w-4 h-4 text-purple-600" />
+                            <div>
+                              <span className="text-sm text-gray-800 font-medium">Community Moderation</span>
+                              <p className="text-[11px] text-gray-500">Manage posts & comments</p>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
                     )}
 
                     {/* Admin Alerts */}
