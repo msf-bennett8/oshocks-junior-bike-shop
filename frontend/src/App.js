@@ -42,6 +42,7 @@ import FloatingSupportWidget from './components/navigation/FloatingSupportWidget
 import ImpersonationBanner from './components/impersonator/ImpersonationBanner';
 import LegalUpdateModal from './components/legal/LegalUpdateModal';
 import { checkForVersionUpdate, recordLegalAcceptance } from './utils/legalTracker';
+import DataSourceToggleWrapper from './components/common/DataSourceToggleWrapper';
 // REMOVED: ToastContainer import - it's now handled by ToastProvider in index.js
 
 // ============================================================================
@@ -531,6 +532,9 @@ function App() {
 
         {/* Impersonation Banner */}
         <ImpersonationBanner />
+
+        {/* Data Source Toggle - Local vs Railway */}
+        <DataSourceToggleWrapper />
 
         {/* Offline Indicator */}
         {!isOnline && (

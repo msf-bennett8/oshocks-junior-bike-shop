@@ -8,11 +8,20 @@ import { logIntegrationError, logApiRetry, recordServiceSuccess, determineServic
 import { getGuestDisplayName } from '../utils/guestSession';
 
 // Base API URL - Railway backend
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://oshocks-backend-production.up.railway.app/api/v1';
+import dataSourceManager from './dataSourceManager';
+
+const API_BASE_URL = dataSourceManager.getApiUrl();
 
 console.log('🌐 API Service Initialized');
 console.log('📍 Base URL:', API_BASE_URL);
 console.log('🔧 Environment:', process.env.NODE_ENV);
+console.log('🔄 Data Source:', dataSourceManager.getCurrentSource().name);
+
+// Listen for data source changes and reload page
+window.addEventListener('data-source-changed', () => {
+  console.log('🔄 Data source changed, reloading...');
+  window.location.reload();
+});
 
 // Create axios instance with default config
 const api = axios.create({
