@@ -70,3 +70,5 @@ backend/.env.save
 backend/.env.*
 backend/storage/framework/cache/
 backend/storage/framework/sessions/
+backend/storage/framework/cache/
+backend/storage/framework/sessions/
