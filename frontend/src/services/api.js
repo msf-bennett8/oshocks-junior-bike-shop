@@ -14,7 +14,7 @@ const getApiUrl = () => dataSourceManager.getApiUrl();
 
 console.log('🌐 API Service Initialized');
 console.log('📍 Base URL:', getApiUrl());
-console.log('🔧 Environment:', process.env.NODE_ENV);
+console.log('🔧 Environment:', import.meta.env.MODE);
 console.log('🔄 Data Source:', dataSourceManager.getCurrentSource().name);
 
 // Listen for data source changes and update baseURL dynamically

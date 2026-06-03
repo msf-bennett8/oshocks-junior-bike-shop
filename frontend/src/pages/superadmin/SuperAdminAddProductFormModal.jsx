@@ -92,7 +92,7 @@ const SuperAdminAddProductFormModal = ({
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/categories`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/categories`);
       const data = await response.json();
       setCategories(data.data || data);
     } catch (err) {
@@ -251,8 +251,8 @@ const SuperAdminAddProductFormModal = ({
       }
 
       const url = mode === 'edit' 
-        ? `${process.env.REACT_APP_API_URL}/seller/products/${product.id}`
-        : `${process.env.REACT_APP_API_URL}/seller/products`;
+        ? `${import.meta.env.VITE_API_URL}/seller/products/${product.id}`
+        : `${import.meta.env.VITE_API_URL}/seller/products`;
 
       const method = mode === 'edit' ? 'PUT' : 'POST';
 

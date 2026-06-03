@@ -1,18 +1,16 @@
+import { onCLS, onFCP, onLCP, onTTFB, onINP } from 'web-vitals';
+
 const reportWebVitals = (onPerfEntry) => {
   if (onPerfEntry && typeof onPerfEntry === 'function') {
-    import('web-vitals').then(({ onCLS, onFID, onFCP, onLCP, onTTFB, onINP }) => {
-      onCLS(onPerfEntry);
-      onFCP(onPerfEntry);
-      onLCP(onPerfEntry);
-      onTTFB(onPerfEntry);
-      
-      // FID is deprecated, use INP instead
-      if (onINP) {
-        onINP(onPerfEntry);
-      }
-    }).catch(err => {
-      console.warn('Web Vitals could not be loaded:', err);
-    });
+    onCLS(onPerfEntry);
+    onFCP(onPerfEntry);
+    onLCP(onPerfEntry);
+    onTTFB(onPerfEntry);
+
+    // FID is deprecated, use INP instead
+    if (onINP) {
+      onINP(onPerfEntry);
+    }
   }
 };
 

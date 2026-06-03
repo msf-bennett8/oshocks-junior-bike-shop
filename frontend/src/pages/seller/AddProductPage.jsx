@@ -31,7 +31,7 @@ const AddProductPage = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/categories`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/categories`);
         const data = await response.json();
         setCategories(data.data || data);
       } catch (err) {
@@ -495,7 +495,7 @@ const handleSubmit = async () => {
     }
     console.log('Total entries:', formDataEntries.length);
     console.log('=== END FORMDATA DEBUG ===');
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
       const response = await fetch(`${apiUrl}/seller/products`, {
         method: 'POST',
         headers: {

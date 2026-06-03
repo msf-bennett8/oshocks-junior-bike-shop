@@ -183,7 +183,7 @@ const OrderTracker = () => {
       }
 
       // API accepts both order_display (encoded) and order_number (legacy)
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
       const response = await fetch(`${apiUrl}/orders/${encodeURIComponent(searchId)}`);
       
       if (response.ok) {

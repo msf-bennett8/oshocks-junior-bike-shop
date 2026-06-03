@@ -199,7 +199,7 @@ export const registerPushNotifications = async () => {
       }
 
       // Subscribe with VAPID key
-      const vapidPublicKey = process.env.REACT_APP_VAPID_PUBLIC_KEY || 
+      const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY || 
         'BLZWRkpWcYxFT4mCZKXuio9h8kdTasrmT7Bp12NlbKPPRhz-HGYktiX15JCG8qODNdsxtt8fT8GirYUMvOU3VZ0';
       
       const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);

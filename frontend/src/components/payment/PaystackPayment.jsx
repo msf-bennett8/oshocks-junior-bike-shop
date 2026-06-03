@@ -41,7 +41,7 @@ const PaystackPayment = ({ order, email, onSuccess, onError }) => {
 
       // Step 2: Option B - Use inline popup (better UX)
       const paystackConfig = {
-        publicKey: process.env.REACT_APP_PAYSTACK_PUBLIC_KEY,
+        publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
         email: email,
         amount: order.total_amount,
         reference: reference,
@@ -109,7 +109,7 @@ const PaystackPayment = ({ order, email, onSuccess, onError }) => {
       </div>
 
       {/* Test Cards Info (remove in production) */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.DEV && (
         <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
           <p className="font-semibold text-yellow-800">Test Cards:</p>
           <p>Success: 4084084084084081 | CVV: 408 | Exp: 12/25</p>

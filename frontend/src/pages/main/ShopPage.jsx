@@ -215,7 +215,7 @@ const ShopPage = () => {
   useEffect(() => {
     const fetchBrands = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/products/brands`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/products/brands`);
         if (response.ok) {
           const data = await response.json();
           setBrands(data.data || []);
@@ -426,7 +426,7 @@ const ShopPage = () => {
           <p className="text-gray-600 mb-4">{getErrorMessage(error)}</p>
           <p className="text-sm text-gray-500 mb-4">
             Please check your backend connection at:<br />
-            <code className="bg-gray-100 px-2 py-1 rounded">{process.env.REACT_APP_API_URL || 'Not configured'}</code>
+            <code className="bg-gray-100 px-2 py-1 rounded">{import.meta.env.VITE_API_URL || 'Not configured'}</code>
           </p>
           <button 
             onClick={() => {

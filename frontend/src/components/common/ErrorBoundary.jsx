@@ -105,7 +105,7 @@ class ErrorBoundary extends React.Component {
     // This would integrate with your error logging service
     // Example: Sentry, LogRocket, or custom backend endpoint
     try {
-      if (process.env.NODE_ENV === 'production') {
+      if (import.meta.env.PROD) {
         // Example: await fetch('/api/log-error', {
         //   method: 'POST',
         //   headers: { 'Content-Type': 'application/json' },
@@ -388,7 +388,7 @@ ${this.state.errorInfo?.componentStack || 'No component stack available'}
             )}
 
             {/* Development Error Details */}
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <details className="text-left bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                 <summary className="cursor-pointer font-semibold text-red-800 mb-2 hover:text-red-900">
                   ⚠️ Developer Error Details

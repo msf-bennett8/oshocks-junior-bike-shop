@@ -304,7 +304,7 @@ const HomePage = () => {
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Connection Error</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <p className="text-sm text-gray-500 mb-4">
-            Backend server: <code className="bg-gray-100 px-2 py-1 rounded text-xs">{process.env.REACT_APP_API_URL || 'Not configured'}</code>
+            Backend server: <code className="bg-gray-100 px-2 py-1 rounded text-xs">{import.meta.env.VITE_API_URL || 'Not configured'}</code>
           </p>
           <button
             onClick={fetchProducts}

@@ -37,7 +37,7 @@ const OrderDetails = () => {
       } else {
         // Try to fetch from API using order number
         try {
-          const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
           const response = await fetch(`${apiUrl}/orders/${orderNumber}`);
           
           if (response.ok) {

@@ -326,7 +326,7 @@ export const logFrontendAuditEvent = async (eventType, eventData = {}) => {
       user_agent: navigator.userAgent,
       ip_address: window.clientIp || null, // Set by backend on first request
       device_fingerprint: getCanvasFingerprint(),
-      environment: process.env.NODE_ENV,
+      environment: import.meta.env.MODE,
       timestamp: new Date().toISOString(),
       metadata: {
         url: window.location.href,

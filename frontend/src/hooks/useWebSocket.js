@@ -45,7 +45,7 @@ export const useWebSocket = (userId) => {
       auth: {
         headers: authHeaders,
       },
-      authEndpoint: `${process.env.REACT_APP_API_URL?.replace('/api/v1', '')}/broadcasting/auth`,
+      authEndpoint: `${import.meta.env.VITE_API_URL?.replace('/api/v1', '')}/broadcasting/auth`,
     });
 
     // Connection handlers

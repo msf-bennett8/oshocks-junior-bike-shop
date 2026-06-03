@@ -148,7 +148,7 @@ const ProductDetails = () => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
         
         console.log('🔍 Fetching product...');
         console.log('📍 API URL:', apiUrl);
@@ -226,7 +226,7 @@ const ProductDetails = () => {
       
       try {
         setLoadingRelated(true);
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
         
         // Fetch products from same category, excluding current product
         const categoryParam = product.category?.id ? `?category=${product.category.id}` : '';

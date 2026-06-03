@@ -477,7 +477,7 @@ const countyInfo = {
     console.log('💰 Totals:', { subtotal, shippingCost, tax, total });
     
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
       console.log('🔧 API URL:', apiUrl);
         
         // Prepare order data

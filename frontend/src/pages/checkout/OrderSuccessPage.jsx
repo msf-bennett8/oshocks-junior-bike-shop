@@ -192,7 +192,7 @@ const OrderSuccessPage = () => {
     const fetchRecommendedProducts = async () => {
       try {
         setLoadingRecommended(true);
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
         
         // Fetch top-selling or featured accessories
         const response = await fetch(`${apiUrl}/products?category=accessories&limit=4&sort=popularity`);
