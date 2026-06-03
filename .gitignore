@@ -67,3 +67,4 @@ railway-env.txt
 railway-env-variables.txt
 backend/.env.save
 .env.save
+backend/.env.*
