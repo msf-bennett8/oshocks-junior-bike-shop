@@ -10,22 +10,23 @@ import { getGuestDisplayName } from '../utils/guestSession';
 // Base API URL - Railway backend
 import dataSourceManager from './dataSourceManager';
 
-const API_BASE_URL = dataSourceManager.getApiUrl();
+const getApiUrl = () => dataSourceManager.getApiUrl();
 
 console.log('🌐 API Service Initialized');
-console.log('📍 Base URL:', API_BASE_URL);
+console.log('📍 Base URL:', getApiUrl());
 console.log('🔧 Environment:', process.env.NODE_ENV);
 console.log('🔄 Data Source:', dataSourceManager.getCurrentSource().name);
 
-// Listen for data source changes and reload page
+// Listen for data source changes and update baseURL dynamically
 window.addEventListener('data-source-changed', () => {
-  console.log('🔄 Data source changed, reloading...');
-  window.location.reload();
+  const newUrl = getApiUrl();
+  api.defaults.baseURL = newUrl;
+  console.log('🔄 Data source changed, baseURL updated to:', newUrl);
 });
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: getApiUrl(),
   timeout: 30000, // 30 seconds (Railway is faster than Render cold starts)
   withCredentials: true,
   headers: {

@@ -6,6 +6,7 @@ import { useMessaging } from '../../hooks/useMessaging';
 import { useWebRTC } from '../../hooks/useWebRTC';
 import { useAuth } from '../../context/AuthContext';
 import { getGuestSessionId, setGuestProfile, getGuestProfile } from '../../utils/guestSession';
+import dataSourceManager from '../../services/dataSourceManager';
 
 const GlobalChatFAB = ({ excludePaths = [] }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -56,7 +57,7 @@ const GlobalChatFAB = ({ excludePaths = [] }) => {
   useEffect(() => {
     const fetchSupportUser = async () => {
       try {
-        const res = await fetch(`${process.env.REACT_APP_API_URL || 'https://oshocks-backend-production.up.railway.app/api/v1'}/support-user`);
+        const res = await fetch(`${dataSourceManager.getApiUrl()}/support-user`);
         if (res.ok) {
           const data = await res.json();
           if (data.data) {

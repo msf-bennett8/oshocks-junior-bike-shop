@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { v4 as uuidv4 } from 'uuid';
+import dataSourceManager from '../services/dataSourceManager';
 
 // ============================================================================
 // SERVICE HEALTH TRACKING - For THIRD_PARTY_INTEGRATION_RECOVERY detection
@@ -226,7 +227,7 @@ class AuditBatchQueue {
     const batch = this.queue.splice(0, this.maxBatchSize);
     
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+      const apiUrl = dataSourceManager.getApiUrl();
       const token = localStorage.getItem('authToken');
       
       // Send batch to backend audit endpoint
@@ -310,7 +311,7 @@ export const logFrontendAuditEvent = async (eventType, eventData = {}) => {
   }
   
   try {
-    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+    const apiUrl = dataSourceManager.getApiUrl();
     const token = localStorage.getItem('authToken');
     
     // Build event payload per backend specification

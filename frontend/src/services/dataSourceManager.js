@@ -96,19 +96,19 @@ class DataSourceManager {
     if (prodTest.available) {
       return { source: ENVIRONMENTS.PRODUCTION, reason: 'production-only' };
     }
-    return { source: ENVIRONMENTS.PRODUCTION, reason: 'fallback-none-available' };
+    return { source: ENVIRONMENTS.LOCAL, reason: 'fallback-prefer-local' };
   }
 
   getCurrentSource() {
     if (this.currentKey === ENVIRONMENTS.HYBRID) {
-      return this.hybridSource || DEFAULT_SOURCES[ENVIRONMENTS.PRODUCTION];
+      return this.hybridSource || DEFAULT_SOURCES[ENVIRONMENTS.LOCAL];
     }
-    return DEFAULT_SOURCES[this.currentKey] || DEFAULT_SOURCES[ENVIRONMENTS.PRODUCTION];
+        return DEFAULT_SOURCES[this.currentKey] || DEFAULT_SOURCES[ENVIRONMENTS.LOCAL];
   }
 
   getApiUrl() {
     const source = this.getCurrentSource();
-    return source.apiUrl || DEFAULT_SOURCES[ENVIRONMENTS.PRODUCTION].apiUrl;
+    return source.apiUrl || DEFAULT_SOURCES[ENVIRONMENTS.LOCAL].apiUrl;
   }
 
   async switchSource(key) {

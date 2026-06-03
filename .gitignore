@@ -68,3 +68,5 @@ railway-env-variables.txt
 backend/.env.save
 .env.save
 backend/.env.*
+backend/storage/framework/cache/
+backend/storage/framework/sessions/

@@ -1,7 +1,8 @@
 import axios from 'axios';
+import dataSourceManager from './dataSourceManager';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://oshocks-backend-production.up.railway.app/api/v1';
-const CSRF_URL = API_BASE_URL.replace('/api/v1', '/sanctum/csrf-cookie');
+const getApiUrl = () => dataSourceManager.getApiUrl();
+const getCsrfUrl = () => getApiUrl().replace('/api/v1', '/sanctum/csrf-cookie');
 
 let csrfPromise = null;
 
@@ -11,7 +12,7 @@ export const fetchCsrfCookie = async () => {
     return csrfPromise;
   }
 
-  csrfPromise = axios.get(CSRF_URL, {
+  csrfPromise = axios.get(getCsrfUrl(), {
     withCredentials: true
   }).then(() => {
     console.log('🍪 CSRF cookie fetched successfully');
