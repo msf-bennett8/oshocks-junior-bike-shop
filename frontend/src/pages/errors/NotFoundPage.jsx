@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Home, ShoppingBag, Bike, Package, Wrench, Shield, MapPin, ArrowRight, TrendingUp } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import SearchBar from '../../components/common/SearchBar'; 
