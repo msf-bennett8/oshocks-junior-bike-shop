@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -326,7 +325,7 @@ const ListBikePage = () => {
         {STEPS.map((step, idx) => {
           const Icon = step.icon;
           return (
-            <React.Fragment key={step.id}>
+            <Fragment key={step.id}>
               <div className="flex flex-col items-center">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
                   currentStep > step.id ? 'bg-green-500 text-white' :
@@ -342,7 +341,7 @@ const ListBikePage = () => {
               {idx < STEPS.length - 1 && (
                 <div className={`flex-1 h-1 mx-2 rounded-full ${currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'}`} />
               )}
-            </React.Fragment>
+            </Fragment>
           );
         })}
       </div>

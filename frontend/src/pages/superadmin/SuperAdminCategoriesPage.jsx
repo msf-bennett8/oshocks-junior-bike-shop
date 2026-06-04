@@ -1,4 +1,3 @@
-import React from 'react';
 import { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, Eye, EyeOff, ChevronRight, ChevronDown, Filter, Download, Upload, AlertCircle, Check, X } from 'lucide-react';
 
@@ -536,7 +535,7 @@ const SuperAdminCategoriesPage = () => {
     const isSelected = selectedCategories.has(category.id);
 
     return (
-      <React.Fragment key={category.id}>
+      <Fragment key={category.id}>
         <tr className={`border-b hover:bg-gray-50 ${!category.isActive ? 'opacity-60' : ''}`}>
           <td className="px-4 py-3">
             <input
@@ -626,7 +625,7 @@ const SuperAdminCategoriesPage = () => {
         {hasChildren && isExpanded && category.children.map(child => 
           renderCategoryRow(child, level + 1)
         )}
-      </React.Fragment>
+      </Fragment>
     );
   };
 

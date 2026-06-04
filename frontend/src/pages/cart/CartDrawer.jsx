@@ -1,4 +1,3 @@
-import React from 'react';
 import { useEffect } from 'react';
 import { X, ShoppingCart, Plus, Minus, Trash2, ArrowRight } from 'lucide-react';
 
@@ -189,8 +188,8 @@ const CartDrawer = ({ isOpen, onClose, cartItems, onUpdateQuantity, onRemoveItem
 
 // Demo Component with Sample Data
 const CartDrawerDemo = () => {
-  const [isOpen, setIsOpen] = React.useState(true);
-  const [cartItems, setCartItems] = React.useState([
+  const [isOpen, setIsOpen] = useState(true);
+  const [cartItems, setCartItems] = useState([
     {
       id: 1,
       name: 'Mountain Bike Pro X1',

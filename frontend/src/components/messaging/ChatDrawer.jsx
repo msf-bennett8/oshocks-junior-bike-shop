@@ -1,4 +1,3 @@
-import React from 'react';
 // ============================================================================
 // CHAT DRAWER — Responsive: Desktop Split-Pane | Mobile WhatsApp-Style
 // ============================================================================
@@ -44,7 +43,7 @@ const ChatDrawer = ({ isOpen, onClose, onStartCall, entryPoint = 'support' }) =>
   } = useMessaging(user?.id);
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024;
-  const [view, setView] = React.useState('list'); // 'list' | 'thread' — mobile only
+  const [view, setView] = useState('list'); // 'list' | 'thread' — mobile only
   const [showCreateCase, setShowCreateCase] = useState(false);
 
   // ─── SPLIT-PANE STATE ───

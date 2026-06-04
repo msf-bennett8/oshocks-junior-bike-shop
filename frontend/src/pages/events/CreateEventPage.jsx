@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -439,7 +438,7 @@ const CreateEventPage = () => {
     <div className="mb-8">
       <div className="flex items-center justify-between max-w-2xl mx-auto">
         {STEPS.map((step, idx) => (
-          <React.Fragment key={step.id}>
+          <Fragment key={step.id}>
             <div className="flex flex-col items-center">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
                 currentStep > step.id ? 'bg-green-500 text-white' :
@@ -457,7 +456,7 @@ const CreateEventPage = () => {
                 currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
               }`} />
             )}
-          </React.Fragment>
+          </Fragment>
         ))}
       </div>
     </div>

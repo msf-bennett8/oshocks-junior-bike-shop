@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import {
   User,
   Mail,
@@ -263,7 +262,7 @@ const CheckoutForm = ({
       <div className="mb-8">
         <div className="flex items-center justify-between">
           {steps.map((step, index) => (
-            <React.Fragment key={step.number}>
+            <Fragment key={step.number}>
               <div className="flex flex-col items-center flex-1">
                 <div
                   className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all ${
@@ -296,7 +295,7 @@ const CheckoutForm = ({
                   style={{ marginBottom: '2rem' }}
                 />
               )}
-            </React.Fragment>
+            </Fragment>
           ))}
         </div>
       </div>

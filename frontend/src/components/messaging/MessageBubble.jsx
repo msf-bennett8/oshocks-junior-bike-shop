@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { Reply, Pencil, Trash2, Check, CheckCheck, Phone, Paperclip } from 'lucide-react';
 import Avatar from '../common/Avatar';
 
-const MessageBubble = React.memo(({
+const MessageBubble = memo(({
   message,
   isOwn,
   showAvatar = true,

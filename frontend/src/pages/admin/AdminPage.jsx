@@ -1,4 +1,3 @@
-import React from 'react';
 import { useState } from 'react';
 import { 
   LayoutDashboard, Package, ShoppingCart, Users, Settings, 
@@ -383,7 +382,7 @@ const AdminPage = () => {
             <div className="max-w-md mx-auto">
               <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 {menuItems.find(item => item.id === currentPage)?.icon && 
-                  React.createElement(menuItems.find(item => item.id === currentPage).icon, { size: 40, className: 'text-blue-600' })
+                  (() => { const CurrentIcon = menuItems.find(item => item.id === currentPage)?.icon; return CurrentIcon ? <CurrentIcon size={40} className="text-blue-600" /> : null; })()
                 }
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">

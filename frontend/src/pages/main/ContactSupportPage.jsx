@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Mail, Phone, MessageCircle, MapPin, Clock, Send, Loader, CheckCircle,
   AlertCircle, User, HelpCircle, Package, CreditCard, Truck, Shield,
@@ -55,7 +54,7 @@ const ContactSupportPage = () => {
   const [attachmentPreview, setAttachmentPreview] = useState(null);
   const [attachmentError, setAttachmentError] = useState(null);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
-  const fileInputRef = React.useRef(null);
+  const fileInputRef = useRef(null);
 
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
   const ALLOWED_TYPES = [

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useState } from 'react';
 import { Plus, Edit2, Trash2, Eye, EyeOff, Search, Filter, ChevronDown, ChevronRight, Package, Image, Save, X } from 'lucide-react';
 
@@ -282,7 +281,7 @@ const SuperAdminManageCategories = () => {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredCategories.map((category) => (
-                  <React.Fragment key={category.id}>
+                  <Fragment key={category.id}>
                     <tr className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -413,7 +412,7 @@ const SuperAdminManageCategories = () => {
                         </td>
                       </tr>
                     ))}
-                  </React.Fragment>
+                  </Fragment>
                 ))}
               </tbody>
             </table>

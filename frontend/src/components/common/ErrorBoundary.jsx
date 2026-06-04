@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { useAudit } from '../../hooks/useAudit';
 import { logFrontendAuditEvent } from '../../utils/auditUtils';
 
-class ErrorBoundary extends React.Component {
+class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
     this.state = {

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useState, useEffect } from 'react';
 import { 
   Search, Filter, Download, MoreVertical, Eye, Edit2, Trash2, 
@@ -775,7 +774,7 @@ const SuperAdminOrdersPage = () => {
                   const isExpanded = expandedOrder === order.id;
                   
                   return (
-                    <React.Fragment key={order.id}>
+                    <Fragment key={order.id}>
                       <tr className="hover:bg-gray-50">
                         <td className="px-4 py-4">
                           <input
@@ -1043,7 +1042,7 @@ const SuperAdminOrdersPage = () => {
                           </td>
                         </tr>
                       )}
-                    </React.Fragment>
+                    </Fragment>
                   );
                 })
               ) : (
