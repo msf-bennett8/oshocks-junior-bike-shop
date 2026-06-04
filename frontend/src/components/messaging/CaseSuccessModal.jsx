@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { CheckCircle, Copy, X, MessageCircle } from 'lucide-react';
 
 const CaseSuccessModal = ({ caseId, message, onClose, onViewChat }) => {

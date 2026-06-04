@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Heart, ShoppingCart, Share2, X, Eye, Filter, SortAsc, Grid, List, Trash2, Tag, TrendingUp, Clock, DollarSign, Package, CheckCircle, AlertCircle, Copy, Facebook, Twitter, Mail, MessageCircle, Download, Plus, Minus, Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import toast, { Toaster } from 'react-hot-toast';

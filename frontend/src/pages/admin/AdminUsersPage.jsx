@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Filter, UserPlus, MoreVertical, Mail, Phone, MapPin, Calendar, Shield, ShoppingBag, Ban, CheckCircle, Edit, Trash2, Eye, Download, Store, User, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import userService from '../../services/userService';

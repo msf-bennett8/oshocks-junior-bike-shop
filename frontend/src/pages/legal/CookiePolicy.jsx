@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Cookie, Shield, Settings, BarChart3, MessageSquare, CreditCard, ChevronDown, ChevronUp, ArrowLeft, ExternalLink, Info } from 'lucide-react';
 
 const CookiePolicy = () => {

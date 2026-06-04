@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Tag, Heart, ShoppingCart, Filter, TrendingDown, Clock, Package, Star, ChevronDown, X, ArrowRight, Zap, Award, Shield, Truck, Search, Grid, List, SlidersHorizontal, Phone, Mail, MapPin } from 'lucide-react';
 
 const ClearanceSalePage = () => {

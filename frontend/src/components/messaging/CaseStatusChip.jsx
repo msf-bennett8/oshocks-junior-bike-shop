@@ -1,4 +1,3 @@
-import React from 'react';
 
 const statusConfig = {
   new: { label: 'New', bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-200', dot: 'bg-gray-400' },

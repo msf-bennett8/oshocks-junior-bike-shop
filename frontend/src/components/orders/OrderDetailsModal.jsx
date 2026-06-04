@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { X, Package, Truck, CheckCircle, Clock, MapPin, CreditCard, Calendar, Box, Star, RefreshCw } from 'lucide-react';
 
 const OrderDetailsModal = ({ order, isOpen, onClose }) => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, Edit2, Trash2, Search, Filter, Mail, Phone, MapPin, ShoppingBag, DollarSign, Calendar, Eye, Ban, CheckCircle, X, Save, UserPlus, Download, Upload } from 'lucide-react';
 
 const SuperAdminManageUsers = () => {

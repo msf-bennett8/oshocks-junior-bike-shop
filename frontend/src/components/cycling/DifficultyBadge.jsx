@@ -1,4 +1,3 @@
-import React from 'react';
 import { DIFFICULTY_CONFIG } from '../../data/cyclingMockData';
 
 const DifficultyBadge = ({ difficulty, size = 'md', showLabel = true }) => {

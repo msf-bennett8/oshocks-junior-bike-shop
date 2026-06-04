@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import bookingService from '../../services/bookingService';
 import { getGuestSessionId, setGuestProfile, getGuestProfile } from '../../utils/guestSession';

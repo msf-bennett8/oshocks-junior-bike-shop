@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, Smartphone, Shield, AlertCircle, CheckCircle, XCircle, Clock, RefreshCw, Lock, ArrowLeft, Info, DollarSign, Wallet } from 'lucide-react';

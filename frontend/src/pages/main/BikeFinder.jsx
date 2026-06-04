@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Bike, Filter, X, Users, Mountain, Zap, Baby, Heart, ShoppingCart, Star, TrendingUp, CheckCircle, AlertCircle, Sliders, Truck, Shield, RotateCcw, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
 
 const BikeFinder = () => {

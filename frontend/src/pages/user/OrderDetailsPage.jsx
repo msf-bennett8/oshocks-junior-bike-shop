@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Package, Truck, CheckCircle, Clock, MapPin, Phone, Mail, Download, MessageSquare, AlertCircle, ChevronRight, Calendar, CreditCard, User, Home, Star, ArrowLeft, RefreshCw, XCircle, Copy } from 'lucide-react';
 import { useMessaging } from '../../hooks/useMessaging';

@@ -5,7 +5,7 @@
 // Mobile (<1024px): WhatsApp-style — list → tap → thread → back button
 // ============================================================================
 
-import React, { useEffect, useCallback, useRef, useState } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import ConversationList from './ConversationList';
 import MessageThread from './MessageThread';
 import CaseCreateModal from './CaseCreateModal';

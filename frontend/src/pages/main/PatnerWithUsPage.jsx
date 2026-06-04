@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Store, TrendingUp, X, Users, Package, Shield, CreditCard, Truck, BarChart3, Headphones, Zap, CheckCircle, ArrowRight, Mail, Phone, MapPin, Clock, Award, Target, DollarSign, Globe, Briefcase, MessageSquare, FileText, Star, Heart, ThumbsUp } from 'lucide-react';
 
 const PartnerWithUsPage = () => {

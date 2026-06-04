@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { RotateCcw, Package, CheckCircle, XCircle, Clock, AlertTriangle, TruckIcon, Shield, ArrowLeft, Info, PackageCheck, PackageX, Calendar, DollarSign } from 'lucide-react';
 
 const ReturnPolicy = () => {

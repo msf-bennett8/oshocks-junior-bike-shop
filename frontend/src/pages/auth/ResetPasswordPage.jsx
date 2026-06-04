@@ -1,5 +1,5 @@
 //src/frontend/src/pages/auth/ResetPasswordPae.js
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDeviceFingerprint } from '../../hooks/useDeviceFingerprint';
 import { Lock, Eye, EyeOff, AlertCircle, Loader, CheckCircle, X, Shield, AlertTriangle, Check } from 'lucide-react';

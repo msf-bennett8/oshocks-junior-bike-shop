@@ -2,7 +2,7 @@
 // CREATE CHAT MODAL — Search users + New Support Case + Order Context
 // ============================================================================
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import supportCaseService from '../../services/supportCaseService';

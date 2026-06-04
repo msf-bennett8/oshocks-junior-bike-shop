@@ -3,7 +3,7 @@
 // Tabs: Details | Conversation | History | Notes
 // ============================================================================
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBookings } from '../../hooks/useBookings';
 import api from '../../services/api';

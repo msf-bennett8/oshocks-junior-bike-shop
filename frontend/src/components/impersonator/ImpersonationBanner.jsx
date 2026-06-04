@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Eye, LogOut, Shield } from 'lucide-react';
 import { logFrontendAuditEvent, AUDIT_EVENTS } from '../../utils/auditUtils';
 

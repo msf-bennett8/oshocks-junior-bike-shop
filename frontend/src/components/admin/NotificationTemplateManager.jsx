@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Plus, Copy, Trash2, Edit2, Eye, Save, X, 
   Search, Filter, RefreshCw, CheckCircle, AlertCircle 

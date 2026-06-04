@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Search, Calendar, User, Tag, ArrowRight, TrendingUp, Book, Wrench, MapPin } from 'lucide-react';
 
 const BlogPage = () => {

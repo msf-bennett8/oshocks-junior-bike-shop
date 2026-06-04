@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Calendar, Users, ArrowRight, Bike } from 'lucide-react';
 

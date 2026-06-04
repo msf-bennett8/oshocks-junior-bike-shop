@@ -1,5 +1,5 @@
 // frontend/src/components/legal/LegalDocumentBottomSheet.jsx
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { getLegalDocumentContent, trackDocumentOpened, trackDocumentScrolledToBottom } from '../../utils/legalTracker';

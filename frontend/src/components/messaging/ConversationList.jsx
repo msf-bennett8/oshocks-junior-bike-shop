@@ -2,7 +2,7 @@
 // CONVERSATION LIST — Sidebar with search, unread badges, previews, archive, pin
 // ============================================================================
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Search, Archive, Pin, MoreVertical, Trash2, Phone, Video, Inbox, Headphones, AlertCircle, ShoppingBag, Mail, Clock, Truck, Wrench, MessageSquare, CreditCard, Package, RotateCcw, Cpu, HelpCircle } from 'lucide-react';
 import Avatar from '../common/Avatar';
 import ProfilePreviewModal from '../common/ProfilePreviewModal';

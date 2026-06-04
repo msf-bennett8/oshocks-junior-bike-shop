@@ -1,5 +1,5 @@
 //frontend/src/pages/auth/GoogleCallback.jsx
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Loader, AlertCircle, CheckCircle } from 'lucide-react';

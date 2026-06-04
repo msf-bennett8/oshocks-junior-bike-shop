@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import cardPaymentService from '../../services/cardPaymentService';
 
 const PaystackPayment = ({ order, email, onSuccess, onError }) => {

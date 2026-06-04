@@ -1,4 +1,3 @@
-import React from 'react';
 import { CaseStatusChip } from './CaseStatusChip';
 import { ClipboardCopy, AlertTriangle, CheckCircle, Package, Wrench, Mail, User, Truck, MessageSquare, CreditCard, RotateCcw, Cpu, HelpCircle } from 'lucide-react';
 

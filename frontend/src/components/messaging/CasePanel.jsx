@@ -4,7 +4,7 @@
 // Modeled after AppointmentPanel.jsx
 // ============================================================================
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useSupportCases } from '../../hooks/useSupportCases';
 import { useMessaging } from '../../hooks/useMessaging';

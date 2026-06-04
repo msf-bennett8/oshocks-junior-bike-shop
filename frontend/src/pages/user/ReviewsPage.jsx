@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Star, ThumbsUp, ThumbsDown, CheckCircle, AlertCircle, Camera, X, Filter, ChevronDown, Search, TrendingUp, Award, Users, MessageSquare, Image as ImageIcon, Upload } from 'lucide-react';
 
 const ReviewPage = () => {

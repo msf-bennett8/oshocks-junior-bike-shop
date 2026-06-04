@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AlertTriangle, Shield, CheckCircle, ChevronDown, ChevronUp, AlertCircle, Lock, Package, CreditCard, Users } from 'lucide-react';
 
 const Safety = () => {

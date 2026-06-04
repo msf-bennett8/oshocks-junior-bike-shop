@@ -1,4 +1,3 @@
-import React from 'react';
 
 const SeatAvailability = ({ current, max, size = 'md' }) => {
   const remaining = max - current;

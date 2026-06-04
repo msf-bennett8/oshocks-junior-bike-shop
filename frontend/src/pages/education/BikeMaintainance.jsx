@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Wrench, Calendar, CheckCircle, AlertTriangle, Search, Filter, Clock, Video, FileText, Download, Share2, Bookmark, ChevronDown, ChevronUp, Settings, Droplet, Cog, Gauge } from 'lucide-react';
 
 const BikeMaintenance = () => {

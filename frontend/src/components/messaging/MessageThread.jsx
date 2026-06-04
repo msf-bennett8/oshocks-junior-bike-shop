@@ -4,7 +4,7 @@
 // Features: Read receipts, reply-to, edit, delete, reactions, typing indicator
 // ============================================================================
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import MessageBubble from './MessageBubble';
 import CaseThreadHeader from './CaseThreadHeader';
 import CaseCreateModal from './CaseCreateModal';

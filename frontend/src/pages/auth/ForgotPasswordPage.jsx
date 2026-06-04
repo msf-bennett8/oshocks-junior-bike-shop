@@ -1,5 +1,5 @@
 //src/frontend/src/pages/auth/ForgotPasswordPage.js
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDeviceFingerprint } from '../../hooks/useDeviceFingerprint';
 import { Mail, AlertCircle, Loader, CheckCircle, ArrowLeft, Send, Clock, RefreshCw } from 'lucide-react';

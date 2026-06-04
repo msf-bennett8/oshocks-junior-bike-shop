@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   MapPin, Plus, Edit2, Trash2, Check, X, Home, Briefcase, Navigation,
   Search, Star, Clock, Copy,

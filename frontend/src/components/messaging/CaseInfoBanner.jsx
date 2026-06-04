@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { CaseStatusChip } from './CaseStatusChip';
 import { useAuth } from '../../context/AuthContext';
 import { Target, CheckCircle, AlertTriangle, Lock } from 'lucide-react';

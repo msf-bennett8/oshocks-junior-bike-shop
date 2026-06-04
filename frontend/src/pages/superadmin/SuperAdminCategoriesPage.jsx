@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, Eye, EyeOff, ChevronRight, ChevronDown, Filter, Download, Upload, AlertCircle, Check, X } from 'lucide-react';
 
 const SuperAdminCategoriesPage = () => {

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Bike, Store, Users, Globe, Shield, Zap } from 'lucide-react';
 
 const AboutPage = () => {

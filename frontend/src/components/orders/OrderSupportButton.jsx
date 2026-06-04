@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Headphones, MessageSquare, Loader2 } from 'lucide-react';
 import CreateChatModal from '../messaging/CreateChatModal';
 

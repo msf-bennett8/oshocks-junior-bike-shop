@@ -1,7 +1,7 @@
 // src/components/common/DraggableDataSourceToggle.jsx
 // Exact Accella Analytics style — rounded-lg container, tinted active button, gray inactive
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Server, TrainFront, Shuffle, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import dataSourceManager, { ENVIRONMENTS, DEFAULT_SOURCES } from '../../services/dataSourceManager';
 import toast from 'react-hot-toast';

@@ -2,7 +2,7 @@
 // AVATAR COMPONENT — Smart fallback: Google avatar → user avatar → initials → default
 // ============================================================================
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 const COLORS = [
   'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-orange-500',

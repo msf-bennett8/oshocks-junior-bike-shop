@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, Minus, Trash2, Heart, Package, AlertCircle } from 'lucide-react';
 
 /**

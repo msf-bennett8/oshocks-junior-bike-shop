@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Gift, ShoppingCart, Calendar, Mail, User, MessageSquare, Check, CreditCard, Smartphone, Search, Copy, CheckCircle, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
 const GiftCards = () => {

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Clock, Users, Bike, ArrowRight, Heart } from 'lucide-react';
 import DifficultyBadge from './DifficultyBadge';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { CaseStatusChip } from './CaseStatusChip';
 
 export const SupportCaseBadge = ({ supportCase, compact = false }) => {

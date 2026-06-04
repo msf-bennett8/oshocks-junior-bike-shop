@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Bell, X, Check, Trash2, Settings, Mail, 
   ShoppingBag, Truck, DollarSign, AlertCircle, Info, Package,

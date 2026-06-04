@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Settings, Store, Bell, CreditCard, Truck, Mail, Shield, Globe, Image, DollarSign, Package, Users, Save, Upload, Eye, EyeOff, AlertCircle, CheckCircle, Smartphone } from 'lucide-react';
 
 const AdminSettingsPage = () => {

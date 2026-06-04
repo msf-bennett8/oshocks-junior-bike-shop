@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, MessageCircle, MapPin, TrendingUp, Clock } from 'lucide-react';
 

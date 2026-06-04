@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { X, Download, ExternalLink, FileText, Image, File, Music, Video } from 'lucide-react';
 
 const AttachmentViewerModal = ({ attachment, message, onClose, onReply }) => {

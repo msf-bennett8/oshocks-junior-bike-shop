@@ -1,4 +1,3 @@
-import React from 'react';
 import DraggableDataSourceToggle from './DraggableDataSourceToggle';
 
 const DataSourceToggleWrapper = () => {

@@ -2,7 +2,7 @@
 // CALL OVERLAY — Incoming call popup + active call screen
 // ============================================================================
 
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import Avatar from '../common/Avatar';
 
 const CallOverlay = ({

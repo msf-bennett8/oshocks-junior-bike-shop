@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Cookie, X, Shield, Settings } from 'lucide-react';
 import { logFrontendAuditEvent, AUDIT_EVENTS } from '../utils/auditUtils';
 

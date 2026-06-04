@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { X, Search, Filter, MapPin, Star, Shield, Check, Bike, ArrowRight, Heart, Clock, Info } from 'lucide-react';
 import bikeService from '../../services/bikeService';
 import { BIKE_CATEGORY_CONFIG, FRAME_SIZE_CONFIG } from '../../data/cyclingMockData';

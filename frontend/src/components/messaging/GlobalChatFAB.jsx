@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { MessageCircle, Phone, X, Mail, ChevronRight, User } from 'lucide-react';
 import ChatDrawer from './ChatDrawer';
 import CallOverlay from './CallOverlay';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Heart, ShoppingCart, Share2, X, Eye, Filter, SortAsc, Grid, List, Trash2, Tag, TrendingUp, Clock, DollarSign, Package, CheckCircle, AlertCircle, Copy, Facebook, Twitter, Mail, MessageCircle, Download, Plus, Minus, Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';

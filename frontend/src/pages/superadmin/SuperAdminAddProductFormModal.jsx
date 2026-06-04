@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Upload, ImageIcon, Loader, AlertCircle, Check, Plus, Trash2 } from 'lucide-react';
 
 const SuperAdminAddProductFormModal = ({ 

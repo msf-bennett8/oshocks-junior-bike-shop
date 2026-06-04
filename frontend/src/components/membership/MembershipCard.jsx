@@ -1,4 +1,3 @@
-import React from 'react';
 import { Check, Zap, Crown, Star, Bike } from 'lucide-react';
 import { MOCK_MEMBERSHIP_PLANS } from '../../data/cyclingMockData';
 

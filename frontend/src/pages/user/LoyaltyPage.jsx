@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Award, Gift, TrendingUp, History, Star, Crown, 
   ChevronRight, Lock, CheckCircle, AlertCircle,

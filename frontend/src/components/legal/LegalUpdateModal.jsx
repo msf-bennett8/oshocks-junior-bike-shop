@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FileText, Shield, Cookie, ChevronRight } from 'lucide-react';
 import ReadOnlyLegalModal from './ReadOnlyLegalModal';
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Sparkles, Heart, ShoppingCart, Star, TrendingUp, Package, Shield, Truck, Search, Grid, List, SlidersHorizontal, X, ArrowRight, Zap, Award, Eye, Bell, Mail, CheckCircle, ChevronDown } from 'lucide-react';
 
 const NewArrivalsPage = () => {

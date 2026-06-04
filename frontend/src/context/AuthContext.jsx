@@ -1,5 +1,5 @@
 // frontend/src/context/AuthContext.js
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../services/authService';
 import api from '../services/api';
 import { useDeviceFingerprint } from '../hooks/useDeviceFingerprint';

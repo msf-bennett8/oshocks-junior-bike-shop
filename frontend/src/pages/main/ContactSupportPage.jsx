@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Mail, Phone, MessageCircle, MapPin, Clock, Send, Loader, CheckCircle,
   AlertCircle, User, HelpCircle, Package, CreditCard, Truck, Shield,

@@ -2,7 +2,7 @@
 // PROFILE PREVIEW MODAL — Hover tooltip showing user profile overview
 // ============================================================================
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Avatar from './Avatar';
 import { Mail, Phone, Shield, User, X } from 'lucide-react';
 
