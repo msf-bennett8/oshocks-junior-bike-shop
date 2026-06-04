@@ -1,0 +1,57 @@
+#!/bin/bash
+
+PIDFILE="/tmp/php-artisan-serve.pid"
+LOGFILE="/tmp/php-artisan-serve.log"
+BACKEND_DIR="/home/msf_bennett/studio.dev/oshocks/backend"
+
+case "$1" in
+  start)
+    if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
+      echo "PHP artisan serve is already running (PID: $(cat $PIDFILE))"
+      exit 0
+    fi
+    echo "Starting PHP artisan serve on http://0.0.0.0:8000..."
+    cd "$BACKEND_DIR" || exit 1
+    nohup php artisan serve --host=0.0.0.0 --port=8000 > "$LOGFILE" 2>&1 &
+    echo $! > "$PIDFILE"
+    sleep 2
+    echo "Started (PID: $(cat $PIDFILE))"
+    ;;
+  stop)
+    if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
+      echo "Stopping PHP artisan serve (PID: $(cat $PIDFILE))..."
+      kill $(cat "$PIDFILE") 2>/dev/null
+      rm -f "$PIDFILE"
+      echo "Stopped"
+    else
+      echo "PHP artisan serve is not running"
+      rm -f "$PIDFILE"
+    fi
+    ;;
+  status)
+    if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
+      echo "Running (PID: $(cat $PIDFILE)) — http://0.0.0.0:8000"
+    else
+      echo "Not running"
+      rm -f "$PIDFILE" 2>/dev/null
+    fi
+    ;;
+  restart)
+    $0 stop
+    sleep 1
+    $0 start
+    ;;
+  clear)
+    echo "Clearing caches..."
+    cd "$BACKEND_DIR" || exit 1
+    php artisan cache:clear
+    php artisan config:clear
+    php artisan route:clear
+    php artisan view:clear
+    echo "Caches cleared"
+    ;;
+  *)
+    echo "Usage: php artisan serve {start|stop|status|restart|clear}"
+    exit 1
+    ;;
+esac

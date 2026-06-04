@@ -1,0 +1,49 @@
+#!/bin/bash
+
+case "$1" in
+  start)
+    if pgrep -x "mariadbd" > /dev/null || pgrep -x "mysqld" > /dev/null; then
+      echo "MariaDB is already running"
+      exit 0
+    fi
+    echo "Starting MariaDB..."
+    sudo mariadbd-safe --datadir=/var/lib/mysql &
+    sleep 2
+    ps aux | grep -E "mariadb|mysqld" | grep -v grep
+    ;;
+  stop)
+    echo "Stopping MariaDB..."
+    sudo pkill -f mariadbd-safe
+    sudo pkill -f mysqld_safe
+    sudo killall mysqld mariadbd 2>/dev/null
+    sleep 2
+    echo "MariaDB stopped"
+    ;;
+  status)
+    if pgrep -x "mariadbd" > /dev/null || pgrep -x "mysqld" > /dev/null; then
+      echo "MariaDB is running"
+      ps aux | grep -E "mariadb|mysqld" | grep -v grep
+    else
+      echo "MariaDB is NOT running"
+    fi
+    ;;
+  restart)
+    $0 stop
+    sleep 2
+    $0 start
+    ;;
+  clear)
+    echo "Clearing MariaDB caches..."
+    # Add any cache clearing commands here if needed
+    echo "Caches cleared"
+    ;;
+  clear-restart)
+    $0 clear
+    sleep 1
+    $0 restart
+    ;;
+  *)
+    echo "Usage: mariadb control.sh {start|stop|status|restart|clear|clear-restart}"
+    exit 1
+    ;;
+esac
