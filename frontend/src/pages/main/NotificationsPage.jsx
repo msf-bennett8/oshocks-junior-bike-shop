@@ -29,18 +29,18 @@ import { logFrontendAuditEvent, AUDIT_EVENTS } from '../../utils/auditUtils';
 // ICON MAPPING - Map string names to actual icon components
 // ============================================================================
 const iconMap = {
-  TrendingDown, Users, Zap, AlertTriangle, PackageCheck, FileText, Shield,
+  TrendingDown, Users, Zap, AlertTriangle, PackageCheck, Shield,
   Megaphone, Wallet, Heart, AlertCircle, Store, Star, Bell, ShoppingBag,
   Truck, CreditCard, Tag, MessageSquare, Gift, CheckCircle, X, Settings,
   Trash2, MailOpen, Clock, ArrowLeft, Sparkles, Archive, Volume2, VolumeX,
   Smartphone, Mail, CheckSquare, Square, RefreshCw, Download, BellRing,
   MapPin, TrendingUp, User, Calendar, Clock3, CheckCheck, Trash, ExternalLink,
-  Pin, PinOff, History, Boxes, Receipt, BarChart3, Package, PackageX,
+  History, Boxes, Receipt, BarChart3, Package, PackageX,
   PackageOpen, Clock4, Timer, CalendarDays, ArrowUpRight, ArrowDownRight,
   MoreVertical, Flag, Bookmark, BookmarkX, Send, Reply, ThumbsUp, ThumbsDown,
   LayoutGrid, List, Search, Filter, ChevronDown, MoreHorizontal, Eye,
-  ChevronRight, Share2, Printer, Copy, XCircle, Info, FileText, TruckIcon,
-  Check, Pin, PinOff
+  ChevronRight, Share2, Printer, Copy, XCircle, Info, TruckIcon,
+  Check
 };
 
 const NotificationsPage = () => {

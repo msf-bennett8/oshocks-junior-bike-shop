@@ -140,16 +140,6 @@ class ErrorBoundary extends React.Component {
     }
   };
 
-  getErrorSeverity = (errorDetails) => {
-    const category = this.getErrorCategory({ message: errorDetails.message });
-    switch (category) {
-      case 'chunk': return 'high';
-      case 'network': return 'medium';
-      case 'resize-observer': return 'low';
-      default: return 'medium';
-    }
-  };
-
   logErrorToAuditService = async (errorDetails) => {
     // Log to backend audit system
     try {

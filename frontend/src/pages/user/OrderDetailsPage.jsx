@@ -167,7 +167,6 @@ const OrderDetails = () => {
       shipping: shippingCost,
       tax: tax, // Set to 0 as per VAT exemption
       discount: discount,
-      totalAmount: total,
       paymentMethod: orderInfo.payment?.method || 'N/A',
       paymentStatus: isPending ? 'pending' : 'paid',
       mpesaCode: orderInfo.purchaseId || orderInfo.purchase_id

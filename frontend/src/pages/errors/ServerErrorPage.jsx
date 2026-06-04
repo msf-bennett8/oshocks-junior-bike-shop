@@ -36,7 +36,6 @@ const ServerErrorPage = () => {
       metadata: {
         error_code: errorCode,
         http_status: 500,
-        error_code: errorCode,
         error_message: 'Server error occurred',
         user_agent: navigator.userAgent,
         page_url: window.location.href,
