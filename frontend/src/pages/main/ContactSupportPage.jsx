@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import {
   Mail, Phone, MessageCircle, MapPin, Clock, Send, Loader, CheckCircle,

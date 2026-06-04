@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState } from 'react';
 import { Briefcase, MapPin, Clock, DollarSign, Users, TrendingUp, Heart, Award, ChevronRight, Search, Filter, X } from 'lucide-react';
 

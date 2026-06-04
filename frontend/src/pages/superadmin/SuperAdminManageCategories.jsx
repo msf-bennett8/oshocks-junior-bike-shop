@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState } from 'react';
 import { Plus, Edit2, Trash2, Eye, EyeOff, Search, Filter, ChevronDown, ChevronRight, Package, Image, Save, X } from 'lucide-react';
 

@@ -1,3 +1,4 @@
+import React, { Component } from 'react';
 import { useAudit } from '../../hooks/useAudit';
 import { logFrontendAuditEvent } from '../../utils/auditUtils';
 

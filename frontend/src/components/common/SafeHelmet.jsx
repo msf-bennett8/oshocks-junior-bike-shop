@@ -1,3 +1,4 @@
+import React from 'react';
 // src/components/common/SafeHelmet.js
 import { Helmet } from 'react-helmet-async';
 import PropTypes from 'prop-types';
