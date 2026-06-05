@@ -170,6 +170,8 @@ const EventsModerationPage = lazy(() => import('./pages/admin/EventsModerationPa
 const BikeListingModerationPage = lazy(() => import('./pages/admin/BikeListingModerationPage'));
 const CustomRideModerationPage = lazy(() => import('./pages/admin/CustomRideModerationPage'));
 const MyCustomRidesPage = lazy(() => import('./pages/user/MyCustomRidesPage'));
+const MyBikeListingsPage = lazy(() => import('./pages/user/MyBikeListingsPage'));
+const MyBikeHiresPage = lazy(() => import('./pages/user/MyBikeHiresPage'));
 
 // Education Pages
 const Careers = lazy(() => import('./pages/education/Careers'));
@@ -738,6 +740,24 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <MyCustomRidesPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/my-bikes"
+                  element={
+                    <ProtectedRoute>
+                      <MyBikeListingsPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/my-bike-hires"
+                  element={
+                    <ProtectedRoute>
+                      <MyBikeHiresPage />
                     </ProtectedRoute>
                   }
                 />

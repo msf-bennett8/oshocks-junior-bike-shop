@@ -8,7 +8,7 @@ import {
   ShoppingCart, DollarSign, TrendingDown, Calendar, FileText, Download, 
   BarChart3, PieChart, ArrowUpRight, ArrowDownRight, Filter, Search, 
   RefreshCw, Settings, ChevronRight, AlertCircle, Bookmark, Target,
-  Percent, Tag, Box, Headphones, Share2, ExternalLink, Phone, ChevronLeft
+  Percent, Tag, Box, Headphones, Share2, ExternalLink, Phone, ChevronLeft, Bike
 } from 'lucide-react';
 
 const UserDashboard = () => {
@@ -742,6 +742,10 @@ const UserDashboard = () => {
               <div className="space-y-2">
                 {[
                   { label: 'My Orders', sublabel: 'Track & manage', icon: Package, color: 'blue', link: '/orders' },
+                  { label: 'My Bike Listings', sublabel: 'Bikes for rent', icon: Bike, color: 'indigo', link: '/my-bikes' },
+                  { label: 'My Custom Rides', sublabel: 'Ride requests', icon: MapPin, color: 'purple', link: '/my-rides' },
+                  { label: 'All Events', sublabel: 'Cycling events', icon: Calendar, color: 'orange', link: '/events' },
+                  { label: 'My Bike Hires', sublabel: 'Rental bookings', icon: DollarSign, color: 'green', link: '/my-bike-hires' },
                   { label: 'Account Settings', sublabel: 'Update profile', icon: User, color: 'green', link: '/settings' },
                   { label: 'Addresses', sublabel: 'Manage locations', icon: MapPin, color: 'purple', link: '/addresses' },
                   { label: 'My Reviews', sublabel: 'View feedback', icon: MessageSquare, color: 'yellow', link: '/reviews' },

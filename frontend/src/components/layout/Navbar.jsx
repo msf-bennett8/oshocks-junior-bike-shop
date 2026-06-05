@@ -942,6 +942,92 @@ const Navbar = () => {
                       </div>
                     )}
 
+                                        {/* My Activities — Expandable Dropdown */}
+                    {isAuthenticated && (
+                      <div className="relative">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const submenu = e.currentTarget.nextElementSibling;
+                            if (submenu) submenu.classList.toggle('hidden');
+                          }}
+                          className="flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-50 transition-colors w-full text-left"
+                        >
+                          <div className="relative">
+                            <Bike className="w-5 h-5 text-indigo-600" />
+                          </div>
+                          <div className="flex-1">
+                            <span className="text-gray-900 font-medium">My Activities</span>
+                            <p className="text-xs text-gray-500">Your listings, rides & hires</p>
+                          </div>
+                          <ChevronDown className="w-3.5 h-3.5 text-gray-400 transition-transform" />
+                        </button>
+
+                        {/* Submenu */}
+                        <div className="hidden bg-gray-50 border-l-2 border-indigo-200 ml-4">
+                          {/* My Bike Listings */}
+                          <button
+                            onClick={() => {
+                              setShowQuickActions(false);
+                              navigate('/my-bikes');
+                            }}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-indigo-100/50 transition-colors w-full text-left"
+                          >
+                            <Bike className="w-4 h-4 text-indigo-600" />
+                            <div>
+                              <span className="text-sm text-gray-800 font-medium">My Bike Listings</span>
+                              <p className="text-[11px] text-gray-500">Bikes you've listed for rent</p>
+                            </div>
+                          </button>
+
+                          {/* My Custom Rides */}
+                          <button
+                            onClick={() => {
+                              setShowQuickActions(false);
+                              navigate('/my-rides');
+                            }}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-indigo-100/50 transition-colors w-full text-left"
+                          >
+                            <MapPin className="w-4 h-4 text-indigo-600" />
+                            <div>
+                              <span className="text-sm text-gray-800 font-medium">My Custom Rides</span>
+                              <p className="text-[11px] text-gray-500">Your custom ride requests</p>
+                            </div>
+                          </button>
+
+                          {/* All Events */}
+                          <button
+                            onClick={() => {
+                              setShowQuickActions(false);
+                              navigate('/events');
+                            }}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-indigo-100/50 transition-colors w-full text-left"
+                          >
+                            <Calendar className="w-4 h-4 text-indigo-600" />
+                            <div>
+                              <span className="text-sm text-gray-800 font-medium">All Events</span>
+                              <p className="text-[11px] text-gray-500">Browse upcoming cycling events</p>
+                            </div>
+                          </button>
+
+                          {/* My Bike Hires */}
+                          <button
+                            onClick={() => {
+                              setShowQuickActions(false);
+                              navigate('/my-bike-hires');
+                            }}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-indigo-100/50 transition-colors w-full text-left"
+                          >
+                            <DollarSign className="w-4 h-4 text-indigo-600" />
+                            <div>
+                              <span className="text-sm text-gray-800 font-medium">My Bike Hires</span>
+                              <p className="text-[11px] text-gray-500">Your bike rental bookings</p>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Admin Alerts */}
                     {isAuthenticated && (user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'owner') && (
                       <button
