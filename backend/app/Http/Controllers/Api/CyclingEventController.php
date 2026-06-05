@@ -277,7 +277,7 @@ class CyclingEventController extends Controller
                 'cancellation_policy' => $validated['cancellation_policy'] ?? null,
                 'weather_policy' => $validated['weather_policy'] ?? null,
                 'photos' => $photoData,
-                'status' => $user->hasAdminAccess() ? 'open' : 'pending',
+                'status' => 'open',
                 'approved_by' => $user->hasAdminAccess() ? $user->id : null,
                 'approved_at' => $user->hasAdminAccess() ? now() : null,
                 'submitted_by' => $user->hasAdminAccess() ? 'admin' : 'user',
@@ -504,8 +504,8 @@ class CyclingEventController extends Controller
             ->orWhere('slug', $eventCode)
             ->firstOrFail();
 
-        // Check if event is open
-        if ($event->status !== 'open') {
+        // Check if event is open for registration
+        if (!in_array($event->status, ['open', 'pending'])) {
             return response()->json(['success' => false, 'message' => 'Event is not open for registration.'], 400);
         }
 

@@ -8,7 +8,8 @@ import {
   ShoppingCart, DollarSign, TrendingDown, Calendar, FileText, Download, 
   BarChart3, PieChart, ArrowUpRight, ArrowDownRight, Filter, Search, 
   RefreshCw, Settings, ChevronRight, AlertCircle, Bookmark, Target,
-  Percent, Tag, Box, Headphones, Share2, ExternalLink, Phone, ChevronLeft, Bike
+  Percent, Tag, Box, Headphones, Share2, ExternalLink, Phone, ChevronLeft, Bike,
+  Ticket
 } from 'lucide-react';
 
 const UserDashboard = () => {

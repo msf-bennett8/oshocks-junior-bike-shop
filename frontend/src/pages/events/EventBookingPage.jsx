@@ -38,6 +38,8 @@ const EventBookingPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [participants, setParticipants] = useState(1);
   const [bikeOption, setBikeOption] = useState('own'); // 'own', 'rent', 'included'
   const [selectedBike, setSelectedBike] = useState(null);
@@ -67,14 +69,26 @@ const EventBookingPage = () => {
   const [registrationData, setRegistrationData] = useState(null);
   const { user } = useAuth();
 
-  // Load saved cards when on payment step
+  // Fetch real event from API
   useEffect(() => {
-    if (step === 4 && user) {
-      loadSavedCards();
-      setMpesaPhone(user?.phone || '');
-    }
-  }, [step, user]);
+    const fetchEvent = async () => {
+      try {
+        setLoading(true);
+        const response = await eventService.getEvent(slug);
+        setEvent(response.data?.data);
+      } catch (error) {
+        console.error('Failed to fetch event:', error);
+        // Fallback to mock data for development
+        const mockEvent = MOCK_EVENTS.find(e => e.slug === slug);
+        setEvent(mockEvent);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvent();
+  }, [slug]);
 
+  // Define loadSavedCards BEFORE the useEffect that calls it
   const loadSavedCards = async () => {
     setLoadingSavedCards(true);
     try {
@@ -96,7 +110,21 @@ const EventBookingPage = () => {
     }
   };
 
-  const event = MOCK_EVENTS.find(e => e.slug === slug);
+  // Load saved cards when on payment step
+  useEffect(() => {
+    if (step === 4 && user) {
+      loadSavedCards();
+      setMpesaPhone(user?.phone || '');
+    }
+  }, [step, user]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   if (!event) {
     return (
@@ -898,15 +926,16 @@ const EventBookingPage = () => {
                             };
                             
                             const regResponse = await eventService.registerForEvent(slug, payload);
-                            if (!regResponse.data?.success) {
-                              throw new Error(regResponse.data?.message || 'Registration failed');
+                            const regData = regResponse.data || {};
+                            if (!regData.success) {
+                              throw new Error(regData.message || 'Registration failed');
                             }
 
-                            const regCode = regResponse.data?.data?.registration_code;
-                            const amountDue = regResponse.data?.data?.amount_due;
+                            const regCode = regData.data?.registration_code;
+                            const amountDue = regData.data?.amount_due;
 
                             // If no payment required, go to success
-                            if (!regResponse.data?.data?.payment_required || amountDue <= 0) {
+                            if (!regData.data?.payment_required || amountDue <= 0) {
                               navigate('/my-event-bookings', {
                                 state: { success: true, message: 'Registration confirmed!' }
                               });
