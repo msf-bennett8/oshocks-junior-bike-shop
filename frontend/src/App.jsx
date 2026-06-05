@@ -168,6 +168,9 @@ const CreateCommunityPostPage = lazy(() => import('./pages/community/CreateCommu
 const CommunityModerationPage = lazy(() => import('./pages/admin/CommunityModerationPage'));
 const EventsModerationPage = lazy(() => import('./pages/admin/EventsModerationPage'));
 const BikeListingModerationPage = lazy(() => import('./pages/admin/BikeListingModerationPage'));
+const CustomRideModerationPage = lazy(() => import('./pages/admin/CustomRideModerationPage'));
+const MyCustomRidesPage = lazy(() => import('./pages/user/MyCustomRidesPage'));
+
 // Education Pages
 const Careers = lazy(() => import('./pages/education/Careers'));
 const Safety = lazy(() => import('./pages/education/Safety'));
@@ -730,6 +733,15 @@ function App() {
                   }
                 />
 
+                <Route
+                  path="/my-rides"
+                  element={
+                    <ProtectedRoute>
+                      <MyCustomRidesPage />
+                    </ProtectedRoute>
+                  }
+                />
+
                 {/* ============================================
                     SELLER DASHBOARD (Seller Only)
                     ============================================ */}
@@ -1050,6 +1062,18 @@ function App() {
                 <Route path="/admin/events-moderation" element={
                   <AdminRoute>
                     <EventsModerationPage />
+                  </AdminRoute>
+                } />
+
+                <Route path="/admin/custom-rides-moderation" element={
+                  <AdminRoute>
+                    <CustomRideModerationPage />
+                  </AdminRoute>
+                } />
+
+                <Route path="/admin/custom-rides-moderation" element={
+                  <AdminRoute>
+                    <CustomRideModerationPage />
                   </AdminRoute>
                 } />
 

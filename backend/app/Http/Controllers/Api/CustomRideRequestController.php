@@ -8,6 +8,7 @@ use App\Models\CustomRideRequest;
 use App\Models\CustomRideRequestImage;
 use App\Services\CustomRideRequestIdService;
 use App\Services\CustomRideCloudinaryService;
+use App\Services\CustomRideToEventConversionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -267,7 +268,7 @@ class CustomRideRequestController extends Controller
         }
 
         $request->validate([
-            'status' => ['required', 'in:quoted,accepted,declined,scheduled,completed,cancelled'],
+            'status' => ['required', 'in:quoted,accepted,converted,declined,scheduled,completed,cancelled'],
             'staff_notes' => ['nullable', 'string', 'max:5000'],
         ]);
 
@@ -315,7 +316,7 @@ class CustomRideRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
         }
 
-        $statuses = ['reviewing', 'quoted', 'accepted', 'declined', 'scheduled', 'completed', 'cancelled', 'expired'];
+        $statuses = ['reviewing', 'quoted', 'accepted', 'converted', 'declined', 'scheduled', 'completed', 'cancelled', 'expired'];
         $counts = [];
 
         foreach ($statuses as $status) {
@@ -348,7 +349,7 @@ class CustomRideRequestController extends Controller
             ->where('request_id', $requestId)
             ->firstOrFail();
 
-        $converter = app(CustomRideToEventConversionService::class);
+        $converter = app(\App\Services\CustomRideToEventConversionService::class);
         $preview = $converter->preview($rideRequest);
 
         return response()->json([
@@ -361,7 +362,54 @@ class CustomRideRequestController extends Controller
     }
 
     /**
-     * Convert custom ride request to cycling event (admin/staff)
+     * Quote a custom ride request (admin/staff)
+     * POST /api/v1/custom-ride-requests/{requestId}/quote
+     */
+    public function quote(Request $request, string $requestId): JsonResponse
+    {
+        $user = Auth::user();
+
+        if (!$user || !in_array($user->role, ['admin', 'super_admin', 'owner', 'support_agent'])) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+
+        $request->validate([
+            'base_rental_price' => ['nullable', 'numeric', 'min:0'],
+            'add_ons_price' => ['nullable', 'numeric', 'min:0'],
+            'insurance_price' => ['nullable', 'numeric', 'min:0'],
+            'transport_price' => ['nullable', 'numeric', 'min:0'],
+            'security_deposit' => ['nullable', 'numeric', 'min:0'],
+            'total_price' => ['nullable', 'numeric', 'min:0'],
+            'staff_notes' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $rideRequest = CustomRideRequest::where('request_id', $requestId)->firstOrFail();
+
+        $updateData = [
+            'status' => 'quoted',
+            'quoted_at' => now(),
+            'quoted_by' => $user->id,
+            'staff_notes' => $request->input('staff_notes'),
+        ];
+
+        // Only update pricing fields if provided
+        $pricingFields = ['base_rental_price', 'add_ons_price', 'insurance_price', 'transport_price', 'security_deposit', 'total_price'];
+        foreach ($pricingFields as $field) {
+            if ($request->has($field)) {
+                $updateData[$field] = $request->input($field);
+            }
+        }
+
+        $rideRequest->update($updateData);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quote sent successfully.',
+            'data' => $rideRequest->fresh(['images', 'user', 'quotedBy']),
+        ]);
+    }
+    /**
+     * Convert to event (admin/staff)
      * POST /api/v1/custom-ride-requests/{requestId}/convert-to-event
      */
     public function convertToEvent(Request $request, string $requestId): JsonResponse
@@ -394,7 +442,7 @@ class CustomRideRequestController extends Controller
         }
 
         try {
-            $converter = app(CustomRideToEventConversionService::class);
+            $converter = app(\App\Services\CustomRideToEventConversionService::class);
             $event = $converter->convert($rideRequest, $user->id);
 
             Log::info('Custom ride request converted to event', [

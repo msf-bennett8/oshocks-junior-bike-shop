@@ -5,11 +5,12 @@ import {
   Shield, CheckCircle, XCircle, Trash2, RotateCcw, AlertTriangle,
   Search, Filter, Calendar, Clock, Users, Bike, MapPin, DollarSign,
   Eye, ChevronLeft, ChevronRight, Flag, Archive, RefreshCw,
-  Edit3, Check, X, Save
+  Edit3, Check, X, Save, MessageSquare
 } from 'lucide-react';
 import eventService from '../../services/eventService';
 import customRideService from '../../services/customRideService';
 import { useAuth } from '../../context/AuthContext';
+import ModerationActionModal from '../../components/common/ModerationActionModal';
 
 const TABS = [
   { key: 'all', label: 'All Events', icon: Calendar },
@@ -42,7 +43,27 @@ const EventsModerationPage = () => {
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [conversionPreview, setConversionPreview] = useState(null);
 
+  // ModerationActionModal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    type: 'confirm',
+    title: '',
+    message: '',
+    onConfirm: null,
+    onCancel: null,
+  });
+
   const isSuperAdmin = user?.role === 'super_admin';
+
+  const openModal = (config) => {
+    setModalConfig(config);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setModalConfig({ type: 'confirm', title: '', message: '', onConfirm: null, onCancel: null });
+  };
 
   useEffect(() => {
     if (activeTab === 'custom-rides') {
@@ -74,11 +95,24 @@ const EventsModerationPage = () => {
     const fetchCustomRides = async () => {
     try {
       setLoading(true);
+      // Map tab to status filter for custom rides
+      const statusMap = {
+        'all': null,
+        'pending': 'reviewing',
+        'quoted': 'quoted',
+        'approved': 'accepted',
+        'scheduled': 'scheduled',
+        'completed': 'completed',
+        'declined': 'declined',
+        'cancelled': 'cancelled',
+        'custom-rides': null, // Show all custom rides in this tab
+      };
+      const statusFilter = statusMap[activeTab] || null;
       const params = {
-        status: 'accepted,quoted,reviewing',
         page: currentPage,
         per_page: 20,
         ...(searchQuery && { search: searchQuery }),
+        ...(statusFilter && { status: statusFilter }),
       };
       const response = await customRideService.getAllRequests(params);
       setCustomRides(response.data?.data?.data || []);
@@ -96,7 +130,13 @@ const EventsModerationPage = () => {
       setConversionPreview(response.data?.data || null);
       setShowConvertModal(true);
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to preview conversion');
+      openModal({
+        type: 'error',
+        title: 'Preview Failed',
+        message: err.response?.data?.message || 'Failed to preview conversion',
+        showCancel: false,
+        onConfirm: closeModal,
+      });
     } finally {
       setActionLoading(false);
     }
@@ -106,13 +146,49 @@ const EventsModerationPage = () => {
     try {
       setActionLoading(true);
       const response = await customRideService.convertToEvent(requestId);
-      alert('Successfully converted to event: ' + response.data?.data?.event_code);
+      const eventCode = response.data?.data?.event_code;
       setShowConvertModal(false);
       setConversionPreview(null);
       fetchCustomRides();
       fetchStats();
+      openModal({
+        type: 'success',
+        title: 'Converted Successfully',
+        message: `Request converted to event ${eventCode}.`,
+        confirmText: 'View Event',
+        showCancel: false,
+        onConfirm: () => {
+          closeModal();
+          navigate(`/events/${eventCode}`);
+        },
+      });
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to convert to event');
+      openModal({
+        type: 'error',
+        title: 'Conversion Failed',
+        message: err.response?.data?.message || 'Failed to convert to event',
+        showCancel: false,
+        onConfirm: closeModal,
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUpdateRideStatus = async (requestId, newStatus) => {
+    try {
+      setActionLoading(true);
+      await customRideService.updateStatus(requestId, newStatus);
+      fetchCustomRides();
+      fetchStats();
+    } catch (err) {
+      openModal({
+        type: 'error',
+        title: 'Update Failed',
+        message: err.response?.data?.message || 'Failed to update status',
+        showCancel: false,
+        onConfirm: closeModal,
+      });
     } finally {
       setActionLoading(false);
     }
@@ -133,8 +209,21 @@ const EventsModerationPage = () => {
       await eventService.approveEvent(eventCode);
       fetchEvents();
       fetchStats();
+      openModal({
+        type: 'success',
+        title: 'Event Approved',
+        message: `Event ${eventCode} has been approved successfully.`,
+        showCancel: false,
+        onConfirm: closeModal,
+      });
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to approve event');
+      openModal({
+        type: 'error',
+        title: 'Approval Failed',
+        message: err.response?.data?.message || 'Failed to approve event',
+        showCancel: false,
+        onConfirm: closeModal,
+      });
     } finally {
       setActionLoading(false);
     }
@@ -150,8 +239,21 @@ const EventsModerationPage = () => {
       setSelectedEvent(null);
       fetchEvents();
       fetchStats();
+      openModal({
+        type: 'success',
+        title: 'Event Rejected',
+        message: 'The event has been rejected and the organizer notified.',
+        showCancel: false,
+        onConfirm: closeModal,
+      });
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to reject event');
+      openModal({
+        type: 'error',
+        title: 'Rejection Failed',
+        message: err.response?.data?.message || 'Failed to reject event',
+        showCancel: false,
+        onConfirm: closeModal,
+      });
     } finally {
       setActionLoading(false);
     }
@@ -165,8 +267,21 @@ const EventsModerationPage = () => {
       setSelectedEvent(null);
       setEditForm({});
       fetchEvents();
+      openModal({
+        type: 'success',
+        title: 'Event Updated',
+        message: 'Event details have been updated successfully.',
+        showCancel: false,
+        onConfirm: closeModal,
+      });
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update event');
+      openModal({
+        type: 'error',
+        title: 'Update Failed',
+        message: err.response?.data?.message || 'Failed to update event',
+        showCancel: false,
+        onConfirm: closeModal,
+      });
     } finally {
       setActionLoading(false);
     }
@@ -182,25 +297,61 @@ const EventsModerationPage = () => {
       setSelectedEvent(null);
       fetchEvents();
       fetchStats();
+      openModal({
+        type: 'success',
+        title: 'Deletion Scheduled',
+        message: 'Event scheduled for deletion in 30 days. Super admin approval required.',
+        showCancel: false,
+        onConfirm: closeModal,
+      });
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to schedule deletion');
+      openModal({
+        type: 'error',
+        title: 'Scheduling Failed',
+        message: err.response?.data?.message || 'Failed to schedule deletion',
+        showCancel: false,
+        onConfirm: closeModal,
+      });
     } finally {
       setActionLoading(false);
     }
   };
 
-  const handleApproveDeletion = async (eventCode) => {
-    if (!window.confirm('Approve permanent deletion? This cannot be undone.')) return;
-    try {
-      setActionLoading(true);
-      await eventService.approveEventDeletion(eventCode);
-      fetchEvents();
-      fetchStats();
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to approve deletion');
-    } finally {
-      setActionLoading(false);
-    }
+  const handleApproveDeletion = (eventCode) => {
+    openModal({
+      type: 'confirm',
+      title: 'Approve Permanent Deletion',
+      message: 'This action cannot be undone. The event will be permanently deleted.',
+      confirmText: 'Approve Deletion',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
+        closeModal();
+        try {
+          setActionLoading(true);
+          await eventService.approveEventDeletion(eventCode);
+          fetchEvents();
+          fetchStats();
+          openModal({
+            type: 'success',
+            title: 'Deletion Approved',
+            message: 'Event has been permanently deleted.',
+            showCancel: false,
+            onConfirm: closeModal,
+          });
+        } catch (err) {
+          openModal({
+            type: 'error',
+            title: 'Approval Failed',
+            message: err.response?.data?.message || 'Failed to approve deletion',
+            showCancel: false,
+            onConfirm: closeModal,
+          });
+        } finally {
+          setActionLoading(false);
+        }
+      },
+      onCancel: closeModal,
+    });
   };
 
   const handleRestore = async (eventCode) => {
@@ -209,25 +360,61 @@ const EventsModerationPage = () => {
       await eventService.restoreEvent(eventCode);
       fetchEvents();
       fetchStats();
+      openModal({
+        type: 'success',
+        title: 'Event Restored',
+        message: 'Event has been restored successfully.',
+        showCancel: false,
+        onConfirm: closeModal,
+      });
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to restore event');
+      openModal({
+        type: 'error',
+        title: 'Restore Failed',
+        message: err.response?.data?.message || 'Failed to restore event',
+        showCancel: false,
+        onConfirm: closeModal,
+      });
     } finally {
       setActionLoading(false);
     }
   };
 
-  const handlePermanentDelete = async (eventCode) => {
-    if (!window.confirm('PERMANENTLY DELETE? This cannot be undone.')) return;
-    try {
-      setActionLoading(true);
-      await eventService.permanentDeleteEvent(eventCode);
-      fetchEvents();
-      fetchStats();
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete event');
-    } finally {
-      setActionLoading(false);
-    }
+  const handlePermanentDelete = (eventCode) => {
+    openModal({
+      type: 'confirm',
+      title: 'Permanent Deletion',
+      message: 'This event will be permanently deleted. This action cannot be undone.',
+      confirmText: 'Delete Permanently',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
+        closeModal();
+        try {
+          setActionLoading(true);
+          await eventService.permanentDeleteEvent(eventCode);
+          fetchEvents();
+          fetchStats();
+          openModal({
+            type: 'success',
+            title: 'Deleted',
+            message: 'Event has been permanently deleted.',
+            showCancel: false,
+            onConfirm: closeModal,
+          });
+        } catch (err) {
+          openModal({
+            type: 'error',
+            title: 'Deletion Failed',
+            message: err.response?.data?.message || 'Failed to delete event',
+            showCancel: false,
+            onConfirm: closeModal,
+          });
+        } finally {
+          setActionLoading(false);
+        }
+      },
+      onCancel: closeModal,
+    });
   };
 
   const openScheduleModal = (event) => {
@@ -433,8 +620,45 @@ const EventsModerationPage = () => {
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center gap-1">
-                            {!ride.converted_event_code && (
+                          <div className="flex items-center gap-1 flex-wrap">
+                            {/* Quote (reviewing only) */}
+                            {ride.status === 'reviewing' && (
+                              <button
+                                onClick={() => handleUpdateRideStatus(ride.request_id, 'quoted')}
+                                disabled={actionLoading}
+                                className="p-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
+                                title="Mark as quoted"
+                              >
+                                <DollarSign className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {/* Accept (quoted only) */}
+                            {ride.status === 'quoted' && (
+                              <button
+                                onClick={() => handleUpdateRideStatus(ride.request_id, 'accepted')}
+                                disabled={actionLoading}
+                                className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
+                                title="Accept request"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {/* Decline (reviewing or quoted) */}
+                            {(ride.status === 'reviewing' || ride.status === 'quoted') && (
+                              <button
+                                onClick={() => handleUpdateRideStatus(ride.request_id, 'declined')}
+                                disabled={actionLoading}
+                                className="p-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                                title="Decline request"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {/* Convert to Event (accepted only, not already converted) */}
+                            {ride.status === 'accepted' && !ride.converted_event_code && (
                               <>
                                 <button
                                   onClick={() => handlePreviewConversion(ride.request_id)}
@@ -450,10 +674,12 @@ const EventsModerationPage = () => {
                                   className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
                                   title="Convert to event"
                                 >
-                                  <Check className="w-4 h-4" />
+                                  <RefreshCw className="w-4 h-4" />
                                 </button>
                               </>
                             )}
+
+                            {/* View converted event */}
                             {ride.converted_event_code && (
                               <button
                                 onClick={() => navigate(`/events/${ride.converted_event_code}`)}
@@ -463,6 +689,15 @@ const EventsModerationPage = () => {
                                 <Eye className="w-4 h-4" />
                               </button>
                             )}
+
+                            {/* View request details */}
+                            <button
+                              onClick={() => navigate(`/rides/${ride.request_id}`)}
+                              className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
+                              title="View request"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -992,6 +1227,21 @@ const EventsModerationPage = () => {
           </div>
         </div>
       )}
+
+      {/* Moderation Action Modal */}
+      <ModerationActionModal
+        isOpen={modalOpen}
+        onClose={closeModal}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText={modalConfig.confirmText}
+        cancelText={modalConfig.cancelText}
+        showCancel={modalConfig.showCancel}
+        onConfirm={modalConfig.onConfirm}
+        onCancel={modalConfig.onCancel}
+        isLoading={actionLoading}
+      />
     </div>
   );
 };

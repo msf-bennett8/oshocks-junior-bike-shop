@@ -56,6 +56,7 @@ class CustomRideRequest extends Model
     ];
 
     protected $casts = [
+        'status' => 'string',
         'preferred_date' => 'date',
         'date_flexible' => 'boolean',
         'add_ons' => 'array',
@@ -88,7 +89,7 @@ class CustomRideRequest extends Model
 
     public function primaryImage(): ?CustomRideRequestImage
     {
-        return $this->images()->where('is_primary', true)->first() 
+        return $this->images()->where('is_primary', true)->first()
             ?? $this->images()->first();
     }
 
@@ -135,7 +136,7 @@ class CustomRideRequest extends Model
             'bottle' => 'Water Bottle',
             'gloves' => 'Cycling Gloves',
         ];
-        
+
         return array_map(fn($key) => $labels[$key] ?? $key, $addOns);
     }
 
@@ -145,6 +146,7 @@ class CustomRideRequest extends Model
             'reviewing' => 'amber',
             'quoted' => 'blue',
             'accepted' => 'green',
+            'converted' => 'purple',
             'declined' => 'red',
             'scheduled' => 'purple',
             'completed' => 'emerald',

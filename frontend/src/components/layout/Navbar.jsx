@@ -370,6 +370,7 @@ const Navbar = () => {
           { name: 'Events Moderation', link: '/admin/events-moderation', icon: Calendar },
           { name: 'Bike Listing Moderation', link: '/admin/bike-listing-moderation', icon: Bike },
           { name: 'Community Moderation', link: '/admin/community-moderation', icon: MessageCircle },
+          { name: 'Custom Rides Moderation', link: '/admin/custom-rides-moderation', icon: Bike },
           { name: 'Settings', link: '/super-admin/settings', icon: Settings },
         ]
       });
@@ -390,6 +391,7 @@ const Navbar = () => {
           { name: 'Events Moderation', link: '/admin/events-moderation', icon: Calendar },
           { name: 'Bike Listing Moderation', link: '/admin/bike-listing-moderation', icon: Bike },
           { name: 'Community Moderation', link: '/admin/community-moderation', icon: MessageCircle },
+          { name: 'Custom Rides Moderation', link: '/admin/custom-rides-moderation', icon: Bike },
         ]
       });
     }
@@ -919,6 +921,21 @@ const Navbar = () => {
                             <div>
                               <span className="text-sm text-gray-800 font-medium">Community Moderation</span>
                               <p className="text-[11px] text-gray-500">Manage posts & comments</p>
+                            </div>
+                          </button>
+
+                          {/* Custom Rides Moderation */}
+                          <button
+                            onClick={() => {
+                              setShowQuickActions(false);
+                              navigate('/admin/custom-rides-moderation');
+                            }}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-purple-100/50 transition-colors w-full text-left"
+                          >
+                            <Bike className="w-4 h-4 text-purple-600" />
+                            <div>
+                              <span className="text-sm text-gray-800 font-medium">Custom Rides Moderation</span>
+                              <p className="text-[11px] text-gray-500">Manage ride requests & quotes</p>
                             </div>
                           </button>
                         </div>

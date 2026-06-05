@@ -56,6 +56,10 @@ const customRideService = {
   updateStatus: (requestId, status, staffNotes = '') =>
     api.post(`/custom-ride-requests/${requestId}/status`, { status, staff_notes: staffNotes }),
   getStats: () => api.get('/custom-ride-requests/stats'),
+  // ─── Admin Moderation ───
+  getModerationRequests: (params = {}) => api.get('/custom-ride-requests', { params }),
+  quoteRequest: (requestId, pricingData) =>
+    api.post(`/custom-ride-requests/${requestId}/quote`, pricingData),
 
   // ─── Conversion to Event ───
   getConversionPreview: (requestId) => api.get(`/custom-ride-requests/${requestId}/conversion-preview`),

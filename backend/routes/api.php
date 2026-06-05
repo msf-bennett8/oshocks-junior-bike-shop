@@ -630,6 +630,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
         Route::post('/{requestId}/status', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'updateStatus']);
         Route::get('/{requestId}/conversion-preview', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'conversionPreview']);
         Route::post('/{requestId}/convert-to-event', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'convertToEvent']);
+            Route::post('/{requestId}/quote', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'quote']);
     });
     Route::apiResource('custom-ride-requests', \App\Http\Controllers\Api\CustomRideRequestController::class)->only(['index', 'store', 'show']);
 
