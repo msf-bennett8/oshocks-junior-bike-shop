@@ -12,7 +12,7 @@ use App\Services\MessageModerationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class ConversationController extends Controller
+class SupportInboxController extends Controller
 {
     protected MessageModerationService $moderationService;
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\CyclingEvent;
+use App\Models\CyclingEventRegistration;
 use App\Services\EventCodeService;
 use App\Services\CloudinaryService;
 use App\Services\EventImageUploadService;
@@ -303,7 +304,9 @@ class CyclingEventController extends Controller
      */
     public function update(Request $request, string $eventCode)
     {
-        $event = CyclingEvent::where('event_code', $eventCode)->firstOrFail();
+        $event = CyclingEvent::where('event_code', $eventCode)
+            ->orWhere('slug', $eventCode)
+            ->firstOrFail();
         $user = Auth::user();
 
         if ($event->organizer_id !== $user->id && !$user->hasAdminAccess()) {
@@ -410,7 +413,9 @@ class CyclingEventController extends Controller
      */
     public function destroy(string $eventCode)
     {
-        $event = CyclingEvent::where('event_code', $eventCode)->firstOrFail();
+        $event = CyclingEvent::where('event_code', $eventCode)
+            ->orWhere('slug', $eventCode)
+            ->firstOrFail();
         $user = Auth::user();
 
         if ($event->organizer_id !== $user->id && !$user->hasAdminAccess()) {
@@ -459,7 +464,9 @@ class CyclingEventController extends Controller
      */
     public function stats(string $eventCode)
     {
-        $event = CyclingEvent::where('event_code', $eventCode)->firstOrFail();
+        $event = CyclingEvent::where('event_code', $eventCode)
+            ->orWhere('slug', $eventCode)
+            ->firstOrFail();
         $user = Auth::user();
 
         if ($event->organizer_id !== $user->id && !$user->hasAdminAccess()) {
@@ -478,6 +485,350 @@ class CyclingEventController extends Controller
                 'revenue_estimate' => $event->current_participants * $event->price_per_person,
                 'status' => $event->status,
                 'is_full' => $event->is_full,
+            ]
+        ]);
+    }
+
+    /**
+     * Register for an event (authenticated user)
+     * POST /api/v1/events/{eventCode}/register
+     */
+    public function register(Request $request, string $eventCode)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Authentication required.'], 401);
+        }
+
+        $event = CyclingEvent::where('event_code', $eventCode)
+            ->orWhere('slug', $eventCode)
+            ->firstOrFail();
+
+        // Check if event is open
+        if ($event->status !== 'open') {
+            return response()->json(['success' => false, 'message' => 'Event is not open for registration.'], 400);
+        }
+
+        // Check if registration deadline passed
+        if ($event->registration_deadline && now()->gt($event->registration_deadline)) {
+            return response()->json(['success' => false, 'message' => 'Registration deadline has passed.'], 400);
+        }
+
+        // ─── Idempotency: prevent duplicate processing ───
+        $idempotencyKey = $request->header('X-Idempotency-Key') ?? $request->input('_idempotency_key');
+        if ($idempotencyKey) {
+            $cacheKey = "event_reg:{$user->id}:{$event->id}:" . md5($idempotencyKey);
+            if (\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+                $cached = \Illuminate\Support\Facades\Cache::get($cacheKey);
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Registration already processed.',
+                    'data' => $cached,
+                ], 200);
+            }
+        }
+
+        // Validate request
+        $validated = $request->validate([
+            'participant_count' => ['required', 'integer', 'min:1', 'max:' . $event->seats_remaining],
+            'add_ons' => ['nullable', 'array'],
+            'add_ons.transport' => ['boolean'],
+            'add_ons.insurance' => ['boolean'],
+            'add_ons.nutrition' => ['boolean'],
+            'bike_included' => ['boolean'],
+            'bike_rental_id' => ['nullable', 'integer', 'exists:bike_rentals,id'],
+            'bike_add_ons' => ['nullable', 'array'],
+            'emergency_contact_name' => ['required', 'string', 'max:100'],
+            'emergency_contact_phone' => ['required', 'string', 'max:20'],
+            'waiver_signed' => ['required', 'boolean'],
+        ]);
+
+        $participantCount = $validated['participant_count'] ?? 1;
+
+        // Check capacity
+        if ($event->is_full || $event->seats_remaining < $participantCount) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Not enough seats available.',
+                'seats_remaining' => $event->seats_remaining,
+            ], 400);
+        }
+
+        // Calculate pricing
+        $pricePerPerson = $event->price_per_person;
+        $totalAmount = $pricePerPerson * $participantCount;
+
+        // Early bird discount
+        $discountAmount = 0;
+        if ($event->early_bird_price && $event->early_bird_deadline && now()->lte($event->early_bird_deadline)) {
+            $discountAmount = ($event->price_per_person - $event->early_bird_price) * $participantCount;
+        }
+
+        // Group discount
+        if ($participantCount >= $event->group_discount_threshold && $event->group_discount_percent) {
+            $groupDiscount = round($totalAmount * ($event->group_discount_percent / 100), 2);
+            $discountAmount += $groupDiscount;
+        }
+
+        $finalAmount = max(0, $totalAmount - $discountAmount);
+
+        // Add-on pricing
+        $addOns = $validated['add_ons'] ?? [];
+        $addOnsTotal = 0;
+        if (!empty($addOns['transport']) && $event->transport_provided) {
+            $addOnsTotal += $event->transport_price * $participantCount;
+        }
+        if (!empty($addOns['insurance'])) {
+            $addOnsTotal += 200 * $participantCount;
+        }
+        if (!empty($addOns['nutrition'])) {
+            $addOnsTotal += 300 * $participantCount;
+        }
+
+        $finalAmount += $addOnsTotal;
+
+        // Generate registration code
+        $registrationCode = app(\App\Services\BookingIdService::class)->generate();
+
+        try {
+            $result = DB::transaction(function () use ($event, $user, $validated, $participantCount, $pricePerPerson, $totalAmount, $discountAmount, $finalAmount, $addOns, $registrationCode) {
+                // Lock the event row to prevent race conditions on capacity
+                $lockedEvent = CyclingEvent::where('id', $event->id)->lockForUpdate()->first();
+
+                // Check if already registered (inside transaction with lock)
+                $existing = CyclingEventRegistration::where('event_id', $lockedEvent->id)
+                    ->where('user_id', $user->id)
+                    ->where('status', '!=', 'cancelled')
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($existing) {
+                    return [
+                        'type' => 'existing',
+                        'registration' => $existing->load(['event', 'user', 'bike']),
+                        'registration_code' => $existing->registration_code,
+                        'amount_due' => $existing->final_amount,
+                        'payment_required' => $existing->final_amount > 0 && $existing->payment_status !== 'paid',
+                    ];
+                }
+
+                // Verify capacity again (inside locked transaction)
+                if ($lockedEvent->is_full || $lockedEvent->seats_remaining < $participantCount) {
+                    return [
+                        'type' => 'error',
+                        'message' => 'Not enough seats available.',
+                        'seats_remaining' => $lockedEvent->seats_remaining,
+                        'code' => 400,
+                    ];
+                }
+
+                // Create registration
+                $registration = CyclingEventRegistration::create([
+                    'registration_code' => $registrationCode,
+                    'event_id' => $lockedEvent->id,
+                    'user_id' => $user->id,
+                    'participant_count' => $participantCount,
+                    'price_per_person' => $pricePerPerson,
+                    'total_amount' => $totalAmount,
+                    'discount_amount' => $discountAmount,
+                    'final_amount' => $finalAmount,
+                    'add_ons' => $addOns,
+                    'bike_included' => $validated['bike_included'] ?? false,
+                    'bike_rental_id' => $validated['bike_rental_id'] ?? null,
+                    'bike_add_ons' => $validated['bike_add_ons'] ?? null,
+                    'emergency_contact_name' => $validated['emergency_contact_name'],
+                    'emergency_contact_phone' => $validated['emergency_contact_phone'],
+                    'waiver_signed' => $validated['waiver_signed'],
+                    'payment_status' => 'pending',
+                    'status' => 'registered',
+                ]);
+
+                // Update event participant count
+                $lockedEvent->increment('current_participants', $participantCount);
+
+                return [
+                    'type' => 'new',
+                    'registration' => $registration->load(['event', 'user', 'bike']),
+                    'registration_code' => $registrationCode,
+                    'amount_due' => $finalAmount,
+                    'payment_required' => $finalAmount > 0,
+                ];
+            });
+
+            if ($result['type'] === 'error') {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['message'],
+                    'seats_remaining' => $result['seats_remaining'],
+                ], $result['code']);
+            }
+
+            // Cache result for idempotency (5 minutes)
+            if ($idempotencyKey) {
+                $cacheKey = "event_reg:{$user->id}:{$event->id}:" . md5($idempotencyKey);
+                \Illuminate\Support\Facades\Cache::put($cacheKey, $result, 300);
+            }
+
+            $statusCode = $result['type'] === 'existing' ? 200 : 201;
+            $message = $result['type'] === 'existing' ? 'Registration already processed.' : 'Registration successful.';
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => [
+                    'registration' => $result['registration'],
+                    'registration_code' => $result['registration_code'],
+                    'amount_due' => $result['amount_due'],
+                    'payment_required' => $result['payment_required'],
+                ],
+            ], $statusCode);
+
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            // Another request won the race — return existing registration
+            $existing = CyclingEventRegistration::where('event_id', $event->id)
+                ->where('user_id', $user->id)
+                ->where('status', '!=', 'cancelled')
+                ->first();
+
+            if ($existing) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Registration already processed.',
+                    'data' => [
+                        'registration' => $existing->load(['event', 'user', 'bike']),
+                        'registration_code' => $existing->registration_code,
+                        'amount_due' => $existing->final_amount,
+                        'payment_required' => $existing->final_amount > 0 && $existing->payment_status !== 'paid',
+                    ],
+                ], 200);
+            }
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Unregister from an event (cancel registration)
+     * POST /api/v1/events/{eventCode}/unregister
+     */
+    public function unregister(Request $request, string $eventCode)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Authentication required.'], 401);
+        }
+
+        $event = CyclingEvent::where('event_code', $eventCode)
+            ->orWhere('slug', $eventCode)
+            ->firstOrFail();
+
+        $registration = CyclingEventRegistration::where('event_id', $event->id)
+            ->where('user_id', $user->id)
+            ->where('status', 'registered')
+            ->first();
+
+        if (!$registration) {
+            return response()->json(['success' => false, 'message' => 'No active registration found.'], 404);
+        }
+
+        $validated = $request->validate([
+            'reason' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        return DB::transaction(function () use ($registration, $event, $validated) {
+            // Update registration
+            $registration->update([
+                'status' => 'cancelled',
+                'cancelled_at' => now(),
+                'cancellation_reason' => $validated['reason'] ?? null,
+            ]);
+
+            // Decrement event participant count
+            $event->decrement('current_participants', $registration->participant_count);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Registration cancelled successfully.',
+                'data' => $registration->fresh(),
+            ]);
+        });
+    }
+
+    /**
+     * Get my event registrations
+     * GET /api/v1/events/my/registrations
+     */
+    public function myRegistrations(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Authentication required.'], 401);
+        }
+
+        $status = $request->get('status'); // registered, cancelled, attended
+        $tab = $request->get('tab', 'upcoming'); // upcoming, past, all
+
+        $query = CyclingEventRegistration::with(['event', 'bike'])
+            ->where('user_id', $user->id);
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($tab === 'upcoming') {
+            $query->whereHas('event', function ($q) {
+                $q->where('start_datetime', '>=', now());
+            });
+        } elseif ($tab === 'past') {
+            $query->whereHas('event', function ($q) {
+                $q->where('start_datetime', '<', now());
+            });
+        }
+
+        $registrations = $query->orderBy('created_at', 'desc')
+            ->paginate($request->get('per_page', 12));
+
+        return response()->json([
+            'success' => true,
+            'data' => $registrations->items(),
+            'meta' => [
+                'current_page' => $registrations->currentPage(),
+                'last_page' => $registrations->lastPage(),
+                'per_page' => $registrations->perPage(),
+                'total' => $registrations->total(),
+            ]
+        ]);
+    }
+
+    /**
+     * Get event participants (organizer/admin only)
+     * GET /api/v1/events/{eventCode}/participants
+     */
+    public function participants(Request $request, string $eventCode)
+    {
+        $user = Auth::user();
+        $event = CyclingEvent::where('event_code', $eventCode)
+            ->orWhere('slug', $eventCode)
+            ->firstOrFail();
+
+        if ($event->organizer_id !== $user->id && !$user->hasAdminAccess()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $registrations = CyclingEventRegistration::with('user')
+            ->where('event_id', $event->id)
+            ->where('status', 'registered')
+            ->orderBy('created_at', 'desc')
+            ->paginate($request->get('per_page', 50));
+
+        return response()->json([
+            'success' => true,
+            'data' => $registrations->items(),
+            'meta' => [
+                'current_page' => $registrations->currentPage(),
+                'last_page' => $registrations->lastPage(),
+                'per_page' => $registrations->perPage(),
+                'total' => $registrations->total(),
             ]
         ]);
     }

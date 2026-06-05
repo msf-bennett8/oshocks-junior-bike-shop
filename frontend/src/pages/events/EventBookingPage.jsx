@@ -1,12 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
   ChevronLeft, Calendar, MapPin, Clock, Users, Bike, ArrowRight,
-  Check, CreditCard, Shield, AlertTriangle, Minus, Plus, Info, X
+  Check, CreditCard, Shield, AlertTriangle, Minus, Plus, Info, X,
+  Phone, Wallet, Loader
 } from 'lucide-react';
 import { MOCK_EVENTS, MOCK_BIKES } from '../../data/cyclingMockData';
 import BikeSelectionModal from '../../components/bikes/BikeSelectionModal';
+import eventService from '../../services/eventService';
+import paymentService from '../../services/paymentService';
+import { useAuth } from '../../context/AuthContext';
 
 // Helper component for summary rows (full width)
 const SummaryRow = ({ label, value, highlight = false, discount = false }) => (
@@ -53,6 +57,44 @@ const EventBookingPage = () => {
   });
   const [waiverAgreed, setWaiverAgreed] = useState(false);
   const [emergencyContact, setEmergencyContact] = useState({ name: '', phone: '' });
+  const [actionLoading, setActionLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('mpesa');
+  const [mpesaPhone, setMpesaPhone] = useState('');
+  const [savedCards, setSavedCards] = useState([]);
+  const [selectedSavedCard, setSelectedSavedCard] = useState(null);
+  const [showAddNewCard, setShowAddNewCard] = useState(false);
+  const [loadingSavedCards, setLoadingSavedCards] = useState(false);
+  const [registrationData, setRegistrationData] = useState(null);
+  const { user } = useAuth();
+
+  // Load saved cards when on payment step
+  useEffect(() => {
+    if (step === 4 && user) {
+      loadSavedCards();
+      setMpesaPhone(user?.phone || '');
+    }
+  }, [step, user]);
+
+  const loadSavedCards = async () => {
+    setLoadingSavedCards(true);
+    try {
+      const response = await paymentService.getSavedCards();
+      if (response.success && response.data.length > 0) {
+        setSavedCards(response.data);
+        setSelectedSavedCard(response.data[0]);
+        setShowAddNewCard(false);
+      } else {
+        setSavedCards([]);
+        setShowAddNewCard(true);
+      }
+    } catch (error) {
+      console.error('Failed to load saved cards:', error);
+      setSavedCards([]);
+      setShowAddNewCard(true);
+    } finally {
+      setLoadingSavedCards(false);
+    }
+  };
 
   const event = MOCK_EVENTS.find(e => e.slug === slug);
 
@@ -673,37 +715,158 @@ const EventBookingPage = () => {
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                     <h2 className="text-xl font-bold text-gray-900 mb-4">Payment Method</h2>
 
-                    <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 mb-4">
-                      <div className="flex items-center gap-2">
-                        <Info className="w-4 h-4 text-blue-500" />
-                        <p className="text-xs text-blue-700">
-                          Demo page. Production integrates with Paystack/M-Pesa.
-                        </p>
+                    {/* Payment Method Selection */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('mpesa')}
+                        className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
+                          paymentMethod === 'mpesa'
+                            ? 'border-orange-600 bg-orange-50'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                      >
+                        <div className="text-center">
+                          <img
+                            src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg"
+                            alt="M-Pesa"
+                            className="h-12 w-auto mx-auto mb-2 object-contain"
+                          />
+                          <div className="text-sm text-gray-600">M-Pesa STK</div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('card')}
+                        className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
+                          paymentMethod === 'card'
+                            ? 'border-orange-600 bg-orange-50'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                      >
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-3 mb-2">
+                            <img src="/assets/images/visa-logo.svg" alt="Visa" className="h-8 w-auto object-contain" />
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-8 w-auto object-contain" />
+                          </div>
+                          <div className="text-sm text-gray-600">Card</div>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('cod')}
+                        className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
+                          paymentMethod === 'cod'
+                            ? 'border-orange-600 bg-orange-50'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                      >
+                        <div className="text-center">
+                          <div className="w-12 h-12 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center">
+                            <Wallet className="w-6 h-6 text-green-600" />
+                          </div>
+                          <div className="text-sm text-gray-600">Pay at Event</div>
+                        </div>
+                      </button>
+                    </div>
+
+                    {/* M-Pesa Payment */}
+                    {paymentMethod === 'mpesa' && (
+                      <div className="mb-6">
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                          <h3 className="font-semibold text-green-900 mb-2">How M-Pesa Payment Works:</h3>
+                          <ol className="text-sm text-green-800 space-y-1 list-decimal list-inside">
+                            <li>Enter your M-Pesa phone number below</li>
+                            <li>You'll receive an STK push notification on your phone</li>
+                            <li>Enter your M-Pesa PIN to complete payment</li>
+                            <li>You'll receive a confirmation SMS immediately</li>
+                          </ol>
+                        </div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          M-Pesa Phone Number *
+                        </label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                          <input
+                            type="tel"
+                            value={mpesaPhone}
+                            onChange={(e) => setMpesaPhone(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent border-gray-300"
+                            placeholder="0712345678"
+                          />
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    <div className="grid sm:grid-cols-2 gap-3 mb-6">
-                      <button className="p-4 rounded-xl border-2 border-orange-500 bg-orange-50 flex items-center gap-3">
-                        <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center text-white">
-                          <CreditCard className="w-5 h-5" />
-                        </div>
-                        <div className="text-left">
-                          <p className="font-semibold text-gray-900 text-sm">M-Pesa</p>
-                          <p className="text-xs text-gray-500">STK Push</p>
-                        </div>
-                        <Check className="w-4 h-4 text-orange-500 ml-auto" />
-                      </button>
+                    {/* Card Payment */}
+                    {paymentMethod === 'card' && (
+                      <div className="mb-6">
+                        {loadingSavedCards ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader className="w-6 h-6 animate-spin text-orange-600 mr-2" />
+                            <span className="text-sm text-gray-600">Checking for saved cards...</span>
+                          </div>
+                        ) : savedCards.length > 0 && !showAddNewCard ? (
+                          <div className="mb-4">
+                            <h3 className="font-semibold text-gray-900 mb-3">Your Saved Cards</h3>
+                            <div className="space-y-2 mb-4">
+                              {savedCards.map((card, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  onClick={() => setSelectedSavedCard(card)}
+                                  className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition ${
+                                    selectedSavedCard?.authorization_code === card.authorization_code
+                                      ? 'border-orange-500 bg-orange-50'
+                                      : 'border-gray-200'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <CreditCard className="w-6 h-6 text-gray-600" />
+                                    <div className="text-left">
+                                      <p className="font-medium">•••• •••• •••• {card.card_last4}</p>
+                                      <p className="text-xs text-gray-500">Expires {card.card_expiry_month}/{card.card_expiry_year}</p>
+                                    </div>
+                                  </div>
+                                  {selectedSavedCard?.authorization_code === card.authorization_code && <Check className="w-5 h-5 text-orange-600" />}
+                                </button>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => { setShowAddNewCard(true); setSelectedSavedCard(null); }}
+                                className="w-full p-4 border-2 border-dashed border-gray-200 rounded-lg text-gray-600 hover:border-orange-300"
+                              >
+                                Use a different card
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h3 className="font-semibold text-blue-900 mb-1">Secure Card Payment</h3>
+                            <p className="text-sm text-blue-700">
+                              You'll be redirected to our secure payment partner (Paystack) to complete your card payment.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-                      <button className="p-4 rounded-xl border-2 border-gray-200 flex items-center gap-3 opacity-50">
-                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
-                          <CreditCard className="w-5 h-5" />
+                    {/* Cash on Delivery */}
+                    {paymentMethod === 'cod' && (
+                      <div className="mb-6">
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <h3 className="font-semibold text-blue-900 mb-2">Pay at Event</h3>
+                          <ul className="text-sm text-blue-800 space-y-2 list-disc list-inside">
+                            <li>Your spot is reserved</li>
+                            <li>Pay with cash or M-Pesa at the event check-in</li>
+                            <li>Please arrive 15 minutes early to complete payment</li>
+                            <li>Have exact change ready</li>
+                          </ul>
                         </div>
-                        <div className="text-left">
-                          <p className="font-semibold text-gray-900 text-sm">Card</p>
-                          <p className="text-xs text-gray-500">Paystack</p>
-                        </div>
-                      </button>
-                    </div>
+                      </div>
+                    )}
 
                     <div className="flex justify-between">
                       <button
@@ -713,11 +876,131 @@ const EventBookingPage = () => {
                         Back
                       </button>
                       <button
-                        onClick={() => alert('Demo: Booking confirmed! In production, this processes payment via Paystack/M-Pesa.')}
-                        className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center gap-2"
+                        onClick={async () => {
+                          if (actionLoading) return; // Prevent double-click
+                          try {
+                            setActionLoading(true);
+                            
+                            // Step 1: Register for event
+                            const payload = {
+                              participant_count: participants,
+                              add_ons: {
+                                transport: addOns.transport,
+                                insurance: addOns.insurance,
+                                nutrition: addOns.nutrition,
+                              },
+                              bike_included: bikeOption === 'included',
+                              bike_rental_id: bikeOption === 'rent' ? selectedBike?.id : null,
+                              bike_add_ons: bikeOption === 'rent' ? bikeAddOns : null,
+                              emergency_contact_name: emergencyContact.name,
+                              emergency_contact_phone: emergencyContact.phone,
+                              waiver_signed: waiverAgreed,
+                            };
+                            
+                            const regResponse = await eventService.registerForEvent(slug, payload);
+                            if (!regResponse.data?.success) {
+                              throw new Error(regResponse.data?.message || 'Registration failed');
+                            }
+
+                            const regCode = regResponse.data?.data?.registration_code;
+                            const amountDue = regResponse.data?.data?.amount_due;
+
+                            // If no payment required, go to success
+                            if (!regResponse.data?.data?.payment_required || amountDue <= 0) {
+                              navigate('/my-event-bookings', {
+                                state: { success: true, message: 'Registration confirmed!' }
+                              });
+                              return;
+                            }
+
+                            // Step 2: Process payment based on method
+                            if (paymentMethod === 'mpesa') {
+                              const mpesaResponse = await eventService.initiateEventMpesa({
+                                registration_code: regCode,
+                                phone_number: mpesaPhone || user?.phone || ''
+                              });
+                              
+                              if (mpesaResponse.data?.success) {
+                                const paymentId = mpesaResponse.data?.data?.payment_id;
+                                const isMock = mpesaResponse.data?.data?.mock;
+
+                                if (isMock) {
+                                  // Mock mode: show message and poll briefly
+                                  console.log('🧪 Mock M-Pesa payment — auto-completing in 5 seconds...');
+                                }
+
+                                // Poll for payment status
+                                paymentService.pollPaymentStatus(
+                                  paymentId,
+                                  (status) => {
+                                    if (status === 'completed') {
+                                      navigate('/my-event-bookings', {
+                                        state: { success: true, message: 'Payment successful! Registration confirmed.' }
+                                      });
+                                    } else if (status === 'failed') {
+                                      alert('Payment failed. Please try again.');
+                                      setActionLoading(false);
+                                    }
+                                  }
+                                );
+                              }
+                            } else if (paymentMethod === 'card') {
+                              if (selectedSavedCard && !showAddNewCard) {
+                                // Charge saved card
+                                const cardResponse = await paymentService.chargeSavedCard({
+                                  order_id: null, // Event payment doesn't use order_id
+                                  email: user?.email,
+                                  authorization_code: selectedSavedCard.authorization_code
+                                });
+                                // Note: This needs backend support for event registration charging
+                                // For now, redirect to Paystack
+                                const cardInit = await eventService.initiateEventCard({
+                                  registration_code: regCode,
+                                  email: user?.email
+                                });
+                                if (cardInit.data?.success && cardInit.data?.data?.authorization_url) {
+                                  window.location.href = cardInit.data.data.authorization_url;
+                                }
+                              } else {
+                                // New card - redirect to Paystack
+                                const cardInit = await eventService.initiateEventCard({
+                                  registration_code: regCode,
+                                  email: user?.email
+                                });
+                                if (cardInit.data?.success && cardInit.data?.data?.authorization_url) {
+                                  window.location.href = cardInit.data.data.authorization_url;
+                                }
+                              }
+                            } else if (paymentMethod === 'cod') {
+                              const codResponse = await eventService.eventCod({
+                                registration_code: regCode
+                              });
+                              if (codResponse.data?.success) {
+                                navigate('/my-event-bookings', {
+                                  state: { success: true, message: 'Spot reserved! Pay at the event.' }
+                                });
+                              }
+                            }
+
+                          } catch (err) {
+                            alert(err.response?.data?.message || err.message || 'Payment failed. Please try again.');
+                            setActionLoading(false);
+                          }
+                        }}
+                        disabled={actionLoading}
+                        className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
                       >
-                        <Shield className="w-5 h-5" />
-                        Pay KSh {total.toLocaleString()}
+                        {actionLoading ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <Shield className="w-5 h-5" />
+                            {paymentMethod === 'cod' ? 'Reserve Spot' : `Pay KSh ${total.toLocaleString()}`}
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>

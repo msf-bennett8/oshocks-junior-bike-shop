@@ -8,6 +8,8 @@ class Payment extends Model
 {
     protected $fillable = [
         'order_id',
+        'event_registration_id',
+        'payment_for',
         'seller_id',
         'sale_channel',
         'payment_method',
@@ -59,6 +61,11 @@ class Payment extends Model
     public function order()
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function eventRegistration()
+    {
+        return $this->belongsTo(CyclingEventRegistration::class, 'event_registration_id');
     }
 
     public function seller()

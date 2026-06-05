@@ -42,7 +42,7 @@ class PaymentController extends Controller
 
         try {
             $order = Order::with('orderItems.product.seller')->findOrFail($validated['order_id']);
-            
+
             // Check if order is already paid
             if ($order->payment_status === 'paid') {
                 return response()->json([
@@ -53,7 +53,7 @@ class PaymentController extends Controller
 
             // Generate unique transaction reference
             $transactionRef = 'OS' . strtoupper(Str::random(8)) . time();
-            
+
             // Calculate amounts
             $amount = $order->total;
             $sellerId = $order->orderItems->first()->product->seller_id ?? null;
@@ -81,7 +81,63 @@ class PaymentController extends Controller
                 ],
             ]);
 
-            // Initiate STK Push
+            // ─── Development Mock: Bypass real M-Pesa API in local dev ───
+            if (app()->environment('local') && config('services.mpesa.mock_in_dev', false)) {
+                $mockCheckoutId = 'ws_CO_' . strtoupper(Str::random(16));
+
+                $payment->update([
+                    'external_reference' => $mockCheckoutId,
+                    'payment_details' => json_encode([
+                        'merchant_request_id' => 'mock_' . Str::random(10),
+                        'checkout_request_id' => $mockCheckoutId,
+                        'customer_message' => 'Mock STK push sent successfully',
+                        'mock' => true,
+                    ]),
+                ]);
+
+                // Auto-complete payment after 5 seconds (simulate M-Pesa callback)
+                \Illuminate\Support\Facades\Queue::later(
+                    now()->addSeconds(5),
+                    function () use ($payment, $order) {
+                        $payment->refresh();
+                        if ($payment->status === 'pending') {
+                            $payment->update([
+                                'status' => 'completed',
+                                'external_transaction_id' => 'MPESA' . Str::random(10),
+                                'payment_collected_at' => now(),
+                                'verified_at' => now(),
+                                'payment_details' => json_encode([
+                                    'mpesa_receipt_number' => 'MCK' . Str::random(8),
+                                    'transaction_date' => now()->format('YmdHis'),
+                                    'phone_number' => $payment->phone_number,
+                                    'amount' => $payment->amount,
+                                    'mock' => true,
+                                ]),
+                            ]);
+
+                            $order->update([
+                                'payment_status' => 'paid',
+                                'status' => 'processing'
+                            ]);
+                        }
+                    }
+                );
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Mock payment initiated (dev mode)',
+                    'data' => [
+                        'payment_id' => $payment->id,
+                        'transaction_reference' => $transactionRef,
+                        'transaction_id' => $transactionRef,
+                        'checkout_request_id' => $mockCheckoutId,
+                        'customer_message' => 'Mock STK push — payment will auto-complete in 5 seconds',
+                        'mock' => true,
+                    ]
+                ]);
+            }
+
+            // Initiate STK Push (real M-Pesa API)
             $stkResponse = $this->stkService->initiateStkPush(
                 phoneNumber: $validated['phone_number'],
                 amount: $amount,
@@ -147,12 +203,12 @@ class PaymentController extends Controller
 
         try {
             $callbackData = $request->all();
-            
+
             // Check if it's STK callback or B2C callback
             if (isset($callbackData['Body']['stkCallback'])) {
                 return $this->handleStkCallback($callbackData);
             }
-            
+
             if (isset($callbackData['Result'])) {
                 return $this->handleB2CCallback($callbackData);
             }
@@ -165,7 +221,7 @@ class PaymentController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             // Always return success to Safaricom to prevent retries
             return response()->json(['ResultCode' => 0, 'ResultDesc' => 'Received']);
         }
@@ -193,7 +249,7 @@ class PaymentController extends Controller
             // Success
             $callbackMetadata = $stkCallback['CallbackMetadata']['Item'] ?? [];
             $metadata = [];
-            
+
             foreach ($callbackMetadata as $item) {
                 $metadata[$item['Name']] = $item['Value'] ?? null;
             }
@@ -212,11 +268,19 @@ class PaymentController extends Controller
                 ]),
             ]);
 
-            // Update order status
-            $payment->order->update([
-                'payment_status' => 'paid',
-                'status' => 'processing'
-            ]);
+            // Update order or event registration status
+            if ($payment->order) {
+                $payment->order->update([
+                    'payment_status' => 'paid',
+                    'status' => 'processing'
+                ]);
+            }
+
+            if ($payment->eventRegistration) {
+                $payment->eventRegistration->update([
+                    'payment_status' => 'paid',
+                ]);
+            }
 
             Log::info('Payment completed successfully', [
                 'payment_id' => $payment->id,
@@ -330,7 +394,7 @@ class PaymentController extends Controller
 
         try {
             $order = Order::findOrFail($validated['order_id']);
-            
+
             $payment = Payment::create([
                 'order_id' => $order->id,
                 'payment_method' => $validated['payment_method'],

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
@@ -23,6 +24,7 @@ const EventDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [showShareMenu, setShowShareMenu] = useState(false);
+    const { user } = useAuth();
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -416,7 +418,14 @@ const EventDetailsPage = () => {
                   )}
 
                   <button
-                    onClick={() => navigate(`/events/${event.slug}/book`)}
+                    onClick={() => {
+                      if (!user) {
+                        // Redirect to login with return URL
+                        navigate('/login', { state: { from: `/events/${event.slug}/book` } });
+                        return;
+                      }
+                      navigate(`/events/${event.slug}/book`);
+                    }}
                     disabled={seatsRemaining <= 0}
                     className={`w-full mt-6 py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
                       seatsRemaining > 0
@@ -426,7 +435,7 @@ const EventDetailsPage = () => {
                   >
                     {seatsRemaining > 0 ? (
                       <>
-                        Book Your Spot
+                        {user ? 'Book Your Spot' : 'Sign In to Book'}
                         <ArrowRight className="w-5 h-5" />
                       </>
                     ) : (

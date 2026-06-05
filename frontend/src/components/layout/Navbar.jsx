@@ -13,7 +13,7 @@ import CreateChatModal from '../messaging/CreateChatModal';
 import { useWebRTC } from '../../hooks/useWebRTC';
 import { useMessaging } from '../../hooks/useMessaging';
 
-import SearchBar from '../common/SearchBar';import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Plus, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowRight, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, Users, Package2, BarChart3, FolderTree, Heart, Bell, MessageCircle, Inbox, Calendar, ClipboardList } from 'lucide-react';
+import SearchBar from '../common/SearchBar';import { Search, User, ShoppingCart, Menu, X, ChevronRight, ChevronDown, Plus, Home, Package, Info, Mail, LayoutDashboard, LogOut, Sparkles, Wrench, HelpCircle, BookOpen, Settings, ArrowRight, Mountain, Bike, Zap, Baby, Backpack, Settings as SettingsIcon, Flame, DollarSign, Tag, MapPin, Ruler, Shield, AlertTriangle, Store, Briefcase, Handshake, Gift, Users, Package2, BarChart3, FolderTree, Heart, Bell, MessageCircle, Inbox, Calendar, ClipboardList, Ticket } from 'lucide-react';
 import Avatar from '../common/Avatar';
 
 const Navbar = () => {
@@ -1007,6 +1007,21 @@ const Navbar = () => {
                             <div>
                               <span className="text-sm text-gray-800 font-medium">All Events</span>
                               <p className="text-[11px] text-gray-500">Browse upcoming cycling events</p>
+                            </div>
+                          </button>
+
+                          {/* My Event Bookings */}
+                          <button
+                            onClick={() => {
+                              setShowQuickActions(false);
+                              navigate('/my-event-bookings');
+                            }}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-indigo-100/50 transition-colors w-full text-left"
+                          >
+                            <Ticket className="w-4 h-4 text-indigo-600" />
+                            <div>
+                              <span className="text-sm text-gray-800 font-medium">My Event Bookings</span>
+                              <p className="text-[11px] text-gray-500">Your event registrations</p>
                             </div>
                           </button>
 

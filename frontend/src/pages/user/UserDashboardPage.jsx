@@ -746,6 +746,7 @@ const UserDashboard = () => {
                   { label: 'My Custom Rides', sublabel: 'Ride requests', icon: MapPin, color: 'purple', link: '/my-rides' },
                   { label: 'All Events', sublabel: 'Cycling events', icon: Calendar, color: 'orange', link: '/events' },
                   { label: 'My Bike Hires', sublabel: 'Rental bookings', icon: DollarSign, color: 'green', link: '/my-bike-hires' },
+                  { label: 'My Event Bookings', sublabel: 'Event registrations', icon: Ticket, color: 'orange', link: '/my-event-bookings' },
                   { label: 'Account Settings', sublabel: 'Update profile', icon: User, color: 'green', link: '/settings' },
                   { label: 'Addresses', sublabel: 'Manage locations', icon: MapPin, color: 'purple', link: '/addresses' },
                   { label: 'My Reviews', sublabel: 'View feedback', icon: MessageSquare, color: 'yellow', link: '/reviews' },

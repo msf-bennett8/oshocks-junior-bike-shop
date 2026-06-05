@@ -45,6 +45,7 @@ return [
         'x-guest-name',
         'x-guest-email',
         'X-Socket-ID',
+        'X-Idempotency-Key'
     ],
 
     'exposed_headers' => ['Authorization'],

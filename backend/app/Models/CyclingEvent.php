@@ -95,6 +95,17 @@ class CyclingEvent extends Model
         return $this->belongsTo(User::class, 'organizer_id');
     }
 
+    public function registrations()
+    {
+        return $this->hasMany(CyclingEventRegistration::class, 'event_id');
+    }
+
+    public function registeredUsers()
+    {
+        return $this->belongsToMany(User::class, 'cycling_event_registrations', 'event_id', 'user_id')
+            ->wherePivot('status', 'registered');
+    }
+
     public function scopeOpen($query)
     {
         return $query->where('status', 'open');

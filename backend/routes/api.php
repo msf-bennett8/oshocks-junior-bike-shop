@@ -657,12 +657,34 @@ Route::prefix('v1/events')->middleware(['api', 'audit'])->group(function () {
 // ============================================================================
 Route::prefix('v1/events')->middleware(['auth:sanctum', 'audit', 'security.monitor'])->group(function () {
     Route::post('/', [\App\Http\Controllers\Api\CyclingEventController::class, 'store']);
+    Route::get('/my/events', [\App\Http\Controllers\Api\CyclingEventController::class, 'myEvents']);
+    Route::get('/my/registrations', [\App\Http\Controllers\Api\CyclingEventController::class, 'myRegistrations']);
+
+    // ─── SPECIFIC routes MUST come BEFORE dynamic /{eventCode} routes ───
+    Route::post('/{eventCode}/register', [\App\Http\Controllers\Api\CyclingEventController::class, 'register']);
+    Route::post('/{eventCode}/unregister', [\App\Http\Controllers\Api\CyclingEventController::class, 'unregister']);
+    Route::get('/{eventCode}/participants', [\App\Http\Controllers\Api\CyclingEventController::class, 'participants']);
+    Route::get('/{eventCode}/stats', [\App\Http\Controllers\Api\CyclingEventController::class, 'stats']);
+
+    // ─── Dynamic /{eventCode} routes come LAST ───
     Route::post('/{eventCode}', [\App\Http\Controllers\Api\CyclingEventController::class, 'update']); // POST for FormData with _method=PUT
     Route::put('/{eventCode}', [\App\Http\Controllers\Api\CyclingEventController::class, 'update']);
     Route::delete('/{eventCode}', [\App\Http\Controllers\Api\CyclingEventController::class, 'destroy']);
-    Route::get('/my/events', [\App\Http\Controllers\Api\CyclingEventController::class, 'myEvents']);
-    Route::get('/{eventCode}/stats', [\App\Http\Controllers\Api\CyclingEventController::class, 'stats']);
 });
+
+// ============================================================================
+// EVENT PAYMENT ROUTES (M-Pesa, Card, COD for event registrations)
+// ============================================================================
+Route::prefix('v1/event-payments')->middleware(['auth:sanctum', 'audit', 'security.monitor'])->group(function () {
+    Route::post('/mpesa/initiate', [\App\Http\Controllers\Api\EventPaymentController::class, 'initiateMpesa']);
+    Route::post('/card/initialize', [\App\Http\Controllers\Api\EventPaymentController::class, 'initializeCard']);
+    Route::post('/cod', [\App\Http\Controllers\Api\EventPaymentController::class, 'cashOnDelivery']);
+    Route::get('/{paymentId}/status', [\App\Http\Controllers\Api\EventPaymentController::class, 'status']);
+    Route::get('/card/verify/{reference}', [\App\Http\Controllers\Api\EventPaymentController::class, 'verifyCard']);
+});
+
+// Public callback for event card payments
+Route::get('/v1/event-payments/card/callback', [\App\Http\Controllers\Api\EventPaymentController::class, 'cardCallback']);
 
 // ============================================================================
 // BIKE RENTAL ROUTES — PUBLIC

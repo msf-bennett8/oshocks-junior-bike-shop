@@ -89,6 +89,26 @@ const eventService = {
   deleteEvent: (eventCode) => eventAPI.deleteEvent(eventCode),
   getMyEvents: (params = {}) => eventAPI.getMyEvents(params),
   getEventStats: (eventCode) => eventAPI.getEventStats(eventCode),
+
+  // ─── Event Registration ───
+  registerForEvent: (eventCode, data) => {
+    const idempotencyKey = `${eventCode}:${Date.now()}:${Math.random().toString(36).substr(2, 9)}`;
+    return api.post(`/events/${eventCode}/register`, data, {
+      headers: {
+        'X-Idempotency-Key': idempotencyKey,
+      },
+    });
+  },
+  unregisterFromEvent: (eventCode, reason) => api.post(`/events/${eventCode}/unregister`, { reason }),
+  getMyEventRegistrations: (params = {}) => api.get('/events/my/registrations', { params }),
+  getEventParticipants: (eventCode, params = {}) => api.get(`/events/${eventCode}/participants`, { params }),
+
+  // ─── Event Payments ───
+  initiateEventMpesa: (data) => api.post('/event-payments/mpesa/initiate', data),
+  initiateEventCard: (data) => api.post('/event-payments/card/initialize', data),
+  eventCod: (data) => api.post('/event-payments/cod', data),
+  checkEventPaymentStatus: (paymentId) => api.get(`/event-payments/${paymentId}/status`),
+  verifyEventCardPayment: (reference) => api.get(`/event-payments/card/verify/${reference}`),
 };
 
 export default eventService;
