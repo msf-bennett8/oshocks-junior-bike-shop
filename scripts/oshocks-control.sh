@@ -9,12 +9,12 @@ PROJECT="$3"
 ENV="$4"
 
 if [ "$1" != "$USER_NAME" ]; then
-    echo "Usage: msf bennett <start|stop|clear|restart|status|logs|attach> <project> <dev|prod>"
+    echo "Usage: msf bennett <start|stop|clear|restart|status|logs|attach|tree> <project> <dev|prod>"
     exit 1
 fi
 
 if [ -z "$ACTION" ] || [ -z "$PROJECT" ] || [ -z "$ENV" ]; then
-    echo "Usage: msf bennett <start|stop|clear|restart|status|logs|attach> <project> <dev|prod>"
+    echo "Usage: msf bennett <start|stop|clear|restart|status|logs|attach|tree> <project> <dev|prod>"
     exit 1
 fi
 
@@ -124,6 +124,16 @@ case "$PROJECT" in
             # Tail all three log files with labels
             tail -f /var/lib/mysql/accellalegacy.err /tmp/php-artisan-serve.log /tmp/npm-run-dev.log 2>/dev/null || echo "Some log files not found. Servers may not be running."
             ;;
+          tree)
+            echo "=========================================="
+            echo "  📁 Generating Project Tree"
+            echo "=========================================="
+            echo ""
+            echo "Use: msf bennett tree -L <depth> for terminal output"
+            echo "Use: msf bennett tree -L <depth> make file for file output"
+            echo "Use: msf bennett tree -L <depth> --preview for interactive preview"
+            echo ""
+            ;;
           attach)
             if tmux has-session -t oshocks-dev 2>/dev/null; then
               echo "📎 Attaching to oshocks-dev tmux session..."
@@ -135,7 +145,7 @@ case "$PROJECT" in
             fi
             ;;
           *)
-            echo "Usage: msf bennett <start|stop|clear|restart|status|logs|attach> oshocks dev"
+            echo "Usage: msf bennett <start|stop|clear|restart|status|logs|attach|tree> oshocks dev"
             exit 1
             ;;
         esac

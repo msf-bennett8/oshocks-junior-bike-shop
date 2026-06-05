@@ -9,6 +9,19 @@ msf bennett logs oshocks dev       # Tail all logs
 msf bennett clear oshocks dev      # Clear all caches
 msf bennett attach oshocks dev     # Attach to tmux session
 
+## Tree Commands
+msf bennett tree                   # Default depth 5, terminal output
+msf bennett tree -L 3              # Depth 3, terminal 
+msf bennett tree -L 5 make file    # Save tree to 
+
+# PROJECT-TREE-SNAPSHOT.md
+msf bennett tree -L 5 --preview    # Interactive collapsible preview
+
+# Interactive Preview Controls
+↑ / ↓ — Navigate tree
+Enter — Preview directory contents
+/ — Search/filter
+q / Esc — Quit preview
 
 ## TMUX Session Management
 tmux ls                            # List tmux sessions
@@ -44,7 +57,6 @@ npm run dev clear                  # Clear npm cache
 npm run dev logs                   # Tail npm logs
 
 ## Project Structure
-
 ~/studio.dev/
 ├── oshocks/                       # Main project (PHP + React)
 │   ├── backend/                   # Laravel PHP backend
@@ -56,12 +68,16 @@ npm run dev logs                   # Tail npm logs
 │   │       └── npm-run-dev.sh     # npm dev control
 │   └── scripts/
 │       ├── oshocks-control.sh     # Main controller
-│       └── tmux-oshocks-start.sh  # Tmux starter
+│       ├── tmux-oshocks-start.sh  # Tmux starter
+│       ├── project-tree.sh        # Tree snapshot generator
+│       ├── project-tree-preview.sh # Interactive tree preview
+│       └── tree-with-paths.sh     # Tree path helper
 │
 ├── bennett 065/                   # Frontend only project
 │   └── frontend/                  # Vite React app
 │
 └── silicon swimming ducks/        # Multiple projects
+
 
 ## Important Files
 
@@ -82,9 +98,14 @@ Terminal restores last directory on reopen
 .lastdir file saves current directory
 Tmux sessions survive terminal closes
 
-# Tips
-Always use msf bennett commands — they handle everything
-Servers run in tmux by default — safe to close terminal
-Use msf bennett attach to view running servers
-Port 3000 is forced for npm (auto-fallback to 3001 if busy)
-MariaDB runs without sudo password (configured in sudoers)
+## Tips
+1. Always use `msf bennett` commands — they handle everything
+2. Servers run in tmux by default — safe to close terminal
+3. Use `msf bennett attach` to view running servers
+4. Port 3000 is forced for npm (auto-fallback to 3001 if busy)
+5. MariaDB runs without sudo password (configured in sudoers)
+6. Use `msf bennett tree --preview` for interactive file exploration
+7. `make file` saves tree output to markdown for documentation
+
+
+
