@@ -519,6 +519,7 @@ const EventBookingPage = () => {
                           <CompactRow label="Event" value={event.title} />
                           <CompactRow label="Date" value={formattedDate} />
                           <CompactRow label="Duration" value={`${eventDurationDays} day${eventDurationDays > 1 ? 's' : ''}`} />
+                          <CompactRow label="Meeting Point" value={event.meeting_point} />
                           <CompactRow label="Distance" value={`${event.distance_km} km`} />
                           <CompactRow label="Difficulty" value={event.difficulty} />
                         </div>
@@ -528,12 +529,16 @@ const EventBookingPage = () => {
                       <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                         <h3 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-2">Riders</h3>
                         <div className="space-y-1 text-sm">
-                          <CompactRow label="Riders" value={participants} />
+                          <CompactRow label="Number of Riders" value={participants} />
                           <CompactRow label="Emergency Contact" value={emergencyContact.name || '—'} />
                           <CompactRow label="Emergency Phone" value={emergencyContact.phone || '—'} />
-                          <CompactRow label="Waiver" value={waiverAgreed ? '✓ Signed' : '✗ Not signed'} highlight={waiverAgreed} />
+                          <CompactRow label="Waiver Signed" value={waiverAgreed ? 'Yes ✓' : 'No ✗'} highlight={waiverAgreed} />
                           {participants >= event.group_discount_threshold && (
-                            <CompactRow label="Discount" value={`${event.group_discount_percent}% off`} highlight />
+                            <CompactRow 
+                              label="Group Discount" 
+                              value={`${event.group_discount_percent}% off applied!`} 
+                              highlight 
+                            />
                           )}
                         </div>
                       </div>
@@ -545,23 +550,38 @@ const EventBookingPage = () => {
                           <CompactRow 
                             label="Bike" 
                             value={
-                              bikeOption === 'own' ? 'Own bike' :
-                              bikeOption === 'included' ? 'Included' :
-                              bikeOption === 'rent' && selectedBike ? `${selectedBike.name}` : 'Not selected'
+                              bikeOption === 'own' ? 'I have my own bike' :
+                              bikeOption === 'included' ? 'Bike included in event' :
+                              bikeOption === 'rent' && selectedBike ? `Rent: ${selectedBike.name} (${selectedBike.brand} ${selectedBike.model})` :
+                              'No bike selected'
                             } 
                           />
                           {bikeOption === 'rent' && selectedBike && (
-                            <CompactRow label="Rate" value={`KSh ${selectedBike.daily_rate.toLocaleString()}/day`} />
+                            <>
+                              <CompactRow label="Rental Duration" value={`${eventDurationDays} day${eventDurationDays > 1 ? 's' : ''} × ${participants} rider${participants > 1 ? 's' : ''}`} />
+                              <CompactRow label="Daily Rate" value={`KSh ${selectedBike.daily_rate.toLocaleString()}`} />
+                            </>
+                          )}
+                          {bikeOption === 'rent' && selectedBike && selectedBike.insurance_included !== true && (
+                            <CompactRow 
+                              label="Bike Insurance" 
+                              value={addOns.insurance ? 'Included (KSh 200/day)' : 'Not selected'} 
+                              highlight={addOns.insurance}
+                            />
                           )}
                           {bikeOption === 'rent' && Object.entries(bikeAddOns).some(([_, v]) => v) && (
-                            <div className="mt-2">
-                              <span className="text-xs text-gray-500 font-medium">Add-ons:</span>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {Object.entries(bikeAddOns).filter(([_, v]) => v).map(([key]) => (
-                                  <span key={key} className="px-2 py-0.5 bg-white text-orange-700 text-xs rounded-full border border-orange-200 capitalize">
-                                    {key.replace(/_/g, ' ')}
-                                  </span>
-                                ))}
+                            <div className="mt-2 pt-2 border-t border-gray-200">
+                              <span className="text-xs text-gray-500 font-medium block mb-1">Selected Add-ons:</span>
+                              <div className="space-y-1">
+                                {Object.entries(bikeAddOns).filter(([_, v]) => v).map(([key]) => {
+                                  const prices = { helmet: 200, lights: 150, lock: 100, repair_kit: 100, water_bottle: 50, gloves: 150 };
+                                  return (
+                                    <div key={key} className="flex justify-between items-center px-2 py-1 bg-white rounded border border-gray-100">
+                                      <span className="text-xs text-gray-600 capitalize">{key.replace(/_/g, ' ')}</span>
+                                      <span className="text-xs font-bold text-gray-900">KSh {(prices[key] * participants).toLocaleString()}</span>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
                           )}
@@ -609,6 +629,12 @@ const EventBookingPage = () => {
                           <div className="bg-white rounded-lg p-2 border border-gray-100">
                             <span className="text-xs text-gray-500 block">Equip</span>
                             <span className="font-bold text-gray-900">KSh {bikeAddOnsPrice.toLocaleString()}</span>
+                          </div>
+                        )}
+                        {bikeInsurancePrice > 0 && (
+                          <div className="bg-white rounded-lg p-2 border border-gray-100">
+                            <span className="text-xs text-gray-500 block">Bike Ins.</span>
+                            <span className="font-bold text-gray-900">KSh {bikeInsurancePrice.toLocaleString()}</span>
                           </div>
                         )}
                         {transportPrice > 0 && (
@@ -734,6 +760,12 @@ const EventBookingPage = () => {
                             <span className="font-medium">KSh {bikeAddOnsPrice.toLocaleString()}</span>
                           </div>
                         )}
+                        {bikeInsurancePrice > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-500">Bike Ins.</span>
+                            <span className="font-medium">KSh {bikeInsurancePrice.toLocaleString()}</span>
+                          </div>
+                        )}
                         {transportPrice > 0 && (
                           <div className="flex justify-between">
                             <span className="text-gray-500">Transport</span>
@@ -766,6 +798,30 @@ const EventBookingPage = () => {
                       </div>
                     </div>
 
+                    {/* Event Add-ons Mini Card */}
+                    {(addOns.transport || addOns.insurance || addOns.nutrition) && (
+                      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+                        <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider">Event Add-ons</h3>
+                        <div className="space-y-2 text-sm">
+                          <CompactRow 
+                            label="Transport to Start" 
+                            value={addOns.transport ? `Yes (+KSh ${transportPrice.toLocaleString()})` : 'Not selected'} 
+                            highlight={addOns.transport}
+                          />
+                          <CompactRow 
+                            label="Ride Insurance" 
+                            value={addOns.insurance ? `Yes (+KSh ${eventInsurancePrice.toLocaleString()})` : 'Not selected'} 
+                            highlight={addOns.insurance}
+                          />
+                          <CompactRow 
+                            label="Nutrition Pack" 
+                            value={addOns.nutrition ? `Yes (+KSh ${nutritionPrice.toLocaleString()})` : 'Not selected'} 
+                            highlight={addOns.nutrition}
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     {/* Bike Details Mini Card */}
                     {bikeOption === 'rent' && selectedBike && (
                       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
@@ -774,20 +830,24 @@ const EventBookingPage = () => {
                           <img 
                             src={selectedBike.images?.[0]} 
                             alt={selectedBike.name}
-                            className="w-12 h-12 rounded-lg object-cover"
+                            className="w-14 h-14 rounded-lg object-cover border border-gray-100"
                           />
-                          <div>
-                            <h4 className="font-bold text-gray-900 text-sm">{selectedBike.name}</h4>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-gray-900 text-sm truncate">{selectedBike.name}</h4>
                             <p className="text-xs text-gray-500">{selectedBike.brand} {selectedBike.model}</p>
+                            <p className="text-xs text-orange-600 font-semibold">KSh {selectedBike.daily_rate.toLocaleString()}/day</p>
                           </div>
                         </div>
                         {Object.entries(bikeAddOns).some(([_, v]) => v) && (
-                          <div className="flex flex-wrap gap-1">
-                            {Object.entries(bikeAddOns).filter(([_, v]) => v).map(([key]) => (
-                              <span key={key} className="px-2 py-1 bg-orange-50 text-orange-700 text-xs rounded-full border border-orange-200 capitalize">
-                                {key.replace(/_/g, ' ')}
-                              </span>
-                            ))}
+                          <div className="mt-2 pt-2 border-t border-gray-100">
+                            <span className="text-xs text-gray-500 font-medium block mb-1">Selected Add-ons:</span>
+                            <div className="flex flex-wrap gap-1">
+                              {Object.entries(bikeAddOns).filter(([_, v]) => v).map(([key]) => (
+                                <span key={key} className="px-2 py-1 bg-orange-50 text-orange-700 text-xs rounded-full border border-orange-200 capitalize">
+                                  {key.replace(/_/g, ' ')}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
