@@ -72,3 +72,6 @@ backend/storage/framework/cache/
 backend/storage/framework/sessions/
 backend/storage/framework/cache/
 backend/storage/framework/sessions/
+
+# Vite PWA / Workbox dev build artifacts
+frontend/dev-dist/
