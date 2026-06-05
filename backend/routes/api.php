@@ -659,6 +659,9 @@ Route::prefix('v1/events')->middleware(['auth:sanctum', 'audit', 'security.monit
     Route::post('/', [\App\Http\Controllers\Api\CyclingEventController::class, 'store']);
     Route::get('/my/events', [\App\Http\Controllers\Api\CyclingEventController::class, 'myEvents']);
     Route::get('/my/registrations', [\App\Http\Controllers\Api\CyclingEventController::class, 'myRegistrations']);
+    Route::post('/registrations/{registrationCode}/refund-request', [\App\Http\Controllers\Api\CyclingEventController::class, 'requestRefund']);
+    Route::get('/registrations/{registrationCode}/ticket', [\App\Http\Controllers\Api\CyclingEventController::class, 'downloadTicket']);
+    Route::post('/registrations/{registrationCode}/transfer-request', [\App\Http\Controllers\Api\CyclingEventController::class, 'requestTransfer']);
 
     // ─── SPECIFIC routes MUST come BEFORE dynamic /{eventCode} routes ───
     Route::post('/{eventCode}/register', [\App\Http\Controllers\Api\CyclingEventController::class, 'register']);
@@ -787,6 +790,18 @@ Route::prefix('v1/admin/bike-listings')->middleware(['auth:sanctum', 'audit', 's
         Route::post('/{eventCode}/approve-deletion', [\App\Http\Controllers\Api\CyclingEventModerationController::class, 'approveDeletion']);
         Route::post('/{eventCode}/restore', [\App\Http\Controllers\Api\CyclingEventModerationController::class, 'restore']);
         Route::delete('/{eventCode}/permanent', [\App\Http\Controllers\Api\CyclingEventModerationController::class, 'permanentDelete']);
+
+        // ─── EVENT BOOKING MANAGEMENT ───
+        Route::get('/bookings', [\App\Http\Controllers\Api\EventBookingManagementController::class, 'index']);
+        Route::get('/bookings/stats', [\App\Http\Controllers\Api\EventBookingManagementController::class, 'stats']);
+        Route::get('/{eventCode}/bookings', [\App\Http\Controllers\Api\EventBookingManagementController::class, 'eventBookings']);
+        Route::post('/bookings/{registrationCode}/check-in', [\App\Http\Controllers\Api\EventBookingManagementController::class, 'checkIn']);
+        Route::post('/bookings/{registrationCode}/cancel', [\App\Http\Controllers\Api\EventBookingManagementController::class, 'adminCancel']);
+        Route::post('/bookings/{registrationCode}/refund', [\App\Http\Controllers\Api\EventBookingManagementController::class, 'processRefund']);
+        Route::post('/bookings/{registrationCode}/transfer', [\App\Http\Controllers\Api\EventBookingManagementController::class, 'transferBooking']);
+        Route::post('/bookings/bulk-check-in', [\App\Http\Controllers\Api\EventBookingManagementController::class, 'bulkCheckIn']);
+        Route::post('/bookings/bulk-cancel', [\App\Http\Controllers\Api\EventBookingManagementController::class, 'bulkCancel']);
+        Route::get('/{eventCode}/export-bookings', [\App\Http\Controllers\Api\EventBookingManagementController::class, 'exportBookings']);
     });
 
 // ============================================================================

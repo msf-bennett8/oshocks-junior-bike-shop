@@ -174,6 +174,7 @@ const MyBikeListingsPage = lazy(() => import('./pages/user/MyBikeListingsPage'))
 const MyBikeHiresPage = lazy(() => import('./pages/user/MyBikeHiresPage'));
 const MyEventBookingsPage = lazy(() => import('./pages/user/MyEventBookingsPage'));
 const EventBookingSuccessPage = lazy(() => import('./pages/events/EventBookingSuccessPage'));
+const EventBookingManagementPage = lazy(() => import('./pages/admin/EventBookingManagementPage'));
 
 // Education Pages
 const Careers = lazy(() => import('./pages/education/Careers'));
@@ -1104,9 +1105,9 @@ function App() {
                   </AdminRoute>
                 } />
 
-                <Route path="/admin/custom-rides-moderation" element={
+                <Route path="/admin/event-bookings/:eventCode" element={
                   <AdminRoute>
-                    <CustomRideModerationPage />
+                    <EventBookingManagementPage />
                   </AdminRoute>
                 } />
 

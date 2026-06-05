@@ -23,6 +23,7 @@ const STATUS_CONFIG = {
   cancelled: { label: 'Cancelled', color: 'red', icon: XCircle },
   no_show: { label: 'No Show', color: 'gray', icon: XCircle },
   attended: { label: 'Attended', color: 'emerald', icon: CheckCircle },
+  checked_in: { label: 'Checked In', color: 'blue', icon: CheckCircle },
 };
 
 const MyEventBookingsPage = () => {
@@ -266,13 +267,76 @@ const MyEventBookingsPage = () => {
                           {reg.payment_status}
                         </span>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <button
                           onClick={() => navigate(`/events/${event?.slug || event?.event_code}`)}
                           className="flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100"
                         >
                           <Eye className="w-3 h-3" /> View Event
                         </button>
+                        
+                        {/* Download Ticket (if registered and paid) */}
+                        {reg.status === 'registered' && reg.payment_status === 'paid' && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                const response = await eventService.downloadTicket(reg.registration_code);
+                                const blob = new Blob([response.data], { type: 'application/pdf' });
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `ticket-${reg.registration_code}.pdf`;
+                                a.click();
+                              } catch (e) {
+                                alert('Failed to download ticket');
+                              }
+                            }}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-purple-50 text-purple-600 rounded-lg text-sm font-medium hover:bg-purple-100"
+                          >
+                            <Ticket className="w-3 h-3" /> Ticket
+                          </button>
+                        )}
+
+                        {/* Request Refund (if refundable) */}
+                        {reg.is_refundable && (
+                          <button
+                            onClick={() => {
+                              const reason = prompt('Please provide a reason for your refund request:');
+                              if (reason) {
+                                eventService.requestRefund(reg.registration_code, reason)
+                                  .then(() => {
+                                    alert('Refund request submitted');
+                                    fetchRegistrations();
+                                  })
+                                  .catch(e => alert(e.response?.data?.message || 'Request failed'));
+                              }
+                            }}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-orange-50 text-orange-600 rounded-lg text-sm font-medium hover:bg-orange-100"
+                          >
+                            <RotateCcw className="w-3 h-3" /> Refund
+                          </button>
+                        )}
+
+                        {/* Transfer Booking */}
+                        {isUpcoming && reg.status === 'registered' && (
+                          <button
+                            onClick={() => {
+                              const email = prompt('Enter the email of the person you want to transfer this booking to:');
+                              if (email) {
+                                eventService.transferMyBooking(reg.registration_code, email)
+                                  .then(() => {
+                                    alert('Transfer request submitted for approval');
+                                    fetchRegistrations();
+                                  })
+                                  .catch(e => alert(e.response?.data?.message || 'Transfer failed'));
+                              }
+                            }}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100"
+                          >
+                            <Users className="w-3 h-3" /> Transfer
+                          </button>
+                        )}
+
                         {isUpcoming && !isCancelled && (
                           <button
                             onClick={() => handleCancelRegistration(reg)}

@@ -5,7 +5,7 @@ import {
   Shield, CheckCircle, XCircle, Trash2, RotateCcw, AlertTriangle,
   Search, Filter, Calendar, Clock, Users, Bike, MapPin, DollarSign,
   Eye, ChevronLeft, ChevronRight, Flag, Archive, RefreshCw,
-  Edit3, Check, X, Save, MessageSquare
+  Edit3, Check, X, Save, MessageSquare, Ticket,
 } from 'lucide-react';
 import eventService from '../../services/eventService';
 import customRideService from '../../services/customRideService';
@@ -16,6 +16,7 @@ const TABS = [
   { key: 'all', label: 'All Events', icon: Calendar },
   { key: 'pending', label: 'Pending Approval', icon: AlertTriangle },
   { key: 'approved', label: 'Active', icon: CheckCircle },
+  { key: 'bookings', label: 'Event Bookings', icon: Users },
   { key: 'custom-rides', label: 'Custom Ride Requests', icon: Bike },
   { key: 'scheduled', label: 'Scheduled for Deletion', icon: Clock },
   { key: 'auto-scheduled', label: 'Auto-Scheduled', icon: Calendar },
@@ -25,7 +26,13 @@ const TABS = [
 const EventsModerationPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState(() => {
+    // Read tab from URL query param
+    const params = new URLSearchParams(window.location.search);
+    const tabFromUrl = params.get('tab');
+    const validTabs = ['all', 'pending', 'approved', 'bookings', 'custom-rides', 'scheduled', 'auto-scheduled', 'deleted'];
+    return validTabs.includes(tabFromUrl) ? tabFromUrl : 'all';
+  });
   const [events, setEvents] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -65,9 +72,26 @@ const EventsModerationPage = () => {
     setModalConfig({ type: 'confirm', title: '', message: '', onConfirm: null, onCancel: null });
   };
 
+  // Sync activeTab with URL query param
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const tabFromUrl = params.get('tab');
+      const validTabs = ['all', 'pending', 'approved', 'bookings', 'custom-rides', 'scheduled', 'auto-scheduled', 'deleted'];
+      if (tabFromUrl && validTabs.includes(tabFromUrl) && tabFromUrl !== activeTab) {
+        setActiveTab(tabFromUrl);
+        setCurrentPage(1);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [activeTab]);
+
   useEffect(() => {
     if (activeTab === 'custom-rides') {
       fetchCustomRides();
+    } else if (activeTab === 'bookings') {
+      fetchBookings();
     } else {
       fetchEvents();
     }
@@ -78,7 +102,7 @@ const EventsModerationPage = () => {
     try {
       setLoading(true);
       const params = {
-        tab: activeTab,
+        tab: activeTab === 'bookings' ? 'all' : activeTab,
         page: currentPage,
         per_page: 20,
         ...(searchQuery && { search: searchQuery }),
@@ -87,6 +111,31 @@ const EventsModerationPage = () => {
       setEvents(response.data?.data || []);
     } catch (err) {
       console.error('Failed to fetch events:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const [bookings, setBookings] = useState([]);
+  const [bookingStats, setBookingStats] = useState(null);
+
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      const params = {
+        page: currentPage,
+        per_page: 20,
+        ...(searchQuery && { search: searchQuery }),
+        ...(activeTab !== 'bookings' ? {} : {}),
+      };
+      const [bookingsRes, statsRes] = await Promise.all([
+        eventService.getAllBookings(params),
+        eventService.getBookingStats(),
+      ]);
+      setBookings(bookingsRes.data?.data || []);
+      setBookingStats(statsRes.data?.data || null);
+    } catch (err) {
+      console.error('Failed to fetch bookings:', err);
     } finally {
       setLoading(false);
     }
@@ -453,11 +502,24 @@ const EventsModerationPage = () => {
   const getStatusBadge = (event) => {
     if (event.deleted_at) return { label: 'Deleted', color: 'gray', icon: Trash2 };
     if (event.scheduled_for_deletion_at) return { label: 'Scheduled', color: 'red', icon: Clock };
-    if (event.status === 'pending') return { label: 'Pending', color: 'yellow', icon: AlertTriangle };
+    if (event.status === 'pending') return { label: 'Pending Approval', color: 'yellow', icon: AlertTriangle };
     if (event.status === 'rejected') return { label: 'Rejected', color: 'red', icon: XCircle };
     if (event.is_archived) return { label: 'Archived', color: 'purple', icon: Archive };
     if (event.status === 'open') return { label: 'Active', color: 'green', icon: CheckCircle };
+    if (event.status === 'closed') return { label: 'Closed', color: 'blue', icon: XCircle };
+    if (event.status === 'cancelled') return { label: 'Cancelled', color: 'red', icon: XCircle };
+    if (event.status === 'completed') return { label: 'Completed', color: 'emerald', icon: CheckCircle };
     return { label: event.status, color: 'gray', icon: Calendar };
+  };
+
+  const getBookingStatusBadge = (reg) => {
+    if (reg.status === 'registered' && reg.checked_in_at) return { label: 'Checked In', color: 'emerald', icon: CheckCircle };
+    if (reg.status === 'registered') return { label: 'Registered', color: 'green', icon: CheckCircle };
+    if (reg.status === 'waitlisted') return { label: `Waitlist #${reg.waitlist_position}`, color: 'yellow', icon: Clock };
+    if (reg.status === 'cancelled') return { label: 'Cancelled', color: 'red', icon: XCircle };
+    if (reg.status === 'no_show') return { label: 'No Show', color: 'gray', icon: XCircle };
+    if (reg.status === 'attended') return { label: 'Attended', color: 'blue', icon: CheckCircle };
+    return { label: reg.status, color: 'gray', icon: Calendar };
   };
 
   return (
@@ -509,7 +571,18 @@ const EventsModerationPage = () => {
             {TABS.map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => { setActiveTab(tab.key); setCurrentPage(1); }}
+                onClick={() => { 
+                  setActiveTab(tab.key); 
+                  setCurrentPage(1);
+                  // Update URL without reload for shareable tabs
+                  const url = new URL(window.location);
+                  if (tab.key === 'all') {
+                    url.searchParams.delete('tab');
+                  } else {
+                    url.searchParams.set('tab', tab.key);
+                  }
+                  window.history.replaceState({}, '', url);
+                }}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors ${
                   activeTab === tab.key
                     ? 'text-orange-600 border-b-2 border-orange-500 bg-orange-50'
@@ -553,6 +626,95 @@ const EventsModerationPage = () => {
               <tbody className="divide-y divide-gray-100">
                 {loading ? (
                   <tr><td colSpan="7" className="px-4 py-8 text-center text-gray-500">Loading...</td></tr>
+                ) : activeTab === 'bookings' ? (
+                  bookings.length === 0 ? (
+                    <tr><td colSpan="7" className="px-4 py-8 text-center text-gray-500">No bookings found</td></tr>
+                  ) : (
+                    bookings.map((reg) => {
+                      const status = getBookingStatusBadge(reg);
+                      return (
+                        <tr key={reg.registration_code} className="hover:bg-gray-50">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                {(reg.user?.name || 'G').charAt(0)}
+                              </div>
+                              <div>
+                                <p className="font-semibold text-gray-900 text-sm">{reg.user?.name || 'Guest'}</p>
+                                <p className="text-xs text-gray-500">{reg.user?.email}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div>
+                              <p className="font-semibold text-gray-900 text-sm">{reg.event?.title}</p>
+                              <p className="text-xs text-gray-500">{reg.event?.event_code}</p>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-xs text-gray-600">
+                              <div className="flex items-center gap-1 mb-0.5">
+                                <Calendar className="w-3 h-3" />
+                                {reg.event ? new Date(reg.event.start_datetime).toLocaleDateString() : '—'}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1 text-xs text-gray-600">
+                              <Users className="w-3 h-3" />
+                              {reg.participant_count}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="text-xs font-semibold text-gray-900">
+                              KSh {Number(reg.final_amount).toLocaleString()}
+                            </div>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                              reg.payment_status === 'paid' ? 'bg-green-100 text-green-700' :
+                              reg.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-gray-100 text-gray-600'
+                            }`}>
+                              {reg.payment_status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-0.5 bg-${status.color}-100 text-${status.color}-700 rounded-full text-xs font-medium flex items-center gap-1`}>
+                              <status.icon className="w-3 h-3" />
+                              {status.label}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => navigate(`/admin/event-bookings/${reg.event?.event_code}`)}
+                                className="p-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
+                                title="View details"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              {!reg.checked_in_at && reg.status === 'registered' && (
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      await eventService.checkInBooking(reg.registration_code);
+                                      fetchBookings();
+                                    } catch (e) {
+                                      alert(e.response?.data?.message || 'Check-in failed');
+                                    }
+                                  }}
+                                  disabled={actionLoading}
+                                  className="p-1.5 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
+                                  title="Check in"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )
                 ) : activeTab === 'custom-rides' ? (
                   customRides.length === 0 ? (
                     <tr><td colSpan="7" className="px-4 py-8 text-center text-gray-500">No custom ride requests found</td></tr>
@@ -824,6 +986,22 @@ const EventsModerationPage = () => {
                             >
                               <Eye className="w-4 h-4" />
                             </button>
+
+                            {/* View Bookings (for active/approved events with participants) */}
+                            {(event.status === 'open' || event.status === 'closed' || event.current_participants > 0) && (
+                              <button
+                                onClick={() => navigate(`/admin/event-bookings/${event.event_code}`)}
+                                className="relative p-1.5 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200"
+                                title={`${event.current_participants} bookings — View & manage`}
+                              >
+                                <Ticket className="w-4 h-4" />
+                                {event.current_participants > 0 && (
+                                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-indigo-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
+                                    {event.current_participants > 9 ? '9+' : event.current_participants}
+                                  </span>
+                                )}
+                              </button>
+                            )}
 
                             {/* Schedule Deletion */}
                             {!event.scheduled_for_deletion_at && !event.deleted_at && event.status !== 'pending' && (

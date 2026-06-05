@@ -894,6 +894,21 @@ const Navbar = () => {
                             </div>
                           </button>
 
+                          {/* Event Bookings Management */}
+                          <button
+                            onClick={() => {
+                              setShowQuickActions(false);
+                              navigate('/admin/events-moderation?tab=bookings');
+                            }}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-purple-100/50 transition-colors w-full text-left"
+                          >
+                            <Ticket className="w-4 h-4 text-purple-600" />
+                            <div>
+                              <span className="text-sm text-gray-800 font-medium">Event Bookings</span>
+                              <p className="text-[11px] text-gray-500">All registrations & check-ins</p>
+                            </div>
+                          </button>
+
                           {/* Bike Listing Moderation */}
                           <button
                             onClick={() => {

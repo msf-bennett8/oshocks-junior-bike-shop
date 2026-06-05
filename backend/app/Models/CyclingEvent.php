@@ -140,4 +140,70 @@ class CyclingEvent extends Model
     {
         return 'KSh ' . number_format($this->price_per_person, 0);
     }
+
+    public function getIsPendingApprovalAttribute(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    public function getIsPublishedAttribute(): bool
+    {
+        return in_array($this->status, ['open', 'closed']) && !$this->is_archived && !$this->scheduled_for_deletion_at;
+    }
+
+    public function getBookingsCountAttribute(): int
+    {
+        return $this->registrations()->where('status', 'registered')->count();
+    }
+
+    public function getWaitlistCountAttribute(): int
+    {
+        return $this->registrations()->where('status', 'waitlisted')->count();
+    }
+
+    public function getCheckedInCountAttribute(): int
+    {
+        return $this->registrations()->whereNotNull('checked_in_at')->count();
+    }
+
+    public function getRevenueAttribute(): float
+    {
+        return $this->registrations()
+            ->where('status', 'registered')
+            ->where('payment_status', 'paid')
+            ->sum('final_amount');
+    }
+
+    public function getCapacityPercentAttribute(): float
+    {
+        return $this->max_participants > 0
+            ? round(($this->current_participants / $this->max_participants) * 100, 1)
+            : 0;
+    }
+
+    public function getIsAlmostSoldOutAttribute(): bool
+    {
+        return $this->max_participants > 0 &&
+            $this->seats_remaining > 0 &&
+            $this->seats_remaining <= max(3, ceil($this->max_participants * 0.1));
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->whereIn('status', ['open', 'closed'])
+            ->where('is_archived', false)
+            ->whereNull('scheduled_for_deletion_at');
+    }
+
+    public function scopePendingApproval($query)
+    {
+        return $query->where('status', 'pending')->whereNull('deleted_at');
+    }
+
+    public function scopeNeedsModeration($query)
+    {
+        return $query->where('status', 'pending')
+            ->whereNull('deleted_at')
+            ->whereNull('approved_at');
+    }
 }

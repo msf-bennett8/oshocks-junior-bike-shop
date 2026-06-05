@@ -277,7 +277,7 @@ class CyclingEventController extends Controller
                 'cancellation_policy' => $validated['cancellation_policy'] ?? null,
                 'weather_policy' => $validated['weather_policy'] ?? null,
                 'photos' => $photoData,
-                'status' => 'open',
+                'status' => $user->hasAdminAccess() ? 'open' : 'pending',
                 'approved_by' => $user->hasAdminAccess() ? $user->id : null,
                 'approved_at' => $user->hasAdminAccess() ? now() : null,
                 'submitted_by' => $user->hasAdminAccess() ? 'admin' : 'user',
@@ -788,6 +788,12 @@ class CyclingEventController extends Controller
         $registrations = $query->orderBy('created_at', 'desc')
             ->paginate($request->get('per_page', 12));
 
+        // Append computed attributes
+        $registrations->getCollection()->transform(function ($reg) {
+            $reg->append('is_refundable', 'qr_data');
+            return $reg;
+        });
+
         return response()->json([
             'success' => true,
             'data' => $registrations->items(),
@@ -799,6 +805,118 @@ class CyclingEventController extends Controller
             ]
         ]);
     }
+
+        /**
+     * Request refund for a registration
+     */
+    public function requestRefund(Request $request, string $registrationCode)
+    {
+        $user = Auth::user();
+        $registration = CyclingEventRegistration::where('registration_code', $registrationCode)
+            ->where('user_id', $user->id)
+            ->where('status', 'registered')
+            ->where('payment_status', 'paid')
+            ->whereNull('refund_status')
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'reason' => 'required|string|max:500',
+        ]);
+
+        $registration->update([
+            'refund_status' => 'pending',
+            'refund_reason' => $validated['reason'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Refund request submitted for review',
+            'data' => $registration->fresh(),
+        ]);
+    }
+
+    /**
+     * Generate ticket PDF for download
+     */
+    public function downloadTicket(string $registrationCode)
+    {
+        $user = Auth::user();
+        $registration = CyclingEventRegistration::with('event')
+            ->where('registration_code', $registrationCode)
+            ->where('user_id', $user->id)
+            ->where('status', 'registered')
+            ->firstOrFail();
+
+        // Generate simple ticket HTML
+        $event = $registration->event;
+        $html = view('tickets.event', [
+            'registration' => $registration,
+            'event' => $event,
+            'qrData' => $registration->qr_data,
+        ])->render();
+
+        // For now, return JSON with ticket data (PDF generation requires dompdf package)
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'registration_code' => $registration->registration_code,
+                'event_title' => $event->title,
+                'event_code' => $event->event_code,
+                'start_datetime' => $event->start_datetime,
+                'meeting_point' => $event->meeting_point,
+                'participant_count' => $registration->participant_count,
+                'qr_data' => $registration->qr_data,
+            ],
+        ]);
+    }
+
+    /**
+     * Request transfer to another user
+     */
+    public function requestTransfer(Request $request, string $registrationCode)
+    {
+        $user = Auth::user();
+        $registration = CyclingEventRegistration::where('registration_code', $registrationCode)
+            ->where('user_id', $user->id)
+            ->where('status', 'registered')
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'new_user_email' => 'required|email|exists:users,email',
+        ]);
+
+        $newUser = User::where('email', $validated['new_user_email'])->firstOrFail();
+
+        // Prevent self-transfer
+        if ($newUser->id === $user->id) {
+            return response()->json(['error' => 'Cannot transfer to yourself'], 400);
+        }
+
+        // Check capacity for new user (they might already be registered)
+        $existing = CyclingEventRegistration::where('event_id', $registration->event_id)
+            ->where('user_id', $newUser->id)
+            ->where('status', 'registered')
+            ->first();
+
+        if ($existing) {
+            return response()->json(['error' => 'User already registered for this event'], 400);
+        }
+
+        // Create transfer request (admin approval required)
+        $registration->update([
+            'status' => 'pending_transfer',
+            'transfer_reason' => 'User requested transfer to ' . $newUser->email,
+        ]);
+
+        // TODO: Send notification to admin for approval
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Transfer request submitted for approval',
+            'data' => $registration->fresh(),
+        ]);
+    }
+
 
     /**
      * Get event participants (organizer/admin only)

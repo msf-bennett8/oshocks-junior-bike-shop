@@ -109,6 +109,23 @@ const eventService = {
   eventCod: (data) => api.post('/event-payments/cod', data),
   checkEventPaymentStatus: (paymentId) => api.get(`/event-payments/${paymentId}/status`),
   verifyEventCardPayment: (reference) => api.get(`/event-payments/card/verify/${reference}`),
+
+  // ─── Admin Booking Management ───
+  getAllBookings: (params = {}) => api.get('/admin/cycling-events/bookings', { params }),
+  getBookingStats: () => api.get('/admin/cycling-events/bookings/stats'),
+  getEventBookings: (eventCode, params = {}) => api.get(`/admin/cycling-events/${eventCode}/bookings`, { params }),
+  checkInBooking: (registrationCode) => api.post(`/admin/cycling-events/bookings/${registrationCode}/check-in`),
+  adminCancelBooking: (registrationCode, data) => api.post(`/admin/cycling-events/bookings/${registrationCode}/cancel`, data),
+  processRefund: (registrationCode, data) => api.post(`/admin/cycling-events/bookings/${registrationCode}/refund`, data),
+  transferBooking: (registrationCode, data) => api.post(`/admin/cycling-events/bookings/${registrationCode}/transfer`, data),
+  bulkCheckIn: (codes) => api.post('/admin/cycling-events/bookings/bulk-check-in', { registration_codes: codes }),
+  bulkCancelBookings: (codes, reason) => api.post('/admin/cycling-events/bookings/bulk-cancel', { registration_codes: codes, reason }),
+  exportEventBookings: (eventCode) => api.get(`/admin/cycling-events/${eventCode}/export-bookings`, { responseType: 'blob' }),
+
+  // ─── User Booking Actions ───
+  requestRefund: (registrationCode, reason) => api.post(`/events/registrations/${registrationCode}/refund-request`, { reason }),
+  downloadTicket: (registrationCode) => api.get(`/events/registrations/${registrationCode}/ticket`, { responseType: 'blob' }),
+  transferMyBooking: (registrationCode, newUserEmail) => api.post(`/events/registrations/${registrationCode}/transfer-request`, { new_user_email: newUserEmail }),
 };
 
 export default eventService;
