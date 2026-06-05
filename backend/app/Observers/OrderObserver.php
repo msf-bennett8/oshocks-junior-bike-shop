@@ -4,13 +4,7 @@ namespace App\Observers;
 
 use App\Events\OrderPlaced;
 use App\Events\OrderStatusChanged;
-use App\Events\OrderShipped;
-use App\Events\DeliveryOutForDelivery;
-use App\Events\DeliveryCompleted;
-use App\Events\DeliveryFailed;
 use App\Events\PaymentSuccessful;
-use App\Events\PaymentFailed;
-use App\Events\MassPurchaseAlert;
 use App\Models\Order;
 use App\Services\AuditService;
 
@@ -31,14 +25,17 @@ class OrderObserver
         $itemCount = $order->items()->sum('quantity');
         if ($itemCount >= 10 || $order->total >= 100000) {
             $customerType = $this->determineCustomerType($order, $itemCount);
-            
-            MassPurchaseAlert::dispatch(
-                [], // Will be filled by listener to get all admin IDs
-                $order,
-                $itemCount,
-                $order->total,
-                $customerType
-            );
+
+            // Only dispatch if MassPurchaseAlert event exists
+            if (class_exists(\App\Events\MassPurchaseAlert::class)) {
+                \App\Events\MassPurchaseAlert::dispatch(
+                    [], // Will be filled by listener to get all admin IDs
+                    $order,
+                    $itemCount,
+                    $order->total,
+                    $customerType
+                );
+            }
         }
     }
 
@@ -60,11 +57,11 @@ class OrderObserver
             // Fire status changed event
             OrderStatusChanged::dispatch($order->user, $order, $oldStatus, $newStatus);
 
-            // Fire specific events based on new status
+            // Handle specific status transitions
             match($newStatus) {
                 'shipped' => $this->handleShipped($order),
                 'out_for_delivery' => $this->handleOutForDelivery($order),
-                'delivered' => DeliveryCompleted::dispatch($order->user, $order),
+                'delivered' => $this->handleDelivered($order),
                 'cancelled' => $this->handleCancelled($order),
                 default => null,
             };
@@ -80,18 +77,16 @@ class OrderObserver
                     'previous_status' => $oldPaymentStatus,
                 ]);
 
-                PaymentSuccessful::dispatch(
-                    $order->user,
-                    $order,
-                    $order->payment,
-                    ['previous_status' => $oldPaymentStatus]
-                );
+                if ($order->payment) {
+                    PaymentSuccessful::dispatch(
+                        $order->user,
+                        $order,
+                        $order->payment,
+                        ['previous_status' => $oldPaymentStatus]
+                    );
+                }
             } elseif ($newPaymentStatus === 'failed') {
-                PaymentFailed::dispatch(
-                    $order->user,
-                    $order,
-                    $order->payment_failure_reason ?? 'Payment processing failed'
-                );
+                $this->handlePaymentFailed($order);
             }
         }
     }
@@ -110,32 +105,53 @@ class OrderObserver
 
     private function handleShipped(Order $order): void
     {
-        OrderShipped::dispatch(
-            $order->user,
-            $order,
-            $order->tracking_number,
-            $order->shipping_carrier ?? 'Our Courier'
-        );
+        if (class_exists(\App\Events\OrderShipped::class)) {
+            \App\Events\OrderShipped::dispatch(
+                $order->user,
+                $order,
+                $order->tracking_number,
+                $order->shipping_carrier ?? 'Our Courier'
+            );
+        }
     }
 
     private function handleOutForDelivery(Order $order): void
     {
-        // Get driver info from delivery assignment
-        $driverName = $order->deliveryDriver?->name ?? 'Your Driver';
-        $eta = $order->estimated_delivery_time?->diffForHumans() ?? 'soon';
+        if (class_exists(\App\Events\DeliveryOutForDelivery::class)) {
+            $driverName = $order->deliveryDriver?->name ?? 'Your Driver';
+            $eta = $order->estimated_delivery_time?->diffForHumans() ?? 'soon';
 
-        DeliveryOutForDelivery::dispatch(
-            $order->user,
-            $order,
-            $order->tracking_number,
-            $driverName,
-            $eta
-        );
+            \App\Events\DeliveryOutForDelivery::dispatch(
+                $order->user,
+                $order,
+                $order->tracking_number,
+                $driverName,
+                $eta
+            );
+        }
+    }
+
+    private function handleDelivered(Order $order): void
+    {
+        if (class_exists(\App\Events\DeliveryCompleted::class)) {
+            \App\Events\DeliveryCompleted::dispatch($order->user, $order);
+        }
     }
 
     private function handleCancelled(Order $order): void
     {
-        // Could dispatch OrderCancelled event here
+        // Could dispatch OrderCancelled event here if it exists
+    }
+
+    private function handlePaymentFailed(Order $order): void
+    {
+        if (class_exists(\App\Events\PaymentFailed::class)) {
+            \App\Events\PaymentFailed::dispatch(
+                $order->user,
+                $order,
+                $order->payment_failure_reason ?? 'Payment processing failed'
+            );
+        }
     }
 
     private function determineCustomerType(Order $order, int $itemCount): string
