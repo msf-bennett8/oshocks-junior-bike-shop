@@ -14,7 +14,7 @@ class OrderStatusChanged
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public User $user;
+    public ?User $user;
     public Order $order;
     public string $oldStatus;
     public string $newStatus;
@@ -22,7 +22,7 @@ class OrderStatusChanged
     /**
      * Create a new event instance.
      */
-    public function __construct(User $user, Order $order, string $oldStatus, string $newStatus)
+    public function __construct(?User $user, Order $order, string $oldStatus, string $newStatus)
     {
         $this->user = $user;
         $this->order = $order;
@@ -37,6 +37,9 @@ class OrderStatusChanged
      */
     public function broadcastOn(): array
     {
+        if (!$this->user) {
+            return [new Channel('orders.guest')];
+        }
         return [
             new PrivateChannel('user.' . $this->user->id),
         ];

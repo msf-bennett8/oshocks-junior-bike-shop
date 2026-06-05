@@ -5,6 +5,18 @@ use App\Models\Conversation;
 
 /*
 |--------------------------------------------------------------------------
+| Broadcast Routes
+|--------------------------------------------------------------------------
+|
+| Register the broadcasting authentication routes with Sanctum middleware.
+| This enables the /broadcasting/auth endpoint for private/presence channels.
+|
+*/
+
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
+
+/*
+|--------------------------------------------------------------------------
 | Broadcast Channels
 |--------------------------------------------------------------------------
 |

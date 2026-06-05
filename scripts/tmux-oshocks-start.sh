@@ -9,6 +9,8 @@ exec < /dev/null
 sleep 2
 ~/studio.dev/oshocks/backend/scripts/php-artisan-serve start
 sleep 1
+~/studio.dev/oshocks/backend/scripts/reverb-control start
+sleep 1
 ~/studio.dev/oshocks/frontend/scripts/npm-run-dev.sh start
 
 echo "All servers started. Monitoring..."
@@ -16,7 +18,7 @@ echo "Press Ctrl+C to stop all servers and exit tmux"
 
 # Monitor loop - keep pane alive
 while true; do
-    if ! pgrep -x "mariadbd" > /dev/null && ! [ -f /tmp/php-artisan-serve.pid ] && ! [ -f /tmp/npm-run-dev.pid ]; then
+    if ! pgrep -x "mariadbd" > /dev/null && ! [ -f /tmp/php-artisan-serve.pid ] && ! [ -f /tmp/reverb-oshocks.pid ] && ! [ -f /tmp/npm-run-dev.pid ]; then
         echo "All servers stopped. Exiting..."
         break
     fi

@@ -87,13 +87,14 @@ export const executeWithRetry = async (requestFn, endpoint) => {
 // Request interceptor - Add auth token, guest session, and audit headers
 api.interceptors.request.use(
   (config) => {
-    console.log('📤 Outgoing Request:', {
-      method: config.method?.toUpperCase(),
-      url: config.url,
-      baseURL: config.baseURL,
-      fullURL: `${config.baseURL}${config.url}`,
-      params: config.params,
-    });
+    //quite outgoing request details
+    //console.log('📤 Outgoing Request:', {
+    //  method: config.method?.toUpperCase(),
+    //  url: config.url,
+    //  baseURL: config.baseURL,
+    //  fullURL: `${config.baseURL}${config.url}`,
+    //  params: config.params,
+    //});
     
     const token = localStorage.getItem('authToken');
     const guestSessionId = localStorage.getItem('oshocks_guest_session_id');
@@ -101,14 +102,16 @@ api.interceptors.request.use(
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('🔐 Auth token added to request');
+      //quite auth token presence
+      //console.log('🔐 Auth token added to request');
     }
 
     // Guest session for anonymous chat — ALWAYS send if available, even with token
     // (backend uses it to link guest history even for authenticated users)
     if (guestSessionId) {
       config.headers['X-Guest-Session-ID'] = guestSessionId;
-      console.log('👤 Guest session ID added:', guestSessionId.slice(0, 8) + '...');
+      //quite guest session ID
+      //console.log('👤 Guest session ID added:', guestSessionId.slice(0, 8) + '...');
       
       // Guest name for display in messages and cases — ALWAYS send with guest session
       // so backend can track anonXXXX identifiers for support cases and messages
@@ -120,7 +123,8 @@ api.interceptors.request.use(
         displayName = `anon${anonId}`;
       }
       config.headers['X-Guest-Name'] = displayName;
-      console.log('👤 Guest name added:', displayName);
+      //quite guest name
+      //console.log('👤 Guest name added:', displayName);
     }
     
     // ============================================================================
@@ -147,11 +151,12 @@ api.interceptors.request.use(
       config.headers['X-Device-Fingerprint'] = deviceFp;
     }
     
-    console.log('📊 Audit headers added:', {
-      correlationId: correlationId.slice(0, 8) + '...',
-      sessionId: sessionId.slice(0, 8) + '...',
-      requestId: requestId.slice(0, 8) + '...',
-    });
+    //quite correlation headers
+    //console.log('📊 Audit headers added:', {
+    //  correlationId: correlationId.slice(0, 8) + '...',
+    //  sessionId: sessionId.slice(0, 8) + '...',
+    //  requestId: requestId.slice(0, 8) + '...',
+    //});
     
     // Critical: send socket ID so Laravel knows who to exclude with toOthers()
     let socketId = null;
@@ -197,11 +202,12 @@ api.interceptors.response.use(
       });
     }
 
-    console.log('📥 Response received:', {
-      status: response.status,
-      statusText: response.statusText,
-      url: response.config.url,
-    });
+    //Quit conversation response
+    //console.log('📥 Response received:', {
+    //  status: response.status,
+    //  statusText: response.statusText,
+    //  url: response.config.url,
+    //});
     return response;
   },
   async (error) => {

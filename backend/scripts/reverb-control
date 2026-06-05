@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# Reverb WebSocket Server Control Script
+PIDFILE="/tmp/reverb-oshocks.pid"
+LOGFILE="/tmp/reverb-oshocks.log"
+PROJECT_DIR="$HOME/studio.dev/oshocks/backend"
+
+start_reverb() {
+    if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
+        echo "⚠️  Reverb already running (PID: $(cat $PIDFILE))"
+        exit 1
+    fi
+    cd "$PROJECT_DIR" || exit 1
+    nohup php artisan reverb:start --host=0.0.0.0 --port=8080 > "$LOGFILE" 2>&1 &
+    echo $! > "$PIDFILE"
+    echo "🟠 Reverb started on 0.0.0.0:8080 (PID: $!)"
+}
+
+stop_reverb() {
+    if [ -f "$PIDFILE" ]; then
+        PID=$(cat "$PIDFILE")
+        if kill -0 "$PID" 2>/dev/null; then
+            kill "$PID" 2>/dev/null
+            sleep 1
+            kill -0 "$PID" 2>/dev/null && kill -9 "$PID" 2>/dev/null
+            echo "🟠 Reverb stopped"
+        else
+            echo "🟠 Reverb not running (stale PID file)"
+        fi
+        rm -f "$PIDFILE"
+    else
+        echo "🟠 Reverb not running"
+    fi
+}
+
+status_reverb() {
+    if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
+        echo "🟠 Reverb: RUNNING (PID: $(cat $PIDFILE), Port: 8080)"
+    else
+        echo "🟠 Reverb: STOPPED"
+        [ -f "$PIDFILE" ] && rm -f "$PIDFILE"
+    fi
+}
+
+clear_reverb() {
+    rm -f "$LOGFILE"
+    echo "🟠 Reverb logs cleared"
+}
+
+logs_reverb() {
+    if [ -f "$LOGFILE" ]; then
+        tail -f "$LOGFILE"
+    else
+        echo "🟠 No log file found. Start Reverb first."
+    fi
+}
+
+case "$1" in
+    start)   start_reverb ;;
+    stop)    stop_reverb ;;
+    restart) stop_reverb; sleep 1; start_reverb ;;
+    status)  status_reverb ;;
+    clear)   clear_reverb ;;
+    logs)    logs_reverb ;;
+    *)       echo "Usage: $0 {start|stop|restart|status|clear|logs}"; exit 1 ;;
+esac

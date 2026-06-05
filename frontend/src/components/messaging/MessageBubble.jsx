@@ -2,7 +2,7 @@
 // ============================================================================
 // MESSAGE BUBBLE — Single message with avatar, timestamp, status, reactions, reply
 // ============================================================================
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Reply, Pencil, Trash2, Check, CheckCheck, Phone, Paperclip } from 'lucide-react';
 import Avatar from '../common/Avatar';
 

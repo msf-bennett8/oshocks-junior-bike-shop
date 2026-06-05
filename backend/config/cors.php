@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'paths' => ['api/*', 'sanctum/csrf-cookie', 'auth/*'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'auth/*', 'broadcasting/*'],
 
     'allowed_methods' => ['*'],
 
@@ -44,6 +44,7 @@ return [
         'x-guest-session-id',
         'x-guest-name',
         'x-guest-email',
+        'X-Socket-ID',
     ],
 
     'exposed_headers' => ['Authorization'],

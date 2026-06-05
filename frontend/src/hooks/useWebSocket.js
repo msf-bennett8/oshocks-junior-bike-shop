@@ -35,13 +35,14 @@ export const useWebSocket = (userId) => {
     }
 
     const echo = new Echo({
-      broadcaster: 'reverb',
+      broadcaster: 'pusher',
       key: config.key,
-      host: config.host,
-      wsPort: config.port,
-      wssPort: config.port,
-      forceTLS: config.scheme === 'https',
-      enabledTransports: config.scheme === 'https' ? ['wss'] : ['ws', 'wss'],
+      wsHost: config.wsHost,
+      wsPort: config.wsPort,
+      wssPort: config.wssPort,
+      forceTLS: config.forceTLS,
+      enabledTransports: config.forceTLS ? ['wss'] : ['ws', 'wss'],
+      cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER || 'mt1', // Required by pusher-js even for Reverb
       auth: {
         headers: authHeaders,
       },

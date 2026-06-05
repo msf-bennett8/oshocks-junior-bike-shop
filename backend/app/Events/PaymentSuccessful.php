@@ -15,12 +15,12 @@ class PaymentSuccessful
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public User $user;
+    public ?User $user;
     public Order $order;
     public Payment $payment;
     public array $metadata;
 
-    public function __construct(User $user, Order $order, Payment $payment, array $metadata = [])
+    public function __construct(?User $user, Order $order, Payment $payment, array $metadata = [])
     {
         $this->user = $user;
         $this->order = $order;
@@ -30,6 +30,9 @@ class PaymentSuccessful
 
     public function broadcastOn(): array
     {
+        if (!$this->user) {
+            return [new Channel('orders.guest')];
+        }
         return [
             new PrivateChannel('user.' . $this->user->id),
         ];

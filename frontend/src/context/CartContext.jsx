@@ -118,10 +118,11 @@ const loadCartFromAPI = async () => {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
 
-      console.log('✅ Response received!');
-      console.log('📊 Response status:', response.status);
-      console.log('📦 Response data:', JSON.stringify(response.data, null, 2));
-      console.log('📋 Items in response:', response.data.items?.length || 0);
+      //quite response details
+      //console.log('✅ Response received!');
+      //console.log('📊 Response status:', response.status);
+      //console.log('📦 Response data:', JSON.stringify(response.data, null, 2));
+      //console.log('📋 Items in response:', response.data.items?.length || 0);
 
       // Validate response structure
       if (!response.data || !Array.isArray(response.data.items)) {
@@ -158,7 +159,8 @@ const loadCartFromAPI = async () => {
         };
       });
 
-      console.log('✨ Mapped items:', JSON.stringify(mappedItems, null, 2));
+      //quite mapped items
+      //console.log('✨ Mapped items:', JSON.stringify(mappedItems, null, 2));
       console.log('🎯 Setting cart items to state...');
       setCartItems(mappedItems);
       console.log('✅ Cart items set successfully!');

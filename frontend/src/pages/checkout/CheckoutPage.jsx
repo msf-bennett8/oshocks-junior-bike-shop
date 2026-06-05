@@ -549,7 +549,35 @@ const countyInfo = {
         console.log('📊 [DEBUG] Response status:', response.status);
         console.log('📊 [DEBUG] Response ok:', response.ok);
 
-        const result = await response.json();
+        const responseText = await response.text();
+        console.log('📄 [DEBUG] Raw response length:', responseText.length);
+        console.log('📄 [DEBUG] Raw response:', responseText.substring(0, 1000));
+        
+        // Handle concatenated JSON + HTML responses
+        let cleanResponseText = responseText;
+        const htmlIndex = responseText.indexOf('<!DOCTYPE');
+        if (htmlIndex !== -1) {
+          console.warn('⚠️ [DEBUG] Detected HTML appended to JSON response, extracting JSON only');
+          cleanResponseText = responseText.substring(0, htmlIndex);
+        }
+        
+        let result;
+        try {
+          result = JSON.parse(cleanResponseText);
+        } catch (parseError) {
+          // Try to extract first valid JSON object
+          const match = responseText.match(/(\{.*?\})(?=\{|$)/s);
+          if (match) {
+            try {
+              result = JSON.parse(match[1]);
+              console.warn('⚠️ [DEBUG] Parsed first JSON object from concatenated response');
+            } catch {
+              throw new Error(`Server returned invalid JSON (status ${response.status}): ${responseText.substring(0, 200)}`);
+            }
+          } else {
+            throw new Error(`Server returned invalid JSON (status ${response.status}): ${responseText.substring(0, 200)}`);
+          }
+        }
 
         console.log('📦 [DEBUG] Response body:', JSON.stringify(result, null, 2));
         

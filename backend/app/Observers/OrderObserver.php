@@ -21,8 +21,8 @@ class OrderObserver
      */
     public function created(Order $order): void
     {
-        // Fire OrderPlaced event
-        OrderPlaced::dispatch($order, [
+        // Fire OrderPlaced event (handle guest checkout where user may be null)
+        OrderPlaced::dispatch($order, $order->user, [
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);

@@ -65,6 +65,9 @@ case "$PROJECT" in
             fi
             
             # Stop all servers
+            echo "🟠 Stopping Reverb..."
+            ~/studio.dev/oshocks/backend/scripts/reverb-control stop 2>/dev/null || true
+            echo ""
             echo "🟢 Stopping npm run dev..."
             ~/studio.dev/oshocks/frontend/scripts/npm-run-dev.sh stop 2>/dev/null || true
             echo ""
@@ -82,6 +85,9 @@ case "$PROJECT" in
             echo "=========================================="
             echo "  🧹 Clearing OSHOCKS Development Caches"
             echo "=========================================="
+            echo ""
+            echo "🧹 Clearing Reverb logs..."
+            ~/studio.dev/oshocks/backend/scripts/reverb-control clear 2>/dev/null || echo "Reverb clear not available"
             echo ""
             echo "🧹 Clearing MariaDB..."
             ~/studio.dev/oshocks/backend/scripts/mariadb-control clear 2>/dev/null || echo "MariaDB clear not available"
@@ -110,6 +116,7 @@ case "$PROJECT" in
             echo ""
             ~/studio.dev/oshocks/backend/scripts/mariadb-control status
             ~/studio.dev/oshocks/backend/scripts/php-artisan-serve status
+            ~/studio.dev/oshocks/backend/scripts/reverb-control status
             ~/studio.dev/oshocks/frontend/scripts/npm-run-dev.sh status
             echo ""
             echo "=========================================="
@@ -122,7 +129,7 @@ case "$PROJECT" in
             echo "Press Ctrl+C to stop viewing logs"
             echo ""
             # Tail all three log files with labels
-            tail -f /var/lib/mysql/accellalegacy.err /tmp/php-artisan-serve.log /tmp/npm-run-dev.log 2>/dev/null || echo "Some log files not found. Servers may not be running."
+            tail -f /var/lib/mysql/accellalegacy.err /tmp/php-artisan-serve.log /tmp/reverb-oshocks.log /tmp/npm-run-dev.log 2>/dev/null || echo "Some log files not found. Servers may not be running."
             ;;
           tree)
             echo "=========================================="
