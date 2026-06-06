@@ -143,6 +143,21 @@ const BikeDetailsPage = () => {
                 </div>
               </div>
 
+              {/* Availability Banner */}
+              {!bike.is_available && (
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6 flex items-center gap-3">
+                  <Clock className="w-6 h-6 text-red-500 flex-shrink-0" />
+                  <div>
+                    <p className="font-bold text-red-900">Currently Booked</p>
+                    <p className="text-sm text-red-700">
+                      {bike.next_available_after 
+                        ? `This bike is unavailable until ${new Date(bike.next_available_after).toLocaleDateString('en-KE', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                        : 'This bike is currently unavailable for rental.'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Details */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8 mb-6">
                 <div className="flex items-start justify-between mb-4">
@@ -376,11 +391,27 @@ const BikeDetailsPage = () => {
                   </div>
 
                   <button
-                    onClick={() => navigate(`/bikes/${bike.slug}/rent`)}
-                    className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                    onClick={() => bike.is_available && navigate(`/bikes/${bike.slug}/rent`)}
+                    disabled={!bike.is_available}
+                    className={`w-full py-4 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
+                      bike.is_available
+                        ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-0.5 cursor-pointer'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
                   >
-                    Proceed to Rent
-                    <ArrowRight className="w-5 h-5" />
+                    {bike.is_available ? (
+                      <>
+                        Proceed to Rent
+                        <ArrowRight className="w-5 h-5" />
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="w-5 h-5" />
+                        {bike.next_available_after 
+                          ? `Available After ${new Date(bike.next_available_after).toLocaleDateString()}`
+                          : 'Currently Unavailable'}
+                      </>
+                    )}
                   </button>
 
                   <p className="text-center text-xs text-gray-500 mt-3">

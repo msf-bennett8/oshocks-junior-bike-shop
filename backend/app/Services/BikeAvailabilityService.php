@@ -25,7 +25,8 @@ class BikeAvailabilityService
             ->where(function ($q) use ($startDate, $endDate) {
                 $q->where('start_datetime', '<', $endDate)
                   ->where('end_datetime', '>', $startDate);
-            });
+            })
+            ->whereIn('block_type', ['booking', 'maintenance', 'out_of_service', 'blackout']);
 
         if ($excludeBookingId) {
             $query->where('booking_id', '!=', $excludeBookingId);
@@ -43,7 +44,7 @@ class BikeAvailabilityService
 
         // Find the latest end date among conflicts
         $latestConflict = $conflicts->sortByDesc('end_datetime')->first();
-        
+
         return [
             'available' => false,
             'next_available_after' => $latestConflict->end_datetime->format('Y-m-d H:i:s'),
@@ -82,6 +83,11 @@ class BikeAvailabilityService
         return $bikes->map(function ($bike) use ($startDate, $endDate) {
             $availability = self::checkAvailability($bike->id, $startDate, $endDate);
 
+            // Format next_available_after nicely for frontend
+            $nextAvailable = $availability['next_available_after']
+                ? Carbon::parse($availability['next_available_after'])->format('Y-m-d H:i:s')
+                : null;
+
             return [
                 'id' => $bike->id,
                 'listing_code' => $bike->listing_code,
@@ -108,6 +114,9 @@ class BikeAvailabilityService
                 'delivery_fee' => $bike->delivery_fee,
                 'insurance_included' => $bike->insurance_included,
                 'recirculation_status' => $bike->recirculation_status,
+                'is_available' => $availability['available'],
+                'next_available_after' => $nextAvailable,
+                'watermark' => $availability['available'] ? null : 'Booked until ' . ($nextAvailable ? Carbon::parse($nextAvailable)->format('M j, Y g:i A') : 'unknown'),
             ];
         })->toArray();
     }

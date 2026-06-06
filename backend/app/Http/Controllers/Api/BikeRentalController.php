@@ -105,6 +105,24 @@ class BikeRentalController extends Controller
             $bikeArray['owner_name'] = $bike->owner_name;
             $bikeArray['owner_avatar'] = $bike->owner_avatar;
             $bikeArray['owner_initials'] = $bike->owner_initials;
+
+            // === REAL AVAILABILITY CHECK ===
+            // Check if bike has any CURRENT or FUTURE booking blocks
+            $now = now();
+            $hasActiveBooking = \App\Models\BikeAvailabilityBlock::where('bike_rental_id', $bike->id)
+                ->where('end_datetime', '>', $now)
+                ->where('block_type', 'booking')
+                ->orderBy('end_datetime', 'desc')
+                ->first();
+
+            if ($hasActiveBooking) {
+                $bikeArray['is_available'] = false;
+                $bikeArray['next_available_after'] = $hasActiveBooking->end_datetime->format('Y-m-d H:i:s');
+            } else {
+                $bikeArray['is_available'] = true;
+                $bikeArray['next_available_after'] = null;
+            }
+
             return $bikeArray;
         }, $items);
 
@@ -138,10 +156,27 @@ class BikeRentalController extends Controller
         $bikeArray['owner_avatar'] = $bike->owner_avatar;
         $bikeArray['owner_initials'] = $bike->owner_initials;
 
+        // === REAL AVAILABILITY CHECK ===
+        $now = now();
+        $hasActiveBooking = \App\Models\BikeAvailabilityBlock::where('bike_rental_id', $bike->id)
+            ->where('end_datetime', '>', $now)
+            ->where('block_type', 'booking')
+            ->orderBy('end_datetime', 'desc')
+            ->first();
+
+        if ($hasActiveBooking) {
+            $bikeArray['is_available'] = false;
+            $bikeArray['next_available_after'] = $hasActiveBooking->end_datetime->format('Y-m-d H:i:s');
+        } else {
+            $bikeArray['is_available'] = true;
+            $bikeArray['next_available_after'] = null;
+        }
+
         return response()->json([
             'success' => true,
             'data' => $bikeArray,
-            'is_available' => $bike->is_available,
+            'is_available' => $bikeArray['is_available'],
+            'next_available_after' => $bikeArray['next_available_after'],
         ]);
     }
 
@@ -546,6 +581,23 @@ class BikeRentalController extends Controller
             $bikeArray['owner_name'] = $bike->owner_name;
             $bikeArray['owner_avatar'] = $bike->owner_avatar;
             $bikeArray['owner_initials'] = $bike->owner_initials;
+
+            // === REAL AVAILABILITY CHECK ===
+            $now = now();
+            $hasActiveBooking = \App\Models\BikeAvailabilityBlock::where('bike_rental_id', $bike->id)
+                ->where('end_datetime', '>', $now)
+                ->where('block_type', 'booking')
+                ->orderBy('end_datetime', 'desc')
+                ->first();
+
+            if ($hasActiveBooking) {
+                $bikeArray['is_available'] = false;
+                $bikeArray['next_available_after'] = $hasActiveBooking->end_datetime->format('Y-m-d H:i:s');
+            } else {
+                $bikeArray['is_available'] = true;
+                $bikeArray['next_available_after'] = null;
+            }
+
             return $bikeArray;
         }, $items);
 
@@ -649,6 +701,45 @@ class BikeRentalController extends Controller
                 'available' => $availability['available'],
                 'next_available_after' => $availability['next_available_after'],
                 'conflicts' => $availability['conflicts'] ?? [],
+            ]
+        ]);
+    }
+
+        /**
+     * Get current availability status of a bike (public, no dates required)
+     */
+    public function currentAvailability(string $listingCode)
+    {
+        $bike = BikeRental::where('listing_code', $listingCode)
+            ->orWhere('slug', $listingCode)
+            ->firstOrFail();
+
+        $now = now();
+        $activeBlock = \App\Models\BikeAvailabilityBlock::where('bike_rental_id', $bike->id)
+            ->where('end_datetime', '>', $now)
+            ->whereIn('block_type', ['booking', 'maintenance', 'out_of_service', 'blackout'])
+            ->orderBy('end_datetime', 'desc')
+            ->first();
+
+        if ($activeBlock) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'available' => false,
+                    'next_available_after' => $activeBlock->end_datetime->format('Y-m-d H:i:s'),
+                    'block_type' => $activeBlock->block_type,
+                    'reason' => $activeBlock->reason,
+                ]
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'available' => true,
+                'next_available_after' => null,
+                'block_type' => null,
+                'reason' => null,
             ]
         ]);
     }

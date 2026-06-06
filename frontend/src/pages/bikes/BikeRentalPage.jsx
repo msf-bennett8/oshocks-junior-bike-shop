@@ -54,6 +54,13 @@ const BikeRentalPage = () => {
         const response = await bikeService.getBike(slug);
         const bikeData = response.data?.data || response.data;
         setBike(bikeData);
+        
+        // If bike is already known to be unavailable, set initial state
+        if (bikeData.is_available === false) {
+          setIsAvailable(false);
+          setNextAvailableAfter(bikeData.next_available_after || null);
+        }
+        
         setError(null);
       } catch (err) {
         console.error('Failed to fetch bike:', err);

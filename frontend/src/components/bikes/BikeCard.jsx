@@ -97,12 +97,29 @@ const BikeCard = ({ bike, compact = false, onRentNow }) => {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              if (!bike.is_available) return;
               onRentNow?.(bike);
             }}
-            className="w-full py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold rounded-lg hover:shadow-md transition-all flex items-center justify-center gap-1"
+            disabled={!bike.is_available}
+            className={`w-full py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${
+              bike.is_available
+                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:shadow-md cursor-pointer'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
           >
-            Rent Now
-            <ArrowRight className="w-3.5 h-3.5" />
+            {bike.is_available ? (
+              <>
+                Rent Now
+                <ArrowRight className="w-3.5 h-3.5" />
+              </>
+            ) : (
+              <>
+                <Clock className="w-3.5 h-3.5" />
+                {bike.next_available_after 
+                  ? `Available ${new Date(bike.next_available_after).toLocaleDateString()}`
+                  : 'Unavailable'}
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -226,12 +243,29 @@ const BikeCard = ({ bike, compact = false, onRentNow }) => {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
+            if (!bike.is_available) return;
             onRentNow?.(bike);
           }}
-          className="flex-1 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+          disabled={!bike.is_available}
+          className={`flex-1 py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
+            bike.is_available
+              ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-0.5 cursor-pointer'
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+          }`}
         >
-          Rent This Bike
-          <ArrowRight className="w-5 h-5" />
+          {bike.is_available ? (
+            <>
+              Rent This Bike
+              <ArrowRight className="w-5 h-5" />
+            </>
+          ) : (
+            <>
+              <Clock className="w-5 h-5" />
+              {bike.next_available_after 
+                ? `Available After ${new Date(bike.next_available_after).toLocaleDateString()}`
+                : 'Currently Unavailable'}
+            </>
+          )}
         </button>
         <button className="p-3 border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:border-orange-300 transition-all">
           <Heart className="w-5 h-5 text-gray-400 hover:text-red-500 transition-colors" />

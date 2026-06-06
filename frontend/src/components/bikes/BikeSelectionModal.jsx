@@ -57,16 +57,17 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
   // Filter bikes
   const filteredBikes = useMemo(() => {
     return bikes.filter(bike => {
-      const matchesSearch = !searchQuery || 
+      const matchesSearch = !searchQuery ||
         bike.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         bike.brand.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || bike.category === selectedCategory;
       const matchesSize = selectedSize === 'all' || bike.frame_size === selectedSize;
       const matchesTerrain = suitableCategories.includes(bike.category);
-      const isAvailable = bike.is_active && bike.is_verified;
+      // Only show bikes that are active, verified, AND currently available
+      const isAvailable = bike.is_active && bike.is_verified && bike.is_available !== false;
       return matchesSearch && matchesCategory && matchesSize && matchesTerrain && isAvailable;
     });
-  }, [searchQuery, selectedCategory, selectedSize, suitableCategories]);
+  }, [searchQuery, selectedCategory, selectedSize, suitableCategories, bikes]);
 
   // Calculate event duration in days
   const eventDurationDays = useMemo(() => {
