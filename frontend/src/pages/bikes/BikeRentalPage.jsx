@@ -3,24 +3,39 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
   ChevronLeft, Calendar, Clock, MapPin, Shield, Check, CreditCard,
-  ArrowRight, Bike, User, Phone, Info, AlertTriangle
+  ArrowRight, Bike, User, Phone, Info, AlertTriangle, FileText,
+  Hourglass, Timer, CalendarDays, CalendarRange, Ban
 } from 'lucide-react';
 import bikeService from '../../services/bikeService';
+import TermsAcceptanceModal from '../../components/legal/TermsAcceptanceModal';
 
 const BikeRentalPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [bookingType, setBookingType] = useState('daily'); // hourly, daily, weekly, monthly
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [pickupTime, setPickupTime] = useState('09:00');
+  const [startTime, setStartTime] = useState('09:00');
+  const [endTime, setEndTime] = useState('18:00');
+  const [numberOfHours, setNumberOfHours] = useState(4);
+  const [numberOfWeeks, setNumberOfWeeks] = useState(1);
+  const [numberOfMonths, setNumberOfMonths] = useState(1);
   const [waiverSigned, setWaiverSigned] = useState(false);
   const [idVerified, setIdVerified] = useState(false);
   const [insuranceOptIn, setInsuranceOptIn] = useState(true);
   const [deliveryOptIn, setDeliveryOptIn] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [bike, setBike] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState(null);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState(null);
+  const [isAvailable, setIsAvailable] = useState(true);
+  const [nextAvailableAfter, setNextAvailableAfter] = useState(null);
 
   useEffect(() => {
     const fetchBike = async () => {
@@ -40,6 +55,38 @@ const BikeRentalPage = () => {
 
     fetchBike();
   }, [slug]);
+
+  // Check availability when dates change
+  useEffect(() => {
+    const checkAvailability = async () => {
+      if (!startDate || !endDate || !bike) return;
+      
+      setAvailabilityLoading(true);
+      setAvailabilityError(null);
+      
+      try {
+        const startDateTime = bookingType === 'hourly' 
+          ? `${startDate}T${startTime}:00`
+          : `${startDate}T00:00:00`;
+        const endDateTime = bookingType === 'hourly'
+          ? `${startDate}T${endTime}:00`
+          : `${endDate}T23:59:59`;
+          
+        const response = await bikeService.checkAvailability(bike.listing_code, startDateTime, endDateTime);
+        const data = response.data?.data || response.data;
+        
+        setIsAvailable(data?.available !== false);
+        setNextAvailableAfter(data?.next_available_after || null);
+      } catch (err) {
+        console.error('Availability check failed:', err);
+        setAvailabilityError('Could not verify availability. Please try again.');
+      } finally {
+        setAvailabilityLoading(false);
+      }
+    };
+    
+    checkAvailability();
+  }, [startDate, endDate, startTime, endTime, bookingType, bike]);
 
   if (loading) {
     return (
@@ -66,20 +113,125 @@ const BikeRentalPage = () => {
     );
   }
 
-  // Calculate rental details
+  // Calculate rental details based on booking type
   const start = startDate ? new Date(startDate) : null;
   const end = endDate ? new Date(endDate) : null;
-  const days = start && end ? Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24))) : 1;
-  const baseTotal = bike.daily_rate * days;
-  const platformFee = Math.round(baseTotal * 0.15);
-  const insuranceFee = insuranceOptIn ? 200 * days : 0;
-  const deliveryFee = deliveryOptIn ? bike.delivery_fee : 0;
-  const grandTotal = baseTotal + platformFee + insuranceFee + deliveryFee;
-  const ownerPayout = baseTotal - platformFee;
+  
+  // Ensure all values are numbers, not strings
+  const hourlyRate = parseFloat(bike?.hourly_rate) || 0;
+  const dailyRate = parseFloat(bike?.daily_rate) || 0;
+  const weeklyRate = parseFloat(bike?.weekly_rate) || 0;
+  const monthlyRate = parseFloat(bike?.monthly_rate) || 0;
+  const bikeDeliveryFee = parseFloat(bike?.delivery_fee) || 0;
+  const bikeSecurityDeposit = parseFloat(bike?.security_deposit) || 0;
+  
+  let duration = 1;
+  let baseTotal = 0;
+  let rateUsed = dailyRate;
+  
+  if (bookingType === 'hourly' && hourlyRate > 0) {
+    duration = parseInt(numberOfHours) || 1;
+    baseTotal = hourlyRate * duration;
+    rateUsed = hourlyRate;
+  } else if (bookingType === 'daily') {
+    duration = start && end ? Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24))) : 1;
+    baseTotal = dailyRate * duration;
+    rateUsed = dailyRate;
+  } else if (bookingType === 'weekly' && weeklyRate > 0) {
+    duration = parseInt(numberOfWeeks) || 1;
+    baseTotal = weeklyRate * duration;
+    rateUsed = weeklyRate;
+  } else if (bookingType === 'monthly' && monthlyRate > 0) {
+    duration = parseInt(numberOfMonths) || 1;
+    baseTotal = monthlyRate * duration;
+    rateUsed = monthlyRate;
+  } else {
+    // Fallback to daily
+    duration = start && end ? Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24))) : 1;
+    baseTotal = dailyRate * duration;
+  }
+  
+  // Ensure all calculations use numbers
+  baseTotal = parseFloat(baseTotal.toFixed(2));
+  const insuranceFee = insuranceOptIn ? 200 * duration : 0;
+  const deliveryFee = deliveryOptIn ? bikeDeliveryFee : 0;
+  const securityDeposit = bikeSecurityDeposit;
+  
+  // Down payment for weekly+ rentals (50% of total rental fee)
+  const requiresDownPayment = bookingType === 'weekly' || bookingType === 'monthly';
+  const downPayment = requiresDownPayment ? Math.round(baseTotal * 0.5) : 0;
+  
+  // User sees: bike rental + insurance + delivery + down payment (if applicable)
+  // NO platform fee shown to user
+  const grandTotal = baseTotal + insuranceFee + deliveryFee + downPayment;
+  
+  // Total amount user needs to pay now (includes refundable deposit)
+  const totalWithDeposit = grandTotal + securityDeposit;
+
+  // Handle actual checkout
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    setCheckoutError(null);
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login', { state: { from: `/bikes/${slug}/rent` } });
+        return;
+      }
+
+      const startDateTime = bookingType === 'hourly'
+        ? `${startDate}T${startTime}:00`
+        : `${startDate}T00:00:00`;
+      const endDateTime = bookingType === 'hourly'
+        ? `${startDate}T${endTime}:00`
+        : `${endDate}T23:59:59`;
+
+      const bookingData = {
+        listing_code: bike.listing_code,
+        start_datetime: startDateTime,
+        end_datetime: endDateTime,
+        duration_days: bookingType === 'daily' ? duration : bookingType === 'hourly' ? 1 : bookingType === 'weekly' ? numberOfWeeks * 7 : numberOfMonths * 30,
+        duration_type: bookingType,
+        duration_hours: bookingType === 'hourly' ? numberOfHours : null,
+        insurance_opt_in: insuranceOptIn,
+        delivery_opt_in: deliveryOptIn,
+        payment_method: 'mpesa', // Default, user can change on payment page
+      };
+
+      // Create booking
+      const response = await bikeService.createBooking(bookingData);
+      const bookingCode = response.data?.data?.booking_code || response.data?.booking_code;
+      
+      if (!bookingCode) {
+        throw new Error('Failed to create booking');
+      }
+
+      // Navigate to payment page with booking details
+      navigate('/checkout/bike-rental', {
+        state: {
+          bookingCode,
+          bikeName: bike.name,
+          totalAmount: totalWithDeposit,
+          rentalTotal: grandTotal,
+          securityDeposit,
+          bookingType,
+          duration,
+          startDate: startDateTime,
+          endDate: endDateTime,
+        }
+      });
+    } catch (err) {
+      console.error('Checkout failed:', err);
+      setCheckoutError(err.response?.data?.message || err.message || 'Failed to process booking. Please try again.');
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
 
   const steps = [
-    { number: 1, label: 'Dates' },
-    { number: 2, label: 'Details' },
+    { number: 1, label: 'Dates & Duration' },
+    { number: 2, label: 'Details & Terms' },
     { number: 3, label: 'Payment' }
   ];
 
@@ -129,47 +281,213 @@ const BikeRentalPage = () => {
             <div className="grid md:grid-cols-3 gap-6">
               {/* Main Form */}
               <div className="md:col-span-2">
-                {/* Step 1: Dates */}
+                {/* Step 1: Dates & Duration */}
                 {step === 1 && (
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
-                    <h2 className="text-xl font-bold text-gray-900 mb-6">Rental Dates</h2>
+                    <h2 className="text-xl font-bold text-gray-900 mb-6">Rental Duration & Dates</h2>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Pickup Date</label>
-                        <input
-                          type="date"
-                          value={startDate}
-                          onChange={(e) => setStartDate(e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Return Date</label>
-                        <input
-                          type="date"
-                          value={endDate}
-                          onChange={(e) => setEndDate(e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        />
-                      </div>
+                    {/* Booking Type Selector */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                      {[
+                        { key: 'hourly', label: 'Hourly', icon: Timer, available: bike?.hourly_rate },
+                        { key: 'daily', label: 'Daily', icon: CalendarDays, available: true },
+                        { key: 'weekly', label: 'Weekly', icon: CalendarRange, available: bike?.weekly_rate },
+                        { key: 'monthly', label: 'Monthly', icon: Calendar, available: bike?.monthly_rate },
+                      ].map((type) => (
+                        <button
+                          key={type.key}
+                          onClick={() => type.available && setBookingType(type.key)}
+                          disabled={!type.available}
+                          className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                            bookingType === type.key
+                              ? 'border-orange-500 bg-orange-50 text-orange-700'
+                              : type.available
+                                ? 'border-gray-200 hover:border-orange-300 text-gray-700'
+                                : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
+                          }`}
+                        >
+                          <type.icon className={`w-6 h-6 ${bookingType === type.key ? 'text-orange-500' : type.available ? 'text-gray-500' : 'text-gray-300'}`} />
+                          <span className="text-sm font-semibold">{type.label}</span>
+                          {!type.available && <span className="text-[10px] text-gray-400">N/A</span>}
+                        </button>
+                      ))}
                     </div>
 
-                    <div className="mb-6">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Pickup Time</label>
-                      <select
-                        value={pickupTime}
-                        onChange={(e) => setPickupTime(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      >
-                        <option value="08:00">8:00 AM</option>
-                        <option value="09:00">9:00 AM</option>
-                        <option value="10:00">10:00 AM</option>
-                        <option value="11:00">11:00 AM</option>
-                        <option value="14:00">2:00 PM</option>
-                        <option value="16:00">4:00 PM</option>
-                      </select>
-                    </div>
+                    {/* Hourly Booking Inputs */}
+                    {bookingType === 'hourly' && (
+                      <div className="space-y-4 mb-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Date</label>
+                          <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => { setStartDate(e.target.value); setEndDate(e.target.value); }}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Start Time</label>
+                            <input
+                              type="time"
+                              value={startTime}
+                              onChange={(e) => {
+                                setStartTime(e.target.value);
+                                // Auto-calculate end time
+                                const [hours, minutes] = e.target.value.split(':').map(Number);
+                                const endDate = new Date();
+                                endDate.setHours(hours + numberOfHours, minutes);
+                                const endHours = String(endDate.getHours()).padStart(2, '0');
+                                const endMins = String(endDate.getMinutes()).padStart(2, '0');
+                                setEndTime(`${endHours}:${endMins}`);
+                              }}
+                              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">End Time (Auto)</label>
+                            <input
+                              type="time"
+                              value={endTime}
+                              readOnly
+                              className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-100 text-gray-600 focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Number of Hours</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="24"
+                            value={numberOfHours}
+                            onChange={(e) => {
+                              const hours = Math.max(1, Math.min(24, parseInt(e.target.value) || 1));
+                              setNumberOfHours(hours);
+                              // Auto-calculate end time from start time
+                              if (startTime) {
+                                const [startHours, startMinutes] = startTime.split(':').map(Number);
+                                const endDate = new Date();
+                                endDate.setHours(startHours + hours, startMinutes);
+                                const endHours = String(endDate.getHours()).padStart(2, '0');
+                                const endMins = String(endDate.getMinutes()).padStart(2, '0');
+                                setEndTime(`${endHours}:${endMins}`);
+                              }
+                            }}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Daily Booking Inputs */}
+                    {bookingType === 'daily' && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Pickup Date</label>
+                          <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Return Date</label>
+                          <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Weekly Booking Inputs */}
+                    {bookingType === 'weekly' && (
+                      <div className="space-y-4 mb-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
+                          <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Number of Weeks</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="12"
+                            value={numberOfWeeks}
+                            onChange={(e) => setNumberOfWeeks(Math.max(1, parseInt(e.target.value) || 1))}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Monthly Booking Inputs */}
+                    {bookingType === 'monthly' && (
+                      <div className="space-y-4 mb-6">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
+                          <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-700 mb-2">Number of Months</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="6"
+                            value={numberOfMonths}
+                            onChange={(e) => setNumberOfMonths(Math.max(1, parseInt(e.target.value) || 1))}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Availability Status */}
+                    {availabilityLoading && (
+                      <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 mb-6 flex items-center gap-3">
+                        <Clock className="w-5 h-5 text-blue-500 animate-spin" />
+                        <p className="text-sm text-blue-700">Checking availability...</p>
+                      </div>
+                    )}
+                    
+                    {!isAvailable && !availabilityLoading && (
+                      <div className="p-4 bg-red-50 rounded-xl border border-red-100 mb-6">
+                        <div className="flex items-start gap-3">
+                          <Ban className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-semibold text-red-900">Bike Not Available</p>
+                            <p className="text-sm text-red-700">
+                              {nextAvailableAfter 
+                                ? `This bike is booked until ${new Date(nextAvailableAfter).toLocaleDateString()}. Please select dates after this.`
+                                : 'This bike is not available for the selected dates. Please choose different dates.'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {availabilityError && (
+                      <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-100 mb-6">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+                          <p className="text-sm text-yellow-700">{availabilityError}</p>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 mb-6">
                       <div className="flex items-start gap-3">
@@ -211,7 +529,7 @@ const BikeRentalPage = () => {
                     <div className="flex justify-end">
                       <button
                         onClick={() => setStep(2)}
-                        disabled={!startDate || !endDate}
+                        disabled={!startDate || (bookingType === 'daily' && !endDate) || !isAvailable || availabilityLoading}
                         className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
                       >
                         Continue
@@ -225,6 +543,43 @@ const BikeRentalPage = () => {
                 {step === 2 && (
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
                     <h2 className="text-xl font-bold text-gray-900 mb-6">Renter Details</h2>
+
+                    {/* Terms of Service Enforcement */}
+                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-200 mb-6">
+                      <div className="flex items-start gap-3">
+                        <FileText className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-blue-900 mb-2">Terms of Renting</p>
+                          <p className="text-sm text-blue-700 mb-4">
+                            You must accept our Terms of Renting before proceeding. This covers your responsibilities as a renter, liability, and return policies.
+                          </p>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => setTermsModalOpen(true)}
+                              className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold hover:bg-blue-200 transition-colors"
+                            >
+                              Read Terms
+                            </button>
+                            <label className="flex items-center gap-3 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={termsAccepted}
+                                onChange={(e) => setTermsAccepted(e.target.checked)}
+                                className="w-5 h-5 text-blue-500 rounded"
+                              />
+                              <span className="text-sm font-semibold text-blue-900">I accept the Terms of Renting</span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <TermsAcceptanceModal
+                      isOpen={termsModalOpen}
+                      onClose={() => setTermsModalOpen(false)}
+                      termsType="renting"
+                      onAccept={() => setTermsAccepted(true)}
+                    />
 
                     {/* Waiver */}
                     <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-200 mb-6">
@@ -311,7 +666,7 @@ const BikeRentalPage = () => {
                       </button>
                       <button
                         onClick={() => setStep(3)}
-                        disabled={!waiverSigned}
+                        disabled={!waiverSigned || !termsAccepted}
                         className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
                       >
                         Continue to Payment
@@ -334,6 +689,15 @@ const BikeRentalPage = () => {
                         </p>
                       </div>
                     </div>
+
+                    {checkoutError && (
+                      <div className="p-4 bg-red-50 rounded-xl border border-red-200 mb-6">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                          <p className="text-sm text-red-700">{checkoutError}</p>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="space-y-4 mb-8">
                       <button className="w-full p-4 rounded-xl border-2 border-orange-500 bg-orange-50 flex items-center gap-4">
@@ -366,11 +730,21 @@ const BikeRentalPage = () => {
                         Back
                       </button>
                       <button
-                        onClick={() => alert(`Demo: Rental confirmed!\n\nBike: ${bike.name}\nDates: ${startDate} to ${endDate}\nTotal: KSh ${grandTotal.toLocaleString()}\n\nIn production, this processes M-Pesa payment and sends confirmation.`)}
-                        className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center gap-2"
+                        onClick={handleCheckout}
+                        disabled={checkoutLoading}
+                        className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-70"
                       >
-                        <Shield className="w-5 h-5" />
-                        Pay KSh {grandTotal.toLocaleString()}
+                        {checkoutLoading ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <Shield className="w-5 h-5" />
+                            Pay KSh {Number(totalWithDeposit).toLocaleString()}
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -388,51 +762,58 @@ const BikeRentalPage = () => {
                     </div>
                   </div>
 
+                  {/* USER-FACING PRICING ONLY - No commission breakdown */}
                   <div className="space-y-2 text-sm mb-4 pb-4 border-b border-gray-100">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">{days} day{days > 1 ? 's' : ''} @ KSh {bike.daily_rate.toLocaleString()}</span>
-                      <span className="font-medium">KSh {baseTotal.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Platform fee</span>
-                      <span className="font-medium">KSh {platformFee.toLocaleString()}</span>
+                      <span className="text-gray-600">
+                        {bookingType === 'hourly' ? `${numberOfHours} hour${numberOfHours > 1 ? 's' : ''}` :
+                         bookingType === 'daily' ? `${duration} day${duration > 1 ? 's' : ''}` :
+                         bookingType === 'weekly' ? `${numberOfWeeks} week${numberOfWeeks > 1 ? 's' : ''}` :
+                         `${numberOfMonths} month${numberOfMonths > 1 ? 's' : ''}`}
+                        {' '}@ KSh {Number(rateUsed).toLocaleString()}/{bookingType === 'hourly' ? 'hr' : bookingType === 'daily' ? 'day' : bookingType === 'weekly' ? 'wk' : 'mo'}
+                      </span>
+                      <span className="font-medium">KSh {Number(baseTotal).toLocaleString()}</span>
                     </div>
                     {insuranceFee > 0 && (
                       <div className="flex justify-between">
                         <span className="text-gray-600">Insurance</span>
-                        <span className="font-medium">KSh {insuranceFee.toLocaleString()}</span>
+                        <span className="font-medium">KSh {Number(insuranceFee).toLocaleString()}</span>
                       </div>
                     )}
                     {deliveryFee > 0 && (
                       <div className="flex justify-between">
                         <span className="text-gray-600">Delivery</span>
-                        <span className="font-medium">KSh {deliveryFee.toLocaleString()}</span>
+                        <span className="font-medium">KSh {Number(deliveryFee).toLocaleString()}</span>
                       </div>
                     )}
-                    {bike.monthly_rate && days >= 28 && (
-                      <div className="flex justify-between text-green-700">
-                        <span className="text-green-600">Monthly discount applied</span>
-                        <span className="font-medium">-KSh {Math.round(baseTotal * 0.1).toLocaleString()}</span>
+                    {requiresDownPayment && (
+                      <div className="flex justify-between text-orange-700">
+                        <span className="text-orange-600">Down Payment (50%)</span>
+                        <span className="font-medium">KSh {Number(downPayment).toLocaleString()}</span>
                       </div>
                     )}
                   </div>
 
                   <div className="flex justify-between items-center mb-4">
-                    <span className="font-bold text-gray-900">Total</span>
-                    <span className="text-2xl font-bold text-orange-600">KSh {grandTotal.toLocaleString()}</span>
+                    <span className="font-bold text-gray-900">Rental Total</span>
+                    <span className="text-2xl font-bold text-orange-600">KSh {Number(grandTotal).toLocaleString()}</span>
                   </div>
 
-                  <div className="p-3 bg-green-50 rounded-lg border border-green-100">
-                    <p className="text-xs text-green-700 text-center">
-                      Owner receives <span className="font-bold">KSh {ownerPayout.toLocaleString()}</span> after rental
-                    </p>
-                  </div>
-
-                  <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                  {/* Security Deposit - shown separately */}
+                  <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-100 mb-3">
+                    <div className="flex items-center gap-2 text-xs text-yellow-700">
                       <Shield className="w-4 h-4" />
-                      <span>Deposit: KSh {bike.security_deposit.toLocaleString()} (held)</span>
+                      <span>+ Security Deposit: KSh {Number(securityDeposit).toLocaleString()} (refundable on return)</span>
                     </div>
+                  </div>
+
+                  {/* Total amount to pay now */}
+                  <div className="p-3 bg-green-50 rounded-lg border border-green-100">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-700 font-medium">Amount to Pay Now</span>
+                      <span className="font-bold text-green-700 text-lg">KSh {Number(totalWithDeposit).toLocaleString()}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Includes refundable security deposit</p>
                   </div>
                 </div>
               </div>

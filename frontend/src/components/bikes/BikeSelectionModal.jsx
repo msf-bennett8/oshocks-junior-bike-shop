@@ -233,17 +233,33 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
                   return (
                     <button
                       key={bike.id}
-                      onClick={() => handleSelectBike(bike)}
+                      onClick={() => bike.is_available ? handleSelectBike(bike) : null}
+                      disabled={!bike.is_available}
                       className={`relative text-left rounded-xl border-2 transition-all overflow-hidden ${
-                        isSelected 
-                          ? 'border-orange-500 ring-2 ring-orange-200 shadow-lg' 
-                          : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+                        isSelected
+                          ? 'border-orange-500 ring-2 ring-orange-200 shadow-lg'
+                          : !bike.is_available
+                            ? 'border-gray-200 opacity-60 cursor-not-allowed'
+                            : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
                       }`}
                     >
                       {/* Selection Badge */}
                       {isSelected && (
                         <div className="absolute top-3 right-3 z-10 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
                           <Check className="w-5 h-5 text-white" />
+                        </div>
+                      )}
+
+                      {/* Availability Watermark */}
+                      {!bike.is_available && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm rounded-xl z-20">
+                          <div className="text-center text-white">
+                            <Clock className="w-6 h-6 mx-auto mb-1" />
+                            <p className="text-xs font-bold">Booked</p>
+                            {bike.next_available_after && (
+                              <p className="text-[10px] opacity-80">Available after {new Date(bike.next_available_after).toLocaleDateString()}</p>
+                            )}
+                          </div>
                         </div>
                       )}
 

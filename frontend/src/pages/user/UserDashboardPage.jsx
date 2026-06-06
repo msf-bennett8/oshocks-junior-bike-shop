@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useWishlist } from '../../context/WishlistContext';
 import userDashboardService from '../../services/userDashboardService';
+import bikeService from '../../services/bikeService';
 import { 
   Package, ShoppingBag, Heart, MapPin, Bell, User, TrendingUp, Clock, CheckCircle, 
   XCircle, Truck, Star, Eye, MessageSquare, CreditCard, Gift, Award, Zap, 
@@ -56,6 +57,7 @@ const UserDashboard = () => {
   
   const [referralCode, setReferralCode] = useState('');
   const [copyingCode, setCopyingCode] = useState(false);
+  const [hasBikeListings, setHasBikeListings] = useState(false);
   
   // Spending chart scroll state
   const [chartOffset, setChartOffset] = useState(0);
@@ -64,6 +66,7 @@ const UserDashboard = () => {
   // Load all dashboard data
   useEffect(() => {
     loadDashboardData();
+    checkBikeListings();
   }, []);
 
   // Reload when time filter changes
@@ -96,10 +99,10 @@ const UserDashboard = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       // Refresh wishlist from context first
       await refreshWishlist();
-      
+
       await Promise.all([
         loadStats(),
         loadSpendingAnalytics(),
@@ -111,6 +114,17 @@ const UserDashboard = () => {
       console.error('Failed to load dashboard data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkBikeListings = async () => {
+    try {
+      const response = await bikeService.getMyListings();
+      const listings = response.data?.data || [];
+      setHasBikeListings(listings.length > 0);
+    } catch (error) {
+      console.error('Failed to check bike listings:', error);
+      setHasBikeListings(false);
     }
   };
 
@@ -743,7 +757,14 @@ const UserDashboard = () => {
               <div className="space-y-2">
                 {[
                   { label: 'My Orders', sublabel: 'Track & manage', icon: Package, color: 'blue', link: '/orders' },
-                  { label: 'My Bike Listings', sublabel: 'Bikes for rent', icon: Bike, color: 'indigo', link: '/my-bikes' },
+                  ...(hasBikeListings ? [
+                    { label: 'My Bike Moderation', sublabel: 'Manage bikes & bookings', icon: Bike, color: 'indigo', link: '#', isParent: true, children: [
+                      { label: 'My Bike Bookings', sublabel: 'Your rental bookings', icon: DollarSign, color: 'green', link: '/my-bike-hires' },
+                      { label: 'My Bike Listings', sublabel: 'Bikes for rent', icon: Bike, color: 'indigo', link: '/my-bikes' },
+                    ]}
+                  ] : [
+                    { label: 'My Bike Bookings', sublabel: 'Your rental bookings', icon: DollarSign, color: 'green', link: '/my-bike-hires' },
+                  ]),
                   { label: 'My Custom Rides', sublabel: 'Ride requests', icon: MapPin, color: 'purple', link: '/my-rides' },
                   { label: 'All Events', sublabel: 'Cycling events', icon: Calendar, color: 'orange', link: '/events' },
                   { label: 'My Bike Hires', sublabel: 'Rental bookings', icon: DollarSign, color: 'green', link: '/my-bike-hires' },

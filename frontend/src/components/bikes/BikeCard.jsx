@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { MapPin, Clock, Star, Shield, Bike, ArrowRight, Heart } from 'lucide-react';
+import { MapPin, Clock, Star, Shield, Bike, ArrowRight, Heart, Ban } from 'lucide-react';
 import { BIKE_CATEGORY_CONFIG, FRAME_SIZE_CONFIG } from '../../data/cyclingMockData';
 
 const BikeCard = ({ bike, compact = false, onRentNow }) => {
@@ -43,6 +43,25 @@ const BikeCard = ({ bike, compact = false, onRentNow }) => {
               <span className="text-sm font-bold text-gray-900">KSh {bike.daily_rate.toLocaleString()}</span>
               <span className="text-[10px] text-gray-500 block">/day</span>
             </div>
+
+            {/* Availability Watermark */}
+            {!bike.is_available && bike.next_available_after && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm rounded-t-xl">
+                <div className="text-center text-white p-2">
+                  <Clock className="w-6 h-6 mx-auto mb-1 opacity-80" />
+                  <p className="font-bold text-xs">Booked</p>
+                  <p className="text-[10px] opacity-80">Available after {new Date(bike.next_available_after).toLocaleDateString()}</p>
+                </div>
+              </div>
+            )}
+            {!bike.is_available && !bike.next_available_after && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm rounded-t-xl">
+                <div className="text-center text-white p-2">
+                  <Ban className="w-6 h-6 mx-auto mb-1 opacity-80" />
+                  <p className="font-bold text-xs">Unavailable</p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="p-3">
@@ -123,6 +142,25 @@ const BikeCard = ({ bike, compact = false, onRentNow }) => {
             <span className="text-lg font-bold text-gray-900">KSh {bike.daily_rate.toLocaleString()}</span>
             <span className="text-xs text-gray-500 block">per day</span>
           </div>
+
+          {/* Availability Watermark */}
+          {!bike.is_available && bike.next_available_after && (
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm rounded-t-2xl z-10">
+              <div className="text-center text-white p-4">
+                <Clock className="w-10 h-10 mx-auto mb-2 opacity-80" />
+                <p className="font-bold text-lg">Booked</p>
+                <p className="text-sm opacity-80">Available after {new Date(bike.next_available_after).toLocaleDateString()}</p>
+              </div>
+            </div>
+          )}
+          {!bike.is_available && !bike.next_available_after && (
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm rounded-t-2xl z-10">
+              <div className="text-center text-white p-4">
+                <Ban className="w-10 h-10 mx-auto mb-2 opacity-80" />
+                <p className="font-bold text-lg">Unavailable</p>
+              </div>
+            </div>
+          )}
 
           <div className="absolute bottom-4 left-4 right-4">
             <h3 className="text-xl font-bold text-white group-hover:text-orange-300 transition-colors">

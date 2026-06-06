@@ -189,6 +189,16 @@ class BikeRentalController extends Controller
         DB::beginTransaction();
 
         try {
+            // Check terms acceptance for listers
+            try {
+                \App\Services\TermsEnforcementService::enforceTerms($user->id, 'listing');
+            } catch (\Exception $e) {
+                return response()->json([
+                    'error' => $e->getMessage(),
+                    'code' => 'TERMS_NOT_ACCEPTED',
+                ], 403);
+            }
+
             $listingCode = $this->generateListingCode();
 
             // Generate slug
@@ -298,6 +308,7 @@ class BikeRentalController extends Controller
                 'rating' => 0,
                 'review_count' => 0,
                 'owner_rating' => 0,
+                'recirculation_status' => 'available',
             ]);
 
             DB::commit();
@@ -573,8 +584,42 @@ class BikeRentalController extends Controller
                 'listing_status' => $bike->listing_status,
                 'is_active' => $bike->is_active,
                 'is_verified' => $bike->is_verified,
+                'recirculation_status' => $bike->recirculation_status,
+                'next_available_at' => $bike->next_available_at,
                 'earnings_estimate' => $bike->daily_rate * $bike->total_rentals * 0.85,
             ]
+        ]);
+    }
+
+    /**
+     * Get available bikes with conflict resolution for date range
+     */
+    public function availableWithConflictResolution(Request $request)
+    {
+        $validated = $request->validate([
+            'start_datetime' => 'required|date|after:now',
+            'end_datetime' => 'required|date|after:start_datetime',
+            'category' => 'nullable|string',
+            'owner_type' => 'nullable|string|in:platform,user',
+        ]);
+
+        $bikes = \App\Services\BikeAvailabilityService::getAvailableBikesWithConflictResolution(
+            $validated['start_datetime'],
+            $validated['end_datetime'],
+            [
+                'category' => $validated['category'] ?? null,
+                'owner_type' => $validated['owner_type'] ?? null,
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => $bikes,
+            'count' => count($bikes),
+            'date_range' => [
+                'start' => $validated['start_datetime'],
+                'end' => $validated['end_datetime'],
+            ],
         ]);
     }
 }

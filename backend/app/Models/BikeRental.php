@@ -62,6 +62,9 @@ class BikeRental extends Model
         'deletion_scheduled_by',
         'deletion_approved_by',
         'deletion_reason',
+        'recirculation_status',
+        'last_rented_at',
+        'next_available_at',
     ];
 
     protected $casts = [
@@ -95,6 +98,9 @@ class BikeRental extends Model
         'scheduled_for_deletion_at' => 'datetime',
         'deletion_scheduled_by' => 'integer',
         'deletion_approved_by' => 'integer',
+        'recirculation_status' => 'string',
+        'last_rented_at' => 'datetime',
+        'next_available_at' => 'datetime',
     ];
 
     public function owner()

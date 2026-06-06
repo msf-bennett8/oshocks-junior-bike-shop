@@ -39,6 +39,8 @@ class BikeRentalBookingController extends Controller
             'start_datetime' => 'required|date|after:now',
             'end_datetime' => 'required|date|after:start_datetime',
             'duration_days' => 'required|integer|min:1',
+            'duration_type' => 'required|in:hourly,daily,weekly,monthly',
+            'duration_hours' => 'nullable|integer|min:1',
             'add_ons' => 'nullable|array',
             'insurance_opt_in' => 'boolean',
             'delivery_opt_in' => 'boolean',
@@ -49,6 +51,16 @@ class BikeRentalBookingController extends Controller
             ->where('listing_status', 'approved')
             ->where('is_active', true)
             ->firstOrFail();
+
+        // Check terms acceptance for renters
+        try {
+            \App\Services\TermsEnforcementService::enforceTerms($user->id, 'renting');
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'code' => 'TERMS_NOT_ACCEPTED',
+            ], 403);
+        }
 
         // Check if user is trying to book their own bike
         if ($listing->owner_id === $user->id) {
@@ -119,6 +131,8 @@ class BikeRentalBookingController extends Controller
                     'start_datetime' => $start,
                     'end_datetime' => $end,
                     'duration_days' => $durationDays,
+                    'duration_type' => $validated['duration_type'],
+                    'duration_hours' => $validated['duration_hours'] ?? null,
                     'daily_rate' => $dailyRate,
                     'total_rental_fee' => $baseRental,
                     'security_deposit' => $securityDeposit,
@@ -265,6 +279,15 @@ class BikeRentalBookingController extends Controller
         $updateData = ['status' => $newStatus];
 
         if ($newStatus === 'active') {
+            // Update bike recirculation status
+            $bike = BikeRental::find($booking->bike_rental_id);
+            if ($bike) {
+                $bike->update([
+                    'recirculation_status' => 'rented',
+                    'last_rented_at' => now(),
+                    'next_available_at' => $booking->end_datetime,
+                ]);
+            }
             $updateData['picked_up_at'] = now();
         }
         if ($newStatus === 'returned') {
@@ -272,11 +295,32 @@ class BikeRentalBookingController extends Controller
         }
         if ($newStatus === 'completed') {
             $updateData['returned_at'] = $updateData['returned_at'] ?? now();
+            $updateData['recirculated'] = true;
+            $updateData['recirculated_at'] = now();
+            $updateData['recirculated_by'] = $user->id;
+
+            // Update bike recirculation status
+            $bike = BikeRental::find($booking->bike_rental_id);
+            if ($bike) {
+                $bike->update([
+                    'recirculation_status' => 'available',
+                    'next_available_at' => null,
+                ]);
+            }
         }
         if ($newStatus === 'cancelled') {
             $updateData['cancelled_at'] = now();
             // Remove availability block
             BikeAvailabilityBlock::where('booking_id', $booking->id)->delete();
+
+            // Update bike recirculation status
+            $bike = BikeRental::find($booking->bike_rental_id);
+            if ($bike) {
+                $bike->update([
+                    'recirculation_status' => 'available',
+                    'next_available_at' => null,
+                ]);
+            }
         }
 
         if (!empty($validated['notes'])) {

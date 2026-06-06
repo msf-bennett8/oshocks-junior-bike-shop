@@ -169,6 +169,8 @@ const CreateCommunityPostPage = lazy(() => import('./pages/community/CreateCommu
 const CommunityModerationPage = lazy(() => import('./pages/admin/CommunityModerationPage'));
 const EventsModerationPage = lazy(() => import('./pages/admin/EventsModerationPage'));
 const BikeListingModerationPage = lazy(() => import('./pages/admin/BikeListingModerationPage'));
+const BikeBookingModerationPage = lazy(() => import('./pages/admin/BikeBookingModerationPage'));
+const ComingSoonPage = lazy(() => import('./pages/errors/ComingSoonPage'));
 const CustomRideModerationPage = lazy(() => import('./pages/admin/CustomRideModerationPage'));
 const MyCustomRidesPage = lazy(() => import('./pages/user/MyCustomRidesPage'));
 const MyBikeListingsPage = lazy(() => import('./pages/user/MyBikeListingsPage'));
@@ -1102,6 +1104,16 @@ function App() {
                     <BikeListingModerationPage />
                   </AdminRoute>
                 } />
+
+                <Route path="/admin/bike-booking-moderation" element={
+                  <AdminRoute>
+                    <BikeBookingModerationPage />
+                  </AdminRoute>
+                } />
+
+                <Route path="/terms/renting" element={<ComingSoonPage title="Terms of Renting" description="Terms and conditions for bike renters." />} />
+                <Route path="/terms/listing" element={<ComingSoonPage title="Terms of Listing" description="Terms and conditions for bike listers." />} />
+                <Route path="/terms/seller-payments" element={<ComingSoonPage title="Seller Payment Terms" description="Payment terms and conditions for sellers." />} />
                 
                 <Route path="/admin/events-moderation" element={
                   <AdminRoute>

@@ -725,25 +725,85 @@ Route::prefix('v1/bike-rental-bookings')->middleware(['auth:sanctum', 'audit', '
     Route::post('/{bookingCode}/cancel', [\App\Http\Controllers\Api\BikeRentalBookingController::class, 'cancel']);
 });
 
-// ============================================================================
-// BIKE LISTING MODERATION — ADMIN/SUPER ADMIN ONLY
-// ============================================================================
-Route::prefix('v1/admin/bike-listings')->middleware(['auth:sanctum', 'audit', 'security.monitor'])->group(function () {
-    Route::get('/', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'index']);
-    Route::get('/stats', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'stats']);
-    Route::post('/{listingCode}/approve', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'approve']);
-    Route::post('/{listingCode}/reject', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'reject']);
-    Route::put('/{listingCode}/edit', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'updateListing']);
-    Route::post('/{listingCode}/pause', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'pause']);
-    Route::post('/{listingCode}/resume', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'resume']);
-    Route::post('/{listingCode}/archive', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'archive']);
-    Route::post('/{listingCode}/restore-archive', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'restoreArchive']);
-    Route::post('/{listingCode}/out-of-service', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'markOutOfService']);
-    Route::post('/{listingCode}/schedule-deletion', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'scheduleForDeletion']);
-    Route::post('/{listingCode}/approve-deletion', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'approveDeletion']);
-    Route::post('/{listingCode}/restore', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'restore']);
-    Route::delete('/{listingCode}/permanent', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'permanentDelete']);
-});
+    // ============================================================================
+    // BIKE LISTING MODERATION — ADMIN/SUPER ADMIN ONLY
+    // ============================================================================
+    Route::prefix('v1/admin/bike-listings')->middleware(['auth:sanctum', 'audit', 'security.monitor'])->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'index']);
+        Route::get('/stats', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'stats']);
+        Route::post('/{listingCode}/approve', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'approve']);
+        Route::post('/{listingCode}/reject', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'reject']);
+        Route::put('/{listingCode}/edit', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'updateListing']);
+        Route::post('/{listingCode}/pause', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'pause']);
+        Route::post('/{listingCode}/resume', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'resume']);
+        Route::post('/{listingCode}/archive', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'archive']);
+        Route::post('/{listingCode}/restore-archive', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'restoreArchive']);
+        Route::post('/{listingCode}/out-of-service', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'markOutOfService']);
+        Route::post('/{listingCode}/schedule-deletion', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'scheduleForDeletion']);
+        Route::post('/{listingCode}/approve-deletion', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'approveDeletion']);
+        Route::post('/{listingCode}/restore', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'restore']);
+        Route::delete('/{listingCode}/permanent', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'permanentDelete']);
+    });
+
+    // ============================================================================
+    // BIKE BOOKING MODERATION — ADMIN/SUPER ADMIN ONLY
+    // ============================================================================
+    Route::prefix('v1/admin/bike-bookings')->middleware(['auth:sanctum', 'audit', 'security.monitor', 'role:admin,super_admin'])->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'index']);
+        Route::get('/stats', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'stats']);
+        Route::get('/pending-recirculation', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'pendingRecirculation']);
+        Route::post('/{bookingCode}/recirculate', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'recirculate']);
+        Route::post('/{bookingCode}/apply-fine', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'applyFine']);
+        Route::post('/{bookingCode}/remove-fine', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'removeFine']);
+        Route::post('/{bookingCode}/refund-deposit', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'refundDeposit']);
+        Route::post('/payouts/{payoutId}/process', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'processPayout']);
+        Route::post('/payouts/{payoutId}/delay', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'delayPayout']);
+    });
+
+    // ============================================================================
+    // LISTER PAYOUT MANAGEMENT
+    // ============================================================================
+    Route::prefix('v1/bike-lister')->middleware(['auth:sanctum', 'audit', 'security.monitor', 'role:seller'])->group(function () {
+        Route::get('/payout-dashboard', [\App\Http\Controllers\Api\BikeListerPayoutController::class, 'dashboard']);
+        Route::get('/payout-history', [\App\Http\Controllers\Api\BikeListerPayoutController::class, 'history']);
+        Route::post('/payouts/{payoutId}/request', [\App\Http\Controllers\Api\BikeListerPayoutController::class, 'requestPayout']);
+        Route::put('/payout-preference', [\App\Http\Controllers\Api\BikeListerPayoutController::class, 'updatePreference']);
+    });
+
+    // ============================================================================
+    // TERMS OF SERVICE
+    // ============================================================================
+    Route::prefix('v1/terms')->middleware(['auth:sanctum', 'audit', 'security.monitor'])->group(function () {
+        Route::get('/status', [\App\Http\Controllers\Api\TermsController::class, 'status']);
+        Route::post('/accept', [\App\Http\Controllers\Api\TermsController::class, 'accept']);
+        Route::get('/check', [\App\Http\Controllers\Api\TermsController::class, 'check']);
+    });
+
+    // ============================================================================
+    // BIKE AVAILABILITY WITH CONFLICT RESOLUTION
+    // ============================================================================
+    Route::get('/v1/bike-rentals/available', [\App\Http\Controllers\Api\BikeRentalController::class, 'availableWithConflictResolution']);
+
+    // ============================================================================
+    // PLATFORM FINE SETTINGS — ADMIN ONLY
+    // ============================================================================
+    Route::prefix('v1/admin/fine-settings')->middleware(['auth:sanctum', 'audit', 'security.monitor', 'role:super_admin,admin'])->group(function () {
+        Route::get('/', function () {
+            return response()->json([
+                'success' => true,
+                'data' => \App\Models\PlatformFineSetting::getLateReturnFine(),
+            ]);
+        });
+        Route::put('/', function (\Illuminate\Http\Request $request) {
+            $validated = $request->validate(['amount' => 'nullable|numeric|min:0']);
+            $user = \Illuminate\Support\Facades\Auth::user();
+            \App\Models\PlatformFineSetting::setLateReturnFine($validated['amount'] ?? null, $user->id);
+            return response()->json([
+                'success' => true,
+                'message' => 'Fine settings updated',
+            ]);
+        });
+    });
 
     // ============================================================================
     // COMMUNITY POSTS ROUTES

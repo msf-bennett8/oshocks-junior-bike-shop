@@ -368,7 +368,10 @@ const Navbar = () => {
           { name: 'Notification Templates', link: '/super-admin/notification-templates', icon: Bell },
           { name: 'Appointments', link: '/admin/appointments', icon: Calendar },
           { name: 'Events Moderation', link: '/admin/events-moderation', icon: Calendar },
-          { name: 'Bike Listing Moderation', link: '/admin/bike-listing-moderation', icon: Bike },
+          { name: 'Bike Rental Moderation', link: '#', icon: Bike, hasSubmenu: true, submenuItems: [
+            { name: 'Bike Listing Moderation', link: '/admin/bike-listing-moderation', icon: Bike },
+            { name: 'Bike Booking Moderation', link: '/admin/bike-booking-moderation', icon: ClipboardList },
+          ]},
           { name: 'Community Moderation', link: '/admin/community-moderation', icon: MessageCircle },
           { name: 'Custom Rides Moderation', link: '/admin/custom-rides-moderation', icon: Bike },
           { name: 'Settings', link: '/super-admin/settings', icon: Settings },
@@ -389,7 +392,10 @@ const Navbar = () => {
           { name: 'Appointments', link: '/admin/appointments', icon: Calendar },
           { name: 'Support Queue', link: '/admin/support-inbox', icon: Inbox },
           { name: 'Events Moderation', link: '/admin/events-moderation', icon: Calendar },
-          { name: 'Bike Listing Moderation', link: '/admin/bike-listing-moderation', icon: Bike },
+          { name: 'Bike Rental Moderation', link: '#', icon: Bike, hasSubmenu: true, submenuItems: [
+            { name: 'Bike Listing Moderation', link: '/admin/bike-listing-moderation', icon: Bike },
+            { name: 'Bike Booking Moderation', link: '/admin/bike-booking-moderation', icon: ClipboardList },
+          ]},
           { name: 'Community Moderation', link: '/admin/community-moderation', icon: MessageCircle },
           { name: 'Custom Rides Moderation', link: '/admin/custom-rides-moderation', icon: Bike },
         ]
@@ -909,20 +915,35 @@ const Navbar = () => {
                             </div>
                           </button>
 
-                          {/* Bike Listing Moderation */}
-                          <button
-                            onClick={() => {
-                              setShowQuickActions(false);
-                              navigate('/admin/bike-listing-moderation');
-                            }}
-                            className="flex items-center gap-3 px-4 py-2 hover:bg-purple-100/50 transition-colors w-full text-left"
-                          >
-                            <Bike className="w-4 h-4 text-purple-600" />
-                            <div>
-                              <span className="text-sm text-gray-800 font-medium">Bike Listing Moderation</span>
-                              <p className="text-[11px] text-gray-500">Approve & manage bike listings</p>
+                          {/* Bike Rental Moderation - Parent */}
+                          <div className="px-4 py-2">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Bike className="w-4 h-4 text-purple-600" />
+                              <span className="text-sm font-bold text-gray-800">Bike Rental Moderation</span>
                             </div>
-                          </button>
+                            <div className="pl-6 space-y-1">
+                              <button
+                                onClick={() => {
+                                  setShowQuickActions(false);
+                                  navigate('/admin/bike-listing-moderation');
+                                }}
+                                className="flex items-center gap-2 px-3 py-1.5 hover:bg-purple-100/50 rounded transition-colors w-full text-left"
+                              >
+                                <Bike className="w-3 h-3 text-purple-500" />
+                                <span className="text-xs text-gray-700">Bike Listing Moderation</span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setShowQuickActions(false);
+                                  navigate('/admin/bike-booking-moderation');
+                                }}
+                                className="flex items-center gap-2 px-3 py-1.5 hover:bg-purple-100/50 rounded transition-colors w-full text-left"
+                              >
+                                <ClipboardList className="w-3 h-3 text-purple-500" />
+                                <span className="text-xs text-gray-700">Bike Booking Moderation</span>
+                              </button>
+                            </div>
+                          </div>
 
                           {/* Community Moderation */}
                           <button
@@ -980,20 +1001,35 @@ const Navbar = () => {
 
                         {/* Submenu */}
                         <div className="hidden bg-gray-50 border-l-2 border-indigo-200 ml-4">
-                          {/* My Bike Listings */}
-                          <button
-                            onClick={() => {
-                              setShowQuickActions(false);
-                              navigate('/my-bikes');
-                            }}
-                            className="flex items-center gap-3 px-4 py-2 hover:bg-indigo-100/50 transition-colors w-full text-left"
-                          >
-                            <Bike className="w-4 h-4 text-indigo-600" />
-                            <div>
-                              <span className="text-sm text-gray-800 font-medium">My Bike Listings</span>
-                              <p className="text-[11px] text-gray-500">Bikes you've listed for rent</p>
+                          {/* My Bike Moderation - Conditional */}
+                          <div className="px-4 py-2">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Bike className="w-4 h-4 text-indigo-600" />
+                              <span className="text-sm font-bold text-gray-800">My Bike Moderation</span>
                             </div>
-                          </button>
+                            <div className="pl-6 space-y-1">
+                              <button
+                                onClick={() => {
+                                  setShowQuickActions(false);
+                                  navigate('/my-bike-hires');
+                                }}
+                                className="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-100/50 rounded transition-colors w-full text-left"
+                              >
+                                <DollarSign className="w-3 h-3 text-indigo-500" />
+                                <span className="text-xs text-gray-700">My Bike Bookings</span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setShowQuickActions(false);
+                                  navigate('/my-bikes');
+                                }}
+                                className="flex items-center gap-2 px-3 py-1.5 hover:bg-indigo-100/50 rounded transition-colors w-full text-left"
+                              >
+                                <Bike className="w-3 h-3 text-indigo-500" />
+                                <span className="text-xs text-gray-700">My Bike Listings</span>
+                              </button>
+                            </div>
+                          </div>
 
                           {/* My Custom Rides */}
                           <button

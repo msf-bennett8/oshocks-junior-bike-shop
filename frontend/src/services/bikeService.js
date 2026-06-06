@@ -41,6 +41,30 @@ const bikeService = {
   approveListingDeletion: (listingCode) => api.post(`/admin/bike-listings/${listingCode}/approve-deletion`),
   restoreListing: (listingCode) => api.post(`/admin/bike-listings/${listingCode}/restore`),
   permanentDeleteListing: (listingCode) => api.delete(`/admin/bike-listings/${listingCode}/permanent`),
+
+  // ─── Admin Booking Moderation ───
+  getAdminBookings: (params = {}) => api.get('/admin/bike-bookings', { params }),
+  getAdminBookingStats: () => api.get('/admin/bike-bookings/stats'),
+  recirculateBike: (bookingCode) => api.post(`/admin/bike-bookings/${bookingCode}/recirculate`),
+  refundDeposit: (bookingCode) => api.post(`/admin/bike-bookings/${bookingCode}/refund-deposit`),
+  applyFine: (bookingCode, amount) => api.post(`/admin/bike-bookings/${bookingCode}/apply-fine`, { amount }),
+  removeFine: (bookingCode) => api.post(`/admin/bike-bookings/${bookingCode}/remove-fine`),
+
+  // ─── Availability with Conflict Resolution ───
+  getAvailableBikes: (start, end, filters = {}) => api.get('/bike-rentals/available', {
+    params: { start_datetime: start, end_datetime: end, ...filters }
+  }),
+
+  // ─── Lister Payout ───
+  getListerPayoutDashboard: () => api.get('/bike-lister/payout-dashboard'),
+  getListerPayoutHistory: (params = {}) => api.get('/bike-lister/payout-history', { params }),
+  requestPayout: (payoutId) => api.post(`/bike-lister/payouts/${payoutId}/request`),
+  updatePayoutPreference: (period) => api.put('/bike-lister/payout-preference', { payout_period: period }),
+
+  // ─── Terms ───
+  getTermsStatus: () => api.get('/terms/status'),
+  acceptTerms: (termsType) => api.post('/terms/accept', { terms_type: termsType }),
+  checkTerms: (termsType) => api.get('/terms/check', { params: { terms_type: termsType } }),
 };
 
 export default bikeService;
