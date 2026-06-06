@@ -9,6 +9,7 @@ import {
 import eventService from '../../services/eventService';
 import { useAuth } from '../../context/AuthContext';
 import ModerationActionModal from '../../components/common/ModerationActionModal';
+import EventTicketModal from '../../components/events/EventTicketModal';
 
 const TABS = [
   { key: 'upcoming', label: 'Upcoming', icon: Calendar },
@@ -35,6 +36,15 @@ const MyEventBookingsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [stats, setStats] = useState({ total: 0, upcoming: 0, past: 0, cancelled: 0 });
 
+  // Calculate stats from registrations
+  useEffect(() => {
+    const total = registrations.length;
+    const upcoming = registrations.filter(r => r.status !== 'cancelled' && new Date(r.event?.start_datetime) >= new Date()).length;
+    const past = registrations.filter(r => r.status !== 'cancelled' && new Date(r.event?.start_datetime) < new Date()).length;
+    const cancelled = registrations.filter(r => r.status === 'cancelled').length;
+    setStats({ total, upcoming, past, cancelled });
+  }, [registrations]);
+
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState({
@@ -45,6 +55,18 @@ const MyEventBookingsPage = () => {
     onCancel: null,
   });
   const [actionLoading, setActionLoading] = useState(false);
+  const [ticketModalOpen, setTicketModalOpen] = useState(false);
+  const [selectedTicketCode, setSelectedTicketCode] = useState(null);
+
+  const openTicketModal = (code) => {
+    setSelectedTicketCode(code);
+    setTicketModalOpen(true);
+  };
+
+  const closeTicketModal = () => {
+    setTicketModalOpen(false);
+    setSelectedTicketCode(null);
+  };
 
   useEffect(() => {
     fetchRegistrations();
@@ -205,7 +227,7 @@ const MyEventBookingsPage = () => {
         ) : (
           <div className="grid gap-4">
             {filteredRegistrations.map((reg) => {
-              const status = getStatusBadge(reg.status);
+              const status = getStatusBadge(reg.display_status || reg.status);
               const event = reg.event;
               const isUpcoming = event && new Date(event.start_datetime) >= new Date();
               const isCancelled = reg.status === 'cancelled';
@@ -275,22 +297,10 @@ const MyEventBookingsPage = () => {
                           <Eye className="w-3 h-3" /> View Event
                         </button>
                         
-                        {/* Download Ticket (if registered and paid) */}
-                        {reg.status === 'registered' && reg.payment_status === 'paid' && (
+                        {/* View Ticket (if registered/paid and not yet checked in) */}
+                        {(reg.display_status === 'registered' || reg.status === 'registered') && reg.payment_status === 'paid' && !reg.checked_in_at && (
                           <button
-                            onClick={async () => {
-                              try {
-                                const response = await eventService.downloadTicket(reg.registration_code);
-                                const blob = new Blob([response.data], { type: 'application/pdf' });
-                                const url = window.URL.createObjectURL(blob);
-                                const a = document.createElement('a');
-                                a.href = url;
-                                a.download = `ticket-${reg.registration_code}.pdf`;
-                                a.click();
-                              } catch (e) {
-                                alert('Failed to download ticket');
-                              }
-                            }}
+                            onClick={() => openTicketModal(reg.registration_code)}
                             className="flex items-center gap-1 px-3 py-1.5 bg-purple-50 text-purple-600 rounded-lg text-sm font-medium hover:bg-purple-100"
                           >
                             <Ticket className="w-3 h-3" /> Ticket
@@ -318,7 +328,7 @@ const MyEventBookingsPage = () => {
                         )}
 
                         {/* Transfer Booking */}
-                        {isUpcoming && reg.status === 'registered' && (
+                        {isUpcoming && (reg.display_status === 'registered' || reg.status === 'registered') && !reg.checked_in_at && (
                           <button
                             onClick={() => {
                               const email = prompt('Enter the email of the person you want to transfer this booking to:');
@@ -337,7 +347,7 @@ const MyEventBookingsPage = () => {
                           </button>
                         )}
 
-                        {isUpcoming && !isCancelled && (
+                        {isUpcoming && !isCancelled && !reg.checked_in_at && (
                           <button
                             onClick={() => handleCancelRegistration(reg)}
                             disabled={actionLoading}
@@ -346,7 +356,7 @@ const MyEventBookingsPage = () => {
                             <XCircle className="w-3 h-3" /> Cancel
                           </button>
                         )}
-                        {reg.status === 'attended' && !reg.rating && (
+                        {(reg.display_status === 'attended' || reg.status === 'attended') && !reg.rating && (
                           <button
                             onClick={() => navigate(`/events/${event?.slug}/review`)}
                             className="flex items-center gap-1 px-3 py-1.5 bg-yellow-50 text-yellow-600 rounded-lg text-sm font-medium hover:bg-yellow-100"
@@ -363,6 +373,13 @@ const MyEventBookingsPage = () => {
           </div>
         )}
       </div>
+
+      {/* Event Ticket Modal */}
+      <EventTicketModal
+        isOpen={ticketModalOpen}
+        onClose={closeTicketModal}
+        registrationCode={selectedTicketCode}
+      />
 
       {/* Moderation Action Modal */}
       <ModerationActionModal

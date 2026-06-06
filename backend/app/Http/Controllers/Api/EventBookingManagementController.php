@@ -139,10 +139,13 @@ class EventBookingManagementController extends Controller
             'checked_in_at' => now(),
         ]);
 
+        $fresh = $registration->fresh();
+        $fresh->append('display_status');
+
         return response()->json([
             'success' => true,
             'message' => 'Participant checked in successfully',
-            'data' => $registration->fresh(),
+            'data' => $fresh,
         ]);
     }
 

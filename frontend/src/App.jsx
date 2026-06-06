@@ -161,6 +161,7 @@ const BikeDetailsPage = lazy(() => import('./pages/bikes/BikeDetailsPage'));
 const BikeRentalPage = lazy(() => import('./pages/bikes/BikeRentalPage'));
 const ListBikePage = lazy(() => import('./pages/bikes/ListBikePage'));
 const RideRequestPage = lazy(() => import('./pages/rides/RideRequestPage'));
+const CustomRideDetailPage = lazy(() => import('./pages/rides/CustomRideDetailPage'));
 const MembershipPlansPage = lazy(() => import('./pages/membership/MembershipPlansPage'));
 const CommunityFeedPage = lazy(() => import('./pages/community/CommunityFeedPage'));
 const CommunityPostDetailPage = lazy(() => import('./pages/community/CommunityPostDetailPage'));
@@ -1071,6 +1072,11 @@ function App() {
                 <Route path="/bikes/:slug" element={<BikeDetailsPage />} />
                 <Route path="/bikes/:slug/rent" element={<BikeRentalPage />} />
                 <Route path="/ride-request" element={<RideRequestPage />} />
+                <Route path="/rides/:requestId" element={
+                  <ProtectedRoute>
+                    <CustomRideDetailPage />
+                  </ProtectedRoute>
+                } />
                 <Route path="/membership/:planSlug" element={<MembershipPlansPage />} />
                 <Route path="/community" element={<CommunityFeedPage />} />
                 <Route path="/community/create" element={

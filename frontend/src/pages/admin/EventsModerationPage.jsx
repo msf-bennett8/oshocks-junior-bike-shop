@@ -49,6 +49,16 @@ const EventsModerationPage = () => {
   const [customRides, setCustomRides] = useState([]);
   const [showConvertModal, setShowConvertModal] = useState(false);
   const [conversionPreview, setConversionPreview] = useState(null);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [quoteForm, setQuoteForm] = useState({
+    base_rental_price: '',
+    add_ons_price: '',
+    insurance_price: '',
+    transport_price: '',
+    security_deposit: '',
+    total_price: '',
+    staff_notes: '',
+  });
 
   // ModerationActionModal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -92,6 +102,9 @@ const EventsModerationPage = () => {
       fetchCustomRides();
     } else if (activeTab === 'bookings') {
       fetchBookings();
+    } else if (activeTab === 'pending') {
+      fetchEvents();
+      fetchCustomRides('reviewing'); // Fetch only reviewing (pending) custom rides
     } else {
       fetchEvents();
     }
@@ -141,7 +154,7 @@ const EventsModerationPage = () => {
     }
   };
 
-    const fetchCustomRides = async () => {
+    const fetchCustomRides = async (overrideStatus = null) => {
     try {
       setLoading(true);
       // Map tab to status filter for custom rides
@@ -156,7 +169,7 @@ const EventsModerationPage = () => {
         'cancelled': 'cancelled',
         'custom-rides': null, // Show all custom rides in this tab
       };
-      const statusFilter = statusMap[activeTab] || null;
+      const statusFilter = overrideStatus || statusMap[activeTab] || null;
       const params = {
         page: currentPage,
         per_page: 20,
@@ -216,6 +229,58 @@ const EventsModerationPage = () => {
         type: 'error',
         title: 'Conversion Failed',
         message: err.response?.data?.message || 'Failed to convert to event',
+        showCancel: false,
+        onConfirm: closeModal,
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const openQuoteModal = (ride) => {
+    setSelectedEvent(ride);
+    setQuoteForm({
+      base_rental_price: ride.base_rental_price || '',
+      add_ons_price: ride.add_ons_price || '',
+      insurance_price: ride.insurance_price || '',
+      transport_price: ride.transport_price || '',
+      security_deposit: ride.security_deposit || '',
+      total_price: ride.total_price || '',
+      staff_notes: ride.staff_notes || '',
+    });
+    setShowQuoteModal(true);
+  };
+
+  const handleQuote = async () => {
+    if (!selectedEvent) return;
+    try {
+      setActionLoading(true);
+      await customRideService.quoteRequest(selectedEvent.request_id, quoteForm);
+      fetchCustomRides();
+      fetchStats();
+      setShowQuoteModal(false);
+      setSelectedEvent(null);
+      setQuoteForm({
+        base_rental_price: '',
+        add_ons_price: '',
+        insurance_price: '',
+        transport_price: '',
+        security_deposit: '',
+        total_price: '',
+        staff_notes: '',
+      });
+      openModal({
+        type: 'success',
+        title: 'Quote Sent',
+        message: 'The quote has been sent to the customer successfully.',
+        showCancel: false,
+        onConfirm: closeModal,
+      });
+    } catch (err) {
+      openModal({
+        type: 'error',
+        title: 'Quote Failed',
+        message: err.response?.data?.message || 'Failed to send quote',
         showCancel: false,
         onConfirm: closeModal,
       });
@@ -715,7 +780,7 @@ const EventsModerationPage = () => {
                       );
                     })
                   )
-                ) : activeTab === 'custom-rides' ? (
+                ) : activeTab === 'custom-rides' || activeTab === 'pending' ? (
                   customRides.length === 0 ? (
                     <tr><td colSpan="7" className="px-4 py-8 text-center text-gray-500">No custom ride requests found</td></tr>
                   ) : (
@@ -786,10 +851,10 @@ const EventsModerationPage = () => {
                             {/* Quote (reviewing only) */}
                             {ride.status === 'reviewing' && (
                               <button
-                                onClick={() => handleUpdateRideStatus(ride.request_id, 'quoted')}
+                                onClick={() => openQuoteModal(ride)}
                                 disabled={actionLoading}
                                 className="p-1.5 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200"
-                                title="Mark as quoted"
+                                title="Quote request"
                               >
                                 <DollarSign className="w-4 h-4" />
                               </button>
@@ -1061,6 +1126,106 @@ const EventsModerationPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Quote Modal */}
+      {showQuoteModal && selectedEvent && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 my-8">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Quote Request</h3>
+            <p className="text-gray-600 text-sm mb-4">
+              Set pricing for <strong>{selectedEvent.title}</strong>
+            </p>
+            <div className="space-y-3 mb-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Base Rental (KSh)</label>
+                  <input
+                    type="number"
+                    value={quoteForm.base_rental_price}
+                    onChange={(e) => setQuoteForm({...quoteForm, base_rental_price: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Add-ons (KSh)</label>
+                  <input
+                    type="number"
+                    value={quoteForm.add_ons_price}
+                    onChange={(e) => setQuoteForm({...quoteForm, add_ons_price: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Insurance (KSh)</label>
+                  <input
+                    type="number"
+                    value={quoteForm.insurance_price}
+                    onChange={(e) => setQuoteForm({...quoteForm, insurance_price: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Transport (KSh)</label>
+                  <input
+                    type="number"
+                    value={quoteForm.transport_price}
+                    onChange={(e) => setQuoteForm({...quoteForm, transport_price: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Security Deposit (KSh)</label>
+                  <input
+                    type="number"
+                    value={quoteForm.security_deposit}
+                    onChange={(e) => setQuoteForm({...quoteForm, security_deposit: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Total Price (KSh)</label>
+                  <input
+                    type="number"
+                    value={quoteForm.total_price}
+                    onChange={(e) => setQuoteForm({...quoteForm, total_price: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Staff Notes</label>
+                <textarea
+                  value={quoteForm.staff_notes}
+                  onChange={(e) => setQuoteForm({...quoteForm, staff_notes: e.target.value})}
+                  placeholder="Internal notes for staff..."
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  rows={3}
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowQuoteModal(false); setSelectedEvent(null); }}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleQuote}
+                disabled={actionLoading}
+                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <DollarSign className="w-4 h-4" />
+                {actionLoading ? 'Saving...' : 'Send Quote'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Conversion Preview Modal */}
       {showConvertModal && conversionPreview && (

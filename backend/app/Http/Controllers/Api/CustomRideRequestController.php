@@ -160,7 +160,18 @@ class CustomRideRequestController extends Controller
             ->orderBy('created_at', 'desc');
 
         if ($user) {
-            $query->where('user_id', $user->id);
+            // Authenticated user: match by user_id, guest_session_id, OR guest_email
+            // This handles rides created before login or as guest
+            $query->where(function ($q) use ($user, $guestSessionId) {
+                $q->where('user_id', $user->id);
+                if ($guestSessionId) {
+                    $q->orWhere('guest_session_id', $guestSessionId);
+                }
+                // Also match guest requests by email for users who logged in after submitting
+                if ($user->email) {
+                    $q->orWhere('guest_email', $user->email);
+                }
+            });
         } else {
             $query->where('guest_session_id', $guestSessionId);
         }

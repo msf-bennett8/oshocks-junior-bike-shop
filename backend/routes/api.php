@@ -802,6 +802,10 @@ Route::prefix('v1/admin/bike-listings')->middleware(['auth:sanctum', 'audit', 's
         Route::post('/bookings/bulk-check-in', [\App\Http\Controllers\Api\EventBookingManagementController::class, 'bulkCheckIn']);
         Route::post('/bookings/bulk-cancel', [\App\Http\Controllers\Api\EventBookingManagementController::class, 'bulkCancel']);
         Route::get('/{eventCode}/export-bookings', [\App\Http\Controllers\Api\EventBookingManagementController::class, 'exportBookings']);
+
+        // QR Check-in validation
+        Route::post('/check-in/validate', [\App\Http\Controllers\Api\EventCheckInController::class, 'validateQr']);
+        Route::post('/check-in/manual', [\App\Http\Controllers\Api\EventCheckInController::class, 'manualCheckIn']);
     });
 
 // ============================================================================

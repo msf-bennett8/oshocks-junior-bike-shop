@@ -8,6 +8,7 @@
         "php": "^8.2",
         "cloudinary-labs/cloudinary-laravel": "^3.0",
         "doctrine/dbal": "^4.4",
+        "endroid/qr-code": "^6.0",
         "fakerphp/faker": "^1.23",
         "flutterwavedev/flutterwave-v3": "^1.1",
         "geoip2/geoip2": "^3.3",
@@ -19,6 +20,7 @@
         "laravel/tinker": "^2.10.1",
         "league/flysystem-aws-s3-v3": "^3.0",
         "minishlink/web-push": "^8.0",
+        "mpdf/mpdf": "^8.3",
         "ramsey/uuid": "^4.9",
         "socialiteproviders/strava": "^4.1"
     },
@@ -71,7 +73,7 @@
             "php-http/discovery": true
         },
         "platform": {
-            "php": "8.3.0"
+            "php": "8.4.0"
         }
     },
     "minimum-stability": "stable",

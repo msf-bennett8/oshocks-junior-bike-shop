@@ -124,7 +124,7 @@ const eventService = {
 
   // ─── User Booking Actions ───
   requestRefund: (registrationCode, reason) => api.post(`/events/registrations/${registrationCode}/refund-request`, { reason }),
-  downloadTicket: (registrationCode) => api.get(`/events/registrations/${registrationCode}/ticket`, { responseType: 'blob' }),
+  downloadTicket: (registrationCode) => api.get(`/events/registrations/${registrationCode}/ticket`),
   transferMyBooking: (registrationCode, newUserEmail) => api.post(`/events/registrations/${registrationCode}/transfer-request`, { new_user_email: newUserEmail }),
 };
 

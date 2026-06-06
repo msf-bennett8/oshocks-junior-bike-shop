@@ -22,13 +22,14 @@ const TABS = [
 const MyCustomRidesPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { myRequests, loading, fetchMyRequests } = useCustomRides();
+  const { myRequests, loading, error, fetchMyRequests } = useCustomRides();
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    fetchMyRequests();
-  }, []);
+    const params = activeTab !== 'all' ? { status: activeTab } : {};
+    fetchMyRequests(params);
+  }, [activeTab]);
 
   const filteredRequests = myRequests.filter((req) => {
     if (activeTab !== 'all' && req.status !== activeTab) return false;
@@ -99,6 +100,17 @@ const MyCustomRidesPage = () => {
         {/* Requests List */}
         {loading ? (
           <div className="text-center py-12 text-gray-500">Loading...</div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <AlertTriangle className="w-16 h-16 text-red-300 mx-auto mb-4" />
+            <p className="text-red-500 text-lg">{error}</p>
+            <button
+              onClick={() => fetchMyRequests(activeTab !== 'all' ? { status: activeTab } : {})}
+              className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
         ) : filteredRequests.length === 0 ? (
           <div className="text-center py-12">
             <Bike className="w-16 h-16 text-gray-300 mx-auto mb-4" />

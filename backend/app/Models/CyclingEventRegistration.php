@@ -152,4 +152,28 @@ class CyclingEventRegistration extends Model
             'ts' => $this->created_at?->timestamp,
         ]);
     }
+
+    /**
+     * Computed display status for UI
+     * checked_in: when checked_in_at is set
+     * attended: when checked_in_at is set AND event has passed
+     */
+    public function getDisplayStatusAttribute(): string
+    {
+        // If already cancelled/waitlisted, return as-is
+        if (in_array($this->status, ['cancelled', 'waitlisted', 'no_show', 'pending_transfer'])) {
+            return $this->status;
+        }
+
+        // If checked in
+        if ($this->checked_in_at) {
+            $event = $this->event;
+            if ($event && now()->gt($event->end_datetime ?? $event->start_datetime)) {
+                return 'attended';
+            }
+            return 'checked_in';
+        }
+
+        return $this->status;
+    }
 }

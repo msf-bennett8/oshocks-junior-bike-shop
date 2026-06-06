@@ -24,6 +24,9 @@ class CustomRideRequestImage extends Model
         'folder_path',
         'display_order',
         'is_primary',
+        'guest_session_id' ,
+        'guest_name',
+        'guest_email',
     ];
 
     protected $casts = [

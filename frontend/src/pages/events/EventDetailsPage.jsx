@@ -145,7 +145,7 @@ const EventDetailsPage = () => {
                   </div>
 
                   {/* Image Navigation */}
-                  {event.photos.length > 1 && (
+                  {event.photos && event.photos.length > 1 && (
                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                       {(event.photos || []).map((_, idx) => (
                         <button
@@ -161,7 +161,7 @@ const EventDetailsPage = () => {
                 </div>
 
                 {/* Thumbnails */}
-                {event.photos.length > 1 && (
+                {event.photos && event.photos.length > 1 && (
                   <div className="flex gap-2 p-4">
                     {(event.photos || []).map((photo, idx) => (
                       <button
@@ -264,7 +264,7 @@ const EventDetailsPage = () => {
                 <div className="mb-6">
                   <h3 className="text-lg font-bold text-gray-900 mb-3">What's Included</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {event.equipment_provided.map((item, idx) => (
+                    {(event.equipment_provided || []).map((item, idx) => (
                       <div key={idx} className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-100">
                         <Check className="w-5 h-5 text-green-500" />
                         <span className="text-sm font-medium text-gray-700 capitalize">{item.replace(/_/g, ' ')}</span>
@@ -277,7 +277,7 @@ const EventDetailsPage = () => {
                 <div className="mb-6">
                   <h3 className="text-lg font-bold text-gray-900 mb-3">What to Bring</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {event.required_equipment.map((item, idx) => (
+                    {(event.required_equipment || []).map((item, idx) => (
                       <div key={idx} className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
                         <Info className="w-5 h-5 text-blue-500" />
                         <span className="text-sm font-medium text-gray-700 capitalize">{item.replace(/_/g, ' ')}</span>
@@ -298,7 +298,7 @@ const EventDetailsPage = () => {
                         <h4 className="font-bold text-gray-900">{event.guide_name}</h4>
                         <p className="text-sm text-gray-600 mb-1">{event.guide_bio}</p>
                         <div className="flex flex-wrap gap-1">
-                          {event.guide_certifications.map((cert, idx) => (
+                          {(event.guide_certifications || []).map((cert, idx) => (
                             <span key={idx} className="px-2 py-0.5 bg-white text-orange-700 text-xs font-medium rounded-full border border-orange-200">
                               {cert}
                             </span>
@@ -340,7 +340,7 @@ const EventDetailsPage = () => {
                         className="group block bg-gray-50 rounded-xl overflow-hidden hover:shadow-md transition-all"
                       >
                         <div className="relative h-32 overflow-hidden">
-                          <img src={evt.photos[0]} alt={evt.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                          <img src={evt.photos?.[0]?.url || evt.photos?.[0] || 'https://res.cloudinary.com/demo/image/upload/v1/placeholder-event.jpg'} alt={evt.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                           <div className="absolute top-2 left-2">
                             <DifficultyBadge difficulty={evt.difficulty} size="sm" />
                           </div>
@@ -444,7 +444,7 @@ const EventDetailsPage = () => {
                   </button>
 
                   <p className="text-center text-xs text-gray-500 mt-3">
-                    Registration closes {new Date(event.registration_deadline).toLocaleDateString('en-KE')}
+                    {event.registration_deadline ? `Registration closes ${new Date(event.registration_deadline).toLocaleDateString('en-KE')}` : 'Registration open until event starts'}
                   </p>
                 </div>
 

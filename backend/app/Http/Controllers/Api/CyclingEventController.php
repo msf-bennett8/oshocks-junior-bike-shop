@@ -778,11 +778,13 @@ class CyclingEventController extends Controller
         if ($tab === 'upcoming') {
             $query->whereHas('event', function ($q) {
                 $q->where('start_datetime', '>=', now());
-            });
+            })->where('status', '!=', 'cancelled');
         } elseif ($tab === 'past') {
             $query->whereHas('event', function ($q) {
                 $q->where('start_datetime', '<', now());
-            });
+            })->where('status', '!=', 'cancelled');
+        } elseif ($tab === 'cancelled') {
+            $query->where('status', 'cancelled');
         }
 
         $registrations = $query->orderBy('created_at', 'desc')
@@ -790,7 +792,7 @@ class CyclingEventController extends Controller
 
         // Append computed attributes
         $registrations->getCollection()->transform(function ($reg) {
-            $reg->append('is_refundable', 'qr_data');
+            $reg->append('is_refundable', 'qr_data', 'display_status');
             return $reg;
         });
 
@@ -835,37 +837,110 @@ class CyclingEventController extends Controller
         ]);
     }
 
-    /**
-     * Generate ticket PDF for download
+       /**
+     * Generate event ticket with QR code (SVG-based, no GD required)
+     * Returns full ticket data with base64-encoded SVG
      */
     public function downloadTicket(string $registrationCode)
     {
         $user = Auth::user();
-        $registration = CyclingEventRegistration::with('event')
+        $registration = CyclingEventRegistration::with(['event', 'bike', 'user'])
             ->where('registration_code', $registrationCode)
             ->where('user_id', $user->id)
             ->where('status', 'registered')
             ->firstOrFail();
 
-        // Generate simple ticket HTML
         $event = $registration->event;
-        $html = view('tickets.event', [
-            'registration' => $registration,
-            'event' => $event,
-            'qrData' => $registration->qr_data,
-        ])->render();
 
-        // For now, return JSON with ticket data (PDF generation requires dompdf package)
+        // Generate tamper-evident QR data with HMAC signature
+        $qrPayload = [
+            'v' => '1', // version
+            'c' => $registration->registration_code,
+            'e' => $event->event_code,
+            'u' => $user->id,
+            'p' => $registration->participant_count,
+            't' => $registration->created_at->timestamp,
+            'x' => now()->addDays(7)->timestamp, // expiry
+        ];
+
+        // Create signed payload to prevent tampering
+        $payloadString = json_encode($qrPayload);
+        $signature = hash_hmac('sha256', $payloadString, config('app.key'));
+        $qrPayload['s'] = substr($signature, 0, 16); // truncated signature for QR
+
+        $qrDataString = json_encode($qrPayload);
+
+        // Generate QR code using SVG writer (no GD required!)
+        $qrCode = new \Endroid\QrCode\QrCode(
+            data: $qrDataString,
+            encoding: new \Endroid\QrCode\Encoding\Encoding('UTF-8'),
+            errorCorrectionLevel: \Endroid\QrCode\ErrorCorrectionLevel::High,
+            size: 400,
+            margin: 10,
+            roundBlockSizeMode: \Endroid\QrCode\RoundBlockSizeMode::Margin,
+            foregroundColor: new \Endroid\QrCode\Color\Color(0, 0, 0),
+            backgroundColor: new \Endroid\QrCode\Color\Color(255, 255, 255)
+        );
+
+        // Use SVG writer — no GD/Imagick required
+        $writer = new \Endroid\QrCode\Writer\SvgWriter();
+        $result = $writer->write($qrCode);
+
+        // SVG is text-based, so we base64 encode it for JSON transport
+        $svgString = $result->getString();
+        $svgBase64 = base64_encode($svgString);
+
         return response()->json([
             'success' => true,
             'data' => [
                 'registration_code' => $registration->registration_code,
-                'event_title' => $event->title,
-                'event_code' => $event->event_code,
-                'start_datetime' => $event->start_datetime,
-                'meeting_point' => $event->meeting_point,
-                'participant_count' => $registration->participant_count,
-                'qr_data' => $registration->qr_data,
+                'registration' => [
+                    'participant_count' => $registration->participant_count,
+                    'final_amount' => $registration->final_amount,
+                    'payment_status' => $registration->payment_status,
+                    'payment_method' => $registration->payment_method,
+                    'add_ons' => $registration->add_ons,
+                    'bike_included' => $registration->bike_included,
+                    'bike_add_ons' => $registration->bike_add_ons,
+                    'emergency_contact_name' => $registration->emergency_contact_name,
+                    'emergency_contact_phone' => $registration->emergency_contact_phone,
+                    'waiver_signed' => $registration->waiver_signed,
+                    'checked_in_at' => $registration->checked_in_at,
+                ],
+                'event' => [
+                    'title' => $event->title,
+                    'event_code' => $event->event_code,
+                    'slug' => $event->slug,
+                    'start_datetime' => $event->start_datetime,
+                    'end_datetime' => $event->end_datetime,
+                    'meeting_point' => $event->meeting_point,
+                    'distance_km' => $event->distance_km,
+                    'difficulty' => $event->difficulty,
+                    'terrain' => $event->terrain,
+                    'refund_policy' => $event->refund_policy,
+                    'cancellation_policy' => $event->cancellation_policy,
+                    'weather_policy' => $event->weather_policy,
+                    'photos' => $event->photos,
+                    'organizer' => $event->organizer?->only(['name', 'email', 'phone']),
+                ],
+                'bike' => $registration->bike ? [
+                    'brand' => $registration->bike->brand,
+                    'model' => $registration->bike->model,
+                    'frame_size' => $registration->bike->frame_size,
+                    'bike_condition' => $registration->bike->bike_condition,
+                    'category' => $registration->bike->category,
+                ] : null,
+                'user' => [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                ],
+                'qr_base64' => $svgBase64,
+                'qr_mime_type' => 'image/svg+xml',
+                'qr_data' => $qrDataString,
+                'signature' => $signature,
+                'issued_at' => now()->toIso8601String(),
+                'valid_until' => now()->addDays(7)->toIso8601String(),
             ],
         ]);
     }

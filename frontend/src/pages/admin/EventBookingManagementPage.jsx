@@ -25,6 +25,8 @@ const EventBookingManagementPage = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState({ type: 'confirm', title: '', message: '', onConfirm: null });
+  const [showQrScanner, setShowQrScanner] = useState(false);
+  const [scanResult, setScanResult] = useState(null);
 
   useEffect(() => {
     fetchEventBookings();
@@ -175,6 +177,12 @@ const EventBookingManagementPage = () => {
             >
               <Download className="w-4 h-4" /> Export CSV
             </button>
+            <button
+              onClick={() => setShowQrScanner(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 text-sm font-medium"
+            >
+              <QrCode className="w-4 h-4" /> Scan QR
+            </button>
           </div>
 
           {/* Bulk Actions */}
@@ -320,6 +328,49 @@ const EventBookingManagementPage = () => {
           </table>
         </div>
       </div>
+
+            {/* QR Scanner Modal */}
+      {showQrScanner && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full">
+            <h3 className="text-lg font-bold mb-4">QR Check-In</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Paste the QR data string from the scanned ticket:
+            </p>
+            <textarea
+              className="w-full p-3 border border-gray-200 rounded-lg text-sm font-mono mb-4"
+              rows={4}
+              placeholder='{"v":"1","c":"REG-...","e":"EVT-...","s":"..."}'
+              onChange={(e) => setScanResult(e.target.value)}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await api.post('/admin/cycling-events/check-in/validate', {
+                      qr_data: scanResult,
+                    });
+                    alert(response.data?.message || 'Success');
+                    fetchEventBookings();
+                    setShowQrScanner(false);
+                  } catch (e) {
+                    alert(e.response?.data?.message || 'Check-in failed');
+                  }
+                }}
+                className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg font-medium"
+              >
+                Validate & Check In
+              </button>
+              <button
+                onClick={() => setShowQrScanner(false)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ModerationActionModal
         isOpen={modalOpen}

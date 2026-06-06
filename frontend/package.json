@@ -9,6 +9,8 @@
     "axios": "^1.12.2",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.38.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "laravel-echo": "^2.3.4",
     "lucide-react": "^0.545.0",
     "pusher-js": "^8.5.0",
