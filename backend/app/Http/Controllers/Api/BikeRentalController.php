@@ -705,7 +705,7 @@ class BikeRentalController extends Controller
         ]);
     }
 
-        /**
+    /**
      * Get current availability status of a bike (public, no dates required)
      */
     public function currentAvailability(string $listingCode)

@@ -50,7 +50,11 @@ class AuditMiddleware
             $correlationId = str_replace(["\r\n", "\n", "\r", "\0"], '', $correlationId);
             $response->headers->set('X-Correlation-ID', $correlationId);
         }
-        $response->headers->set('X-Request-ID', $request->attributes->get('request_id'));
+        $requestId = $request->attributes->get('request_id');
+        if ($requestId) {
+            $requestId = str_replace(["\r\n", "\n", "\r", "\0"], '', $requestId);
+            $response->headers->set('X-Request-ID', $requestId);
+        }
         $response->headers->set('X-Response-Time', $duration . 'ms');
 
         // Log the request using structured audit service

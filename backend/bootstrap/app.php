@@ -16,21 +16,21 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             \Illuminate\Http\Middleware\HandleCors::class,
         ]);
-        
+
         // Exclude ALL API routes from CSRF
         $middleware->validateCsrfTokens(except: [
             'api/*',
         ]);
-        
+
         // Configure Sanctum for API authentication
         $middleware->statefulApi();
-        
+
         // Make auth middleware redirect to JSON for API routes
         $middleware->redirectGuestsTo(fn () => response()->json([
             'message' => 'Unauthenticated.',
             'status' => 'error'
         ], 401));
-        
+
         // Register middleware aliases (Laravel 11 style)
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
@@ -41,10 +41,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.rate' => \App\Http\Middleware\ApiRateLimiter::class,
             'effective.role' => \App\Http\Middleware\CheckEffectiveRole::class,
         ]);
-        
+
         // Trust Railway proxies and force HTTPS
         $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->shouldRenderJsonWhen(function (\Illuminate\Http\Request $request, \Throwable $e) {
+            return $request->is('api/*') || $request->expectsJson();
+        });
     })->create();

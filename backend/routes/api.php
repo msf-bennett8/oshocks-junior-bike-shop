@@ -710,9 +710,11 @@ Route::get('/v1/bike-rental-payments/card/callback', [\App\Http\Controllers\Api\
 // ============================================================================
 Route::prefix('v1/bike-rentals')->middleware(['api', 'audit'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Api\BikeRentalController::class, 'index']);
-    Route::get('/{listingCode}', [\App\Http\Controllers\Api\BikeRentalController::class, 'show']);
+    Route::get('/available', [\App\Http\Controllers\Api\BikeRentalController::class, 'availableWithConflictResolution']);
+    Route::get('/{listingCode}/current-availability', [\App\Http\Controllers\Api\BikeRentalController::class, 'currentAvailability']);
     Route::get('/{listingCode}/availability', [\App\Http\Controllers\Api\BikeRentalController::class, 'checkAvailability']);
     Route::get('/{listingCode}/calendar', [\App\Http\Controllers\Api\BikeRentalBookingController::class, 'availabilityCalendar']);
+    Route::get('/{listingCode}', [\App\Http\Controllers\Api\BikeRentalController::class, 'show']);
 });
 
 // ============================================================================

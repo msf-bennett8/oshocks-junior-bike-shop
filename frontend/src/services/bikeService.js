@@ -63,6 +63,9 @@ const bikeService = {
   getAvailableBikes: (start, end, filters = {}) => api.get('/bike-rentals/available', {
     params: { start_datetime: start, end_datetime: end, ...filters }
   }),
+  
+  // ─── Current Availability (no dates required) ───
+  getCurrentAvailability: (listingCode) => api.get(`/bike-rentals/${listingCode}/current-availability`),
 
   // ─── Lister Payout ───
   getListerPayoutDashboard: () => api.get('/bike-lister/payout-dashboard'),

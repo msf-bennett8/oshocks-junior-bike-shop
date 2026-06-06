@@ -36,16 +36,19 @@ const BikeBookingModerationPage = () => {
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const params = new URLSearchParams({
         status: activeTab === 'overdue' || activeTab === 'pending_recirculation' ? 'active' : activeTab,
         page: '1',
         per_page: '20',
       });
       if (searchQuery) params.append('search', searchQuery);
-      
+
       const response = await fetch(`/api/v1/admin/bike-bookings?${params}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
       });
       const result = await response.json();
       
@@ -68,9 +71,12 @@ const BikeBookingModerationPage = () => {
 
   const fetchStats = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       const response = await fetch('/api/v1/admin/bike-bookings/stats', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
       });
       const result = await response.json();
       setStats(result.data || null);
@@ -83,10 +89,13 @@ const BikeBookingModerationPage = () => {
     if (!window.confirm('Mark this bike as returned and recirculate to fleet?')) return;
     try {
       setActionLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       await fetch(`/api/v1/admin/bike-bookings/${bookingCode}/recirculate`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
       });
       fetchBookings();
       fetchStats();
@@ -101,10 +110,13 @@ const BikeBookingModerationPage = () => {
     if (!window.confirm('Refund security deposit for this booking?')) return;
     try {
       setActionLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       await fetch(`/api/v1/admin/bike-bookings/${bookingCode}/refund-deposit`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
+        }
       });
       fetchBookings();
     } catch (err) {
