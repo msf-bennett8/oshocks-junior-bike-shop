@@ -382,8 +382,7 @@ const CreateEventPage = () => {
 
     const handleCloseModal = () => {
       setShowSuccessModal(false);
-      setCreatedEventCode(null);
-      navigate('/events');
+      navigate(`/event-created/${createdEventCode}`);
     };
 
     const handleCreateAnother = () => {

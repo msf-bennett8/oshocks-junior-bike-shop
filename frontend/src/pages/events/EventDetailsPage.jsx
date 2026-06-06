@@ -24,6 +24,8 @@ const EventDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [relatedEvents, setRelatedEvents] = useState([]);
+  const [loadingRelated, setLoadingRelated] = useState(false);
     const { user } = useAuth();
 
   useEffect(() => {
@@ -41,6 +43,23 @@ const EventDetailsPage = () => {
       }
     };
     fetchEvent();
+  }, [slug]);
+
+  useEffect(() => {
+    const fetchRelated = async () => {
+      if (!slug) return;
+      try {
+        setLoadingRelated(true);
+        const response = await eventService.getRelatedEvents(slug);
+        setRelatedEvents(response.data?.data || []);
+      } catch (error) {
+        console.error('Failed to fetch related events:', error);
+        setRelatedEvents([]);
+      } finally {
+        setLoadingRelated(false);
+      }
+    };
+    fetchRelated();
   }, [slug]);
 
   if (loading) {
@@ -87,11 +106,6 @@ const EventDetailsPage = () => {
 
   const seatsRemaining = event.max_participants - event.current_participants;
   const percentFull = (event.current_participants / event.max_participants) * 100;
-
-  const relatedEvents = MOCK_EVENTS.filter(e =>
-    e.id !== event.id &&
-    (e.difficulty === event.difficulty || e.terrain === event.terrain)
-  ).slice(0, 3);
 
   return (
     <>
@@ -329,7 +343,22 @@ const EventDetailsPage = () => {
               </div>
 
               {/* Related Events */}
-              {relatedEvents.length > 0 && (
+              {loadingRelated ? (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">You Might Also Like</h3>
+                  <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="bg-gray-50 rounded-xl overflow-hidden animate-pulse">
+                        <div className="h-32 bg-gray-200" />
+                        <div className="p-3 space-y-2">
+                          <div className="h-4 bg-gray-200 rounded w-3/4" />
+                          <div className="h-3 bg-gray-200 rounded w-1/2" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : relatedEvents.length > 0 ? (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
                   <h3 className="text-xl font-bold text-gray-900 mb-4">You Might Also Like</h3>
                   <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -340,20 +369,24 @@ const EventDetailsPage = () => {
                         className="group block bg-gray-50 rounded-xl overflow-hidden hover:shadow-md transition-all"
                       >
                         <div className="relative h-32 overflow-hidden">
-                          <img src={evt.photos?.[0]?.url || evt.photos?.[0] || 'https://res.cloudinary.com/demo/image/upload/v1/placeholder-event.jpg'} alt={evt.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                          <img 
+                            src={evt.photos?.[0]?.url || evt.photos?.[0] || evt.cover_image || 'https://res.cloudinary.com/demo/image/upload/v1/placeholder-event.jpg'} 
+                            alt={evt.title} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform" 
+                          />
                           <div className="absolute top-2 left-2">
                             <DifficultyBadge difficulty={evt.difficulty} size="sm" />
                           </div>
                         </div>
                         <div className="p-3">
                           <h4 className="font-bold text-sm text-gray-900 line-clamp-1 group-hover:text-orange-600 transition-colors">{evt.title}</h4>
-                          <p className="text-xs text-gray-500 mt-1">KSh {evt.price_per_person.toLocaleString()}</p>
+                          <p className="text-xs text-gray-500 mt-1">KSh {Number(evt.price_per_person).toLocaleString()}</p>
                         </div>
                       </Link>
                     ))}
                   </div>
                 </div>
-              )}
+              ) : null}
             </div>
 
             {/* Right Column - Booking Card */}

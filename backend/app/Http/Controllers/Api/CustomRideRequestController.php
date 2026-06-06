@@ -391,10 +391,27 @@ class CustomRideRequestController extends Controller
             'transport_price' => ['nullable', 'numeric', 'min:0'],
             'security_deposit' => ['nullable', 'numeric', 'min:0'],
             'total_price' => ['nullable', 'numeric', 'min:0'],
+            'base_rental_adjustment_note' => ['nullable', 'string', 'max:1000'],
+            'add_ons_adjustment_note' => ['nullable', 'string', 'max:1000'],
+            'insurance_adjustment_note' => ['nullable', 'string', 'max:1000'],
+            'transport_adjustment_note' => ['nullable', 'string', 'max:1000'],
+            'security_deposit_adjustment_note' => ['nullable', 'string', 'max:1000'],
+            'total_price_adjustment_note' => ['nullable', 'string', 'max:1000'],
+            'general_adjustment_notes' => ['nullable', 'string', 'max:5000'],
             'staff_notes' => ['nullable', 'string', 'max:5000'],
         ]);
 
         $rideRequest = CustomRideRequest::where('request_id', $requestId)->firstOrFail();
+
+        // Save original prices if not already saved (only once, on first quote)
+        $originalFields = [
+            'original_base_rental_price' => 'base_rental_price',
+            'original_add_ons_price' => 'add_ons_price',
+            'original_insurance_price' => 'insurance_price',
+            'original_transport_price' => 'transport_price',
+            'original_security_deposit' => 'security_deposit',
+            'original_total_price' => 'total_price',
+        ];
 
         $updateData = [
             'status' => 'quoted',
@@ -403,9 +420,31 @@ class CustomRideRequestController extends Controller
             'staff_notes' => $request->input('staff_notes'),
         ];
 
-        // Only update pricing fields if provided
+        foreach ($originalFields as $originalField => $currentField) {
+            if (is_null($rideRequest->$originalField) && !is_null($rideRequest->$currentField)) {
+                $updateData[$originalField] = $rideRequest->$currentField;
+            }
+        }
+
+        // Pricing fields
         $pricingFields = ['base_rental_price', 'add_ons_price', 'insurance_price', 'transport_price', 'security_deposit', 'total_price'];
         foreach ($pricingFields as $field) {
+            if ($request->has($field)) {
+                $updateData[$field] = $request->input($field);
+            }
+        }
+
+        // Adjustment notes per field
+        $adjustmentNoteFields = [
+            'base_rental_adjustment_note',
+            'add_ons_adjustment_note',
+            'insurance_adjustment_note',
+            'transport_adjustment_note',
+            'security_deposit_adjustment_note',
+            'total_price_adjustment_note',
+            'general_adjustment_notes',
+        ];
+        foreach ($adjustmentNoteFields as $field) {
             if ($request->has($field)) {
                 $updateData[$field] = $request->input($field);
             }
@@ -419,6 +458,47 @@ class CustomRideRequestController extends Controller
             'data' => $rideRequest->fresh(['images', 'user', 'quotedBy']),
         ]);
     }
+    /**
+     * Accept a quote (user)
+     * POST /api/v1/custom-ride-requests/{requestId}/accept
+     */
+    public function acceptQuote(Request $request, string $requestId): JsonResponse
+    {
+        $user = Auth::user();
+
+        $rideRequest = CustomRideRequest::where('request_id', $requestId)->firstOrFail();
+
+        // Authorization: must be owner or admin
+        if ($user) {
+            if ($rideRequest->user_id !== $user->id && !in_array($user->role, ['admin', 'super_admin', 'owner', 'support_agent'])) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+            }
+        } else {
+            $guestSessionId = $request->header('X-Guest-Session-ID');
+            if ($rideRequest->guest_session_id !== $guestSessionId) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+            }
+        }
+
+        if ($rideRequest->status !== 'quoted') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Quote must be in "quoted" status to accept.',
+            ], 400);
+        }
+
+        $rideRequest->update([
+            'status' => 'accepted',
+            'customer_notes' => $request->input('customer_notes'),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quote accepted successfully.',
+            'data' => $rideRequest->fresh(['images', 'user', 'quotedBy']),
+        ]);
+    }
+
     /**
      * Convert to event (admin/staff)
      * POST /api/v1/custom-ride-requests/{requestId}/convert-to-event

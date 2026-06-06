@@ -630,7 +630,8 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'audit', 'security.monitor', \A
         Route::post('/{requestId}/status', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'updateStatus']);
         Route::get('/{requestId}/conversion-preview', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'conversionPreview']);
         Route::post('/{requestId}/convert-to-event', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'convertToEvent']);
-            Route::post('/{requestId}/quote', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'quote']);
+        Route::post('/{requestId}/quote', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'quote']);
+        Route::post('/{requestId}/accept', [\App\Http\Controllers\Api\CustomRideRequestController::class, 'acceptQuote']);
     });
     Route::apiResource('custom-ride-requests', \App\Http\Controllers\Api\CustomRideRequestController::class)->only(['index', 'store', 'show']);
 
@@ -650,6 +651,7 @@ Route::prefix('v1/custom-ride-requests')->middleware(['api', 'audit'])->group(fu
 Route::prefix('v1/events')->middleware(['api', 'audit'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Api\CyclingEventController::class, 'index']);
     Route::get('/{eventCode}', [\App\Http\Controllers\Api\CyclingEventController::class, 'show']);
+    Route::get('/{eventCode}/related', [\App\Http\Controllers\Api\CyclingEventController::class, 'getRelated']);
 });
 
 // ============================================================================

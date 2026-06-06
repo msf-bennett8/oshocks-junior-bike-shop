@@ -43,6 +43,21 @@ const CustomRideDetailPage = () => {
     }
   };
 
+  const [accepting, setAccepting] = useState(false);
+
+  const handleAcceptQuote = async () => {
+    if (!window.confirm('Are you sure you want to accept this quote?')) return;
+    setAccepting(true);
+    try {
+      await customRideService.acceptQuote(request.request_id);
+      setRequest(prev => ({ ...prev, status: 'accepted' }));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to accept quote');
+    } finally {
+      setAccepting(false);
+    }
+  };
+
   const handleCancel = async () => {
     if (!window.confirm('Are you sure you want to cancel this request?')) return;
     
@@ -191,10 +206,166 @@ const CustomRideDetailPage = () => {
               </div>
             )}
 
-            {/* Pricing */}
-            {request.total_price > 0 && (
+            {/* Quotation / Pricing */}
+            {request.status === 'quoted' || request.status === 'accepted' || request.status === 'converted' ? (
+              <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-blue-600" />
+                  Your Quotation
+                </h3>
+                <p className="text-xs text-gray-500 mb-3">Review the adjusted pricing below. Original values shown for comparison.</p>
+
+                <div className="space-y-3 text-sm">
+                  {/* Base Rental */}
+                  <div className="bg-white rounded-lg p-3 border border-gray-100">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-gray-600">Base Rental</span>
+                      <div className="text-right">
+                        {request.original_base_rental_price && Number(request.original_base_rental_price) !== Number(request.base_rental_price) ? (
+                          <>
+                            <span className="text-xs text-gray-400 line-through mr-2">KSh {Number(request.original_base_rental_price).toLocaleString()}</span>
+                            <span className="font-bold text-green-600">KSh {Number(request.base_rental_price || 0).toLocaleString()}</span>
+                          </>
+                        ) : (
+                          <span className="font-bold text-gray-900">KSh {Number(request.base_rental_price || 0).toLocaleString()}</span>
+                        )}
+                      </div>
+                    </div>
+                    {request.base_rental_adjustment_note && (
+                      <p className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-1 mt-1">
+                        <span className="font-semibold">Note:</span> {request.base_rental_adjustment_note}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Add-ons */}
+                  {(request.add_ons_price > 0 || request.add_ons_adjustment_note || request.original_add_ons_price) && (
+                    <div className="bg-white rounded-lg p-3 border border-gray-100">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-gray-600">Add-ons</span>
+                        <div className="text-right">
+                          {request.original_add_ons_price && Number(request.original_add_ons_price) !== Number(request.add_ons_price) ? (
+                            <>
+                              <span className="text-xs text-gray-400 line-through mr-2">KSh {Number(request.original_add_ons_price).toLocaleString()}</span>
+                              <span className="font-bold text-green-600">KSh {Number(request.add_ons_price || 0).toLocaleString()}</span>
+                            </>
+                          ) : (
+                            <span className="font-bold text-gray-900">KSh {Number(request.add_ons_price || 0).toLocaleString()}</span>
+                          )}
+                        </div>
+                      </div>
+                      {request.add_ons_adjustment_note && (
+                        <p className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-1 mt-1">
+                          <span className="font-semibold">Note:</span> {request.add_ons_adjustment_note}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Insurance */}
+                  {(request.insurance_price > 0 || request.insurance_adjustment_note || request.original_insurance_price) && (
+                    <div className="bg-white rounded-lg p-3 border border-gray-100">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-gray-600">Insurance</span>
+                        <div className="text-right">
+                          {request.original_insurance_price && Number(request.original_insurance_price) !== Number(request.insurance_price) ? (
+                            <>
+                              <span className="text-xs text-gray-400 line-through mr-2">KSh {Number(request.original_insurance_price).toLocaleString()}</span>
+                              <span className="font-bold text-green-600">KSh {Number(request.insurance_price || 0).toLocaleString()}</span>
+                            </>
+                          ) : (
+                            <span className="font-bold text-gray-900">KSh {Number(request.insurance_price || 0).toLocaleString()}</span>
+                          )}
+                        </div>
+                      </div>
+                      {request.insurance_adjustment_note && (
+                        <p className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-1 mt-1">
+                          <span className="font-semibold">Note:</span> {request.insurance_adjustment_note}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Transport */}
+                  {(request.transport_price > 0 || request.transport_adjustment_note || request.original_transport_price) && (
+                    <div className="bg-white rounded-lg p-3 border border-gray-100">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-gray-600">Transport</span>
+                        <div className="text-right">
+                          {request.original_transport_price && Number(request.original_transport_price) !== Number(request.transport_price) ? (
+                            <>
+                              <span className="text-xs text-gray-400 line-through mr-2">KSh {Number(request.original_transport_price).toLocaleString()}</span>
+                              <span className="font-bold text-green-600">KSh {Number(request.transport_price || 0).toLocaleString()}</span>
+                            </>
+                          ) : (
+                            <span className="font-bold text-gray-900">KSh {Number(request.transport_price || 0).toLocaleString()}</span>
+                          )}
+                        </div>
+                      </div>
+                      {request.transport_adjustment_note && (
+                        <p className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-1 mt-1">
+                          <span className="font-semibold">Note:</span> {request.transport_adjustment_note}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Security Deposit */}
+                  {(request.security_deposit > 0 || request.security_deposit_adjustment_note || request.original_security_deposit) && (
+                    <div className="bg-white rounded-lg p-3 border border-gray-100">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-gray-600">Security Deposit</span>
+                        <div className="text-right">
+                          {request.original_security_deposit && Number(request.original_security_deposit) !== Number(request.security_deposit) ? (
+                            <>
+                              <span className="text-xs text-gray-400 line-through mr-2">KSh {Number(request.original_security_deposit).toLocaleString()}</span>
+                              <span className="font-bold text-green-600">KSh {Number(request.security_deposit || 0).toLocaleString()}</span>
+                            </>
+                          ) : (
+                            <span className="font-bold text-gray-900">KSh {Number(request.security_deposit || 0).toLocaleString()}</span>
+                          )}
+                        </div>
+                      </div>
+                      {request.security_deposit_adjustment_note && (
+                        <p className="text-xs text-blue-600 bg-blue-50 rounded px-2 py-1 mt-1">
+                          <span className="font-semibold">Note:</span> {request.security_deposit_adjustment_note}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Total */}
+                  <div className="bg-orange-50 rounded-lg p-3 border border-orange-100">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-bold text-gray-900">Total Price</span>
+                      <div className="text-right">
+                        {request.total_price_adjustment_note && (
+                          <span className="text-xs text-orange-600 block mb-0.5">{request.total_price_adjustment_note}</span>
+                        )}
+                        {request.original_total_price && Number(request.original_total_price) !== Number(request.total_price) ? (
+                          <>
+                            <span className="text-xs text-gray-400 line-through mr-2 block">KSh {Number(request.original_total_price).toLocaleString()}</span>
+                            <span className="text-lg font-bold text-green-600">KSh {Number(request.total_price || 0).toLocaleString()}</span>
+                          </>
+                        ) : (
+                          <span className="text-lg font-bold text-orange-600">KSh {Number(request.total_price || 0).toLocaleString()}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* General Notes */}
+                  {request.general_adjustment_notes && (
+                    <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-100">
+                      <p className="text-xs font-semibold text-yellow-800 mb-1">General Notes</p>
+                      <p className="text-sm text-yellow-700">{request.general_adjustment_notes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : request.total_price > 0 ? (
               <div className="p-4 bg-gray-50 rounded-xl">
-                <h3 className="font-semibold text-gray-900 mb-3">Pricing</h3>
+                <h3 className="font-semibold text-gray-900 mb-3">Requested Pricing</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Base Rental</span>
@@ -220,8 +391,9 @@ const CustomRideDetailPage = () => {
                     <p className="text-xs text-gray-500">Security deposit: KSh {Number(request.security_deposit).toLocaleString()} (refundable)</p>
                   )}
                 </div>
+                <p className="text-xs text-gray-400 mt-3 italic">A detailed quote will be sent within 24 hours.</p>
               </div>
-            )}
+            ) : null}
 
             {/* Contact Info */}
             <div className="p-4 bg-gray-50 rounded-xl">
@@ -281,11 +453,12 @@ const CustomRideDetailPage = () => {
 
               {request.status === 'quoted' && (
                 <button
-                  onClick={() => alert('Accept functionality coming soon')}
-                  className="px-6 py-2.5 bg-green-50 text-green-700 rounded-xl font-semibold hover:bg-green-100 transition-colors flex items-center gap-2"
+                  onClick={handleAcceptQuote}
+                  disabled={accepting}
+                  className="px-6 py-2.5 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   <CheckCircle className="w-4 h-4" />
-                  Accept Quote
+                  {accepting ? 'Accepting...' : 'Accept Quote'}
                 </button>
               )}
 

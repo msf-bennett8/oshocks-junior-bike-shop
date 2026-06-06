@@ -994,6 +994,51 @@ class CyclingEventController extends Controller
 
 
     /**
+     * Get related events for "You Might Also Like"
+     * GET /api/v1/events/{eventCode}/related?limit=3
+     */
+    public function getRelated(Request $request, string $eventCode)
+    {
+        $event = CyclingEvent::where('event_code', $eventCode)
+            ->orWhere('slug', $eventCode)
+            ->first();
+
+        if (!$event) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Event not found.'
+            ], 404);
+        }
+
+        $limit = min((int) $request->query('limit', 3), 6);
+
+        $related = CyclingEvent::where('id', '!=', $event->id)
+            ->whereIn('status', ['open', 'pending'])
+            ->where('start_datetime', '>=', now())
+            ->where(function ($query) use ($event) {
+                $query->where('difficulty', $event->difficulty)
+                      ->orWhere('terrain', $event->terrain)
+                      ->orWhere('event_type', $event->event_type);
+            })
+            ->orderByRaw("
+                CASE
+                    WHEN difficulty = ? THEN 3
+                    WHEN terrain = ? THEN 2
+                    WHEN event_type = ? THEN 1
+                    ELSE 0
+                END DESC
+            ", [$event->difficulty, $event->terrain, $event->event_type])
+            ->orderBy('start_datetime', 'asc')
+            ->limit($limit)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $related,
+        ]);
+    }
+
+    /**
      * Get event participants (organizer/admin only)
      * GET /api/v1/events/{eventCode}/participants
      */

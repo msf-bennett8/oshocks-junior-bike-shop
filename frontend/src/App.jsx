@@ -175,6 +175,8 @@ const MyBikeListingsPage = lazy(() => import('./pages/user/MyBikeListingsPage'))
 const MyBikeHiresPage = lazy(() => import('./pages/user/MyBikeHiresPage'));
 const MyEventBookingsPage = lazy(() => import('./pages/user/MyEventBookingsPage'));
 const EventBookingSuccessPage = lazy(() => import('./pages/events/EventBookingSuccessPage'));
+const RideCreatedSuccessPage = lazy(() => import('./pages/rides/RideCreatedSuccessPage'));
+const EventCreatedSuccessPage = lazy(() => import('./pages/events/EventCreatedSuccessPage'));
 const EventBookingManagementPage = lazy(() => import('./pages/admin/EventBookingManagementPage'));
 
 // Education Pages
@@ -776,6 +778,8 @@ function App() {
                 />
 
                 <Route path="/event-booking/success" element={<EventBookingSuccessPage />} />
+                <Route path="/ride-created/:code" element={<RideCreatedSuccessPage />} />
+                <Route path="/event-created/:code" element={<EventCreatedSuccessPage />} />
 
                 {/* ============================================
                     SELLER DASHBOARD (Seller Only)

@@ -43,6 +43,13 @@ const CustomRideModerationPage = () => {
     transport_price: '',
     security_deposit: '',
     total_price: '',
+    base_rental_adjustment_note: '',
+    add_ons_adjustment_note: '',
+    insurance_adjustment_note: '',
+    transport_adjustment_note: '',
+    security_deposit_adjustment_note: '',
+    total_price_adjustment_note: '',
+    general_adjustment_notes: '',
     staff_notes: '',
   });
   const [staffNotes, setStaffNotes] = useState('');
@@ -147,6 +154,13 @@ const CustomRideModerationPage = () => {
         transport_price: '',
         security_deposit: '',
         total_price: '',
+        base_rental_adjustment_note: '',
+        add_ons_adjustment_note: '',
+        insurance_adjustment_note: '',
+        transport_adjustment_note: '',
+        security_deposit_adjustment_note: '',
+        total_price_adjustment_note: '',
+        general_adjustment_notes: '',
         staff_notes: '',
       });
       openModal({
@@ -235,10 +249,44 @@ const CustomRideModerationPage = () => {
       transport_price: request.transport_price || '',
       security_deposit: request.security_deposit || '',
       total_price: request.total_price || '',
+      base_rental_adjustment_note: request.base_rental_adjustment_note || '',
+      add_ons_adjustment_note: request.add_ons_adjustment_note || '',
+      insurance_adjustment_note: request.insurance_adjustment_note || '',
+      transport_adjustment_note: request.transport_adjustment_note || '',
+      security_deposit_adjustment_note: request.security_deposit_adjustment_note || '',
+      total_price_adjustment_note: request.total_price_adjustment_note || '',
+      general_adjustment_notes: request.general_adjustment_notes || '',
       staff_notes: request.staff_notes || '',
     });
     setShowQuoteModal(true);
   };
+
+  // Auto-calculate total when any component price changes
+  useEffect(() => {
+    if (!showQuoteModal || !selectedRequest) return;
+    
+    const base = Number(quoteForm.base_rental_price) || 0;
+    const addons = Number(quoteForm.add_ons_price) || 0;
+    const insurance = Number(quoteForm.insurance_price) || 0;
+    const transport = Number(quoteForm.transport_price) || 0;
+    const deposit = Number(quoteForm.security_deposit) || 0;
+    
+    const calculatedTotal = base + addons + insurance + transport + deposit;
+    
+    // Only auto-update if user hasn't manually entered a total
+    const currentTotal = Number(quoteForm.total_price);
+    if (!currentTotal || currentTotal === 0) {
+      setQuoteForm(prev => ({ ...prev, total_price: calculatedTotal.toString() }));
+    }
+  }, [
+    quoteForm.base_rental_price,
+    quoteForm.add_ons_price,
+    quoteForm.insurance_price,
+    quoteForm.transport_price,
+    quoteForm.security_deposit,
+    showQuoteModal,
+    selectedRequest
+  ]);
 
   const openNotesModal = (request) => {
     setSelectedRequest(request);
@@ -559,84 +607,258 @@ const CustomRideModerationPage = () => {
       {/* Quote Modal */}
       {showQuoteModal && selectedRequest && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 my-8">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Quote Request</h3>
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-6 my-8">
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Quote Request</h3>
             <p className="text-gray-600 text-sm mb-4">
-              Set pricing for <strong>{selectedRequest.title}</strong>
+              Review original pricing and set adjusted values for <strong>{selectedRequest.title}</strong>
             </p>
-            <div className="space-y-3 mb-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Base Rental (KSh)</label>
-                  <input
-                    type="number"
-                    value={quoteForm.base_rental_price}
-                    onChange={(e) => setQuoteForm({...quoteForm, base_rental_price: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                  />
+
+            <div className="space-y-4 mb-4 max-h-[60vh] overflow-y-auto pr-2">
+              {/* Base Rental */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Base Rental</label>
+                  <span className="text-xs text-gray-500">
+                    Original: <span className="line-through text-gray-400 mr-1">KSh {Number(selectedRequest.base_rental_price || 0).toLocaleString()}</span>
+                    {Number(quoteForm.base_rental_price || 0) !== Number(selectedRequest.base_rental_price || 0) && (
+                      <span className="text-green-600 font-semibold">→ KSh {Number(quoteForm.base_rental_price || 0).toLocaleString()}</span>
+                    )}
+                  </span>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Add-ons (KSh)</label>
-                  <input
-                    type="number"
-                    value={quoteForm.add_ons_price}
-                    onChange={(e) => setQuoteForm({...quoteForm, add_ons_price: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Insurance (KSh)</label>
-                  <input
-                    type="number"
-                    value={quoteForm.insurance_price}
-                    onChange={(e) => setQuoteForm({...quoteForm, insurance_price: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Transport (KSh)</label>
-                  <input
-                    type="number"
-                    value={quoteForm.transport_price}
-                    onChange={(e) => setQuoteForm({...quoteForm, transport_price: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-500 mb-1">Adjusted Price (KSh)</label>
+                    <input
+                      type="number"
+                      value={quoteForm.base_rental_price}
+                      onChange={(e) => setQuoteForm({...quoteForm, base_rental_price: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                      placeholder="e.g. 5000"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-500 mb-1">Adjustment Note</label>
+                    <input
+                      type="text"
+                      value={quoteForm.base_rental_adjustment_note}
+                      onChange={(e) => setQuoteForm({...quoteForm, base_rental_adjustment_note: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                      placeholder="Why changed?"
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Security Deposit (KSh)</label>
-                  <input
-                    type="number"
-                    value={quoteForm.security_deposit}
-                    onChange={(e) => setQuoteForm({...quoteForm, security_deposit: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                  />
+
+              {/* Add-ons */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Add-ons</label>
+                  <span className="text-xs text-gray-500">
+                    Original: <span className="line-through text-gray-400 mr-1">KSh {Number(selectedRequest.add_ons_price || 0).toLocaleString()}</span>
+                    {Number(quoteForm.add_ons_price || 0) !== Number(selectedRequest.add_ons_price || 0) && (
+                      <span className="text-green-600 font-semibold">→ KSh {Number(quoteForm.add_ons_price || 0).toLocaleString()}</span>
+                    )}
+                  </span>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Total Price (KSh)</label>
-                  <input
-                    type="number"
-                    value={quoteForm.total_price}
-                    onChange={(e) => setQuoteForm({...quoteForm, total_price: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-500 mb-1">Adjusted Price (KSh)</label>
+                    <input
+                      type="number"
+                      value={quoteForm.add_ons_price}
+                      onChange={(e) => setQuoteForm({...quoteForm, add_ons_price: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                      placeholder="e.g. 800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-500 mb-1">Adjustment Note</label>
+                    <input
+                      type="text"
+                      value={quoteForm.add_ons_adjustment_note}
+                      onChange={(e) => setQuoteForm({...quoteForm, add_ons_adjustment_note: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                      placeholder="Why changed?"
+                    />
+                  </div>
                 </div>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Staff Notes</label>
+
+              {/* Insurance */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Insurance</label>
+                  <span className="text-xs text-gray-500">
+                    Original: <span className="line-through text-gray-400 mr-1">KSh {Number(selectedRequest.insurance_price || 0).toLocaleString()}</span>
+                    {Number(quoteForm.insurance_price || 0) !== Number(selectedRequest.insurance_price || 0) && (
+                      <span className="text-green-600 font-semibold">→ KSh {Number(quoteForm.insurance_price || 0).toLocaleString()}</span>
+                    )}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-500 mb-1">Adjusted Price (KSh)</label>
+                    <input
+                      type="number"
+                      value={quoteForm.insurance_price}
+                      onChange={(e) => setQuoteForm({...quoteForm, insurance_price: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                      placeholder="e.g. 500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-500 mb-1">Adjustment Note</label>
+                    <input
+                      type="text"
+                      value={quoteForm.insurance_adjustment_note}
+                      onChange={(e) => setQuoteForm({...quoteForm, insurance_adjustment_note: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                      placeholder="Why changed?"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Transport */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Transport</label>
+                  <span className="text-xs text-gray-500">
+                    Original: <span className="line-through text-gray-400 mr-1">KSh {Number(selectedRequest.transport_price || 0).toLocaleString()}</span>
+                    {Number(quoteForm.transport_price || 0) !== Number(selectedRequest.transport_price || 0) && (
+                      <span className="text-green-600 font-semibold">→ KSh {Number(quoteForm.transport_price || 0).toLocaleString()}</span>
+                    )}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-500 mb-1">Adjusted Price (KSh)</label>
+                    <input
+                      type="number"
+                      value={quoteForm.transport_price}
+                      onChange={(e) => setQuoteForm({...quoteForm, transport_price: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                      placeholder="e.g. 1500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-500 mb-1">Adjustment Note</label>
+                    <input
+                      type="text"
+                      value={quoteForm.transport_adjustment_note}
+                      onChange={(e) => setQuoteForm({...quoteForm, transport_adjustment_note: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                      placeholder="Why changed?"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Security Deposit */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Security Deposit</label>
+                  <span className="text-xs text-gray-500">
+                    Original: <span className="line-through text-gray-400 mr-1">KSh {Number(selectedRequest.security_deposit || 0).toLocaleString()}</span>
+                    {Number(quoteForm.security_deposit || 0) !== Number(selectedRequest.security_deposit || 0) && (
+                      <span className="text-green-600 font-semibold">→ KSh {Number(quoteForm.security_deposit || 0).toLocaleString()}</span>
+                    )}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-500 mb-1">Adjusted Price (KSh)</label>
+                    <input
+                      type="number"
+                      value={quoteForm.security_deposit}
+                      onChange={(e) => setQuoteForm({...quoteForm, security_deposit: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                      placeholder="e.g. 3000"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-gray-500 mb-1">Adjustment Note</label>
+                    <input
+                      type="text"
+                      value={quoteForm.security_deposit_adjustment_note}
+                      onChange={(e) => setQuoteForm({...quoteForm, security_deposit_adjustment_note: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                      placeholder="Why changed?"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Price - Auto-calculated */}
+              <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold text-orange-800 uppercase tracking-wider">Total Price</label>
+                  <div className="text-right">
+                    <span className="text-xs text-orange-600 block">
+                      Original: <span className="line-through text-orange-400 mr-1">KSh {Number(selectedRequest.total_price || 0).toLocaleString()}</span>
+                    </span>
+                    <span className="text-xs font-bold text-orange-800">
+                      Auto: KSh {(
+                        Number(quoteForm.base_rental_price || 0) +
+                        Number(quoteForm.add_ons_price || 0) +
+                        Number(quoteForm.insurance_price || 0) +
+                        Number(quoteForm.transport_price || 0) +
+                        Number(quoteForm.security_deposit || 0)
+                      ).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-medium text-orange-600 mb-1">Adjusted Total (KSh)</label>
+                    <input
+                      type="number"
+                      value={quoteForm.total_price}
+                      onChange={(e) => setQuoteForm({...quoteForm, total_price: e.target.value})}
+                      className="w-full px-3 py-2 border border-orange-200 rounded-lg text-sm bg-white font-bold"
+                      placeholder="Auto-calculated or override"
+                    />
+                    <p className="text-[10px] text-orange-500 mt-1">Leave empty to use auto-calculation</p>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-medium text-orange-600 mb-1">Adjustment Note</label>
+                    <input
+                      type="text"
+                      value={quoteForm.total_price_adjustment_note}
+                      onChange={(e) => setQuoteForm({...quoteForm, total_price_adjustment_note: e.target.value})}
+                      className="w-full px-3 py-2 border border-orange-200 rounded-lg text-sm bg-white"
+                      placeholder="Summary of changes"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* General Notes */}
+              <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                <label className="block text-xs font-bold text-blue-800 uppercase tracking-wider mb-2">General Adjustment Notes</label>
                 <textarea
-                  value={quoteForm.staff_notes}
-                  onChange={(e) => setQuoteForm({...quoteForm, staff_notes: e.target.value})}
-                  placeholder="Internal notes for staff..."
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  value={quoteForm.general_adjustment_notes}
+                  onChange={(e) => setQuoteForm({...quoteForm, general_adjustment_notes: e.target.value})}
+                  placeholder="Overall explanation for the customer about pricing changes..."
+                  className="w-full px-3 py-2 border border-blue-200 rounded-lg text-sm bg-white"
                   rows={3}
                 />
               </div>
+
+              {/* Staff Notes */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Internal Staff Notes</label>
+                <textarea
+                  value={quoteForm.staff_notes}
+                  onChange={(e) => setQuoteForm({...quoteForm, staff_notes: e.target.value})}
+                  placeholder="Internal notes for staff only (not visible to customer)..."
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  rows={2}
+                />
+              </div>
             </div>
-            <div className="flex gap-3">
+
+            <div className="flex gap-3 pt-4 border-t border-gray-100">
               <button
                 onClick={() => { setShowQuoteModal(false); setSelectedRequest(null); }}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"

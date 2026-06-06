@@ -62,6 +62,8 @@ const customRideService = {
   getModerationRequests: (params = {}) => api.get('/custom-ride-requests', { params }),
   quoteRequest: (requestId, pricingData) =>
     api.post(`/custom-ride-requests/${requestId}/quote`, pricingData),
+  acceptQuote: (requestId, data = {}) =>
+    api.post(`/custom-ride-requests/${requestId}/accept`, data),
 
   // ─── Conversion to Event ───
   getConversionPreview: (requestId) => api.get(`/custom-ride-requests/${requestId}/conversion-preview`),

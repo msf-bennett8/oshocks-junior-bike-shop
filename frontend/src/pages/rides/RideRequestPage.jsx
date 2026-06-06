@@ -243,8 +243,7 @@ const RideRequestPage = () => {
 
   const handleCloseModal = () => {
     setShowSuccessModal(false);
-    setCreatedRequestCode(null);
-    navigate('/events');
+    navigate(`/ride-created/${createdRequestCode}`);
   };
 
   const handleCreateAnother = () => {

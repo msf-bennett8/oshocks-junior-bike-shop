@@ -122,6 +122,10 @@ const eventService = {
   bulkCancelBookings: (codes, reason) => api.post('/admin/cycling-events/bookings/bulk-cancel', { registration_codes: codes, reason }),
   exportEventBookings: (eventCode) => api.get(`/admin/cycling-events/${eventCode}/export-bookings`, { responseType: 'blob' }),
 
+  // ─── Related Events ───
+  getRelatedEvents: (eventCode, limit = 3) =>
+    api.get(`/events/${eventCode}/related?limit=${limit}`),
+
   // ─── User Booking Actions ───
   requestRefund: (registrationCode, reason) => api.post(`/events/registrations/${registrationCode}/refund-request`, { reason }),
   downloadTicket: (registrationCode) => api.get(`/events/registrations/${registrationCode}/ticket`),
