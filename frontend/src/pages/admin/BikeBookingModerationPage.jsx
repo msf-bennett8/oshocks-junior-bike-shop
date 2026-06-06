@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import bikeService from '../../services/bikeService';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../components/common/ToastContainer';
+import ModerationActionModal from '../../components/common/ModerationActionModal';
 
 const TABS = [
   { key: 'all', label: 'All Bookings', icon: Bike },
@@ -28,44 +30,60 @@ const BikeBookingModerationPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [perPage, setPerPage] = useState(20);
+
+  // Modal state for confirmations
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalConfig, setModalConfig] = useState({ type: 'confirm', title: '', message: '', onConfirm: null });
+
+  const toast = useToast();
+
   useEffect(() => {
+    setCurrentPage(1);
     fetchBookings();
     fetchStats();
   }, [activeTab]);
 
+  useEffect(() => {
+    fetchBookings();
+  }, [currentPage, perPage]);
+
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('authToken');
-      const params = new URLSearchParams({
-        page: '1',
-        per_page: '20',
-      });
+      const params = {
+        page: currentPage,
+        per_page: perPage,
+      };
       if (activeTab !== 'all') {
-        params.append('status', activeTab === 'overdue' || activeTab === 'pending_recirculation' ? 'active' : activeTab);
+        params.status = activeTab === 'overdue' || activeTab === 'pending_recirculation' ? 'active' : activeTab;
       }
-      if (searchQuery) params.append('search', searchQuery);
+      if (searchQuery) params.search = searchQuery;
 
-      const response = await fetch(`/api/v1/admin/bike-bookings?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        }
-      });
-      const result = await response.json();
-      
+      const response = await bikeService.getAdminBookings(params);
+      const result = response.data;
+
       let data = result.data?.data || [];
-      
+      const pagination = result.data || {};
+
       const now = new Date();
       if (activeTab === 'overdue') {
         data = data.filter(b => new Date(b.end_datetime) < now && b.status === 'active');
       } else if (activeTab === 'pending_recirculation') {
         data = data.filter(b => new Date(b.end_datetime) < now && !b.recirculated);
       }
-      
+
       setBookings(data);
+      setCurrentPage(pagination.current_page || 1);
+      setLastPage(pagination.last_page || 1);
+      setTotalItems(pagination.total || data.length);
     } catch (err) {
       console.error('Failed to fetch bookings:', err);
+      toast.error('Failed to load bookings');
     } finally {
       setLoading(false);
     }
@@ -73,59 +91,57 @@ const BikeBookingModerationPage = () => {
 
   const fetchStats = async () => {
     try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch('/api/v1/admin/bike-bookings/stats', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        }
-      });
-      const result = await response.json();
-      setStats(result.data || null);
+      const response = await bikeService.getAdminBookingStats();
+      setStats(response.data?.data || null);
     } catch (err) {
       console.error('Failed to fetch stats:', err);
     }
   };
 
-  const handleRecirculate = async (bookingCode) => {
-    if (!window.confirm('Mark this bike as returned and recirculate to fleet?')) return;
-    try {
-      setActionLoading(true);
-      const token = localStorage.getItem('authToken');
-      await fetch(`/api/v1/admin/bike-bookings/${bookingCode}/recirculate`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
+  const openModal = (config) => { setModalConfig(config); setModalOpen(true); };
+  const closeModal = () => setModalOpen(false);
+
+  const handleRecirculate = (bookingCode) => {
+    openModal({
+      type: 'confirm',
+      title: 'Return to Fleet',
+      message: 'Mark this bike as returned and recirculate to fleet?',
+      onConfirm: async () => {
+        closeModal();
+        try {
+          setActionLoading(true);
+          await bikeService.recirculateBike(bookingCode);
+          toast.success('Bike returned to fleet');
+          fetchBookings();
+          fetchStats();
+        } catch (err) {
+          toast.error(err.response?.data?.message || 'Failed to recirculate');
+        } finally {
+          setActionLoading(false);
         }
-      });
-      fetchBookings();
-      fetchStats();
-    } catch (err) {
-      alert('Failed to recirculate');
-    } finally {
-      setActionLoading(false);
-    }
+      },
+    });
   };
 
-  const handleRefundDeposit = async (bookingCode) => {
-    if (!window.confirm('Refund security deposit for this booking?')) return;
-    try {
-      setActionLoading(true);
-      const token = localStorage.getItem('authToken');
-      await fetch(`/api/v1/admin/bike-bookings/${bookingCode}/refund-deposit`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
+  const handleRefundDeposit = (bookingCode) => {
+    openModal({
+      type: 'confirm',
+      title: 'Refund Deposit',
+      message: 'Refund security deposit for this booking?',
+      onConfirm: async () => {
+        closeModal();
+        try {
+          setActionLoading(true);
+          await bikeService.refundDeposit(bookingCode);
+          toast.success('Security deposit refunded');
+          fetchBookings();
+        } catch (err) {
+          toast.error(err.response?.data?.message || 'Failed to refund deposit');
+        } finally {
+          setActionLoading(false);
         }
-      });
-      fetchBookings();
-    } catch (err) {
-      alert('Failed to refund deposit');
-    } finally {
-      setActionLoading(false);
-    }
+      },
+    });
   };
 
   const getStatusBadge = (booking) => {
@@ -231,6 +247,26 @@ const BikeBookingModerationPage = () => {
                 onKeyPress={(e) => e.key === 'Enter' && fetchBookings()}
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
               />
+            </div>
+          </div>
+
+          {/* Results count */}
+          <div className="px-4 py-2 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+            <p className="text-xs text-gray-500">
+              Showing <span className="font-semibold">{bookings.length}</span> of <span className="font-semibold">{totalItems}</span> bookings
+              {lastPage > 1 && <span> • Page {currentPage} of {lastPage}</span>}
+            </p>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-500">Per page:</label>
+              <select
+                value={perPage}
+                onChange={(e) => { setPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                className="text-xs border border-gray-200 rounded px-2 py-1 bg-white"
+              >
+                {[10, 20, 50, 100].map(n => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -361,8 +397,57 @@ const BikeBookingModerationPage = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {lastPage > 1 && (
+            <div className="px-4 py-4 border-t border-gray-200 flex items-center justify-between">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1 || loading}
+                className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ← Previous
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: lastPage }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    disabled={loading}
+                    className={`w-8 h-8 text-sm font-medium rounded-lg transition-colors ${
+                      currentPage === page
+                        ? 'bg-green-600 text-white'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    } disabled:opacity-50`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(p => Math.min(lastPage, p + 1))}
+                disabled={currentPage === lastPage || loading}
+                className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
+      <ModerationActionModal
+        isOpen={modalOpen}
+        onClose={closeModal}
+        type={modalConfig.type}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        onConfirm={modalConfig.onConfirm}
+        onCancel={closeModal}
+        isLoading={actionLoading}
+      />
     </div>
   );
 };
