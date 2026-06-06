@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
   Bike, CheckCircle, Clock, XCircle, Calendar, MapPin,
-  DollarSign, Search, Eye, ArrowRight, AlertTriangle
+  DollarSign, Search, Eye, ArrowRight, AlertTriangle, Ticket
 } from 'lucide-react';
 import bikeService from '../../services/bikeService';
 import { useAuth } from '../../context/AuthContext';
+import BikeRentalTicketModal from '../bikes/BikeRentalTicketModal';
 
 const STATUS_CONFIG = {
   pending: { label: 'Pending', color: 'yellow', icon: Clock },
@@ -22,6 +23,8 @@ const MyBikeHiresPage = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [ticketModalOpen, setTicketModalOpen] = useState(false);
+  const [selectedBookingCode, setSelectedBookingCode] = useState(null);
 
   useEffect(() => {
     fetchBookings();
@@ -126,10 +129,13 @@ const MyBikeHiresPage = () => {
                         </span>
                       </div>
                       <button
-                        onClick={() => navigate(`/bike-bookings/${booking.booking_code}`)}
+                        onClick={() => {
+                          setSelectedBookingCode(booking.booking_code);
+                          setTicketModalOpen(true);
+                        }}
                         className="flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100"
                       >
-                        <Eye className="w-3 h-3" /> View Details
+                        <Ticket className="w-3 h-3" /> View Ticket
                       </button>
                     </div>
                   </div>
@@ -139,6 +145,11 @@ const MyBikeHiresPage = () => {
           </div>
         )}
       </div>
+      <BikeRentalTicketModal
+        isOpen={ticketModalOpen}
+        onClose={() => setTicketModalOpen(false)}
+        bookingCode={selectedBookingCode}
+      />
     </div>
   );
 };

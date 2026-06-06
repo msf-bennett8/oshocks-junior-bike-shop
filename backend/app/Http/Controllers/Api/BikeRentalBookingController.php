@@ -412,4 +412,47 @@ class BikeRentalBookingController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Get payout records for a booking
+     */
+    public function getPayouts(Request $request)
+    {
+        $bookingId = $request->get('booking_id');
+        $payouts = BikeRentalPayout::where('booking_id', $bookingId)
+            ->with('seller', 'paidBy', 'delayedBy')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $payouts,
+        ]);
+    }
+
+    /**
+     * Create payout record for a booking
+     */
+    public function createPayout(Request $request, string $bookingCode)
+    {
+        $booking = BikeRentalBooking::where('booking_code', $bookingCode)->firstOrFail();
+
+        // Check if payout already exists
+        $existing = BikeRentalPayout::where('booking_id', $booking->id)->first();
+        if ($existing) {
+            return response()->json([
+                'success' => true,
+                'data' => $existing,
+                'message' => 'Payout record already exists',
+            ]);
+        }
+
+        $payout = ListerPayoutService::createPayout($booking);
+
+        return response()->json([
+            'success' => true,
+            'data' => $payout,
+            'message' => 'Payout record created',
+        ]);
+    }
 }

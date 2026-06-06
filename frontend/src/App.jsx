@@ -170,6 +170,7 @@ const CommunityModerationPage = lazy(() => import('./pages/admin/CommunityModera
 const EventsModerationPage = lazy(() => import('./pages/admin/EventsModerationPage'));
 const BikeListingModerationPage = lazy(() => import('./pages/admin/BikeListingModerationPage'));
 const BikeBookingModerationPage = lazy(() => import('./pages/admin/BikeBookingModerationPage'));
+const BikeBookingDetailPage = lazy(() => import('./pages/admin/BikeBookingDetailPage'));
 const ComingSoonPage = lazy(() => import('./pages/errors/ComingSoonPage'));
 const CustomRideModerationPage = lazy(() => import('./pages/admin/CustomRideModerationPage'));
 const MyCustomRidesPage = lazy(() => import('./pages/user/MyCustomRidesPage'));
@@ -1111,6 +1112,12 @@ function App() {
                 <Route path="/admin/bike-booking-moderation" element={
                   <AdminRoute>
                     <BikeBookingModerationPage />
+                  </AdminRoute>
+                } />
+
+                <Route path="/bike-bookings/:bookingCode" element={
+                  <AdminRoute>
+                    <BikeBookingDetailPage />
                   </AdminRoute>
                 } />
 

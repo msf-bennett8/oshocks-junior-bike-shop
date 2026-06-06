@@ -772,6 +772,8 @@ Route::prefix('v1/bike-rental-bookings')->middleware(['auth:sanctum', 'audit', '
         Route::post('/{bookingCode}/apply-fine', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'applyFine']);
         Route::post('/{bookingCode}/remove-fine', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'removeFine']);
         Route::post('/{bookingCode}/refund-deposit', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'refundDeposit']);
+        Route::get('/payouts', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'getPayouts']);
+        Route::post('/{bookingCode}/create-payout', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'createPayout']);
         Route::post('/payouts/{payoutId}/process', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'processPayout']);
         Route::post('/payouts/{payoutId}/delay', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'delayPayout']);
     });

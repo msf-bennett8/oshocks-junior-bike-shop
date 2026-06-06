@@ -38,10 +38,12 @@ const BikeBookingModerationPage = () => {
       setLoading(true);
       const token = localStorage.getItem('authToken');
       const params = new URLSearchParams({
-        status: activeTab === 'overdue' || activeTab === 'pending_recirculation' ? 'active' : activeTab,
         page: '1',
         per_page: '20',
       });
+      if (activeTab !== 'all') {
+        params.append('status', activeTab === 'overdue' || activeTab === 'pending_recirculation' ? 'active' : activeTab);
+      }
       if (searchQuery) params.append('search', searchQuery);
 
       const response = await fetch(`/api/v1/admin/bike-bookings?${params}`, {
