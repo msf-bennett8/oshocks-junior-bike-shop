@@ -44,7 +44,7 @@ class BikeRentalBookingController extends Controller
             'add_ons' => 'nullable|array',
             'insurance_opt_in' => 'boolean',
             'delivery_opt_in' => 'boolean',
-            'payment_method' => 'required|string|in:mpesa,card,bank_transfer',
+            'payment_method' => 'required|string|in:mpesa,card,cod',
         ]);
 
         $listing = BikeRental::where('listing_code', $validated['listing_code'])
@@ -62,9 +62,9 @@ class BikeRentalBookingController extends Controller
             ], 403);
         }
 
-        // Check if user is trying to book their own bike
+        // Check if user is trying to book their own bike (I remember ann btw😂😂)
         if ($listing->owner_id === $user->id) {
-            return response()->json(['error' => 'Cannot book your own bike'], 400);
+            return response()->json(['error' => 'Cannot book your own bike vro 😂😂'], 400);
         }
 
         $start = $validated['start_datetime'];

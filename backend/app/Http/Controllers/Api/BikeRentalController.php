@@ -622,4 +622,34 @@ class BikeRentalController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Check bike availability for a date range (public)
+     */
+    public function checkAvailability(Request $request, string $listingCode)
+    {
+        $validated = $request->validate([
+            'start_datetime' => 'required|date|after:now',
+            'end_datetime' => 'required|date|after:start_datetime',
+        ]);
+
+        $bike = BikeRental::where('listing_code', $listingCode)
+            ->orWhere('slug', $listingCode)
+            ->firstOrFail();
+
+        $availability = \App\Services\BikeAvailabilityService::checkAvailability(
+            $bike->id,
+            $validated['start_datetime'],
+            $validated['end_datetime']
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'available' => $availability['available'],
+                'next_available_after' => $availability['next_available_after'],
+                'conflicts' => $availability['conflicts'] ?? [],
+            ]
+        ]);
+    }
 }

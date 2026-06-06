@@ -19,6 +19,15 @@ const bikeService = {
   // ─── Bookings ───
   createBooking: (data) => api.post('/bike-rental-bookings', data),
   getMyBookings: (params = {}) => api.get('/bike-rental-bookings/my-bookings', { params }),
+  getBooking: (bookingCode) => api.get(`/bike-rental-bookings/${bookingCode}`),
+
+  // ─── Bike Rental Payments ───
+  initiateBikeRentalMpesa: (data) => api.post('/bike-rental-payments/mpesa/initiate', data),
+  initiateBikeRentalCard: (data) => api.post('/bike-rental-payments/card/initialize', data),
+  bikeRentalCod: (data) => api.post('/bike-rental-payments/cod', data),
+  checkBikeRentalPaymentStatus: (paymentId) => api.get(`/bike-rental-payments/${paymentId}/status`),
+  verifyBikeRentalCardPayment: (reference) => api.get(`/bike-rental-payments/card/verify/${reference}`),
+  getBikeRentalTicket: (bookingCode) => api.get(`/bike-rental-bookings/${bookingCode}/ticket`),
   getOwnerBookings: (params = {}) => api.get('/bike-rental-bookings/owner-bookings', { params }),
   getBooking: (bookingCode) => api.get(`/bike-rental-bookings/${bookingCode}`),
   updateBookingStatus: (bookingCode, status, notes) => 

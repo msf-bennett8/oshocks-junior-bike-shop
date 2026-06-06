@@ -692,12 +692,26 @@ Route::prefix('v1/event-payments')->middleware(['auth:sanctum', 'audit', 'securi
 Route::get('/v1/event-payments/card/callback', [\App\Http\Controllers\Api\EventPaymentController::class, 'cardCallback']);
 
 // ============================================================================
+// BIKE RENTAL PAYMENT ROUTES (M-Pesa, Card, COD for bike rental bookings)
+// ============================================================================
+Route::prefix('v1/bike-rental-payments')->middleware(['auth:sanctum', 'audit', 'security.monitor'])->group(function () {
+    Route::post('/mpesa/initiate', [\App\Http\Controllers\Api\BikeRentalPaymentController::class, 'initiateMpesa']);
+    Route::post('/card/initialize', [\App\Http\Controllers\Api\BikeRentalPaymentController::class, 'initiateCard']);
+    Route::post('/cod', [\App\Http\Controllers\Api\BikeRentalPaymentController::class, 'cod']);
+    Route::get('/{paymentId}/status', [\App\Http\Controllers\Api\BikeRentalPaymentController::class, 'checkStatus']);
+    Route::get('/card/verify/{reference}', [\App\Http\Controllers\Api\BikeRentalPaymentController::class, 'verifyCard']);
+});
+
+// Public callback for bike rental card payments
+Route::get('/v1/bike-rental-payments/card/callback', [\App\Http\Controllers\Api\BikeRentalPaymentController::class, 'cardCallback']);
+
+// ============================================================================
 // BIKE RENTAL ROUTES — PUBLIC
 // ============================================================================
 Route::prefix('v1/bike-rentals')->middleware(['api', 'audit'])->group(function () {
     Route::get('/', [\App\Http\Controllers\Api\BikeRentalController::class, 'index']);
     Route::get('/{listingCode}', [\App\Http\Controllers\Api\BikeRentalController::class, 'show']);
-    Route::get('/{listingCode}/availability', [\App\Http\Controllers\Api\BikeListingModerationController::class, 'checkAvailability']);
+    Route::get('/{listingCode}/availability', [\App\Http\Controllers\Api\BikeRentalController::class, 'checkAvailability']);
     Route::get('/{listingCode}/calendar', [\App\Http\Controllers\Api\BikeRentalBookingController::class, 'availabilityCalendar']);
 });
 

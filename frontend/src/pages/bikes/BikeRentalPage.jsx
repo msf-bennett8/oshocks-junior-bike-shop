@@ -4,14 +4,17 @@ import { Helmet } from 'react-helmet-async';
 import {
   ChevronLeft, Calendar, Clock, MapPin, Shield, Check, CreditCard,
   ArrowRight, Bike, User, Phone, Info, AlertTriangle, FileText,
-  Hourglass, Timer, CalendarDays, CalendarRange, Ban
+  Hourglass, Timer, CalendarDays, CalendarRange, Ban, Wallet, Loader
 } from 'lucide-react';
 import bikeService from '../../services/bikeService';
+import paymentService from '../../services/paymentService';
+import { useAuth } from '../../context/AuthContext';
 import TermsAcceptanceModal from '../../components/legal/TermsAcceptanceModal';
 
 const BikeRentalPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [bookingType, setBookingType] = useState('daily'); // hourly, daily, weekly, monthly
   const [startDate, setStartDate] = useState('');
@@ -27,11 +30,18 @@ const BikeRentalPage = () => {
   const [deliveryOptIn, setDeliveryOptIn] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('mpesa');
+  const [mpesaPhone, setMpesaPhone] = useState('');
+  const [savedCards, setSavedCards] = useState([]);
+  const [selectedSavedCard, setSelectedSavedCard] = useState(null);
+  const [showAddNewCard, setShowAddNewCard] = useState(false);
+  const [loadingSavedCards, setLoadingSavedCards] = useState(false);
   const [bike, setBike] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [availabilityError, setAvailabilityError] = useState(null);
   const [isAvailable, setIsAvailable] = useState(true);
@@ -55,6 +65,33 @@ const BikeRentalPage = () => {
 
     fetchBike();
   }, [slug]);
+
+    // Load saved cards when on payment step
+  useEffect(() => {
+    const loadSavedCards = async () => {
+      if (step !== 3) return;
+      try {
+        setLoadingSavedCards(true);
+        const response = await paymentService.getSavedCards();
+        if (response.success && response.data.length > 0) {
+          setSavedCards(response.data);
+          setSelectedSavedCard(response.data[0]);
+          setShowAddNewCard(false);
+        } else {
+          setSavedCards([]);
+          setShowAddNewCard(true);
+        }
+      } catch (error) {
+        console.error('Failed to load saved cards:', error);
+        setSavedCards([]);
+        setShowAddNewCard(true);
+      } finally {
+        setLoadingSavedCards(false);
+      }
+    };
+
+    loadSavedCards();
+  }, [step]);
 
   // Check availability when dates change
   useEffect(() => {
@@ -168,65 +205,9 @@ const BikeRentalPage = () => {
   // Total amount user needs to pay now (includes refundable deposit)
   const totalWithDeposit = grandTotal + securityDeposit;
 
-  // Handle actual checkout
+  // Handle checkout - now just advances to payment step (Step 3 handles payment inline)
   const handleCheckout = async () => {
-    setCheckoutLoading(true);
-    setCheckoutError(null);
-    
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        navigate('/login', { state: { from: `/bikes/${slug}/rent` } });
-        return;
-      }
-
-      const startDateTime = bookingType === 'hourly'
-        ? `${startDate}T${startTime}:00`
-        : `${startDate}T00:00:00`;
-      const endDateTime = bookingType === 'hourly'
-        ? `${startDate}T${endTime}:00`
-        : `${endDate}T23:59:59`;
-
-      const bookingData = {
-        listing_code: bike.listing_code,
-        start_datetime: startDateTime,
-        end_datetime: endDateTime,
-        duration_days: bookingType === 'daily' ? duration : bookingType === 'hourly' ? 1 : bookingType === 'weekly' ? numberOfWeeks * 7 : numberOfMonths * 30,
-        duration_type: bookingType,
-        duration_hours: bookingType === 'hourly' ? numberOfHours : null,
-        insurance_opt_in: insuranceOptIn,
-        delivery_opt_in: deliveryOptIn,
-        payment_method: 'mpesa', // Default, user can change on payment page
-      };
-
-      // Create booking
-      const response = await bikeService.createBooking(bookingData);
-      const bookingCode = response.data?.data?.booking_code || response.data?.booking_code;
-      
-      if (!bookingCode) {
-        throw new Error('Failed to create booking');
-      }
-
-      // Navigate to payment page with booking details
-      navigate('/checkout/bike-rental', {
-        state: {
-          bookingCode,
-          bikeName: bike.name,
-          totalAmount: totalWithDeposit,
-          rentalTotal: grandTotal,
-          securityDeposit,
-          bookingType,
-          duration,
-          startDate: startDateTime,
-          endDate: endDateTime,
-        }
-      });
-    } catch (err) {
-      console.error('Checkout failed:', err);
-      setCheckoutError(err.response?.data?.message || err.message || 'Failed to process booking. Please try again.');
-    } finally {
-      setCheckoutLoading(false);
-    }
+    setStep(3);
   };
 
   const steps = [
@@ -528,7 +509,7 @@ const BikeRentalPage = () => {
 
                     <div className="flex justify-end">
                       <button
-                        onClick={() => setStep(2)}
+                        onClick={() => { setFieldErrors({}); setStep(2); }}
                         disabled={!startDate || (bookingType === 'daily' && !endDate) || !isAvailable || availabilityLoading}
                         className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
                       >
@@ -564,12 +545,31 @@ const BikeRentalPage = () => {
                               <input
                                 type="checkbox"
                                 checked={termsAccepted}
-                                onChange={(e) => setTermsAccepted(e.target.checked)}
+                                onChange={(e) => {
+                                  if (!termsAccepted && !e.target.checked) {
+                                    // Already unchecked, do nothing
+                                    return;
+                                  }
+                                  if (!termsAccepted) {
+                                    // Trying to check without reading terms
+                                    setFieldErrors({ terms: 'Please click "Read Terms" to review and accept the Terms of Renting.' });
+                                    return;
+                                  }
+                                  // Only allow unchecking if already accepted
+                                  setTermsAccepted(e.target.checked);
+                                  setFieldErrors(prev => ({ ...prev, terms: null }));
+                                }}
                                 className="w-5 h-5 text-blue-500 rounded"
                               />
                               <span className="text-sm font-semibold text-blue-900">I accept the Terms of Renting</span>
                             </label>
                           </div>
+                          {fieldErrors.terms && (
+                            <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                              <AlertTriangle className="w-4 h-4" />
+                              {fieldErrors.terms}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -578,7 +578,15 @@ const BikeRentalPage = () => {
                       isOpen={termsModalOpen}
                       onClose={() => setTermsModalOpen(false)}
                       termsType="renting"
-                      onAccept={() => setTermsAccepted(true)}
+                      onAccept={async () => {
+                        setTermsAccepted(true);
+                        setFieldErrors(prev => ({ ...prev, terms: null }));
+                        try {
+                          await bikeService.acceptTerms('renting');
+                        } catch (err) {
+                          console.error('Terms accept API error:', err);
+                        }
+                      }}
                     />
 
                     {/* Waiver */}
@@ -594,11 +602,20 @@ const BikeRentalPage = () => {
                             <input
                               type="checkbox"
                               checked={waiverSigned}
-                              onChange={(e) => setWaiverSigned(e.target.checked)}
+                              onChange={(e) => {
+                                setWaiverSigned(e.target.checked);
+                                if (e.target.checked) setFieldErrors(prev => ({ ...prev, waiver: null }));
+                              }}
                               className="w-5 h-5 text-orange-500 rounded"
                             />
                             <span className="text-sm font-semibold text-yellow-900">I agree to the rental terms</span>
                           </label>
+                          {fieldErrors.waiver && (
+                            <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                              <AlertTriangle className="w-4 h-4" />
+                              {fieldErrors.waiver}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -659,13 +676,29 @@ const BikeRentalPage = () => {
 
                     <div className="flex justify-between">
                       <button
-                        onClick={() => setStep(1)}
+                        onClick={() => { setFieldErrors({}); setStep(1); }}
                         className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50"
                       >
                         Back
                       </button>
                       <button
-                        onClick={() => setStep(3)}
+                        onClick={async () => {
+                          setFieldErrors({});
+                          if (!termsAccepted) {
+                            setFieldErrors({ terms: 'Please read and accept the Terms of Renting before proceeding.' });
+                            return;
+                          }
+                          if (!waiverSigned) {
+                            setFieldErrors({ waiver: 'Please agree to the rental terms and waiver.' });
+                            return;
+                          }
+                          try {
+                            await bikeService.acceptTerms('renting');
+                          } catch (err) {
+                            console.error('Terms accept API error:', err);
+                          }
+                          setStep(3);
+                        }}
                         disabled={!waiverSigned || !termsAccepted}
                         className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
                       >
@@ -679,16 +712,7 @@ const BikeRentalPage = () => {
                 {/* Step 3: Payment */}
                 {step === 3 && (
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
-                    <h2 className="text-xl font-bold text-gray-900 mb-6">Payment</h2>
-
-                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 mb-6">
-                      <div className="flex items-center gap-3">
-                        <Info className="w-5 h-5 text-blue-500" />
-                        <p className="text-sm text-blue-700">
-                          Demo page. Production will integrate Paystack/M-Pesa for payment processing.
-                        </p>
-                      </div>
-                    </div>
+                    <h2 className="text-xl font-bold text-gray-900 mb-6">Payment Method</h2>
 
                     {checkoutError && (
                       <div className="p-4 bg-red-50 rounded-xl border border-red-200 mb-6">
@@ -699,40 +723,295 @@ const BikeRentalPage = () => {
                       </div>
                     )}
 
-                    <div className="space-y-4 mb-8">
-                      <button className="w-full p-4 rounded-xl border-2 border-orange-500 bg-orange-50 flex items-center gap-4">
-                        <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center text-white">
-                          <CreditCard className="w-6 h-6" />
+                    {/* Payment Method Selection */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('mpesa')}
+                        className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
+                          paymentMethod === 'mpesa'
+                            ? 'border-orange-600 bg-orange-50'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                      >
+                        <div className="text-center">
+                          <img
+                            src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg"
+                            alt="M-Pesa"
+                            className="h-12 w-auto mx-auto mb-2 object-contain"
+                          />
+                          <div className="text-sm text-gray-600">M-Pesa STK</div>
                         </div>
-                        <div className="text-left">
-                          <p className="font-semibold text-gray-900">M-Pesa</p>
-                          <p className="text-sm text-gray-500">STK Push to your phone</p>
-                        </div>
-                        <Check className="w-5 h-5 text-orange-500 ml-auto" />
                       </button>
 
-                      <button className="w-full p-4 rounded-xl border-2 border-gray-200 flex items-center gap-4 opacity-50">
-                        <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center text-gray-600">
-                          <CreditCard className="w-6 h-6" />
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('card')}
+                        className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
+                          paymentMethod === 'card'
+                            ? 'border-orange-600 bg-orange-50'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                      >
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-3 mb-2">
+                            <img src="/assets/images/visa-logo.svg" alt="Visa" className="h-8 w-auto object-contain" />
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-8 w-auto object-contain" />
+                          </div>
+                          <div className="text-sm text-gray-600">Card</div>
                         </div>
-                        <div className="text-left">
-                          <p className="font-semibold text-gray-900">Card Payment</p>
-                          <p className="text-sm text-gray-500">Paystack secure checkout</p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('cod')}
+                        className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
+                          paymentMethod === 'cod'
+                            ? 'border-orange-600 bg-orange-50'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                      >
+                        <div className="text-center">
+                          <div className="w-12 h-12 mx-auto mb-2 bg-green-100 rounded-full flex items-center justify-center">
+                            <Wallet className="w-6 h-6 text-green-600" />
+                          </div>
+                          <div className="text-sm text-gray-600">Pay at Pickup</div>
                         </div>
                       </button>
                     </div>
 
+                    {/* M-Pesa Payment */}
+                    {paymentMethod === 'mpesa' && (
+                      <div className="mb-6">
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                          <h3 className="font-semibold text-green-900 mb-2">How M-Pesa Payment Works:</h3>
+                          <ol className="text-sm text-green-800 space-y-1 list-decimal list-inside">
+                            <li>Enter your M-Pesa phone number below</li>
+                            <li>You'll receive an STK push notification on your phone</li>
+                            <li>Enter your M-Pesa PIN to complete payment</li>
+                            <li>You'll receive a confirmation SMS immediately</li>
+                          </ol>
+                        </div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          M-Pesa Phone Number *
+                        </label>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                          <input
+                            type="tel"
+                            value={mpesaPhone}
+                            onChange={(e) => {
+                              setMpesaPhone(e.target.value);
+                              if (e.target.value) setFieldErrors(prev => ({ ...prev, mpesaPhone: null }));
+                            }}
+                            className={`w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${fieldErrors.mpesaPhone ? 'border-red-500' : 'border-gray-300'}`}
+                            placeholder="0712345678"
+                          />
+                        </div>
+                        {fieldErrors.mpesaPhone && (
+                          <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                            <AlertTriangle className="w-4 h-4" />
+                            {fieldErrors.mpesaPhone}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Card Payment */}
+                    {paymentMethod === 'card' && (
+                      <div className="mb-6">
+                        {loadingSavedCards ? (
+                          <div className="flex items-center justify-center py-4">
+                            <Loader className="w-6 h-6 animate-spin text-orange-600 mr-2" />
+                            <span className="text-sm text-gray-600">Checking for saved cards...</span>
+                          </div>
+                        ) : savedCards.length > 0 && !showAddNewCard ? (
+                          <div className="mb-4">
+                            <h3 className="font-semibold text-gray-900 mb-3">Your Saved Cards</h3>
+                            <div className="space-y-2 mb-4">
+                              {savedCards.map((card, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  onClick={() => setSelectedSavedCard(card)}
+                                  className={`w-full p-4 border-2 rounded-lg flex items-center justify-between transition ${
+                                    selectedSavedCard?.authorization_code === card.authorization_code
+                                      ? 'border-orange-500 bg-orange-50'
+                                      : 'border-gray-200'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <CreditCard className="w-6 h-6 text-gray-600" />
+                                    <div className="text-left">
+                                      <p className="font-medium">•••• •••• •••• {card.card_last4}</p>
+                                      <p className="text-xs text-gray-500">Expires {card.card_expiry_month}/{card.card_expiry_year}</p>
+                                    </div>
+                                  </div>
+                                  {selectedSavedCard?.authorization_code === card.authorization_code && <Check className="w-5 h-5 text-orange-600" />}
+                                </button>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => { setShowAddNewCard(true); setSelectedSavedCard(null); }}
+                                className="w-full p-4 border-2 border-dashed border-gray-200 rounded-lg text-gray-600 hover:border-orange-300"
+                              >
+                                Use a different card
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h3 className="font-semibold text-blue-900 mb-1">Secure Card Payment</h3>
+                            <p className="text-sm text-blue-700">
+                              You'll be redirected to our secure payment partner (Paystack) to complete your card payment.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Cash on Delivery / Pay at Pickup */}
+                    {paymentMethod === 'cod' && (
+                      <div className="mb-6">
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <h3 className="font-semibold text-blue-900 mb-2">Pay at Pickup</h3>
+                          <ul className="text-sm text-blue-800 space-y-2 list-disc list-inside">
+                            <li>Your bike is reserved</li>
+                            <li>Pay with cash or M-Pesa at the pickup location</li>
+                            <li>Please arrive 15 minutes early to complete payment</li>
+                            <li>Have exact change ready</li>
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex justify-between">
                       <button
-                        onClick={() => setStep(2)}
-                        className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50"
+                        onClick={() => { setFieldErrors({}); setCheckoutError(null); setStep(2); }}
+                        className="px-6 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all text-sm"
                       >
                         Back
                       </button>
                       <button
-                        onClick={handleCheckout}
+                        onClick={async () => {
+                          if (checkoutLoading) return;
+                          
+                          // Validate fields before proceeding
+                          const errors = {};
+                          if (paymentMethod === 'mpesa' && !mpesaPhone && !user?.phone) {
+                            errors.mpesaPhone = 'Please enter your M-Pesa phone number.';
+                          }
+                          if (Object.keys(errors).length > 0) {
+                            setFieldErrors(errors);
+                            return;
+                          }
+                          
+                          setFieldErrors({});
+                          setCheckoutError(null);
+                          setCheckoutLoading(true);
+                          
+                          try {
+                            // Step 1: Create booking
+                            const startDateTime = bookingType === 'hourly'
+                              ? `${startDate}T${startTime}:00`
+                              : `${startDate}T00:00:00`;
+                            const endDateTime = bookingType === 'hourly'
+                              ? `${startDate}T${endTime}:00`
+                              : `${endDate}T23:59:59`;
+
+                            const bookingData = {
+                              listing_code: bike.listing_code,
+                              start_datetime: startDateTime,
+                              end_datetime: endDateTime,
+                              duration_days: bookingType === 'daily' ? duration : bookingType === 'hourly' ? 1 : bookingType === 'weekly' ? numberOfWeeks * 7 : numberOfMonths * 30,
+                              duration_type: bookingType,
+                              duration_hours: bookingType === 'hourly' ? numberOfHours : null,
+                              insurance_opt_in: insuranceOptIn,
+                              delivery_opt_in: deliveryOptIn,
+                              payment_method: paymentMethod,
+                            };
+
+                            const response = await bikeService.createBooking(bookingData);
+                            const bookingCode = response.data?.data?.booking_code || response.data?.booking_code;
+
+                            if (!bookingCode) {
+                              throw new Error('Failed to create booking');
+                            }
+
+                            // Step 2: Process payment based on method
+                            if (paymentMethod === 'mpesa') {
+                              const mpesaResponse = await bikeService.initiateBikeRentalMpesa({
+                                booking_code: bookingCode,
+                                phone_number: mpesaPhone || user?.phone || ''
+                              });
+
+                              if (mpesaResponse.data?.success) {
+                                const paymentId = mpesaResponse.data?.data?.payment_id;
+                                const isMock = mpesaResponse.data?.data?.mock;
+
+                                if (isMock) {
+                                  console.log('🧪 Mock M-Pesa payment — auto-completing in 5 seconds...');
+                                }
+
+                                // Poll for payment status
+                                paymentService.pollPaymentStatus(
+                                  paymentId,
+                                  (status) => {
+                                    if (status === 'completed') {
+                                      navigate('/bike-rental-success', {
+                                        state: { success: true, message: 'Payment successful! Booking confirmed.', bookingCode }
+                                      });
+                                    } else if (status === 'failed') {
+                                      setCheckoutError('Payment failed. Please try again.');
+                                      setCheckoutLoading(false);
+                                    }
+                                  }
+                                );
+                              }
+                            } else if (paymentMethod === 'card') {
+                              if (selectedSavedCard && !showAddNewCard) {
+                                // Charge saved card
+                                const cardResponse = await paymentService.chargeSavedCard({
+                                  order_id: null,
+                                  email: user?.email,
+                                  authorization_code: selectedSavedCard.authorization_code
+                                });
+                                // Fallback to Paystack redirect
+                                const cardInit = await bikeService.initiateBikeRentalCard({
+                                  booking_code: bookingCode,
+                                  email: user?.email
+                                });
+                                if (cardInit.data?.success && cardInit.data?.data?.authorization_url) {
+                                  window.location.href = cardInit.data.data.authorization_url;
+                                }
+                              } else {
+                                // New card - redirect to Paystack
+                                const cardInit = await bikeService.initiateBikeRentalCard({
+                                  booking_code: bookingCode,
+                                  email: user?.email
+                                });
+                                if (cardInit.data?.success && cardInit.data?.data?.authorization_url) {
+                                  window.location.href = cardInit.data.data.authorization_url;
+                                }
+                              }
+                            } else if (paymentMethod === 'cod') {
+                              const codResponse = await bikeService.bikeRentalCod({
+                                booking_code: bookingCode
+                              });
+                              if (codResponse.data?.success) {
+                                navigate('/bike-rental-success', {
+                                  state: { success: true, message: 'Booking reserved! Pay at pickup.', bookingCode }
+                                });
+                              }
+                            }
+
+                          } catch (err) {
+                            setCheckoutError(err.response?.data?.error || err.response?.data?.message || err.message || 'Payment failed. Please try again.');
+                            setCheckoutLoading(false);
+                          }
+                        }}
                         disabled={checkoutLoading}
-                        className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-70"
+                        className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
                       >
                         {checkoutLoading ? (
                           <>
@@ -742,7 +1021,7 @@ const BikeRentalPage = () => {
                         ) : (
                           <>
                             <Shield className="w-5 h-5" />
-                            Pay KSh {Number(totalWithDeposit).toLocaleString()}
+                            {paymentMethod === 'cod' ? 'Reserve Bike' : `Pay KSh ${totalWithDeposit.toLocaleString()}`}
                           </>
                         )}
                       </button>

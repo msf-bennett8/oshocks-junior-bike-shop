@@ -70,22 +70,13 @@ const TermsAcceptanceModal = ({ isOpen, onClose, termsType, onAccept, forceAccep
     
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/v1/terms/accept', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ terms_type: termsType })
-      });
-      
-      if (!response.ok) throw new Error('Failed to accept terms');
+      const api = (await import('../../services/api')).default;
+      await api.post('/terms/accept', { terms_type: termsType });
       
       onAccept?.();
       onClose();
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message || 'Failed to accept terms');
     } finally {
       setLoading(false);
     }

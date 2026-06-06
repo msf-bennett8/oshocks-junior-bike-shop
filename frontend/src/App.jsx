@@ -176,6 +176,7 @@ const MyCustomRidesPage = lazy(() => import('./pages/user/MyCustomRidesPage'));
 const MyBikeListingsPage = lazy(() => import('./pages/user/MyBikeListingsPage'));
 const MyBikeHiresPage = lazy(() => import('./pages/user/MyBikeHiresPage'));
 const MyEventBookingsPage = lazy(() => import('./pages/user/MyEventBookingsPage'));
+const BikeRentalSuccessPage = lazy(() => import('./pages/bikes/BikeRentalSuccessPage'));
 const EventBookingSuccessPage = lazy(() => import('./pages/events/EventBookingSuccessPage'));
 const RideCreatedSuccessPage = lazy(() => import('./pages/rides/RideCreatedSuccessPage'));
 const EventCreatedSuccessPage = lazy(() => import('./pages/events/EventCreatedSuccessPage'));
@@ -769,6 +770,8 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+
+                <Route path="/bike-rental-success" element={<BikeRentalSuccessPage />} />
 
                 <Route
                   path="/my-event-bookings"

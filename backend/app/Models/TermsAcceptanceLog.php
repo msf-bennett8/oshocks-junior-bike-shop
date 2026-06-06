@@ -37,12 +37,16 @@ class TermsAcceptanceLog extends Model
 
     public static function recordAcceptance(int $userId, string $termsType): self
     {
-        return self::create([
-            'user_id' => $userId,
-            'terms_type' => $termsType,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-            'accepted_at' => now(),
-        ]);
+        return self::updateOrCreate(
+            [
+                'user_id' => $userId,
+                'terms_type' => $termsType,
+            ],
+            [
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'accepted_at' => now(),
+            ]
+        );
     }
 }

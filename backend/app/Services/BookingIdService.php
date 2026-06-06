@@ -171,5 +171,29 @@ class BookingIdService
 
         return true;
     }
+
+    /**
+     * Generate a unique bike rental booking ID
+     * Format: BKB-XXXXXX (BKB prefix + 6 random alphanumeric)
+     */
+    public function generateBikeBookingId(): string
+    {
+        $prefix = 'BKB';
+        $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $suffix = '';
+
+        for ($i = 0; $i < 6; $i++) {
+            $suffix .= $chars[random_int(0, strlen($chars) - 1)];
+        }
+
+        $bookingId = $prefix . '-' . $suffix;
+
+        // Collision check with retry
+        if (DB::table('bike_rental_bookings')->where('booking_code', $bookingId)->exists()) {
+            return $this->generateBikeBookingId();
+        }
+
+        return $bookingId;
+    }
 }
 
