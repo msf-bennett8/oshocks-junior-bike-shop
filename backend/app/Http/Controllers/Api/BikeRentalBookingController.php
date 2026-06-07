@@ -52,6 +52,14 @@ class BikeRentalBookingController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
+        // Check if bike is available for rent
+        if ($listing->listing_status !== 'approved' || !$listing->is_active) {
+            return response()->json([
+                'error' => 'This bike is not available for rent. It may be pending approval or inactive.',
+                'code' => 'BIKE_NOT_AVAILABLE',
+            ], 400);
+        }
+
         // Check terms acceptance for renters
         try {
             \App\Services\TermsEnforcementService::enforceTerms($user->id, 'renting');
@@ -193,7 +201,7 @@ class BikeRentalBookingController extends Controller
         $bookings = BikeRentalBooking::where('renter_id', $user->id)
             ->with(['bike:id,name,listing_code,photos,daily_rate', 'bike.owner:id,name'])
             ->orderBy('created_at', 'desc')
-            ->paginate($request->get('per_page', 10));
+            ->get();
 
         return response()->json([
             'success' => true,

@@ -14,8 +14,15 @@ import TermsAcceptanceModal from '../../components/legal/TermsAcceptanceModal';
 const BikeRentalPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [step, setStep] = useState(1);
+
+  // Redirect to login if not authenticated when trying to book
+  useEffect(() => {
+    if (step === 3 && !isAuthenticated) {
+      navigate('/login', { state: { returnTo: `/bikes/${slug}/rent` } });
+    }
+  }, [step, isAuthenticated, slug, navigate]);
   const [bookingType, setBookingType] = useState('daily'); // hourly, daily, weekly, monthly
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -571,10 +578,10 @@ const BikeRentalPage = () => {
                               <span className="text-sm font-semibold text-blue-900">I accept the Terms of Renting</span>
                             </label>
                           </div>
-                          {fieldErrors.terms && (
+                          {fieldErrors.auth && (
                             <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
                               <AlertTriangle className="w-4 h-4" />
-                              {fieldErrors.terms}
+                              {fieldErrors.auth}
                             </p>
                           )}
                         </div>
@@ -690,7 +697,13 @@ const BikeRentalPage = () => {
                       </button>
                       <button
                         onClick={async () => {
-                          setFieldErrors({});
+                          if (!isAuthenticated) {
+                            setFieldErrors({ auth: 'Please sign in to proceed with booking.' });
+                            setTimeout(() => {
+                              navigate('/login', { state: { returnTo: `/bikes/${slug}/rent` } });
+                            }, 1500);
+                            return;
+                          }
                           if (!termsAccepted) {
                             setFieldErrors({ terms: 'Please read and accept the Terms of Renting before proceeding.' });
                             return;
@@ -902,7 +915,22 @@ const BikeRentalPage = () => {
                       <button
                         onClick={async () => {
                           if (checkoutLoading) return;
-                          
+
+                          // Check authentication before booking
+                          if (!user) {
+                            setCheckoutError('Please sign in to complete your booking. Redirecting to login...');
+                            setTimeout(() => {
+                              navigate('/login', { state: { returnTo: `/bikes/${slug}/rent` } });
+                            }, 2000);
+                            return;
+                          }
+
+                          // Check bike is available before booking
+                          if (!bike?.is_active || bike?.listing_status !== 'approved') {
+                            setCheckoutError('This bike is not available for rent. Please choose another bike.');
+                            return;
+                          }
+
                           // Validate fields before proceeding
                           const errors = {};
                           if (paymentMethod === 'mpesa' && !mpesaPhone && !user?.phone) {
@@ -912,11 +940,11 @@ const BikeRentalPage = () => {
                             setFieldErrors(errors);
                             return;
                           }
-                          
+
                           setFieldErrors({});
                           setCheckoutError(null);
                           setCheckoutLoading(true);
-                          
+
                           try {
                             // Step 1: Create booking
                             const startDateTime = bookingType === 'hourly'

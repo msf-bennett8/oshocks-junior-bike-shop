@@ -49,7 +49,7 @@ class BikeRentalPaymentController extends Controller
             }
 
             $phone = $this->formatPhoneNumber($request->phone_number);
-            $amount = $booking->total_amount;
+            $amount = $booking->grand_total;
 
             $stkResponse = $this->mpesaStkService->initiateStkPush([
                 'phone' => $phone,
@@ -66,7 +66,7 @@ class BikeRentalPaymentController extends Controller
                 'transaction_id' => 'BIKE-MPESA-' . uniqid() . '-' . time(),
                 'transaction_reference' => $stkResponse['CheckoutRequestID'] ?? null,
                 'phone_number' => $phone,
-                'payment_type' => 'bike_rental',
+                'payment_for' => 'bike_rental',
             ]);
 
             return response()->json([
@@ -116,12 +116,12 @@ class BikeRentalPaymentController extends Controller
 
             $paystackData = [
                 'email' => $request->email,
-                'amount' => $booking->total_amount * 100,
+                'amount' => $booking->grand_total * 100,
                 'reference' => $reference,
                 'callback_url' => config('app.frontend_url') . '/bike-rental-success?reference=' . $reference,
                 'metadata' => [
                     'booking_code' => $booking->booking_code,
-                    'payment_type' => 'bike_rental',
+                    'payment_for' => 'bike_rental',
                     'cancel_action' => config('app.frontend_url') . '/bikes',
                 ]
             ];
@@ -131,12 +131,12 @@ class BikeRentalPaymentController extends Controller
             $payment = Payment::create([
                 'booking_code' => $booking->booking_code,
                 'payment_method' => 'card',
-                'amount' => $booking->total_amount,
+                'amount' => $booking->grand_total,
                 'status' => 'pending',
                 'transaction_id' => 'BIKE-CARD-' . uniqid() . '-' . time(),
                 'transaction_reference' => $reference,
                 'email' => $request->email,
-                'payment_type' => 'bike_rental',
+                'payment_for' => 'bike_rental',
             ]);
 
             return response()->json([
@@ -184,10 +184,10 @@ class BikeRentalPaymentController extends Controller
             $payment = Payment::create([
                 'booking_code' => $booking->booking_code,
                 'payment_method' => 'cod',
-                'amount' => $booking->total_amount,
+                'amount' => $booking->grand_total,
                 'status' => 'pending',
                 'transaction_id' => 'BIKE-COD-' . uniqid() . '-' . time(),
-                'payment_type' => 'bike_rental',
+                'payment_for' => 'bike_rental',
             ]);
 
             $booking->update([
@@ -224,7 +224,7 @@ class BikeRentalPaymentController extends Controller
     {
         try {
             $payment = Payment::where('transaction_reference', $reference)
-                ->where('payment_type', 'bike_rental')
+                ->where('payment_for', 'bike_rental')
                 ->firstOrFail();
 
             $verification = $this->paystackService->verifyTransaction($reference);

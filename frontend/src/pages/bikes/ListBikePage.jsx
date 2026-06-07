@@ -9,6 +9,8 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import listBikeService from '../../services/listBikeService';
 import EventActionModal from '../../components/events/EventActionModal';
+import TermsAcceptanceModal from '../../components/legal/TermsAcceptanceModal';
+import bikeService from '../../services/bikeService';
 import {
   BIKE_CATEGORY_CONFIG, FRAME_SIZE_CONFIG
 } from '../../data/cyclingMockData';
@@ -72,6 +74,9 @@ const ListBikePage = () => {
   const [featureInput, setFeatureInput] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdListingCode, setCreatedListingCode] = useState(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   const [formData, setFormData] = useState({
     // Step 1: Basic Info
@@ -223,7 +228,16 @@ const ListBikePage = () => {
 
     const handleSubmit = async () => {
       if (!validateStep(currentStep)) return;
+
+      // Check terms acceptance before submitting
+      if (!termsAccepted) {
+        setTermsModalOpen(true);
+        setSubmitError('Please read and accept the Terms of Listing before publishing your bike.');
+        return;
+      }
+
       setIsSubmitting(true);
+      setSubmitError(null);
 
       try {
         // Build flat form data object for listBikeService
@@ -273,10 +287,20 @@ const ListBikePage = () => {
         }
       } catch (error) {
         console.error('Bike listing error:', error);
-        alert(error.response?.data?.message || error.message || 'Failed to list bike. Please try again.');
+        const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to list bike. Please try again.';
+        const errorCode = error.response?.data?.code;
+
+        // If backend rejected due to terms not accepted, show terms modal
+        if (errorCode === 'TERMS_NOT_ACCEPTED' || error.response?.status === 403) {
+          setTermsModalOpen(true);
+          setTermsAccepted(false);
+        }
+
+        setSubmitError(errorMsg);
         setIsSubmitting(false);
       }
     };
+
 
     const handleCloseModal = () => {
       setShowSuccessModal(false);
@@ -906,6 +930,48 @@ const ListBikePage = () => {
           </div>
         </div>
 
+        {/* Terms Acceptance */}
+        <div className="p-4 bg-blue-50 rounded-xl border border-blue-200 mb-4">
+          <div className="flex items-start gap-3">
+            <FileText className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-blue-900 mb-2">Terms of Listing</p>
+              <p className="text-sm text-blue-700 mb-3">
+                Before listing your bike, you must read and accept our Terms of Listing. This covers platform commission, lister responsibilities, and payout policies.
+              </p>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => {
+                    if (!termsAccepted && !e.target.checked) return;
+                    if (!termsAccepted) {
+                      setTermsModalOpen(true);
+                      return;
+                    }
+                    setTermsAccepted(e.target.checked);
+                    setSubmitError(null);
+                  }}
+                  className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-blue-900">
+                  I have read and accept the Terms of Listing
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Submit Error Display */}
+        {submitError && (
+          <div className="p-4 bg-red-50 rounded-xl border border-red-200 mb-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-700">{submitError}</p>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-start gap-3 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
           <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
           <div>
@@ -982,7 +1048,7 @@ const ListBikePage = () => {
               ) : (
                 <button
                   onClick={handleSubmit}
-                  disabled={isSubmitting || photoPreview.length < 1}
+                  disabled={isSubmitting || photoPreview.length < 1 || !termsAccepted}
                   className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold hover:shadow-lg hover:shadow-green-500/30 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
@@ -1002,6 +1068,22 @@ const ListBikePage = () => {
           </div>
         </div>
       </div>
+
+      {/* Terms Acceptance Modal */}
+      <TermsAcceptanceModal
+        isOpen={termsModalOpen}
+        onClose={() => setTermsModalOpen(false)}
+        termsType="listing"
+        onAccept={async () => {
+          setTermsAccepted(true);
+          setSubmitError(null);
+          try {
+            await bikeService.acceptTerms('listing');
+          } catch (err) {
+            console.error('Terms accept API error:', err);
+          }
+        }}
+      />
 
       {/* Success Modal */}
       {showSuccessModal && createdListingCode && (

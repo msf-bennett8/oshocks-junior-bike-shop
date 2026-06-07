@@ -124,11 +124,11 @@ const MyBikeHiresPage = () => {
                         </span>
                         <span className="flex items-center gap-1">
                           <DollarSign className="w-3 h-3" />
-                          KSh {Number(booking.total_price).toLocaleString()}
+                          KSh {Number(booking.grand_total).toLocaleString()}
                         </span>
                         <span className="flex items-center gap-1">
                           <MapPin className="w-3 h-3" />
-                          {booking.bike?.owner?.name}
+                          {booking.bike?.owner_name || booking.bike?.owner?.name || 'Unknown'}
                         </span>
                       </div>
                       <button

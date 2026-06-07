@@ -9,6 +9,7 @@ class Payment extends Model
     protected $fillable = [
         'order_id',
         'event_registration_id',
+        'booking_code',
         'payment_for',
         'seller_id',
         'sale_channel',
