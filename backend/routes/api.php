@@ -769,6 +769,7 @@ Route::prefix('v1/bike-rental-bookings')->middleware(['auth:sanctum', 'audit', '
         Route::get('/stats', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'stats']);
         Route::get('/pending-recirculation', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'pendingRecirculation']);
         Route::post('/{bookingCode}/recirculate', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'recirculate']);
+        Route::post('/{bookingCode}/return-to-fleet', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'returnToFleet']);
         Route::post('/{bookingCode}/apply-fine', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'applyFine']);
         Route::post('/{bookingCode}/remove-fine', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'removeFine']);
         Route::post('/{bookingCode}/refund-deposit', [\App\Http\Controllers\Api\Admin\BikeBookingModerationController::class, 'refundDeposit']);

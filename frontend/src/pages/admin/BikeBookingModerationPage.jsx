@@ -15,9 +15,10 @@ const TABS = [
   { key: 'all', label: 'All Bookings', icon: Bike },
   { key: 'active', label: 'Active Rentals', icon: Clock },
   { key: 'pending_payment', label: 'Pending Payment', icon: DollarSign },
+  { key: 'returned', label: 'Returned (Awaiting Inspection)', icon: RotateCcw },
   { key: 'completed', label: 'Completed', icon: CheckCircle },
   { key: 'overdue', label: 'Overdue', icon: AlertTriangle },
-  { key: 'pending_recirculation', label: 'Pending Recirculation', icon: RotateCcw },
+  { key: 'pending_recirculation', label: 'Pending Fleet Return', icon: RotateCcw },
 ];
 
 const BikeBookingModerationPage = () => {
@@ -60,7 +61,13 @@ const BikeBookingModerationPage = () => {
         per_page: perPage,
       };
       if (activeTab !== 'all') {
-        params.status = activeTab === 'overdue' || activeTab === 'pending_recirculation' ? 'active' : activeTab;
+        if (activeTab === 'overdue') {
+          params.status = 'active';
+        } else if (activeTab === 'pending_recirculation') {
+          params.status = 'returned';
+        } else {
+          params.status = activeTab;
+        }
       }
       if (searchQuery) params.search = searchQuery;
 
@@ -74,7 +81,7 @@ const BikeBookingModerationPage = () => {
       if (activeTab === 'overdue') {
         data = data.filter(b => new Date(b.end_datetime) < now && b.status === 'active');
       } else if (activeTab === 'pending_recirculation') {
-        data = data.filter(b => new Date(b.end_datetime) < now && !b.recirculated);
+        data = data.filter(b => b.status === 'returned' && !b.recirculated);
       }
 
       setBookings(data);
@@ -123,6 +130,28 @@ const BikeBookingModerationPage = () => {
     });
   };
 
+  const handleReturnToFleet = (bookingCode) => {
+    openModal({
+      type: 'confirm',
+      title: 'Return to Fleet',
+      message: 'Has the bike been inspected and is ready to return to fleet? This will release the deposit hold.',
+      onConfirm: async () => {
+        closeModal();
+        try {
+          setActionLoading(true);
+          await bikeService.returnToFleet(bookingCode);
+          toast.success('Bike returned to fleet and deposit released');
+          fetchBookings();
+          fetchStats();
+        } catch (err) {
+          toast.error(err.response?.data?.message || 'Failed to return to fleet');
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
+  };
+
   const handleRefundDeposit = (bookingCode) => {
     openModal({
       type: 'confirm',
@@ -153,8 +182,8 @@ const BikeBookingModerationPage = () => {
       pending_payment: { label: 'Pending Payment', color: 'yellow', icon: DollarSign },
       confirmed: { label: 'Confirmed', color: 'blue', icon: CheckCircle },
       active: { label: 'Active', color: 'indigo', icon: Clock },
-      returned: { label: 'Returned', color: 'orange', icon: RotateCcw },
-      completed: { label: 'Completed', color: 'green', icon: CheckCircle },
+      returned: { label: 'Returned — Awaiting Inspection', color: 'orange', icon: RotateCcw },
+      completed: { label: 'Completed — In Fleet', color: 'green', icon: CheckCircle },
       cancelled: { label: 'Cancelled', color: 'gray', icon: Ban },
       disputed: { label: 'Disputed', color: 'red', icon: AlertTriangle },
     };
@@ -162,9 +191,13 @@ const BikeBookingModerationPage = () => {
   };
 
   const canRecirculate = (booking) => {
-    return booking.status === 'active' && 
-           new Date(booking.end_datetime) < new Date() && 
+    return booking.status === 'active' &&
+           new Date(booking.end_datetime) < new Date() &&
            !booking.recirculated;
+  };
+
+  const canReturnToFleet = (booking) => {
+    return booking.status === 'returned' && !booking.recirculated;
   };
 
   const canRefundDeposit = (booking) => {
@@ -365,9 +398,19 @@ const BikeBookingModerationPage = () => {
                               <button
                                 onClick={() => handleRecirculate(booking.booking_code)}
                                 disabled={actionLoading}
-                                className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-medium hover:bg-green-200 flex items-center gap-1 transition-colors"
+                                className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-xs font-medium hover:bg-orange-200 flex items-center gap-1 transition-colors"
                               >
                                 <RotateCcw className="w-3 h-3" />
+                                Mark Returned
+                              </button>
+                            )}
+                            {canReturnToFleet(booking) && (
+                              <button
+                                onClick={() => handleReturnToFleet(booking.booking_code)}
+                                disabled={actionLoading}
+                                className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-medium hover:bg-green-200 flex items-center gap-1 transition-colors"
+                              >
+                                <Check className="w-3 h-3" />
                                 Return to Fleet
                               </button>
                             )}

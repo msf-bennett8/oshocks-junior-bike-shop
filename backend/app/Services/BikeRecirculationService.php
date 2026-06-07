@@ -17,16 +17,51 @@ class BikeRecirculationService
         $booking = BikeRentalBooking::findOrFail($bookingId);
         $bike = BikeRental::findOrFail($booking->bike_rental_id);
 
-        // Update booking status
+        // Only mark as physically returned — do NOT recirculate yet
         $booking->update([
             'status' => 'returned',
             'returned_at' => now(),
+        ]);
+
+        // Update bike to show it's back but pending inspection
+        $bike->update([
+            'recirculation_status' => 'pending_return',
+        ]);
+
+        return [
+            'success' => true,
+            'booking' => $booking->fresh(),
+            'bike' => $bike->fresh(),
+            'deposit_refund_eligible' => false,
+            'message' => 'Bike marked as returned. Awaiting inspection before returning to fleet.',
+        ];
+    }
+
+   /**
+     * Complete inspection and return bike to fleet/circulation
+     * This should be called after admin inspects returned bike
+     */
+    public static function returnToFleet(int $bookingId, int $adminId): array
+    {
+        $booking = BikeRentalBooking::findOrFail($bookingId);
+        $bike = BikeRental::findOrFail($booking->bike_rental_id);
+
+        if ($booking->status !== 'returned') {
+            return [
+                'success' => false,
+                'message' => 'Bike must be marked as returned before returning to fleet',
+            ];
+        }
+
+        // Update booking to completed and record recirculation
+        $booking->update([
+            'status' => 'completed',
             'recirculated' => true,
             'recirculated_at' => now(),
             'recirculated_by' => $adminId,
         ]);
 
-        // Remove availability block
+        // Remove availability block — bike is now free to book again
         BikeAvailabilityBlock::where('booking_id', $bookingId)->delete();
 
         // Update bike recirculation status
@@ -35,15 +70,12 @@ class BikeRecirculationService
             'next_available_at' => null,
         ]);
 
-        // Check if deposit should be refunded
-        $shouldRefundDeposit = true; // Admin can override this later
-
         return [
             'success' => true,
             'booking' => $booking->fresh(),
             'bike' => $bike->fresh(),
-            'deposit_refund_eligible' => $shouldRefundDeposit,
-            'message' => 'Bike marked as returned and recirculated successfully',
+            'deposit_refund_eligible' => true,
+            'message' => 'Bike inspected and returned to fleet successfully',
         ];
     }
 
@@ -72,7 +104,9 @@ class BikeRecirculationService
         $recirculated = [];
 
         foreach ($expiredBookings as $booking) {
-            $result = self::markAsReturned($booking->id, 0); // System user
+            // For expired bookings, auto-mark returned then immediately return to fleet
+            self::markAsReturned($booking->id, 0);
+            $result = self::returnToFleet($booking->id, 0);
             $recirculated[] = [
                 'booking_code' => $booking->booking_code,
                 'type' => 'normal_expired',
@@ -93,8 +127,7 @@ class BikeRecirculationService
     {
         $now = now();
 
-        $pending = BikeRentalBooking::whereIn('status', ['active', 'returned'])
-            ->where('end_datetime', '<', $now)
+        $pending = BikeRentalBooking::where('status', 'returned')
             ->where('recirculated', false)
             ->with(['bike', 'renter'])
             ->get();
@@ -119,8 +152,7 @@ class BikeRecirculationService
         $booking = BikeRentalBooking::find($bookingId);
         if (!$booking) return false;
 
-        return $booking->status === 'active' 
-            && $booking->end_datetime < now() 
+        return $booking->status === 'returned'
             && !$booking->recirculated;
     }
 }

@@ -52,8 +52,7 @@ class BikeBookingModerationController extends Controller
             'pending_payment' => BikeRentalBooking::where('status', 'pending_payment')->count(),
             'completed' => BikeRentalBooking::where('status', 'completed')->count(),
             'overdue' => BikeRentalBooking::where('status', 'active')->where('end_datetime', '<', $now)->count(),
-            'pending_recirculation' => BikeRentalBooking::where('status', 'active')
-                ->where('end_datetime', '<', $now)
+            'pending_recirculation' => BikeRentalBooking::where('status', 'returned')
                 ->where('recirculated', false)
                 ->count(),
             'total_revenue' => BikeRentalBooking::where('status', 'completed')->sum('grand_total'),
@@ -79,6 +78,23 @@ class BikeBookingModerationController extends Controller
         $booking = BikeRentalBooking::where('booking_code', $bookingCode)->firstOrFail();
 
         $result = BikeRecirculationService::markAsReturned($booking->id, $user->id);
+
+        return response()->json([
+            'success' => $result['success'],
+            'data' => $result,
+            'message' => $result['message'],
+        ]);
+     }
+
+    /**
+     * Complete inspection and return bike to fleet
+     */
+    public function returnToFleet(Request $request, string $bookingCode)
+    {
+        $user = Auth::user();
+        $booking = BikeRentalBooking::where('booking_code', $bookingCode)->firstOrFail();
+
+        $result = BikeRecirculationService::returnToFleet($booking->id, $user->id);
 
         return response()->json([
             'success' => $result['success'],

@@ -55,6 +55,7 @@ const bikeService = {
   getAdminBookings: (params = {}) => api.get('/admin/bike-bookings', { params }),
   getAdminBookingStats: () => api.get('/admin/bike-bookings/stats'),
   recirculateBike: (bookingCode) => api.post(`/admin/bike-bookings/${bookingCode}/recirculate`),
+  returnToFleet: (bookingCode) => api.post(`/admin/bike-bookings/${bookingCode}/return-to-fleet`),
   refundDeposit: (bookingCode) => api.post(`/admin/bike-bookings/${bookingCode}/refund-deposit`),
   applyFine: (bookingCode, amount) => api.post(`/admin/bike-bookings/${bookingCode}/apply-fine`, { amount }),
   removeFine: (bookingCode) => api.post(`/admin/bike-bookings/${bookingCode}/remove-fine`),

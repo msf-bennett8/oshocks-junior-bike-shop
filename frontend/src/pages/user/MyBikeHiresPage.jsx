@@ -10,11 +10,14 @@ import { useAuth } from '../../context/AuthContext';
 import BikeRentalTicketModal from '../bikes/BikeRentalTicketModal';
 
 const STATUS_CONFIG = {
-  pending: { label: 'Pending', color: 'yellow', icon: Clock },
+  pending_payment: { label: 'Pending Payment', color: 'yellow', icon: Clock },
   confirmed: { label: 'Confirmed', color: 'green', icon: CheckCircle },
   active: { label: 'Active', color: 'blue', icon: Bike },
+  returned: { label: 'Returned — Awaiting Inspection', color: 'orange', icon: Clock },
   completed: { label: 'Completed', color: 'emerald', icon: CheckCircle },
   cancelled: { label: 'Cancelled', color: 'red', icon: XCircle },
+  disputed: { label: 'Disputed', color: 'red', icon: AlertTriangle },
+  refunded: { label: 'Refunded', color: 'gray', icon: XCircle },
 };
 
 const MyBikeHiresPage = () => {
