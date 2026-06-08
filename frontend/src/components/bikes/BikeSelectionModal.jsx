@@ -4,15 +4,15 @@ import bikeService from '../../services/bikeService';
 import resourceService from '../../services/resourceService';
 import { BIKE_CATEGORY_CONFIG } from '../../data/cyclingMockData';
 
-const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1 }) => {
+const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1, initialSelectedBike = null, initialSelectedResources = [] }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedSize, setSelectedSize] = useState('all');
-  const [selectedBike, setSelectedBike] = useState(null);
+  const [selectedBike, setSelectedBike] = useState(initialSelectedBike);
   const [bikes, setBikes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [resourceAddOns, setResourceAddOns] = useState([]);
-  const [selectedResourceAddOns, setSelectedResourceAddOns] = useState([]);
+  const [selectedResourceAddOns, setSelectedResourceAddOns] = useState(initialSelectedResources);
   const [resourceLoading, setResourceLoading] = useState(false);
   const [insuranceOptIn, setInsuranceOptIn] = useState(true);
   const [frameSize, setFrameSize] = useState('');
@@ -53,6 +53,14 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
 
     fetchBikes();
   }, [isOpen, event]);
+
+    // Sync initial selected bike/resources when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedBike(initialSelectedBike);
+      setSelectedResourceAddOns(initialSelectedResources);
+    }
+  }, [isOpen, initialSelectedBike, initialSelectedResources]);
 
   // Fetch available resource add-ons from DB (helmets, lights, locks, etc.)
   useEffect(() => {

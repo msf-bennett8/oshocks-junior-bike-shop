@@ -156,9 +156,17 @@ const EventBookingPage = () => {
   }, [booking]);
 
   // ─── Handle Resource Selection ───
-  const handleResourceConfirm = useCallback(({ resources, resourcesTotalPrice, grandTotal }) => {
-    // Resources are already in booking.selectedResources via the modal's state
-    // The modal updates the parent's state through the hook
+  const handleResourceConfirm = useCallback(({ resources }) => {
+    // Clear existing resources first, then add all from modal
+    booking.setSelectedResources([]);
+    // Use setTimeout to ensure clear happens before add
+    setTimeout(() => {
+      if (resources && resources.length > 0) {
+        resources.forEach(item => {
+          booking.addResource(item.resourceItem, item.quantity);
+        });
+      }
+    }, 0);
     booking.setShowResourceSelector(false);
   }, [booking]);
 
@@ -475,7 +483,7 @@ const EventBookingPage = () => {
                   {/* Selected Bike Summary */}
                   {bikeOption === 'rent' && selectedBike && (
                     <div className="mt-4 p-4 bg-orange-50 rounded-xl border border-orange-200">
-                      <div className="flex items-center gap-3 mb-3">
+                      <div className="flex items-center gap-3">
                         <img src={selectedBike.images?.[0] || selectedBike.photos?.[0]?.url} alt={selectedBike.name} className="w-16 h-16 rounded-lg object-cover" />
                         <div className="flex-1">
                           <p className="font-semibold text-gray-900">{selectedBike.name}</p>
@@ -493,21 +501,9 @@ const EventBookingPage = () => {
                         </button>
                       </div>
 
-                      {/* Selected Resource Chips from Bike Modal */}
-                      {selectedResources.length > 0 && (
-                        <div className="mb-3">
-                          <SelectedResourceChips
-                            selectedResources={selectedResources}
-                            onRemove={removeResource}
-                            onQuantityChange={updateResourceQuantity}
-                            eventDurationDays={eventDurationDays}
-                          />
-                        </div>
-                      )}
-
                       <button
                         onClick={() => setShowBikeModal(true)}
-                        className="text-sm text-orange-600 font-semibold hover:underline flex items-center gap-1"
+                        className="mt-3 text-sm text-orange-600 font-semibold hover:underline flex items-center gap-1"
                       >
                         <Bike className="w-4 h-4" />
                         Browse more bikes or change equipment
@@ -1218,6 +1214,8 @@ const EventBookingPage = () => {
           onSelect={handleBikeSelect}
           event={event}
           participants={participants}
+          initialSelectedBike={selectedBike}
+          initialSelectedResources={selectedResources}
         />
 
         <EventResourceSelector
@@ -1226,7 +1224,10 @@ const EventBookingPage = () => {
           onConfirm={handleResourceConfirm}
           event={event}
           participants={participants}
-          initialSelectedResources={selectedResources}
+          initialSelectedResources={selectedResources.map(r => ({
+            ...r.resourceItem,
+            quantity: r.quantity,
+          }))}
           selectedBike={selectedBike}
         />
       </div>

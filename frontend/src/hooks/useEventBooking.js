@@ -96,7 +96,7 @@ export const useEventBooking = (event) => {
       if (existing) {
         return prev.map(r => 
           r.resourceItem.id === resourceItem.id 
-            ? { ...r, quantity: r.quantity + quantity }
+            ? { ...r, quantity }  // ← Replace, don't increment
             : r
         );
       }
