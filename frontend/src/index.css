@@ -647,3 +647,59 @@
   height: 100%;
   object-fit: cover;
 }
+
+/* ============================================================================
+   BOTTOM SHEET ANIMATIONS
+   ============================================================================ */
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Pulse animation for side indicators */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Drag handle hover effect */
+.drag-handle-hover:hover {
+  background-color: #f97316;
+  transform: scaleX(1.2);
+  transition: all 0.2s ease;
+}
+
+/* Prevent body scroll when bottom sheet is open */
+body.bottom-sheet-open {
+  overflow: hidden;
+  touch-action: none;
+}
+
+/* Smooth height transitions */
+.will-change-height {
+  will-change: height;
+}
+
+/* iOS momentum scrolling */
+.overscroll-contain {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}

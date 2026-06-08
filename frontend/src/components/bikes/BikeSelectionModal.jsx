@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { X, Search, Filter, MapPin, Star, Shield, Check, Bike, Clock, Info, Plus, Minus, Package } from 'lucide-react';
 import bikeService from '../../services/bikeService';
 import resourceService from '../../services/resourceService';
@@ -18,6 +18,10 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
   const [frameSize, setFrameSize] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewExpanded, setPreviewExpanded] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartY = useRef(0);
+  const dragStartExpanded = useRef(false);
 
   // Fetch available bikes WITH conflict checking for event dates
   useEffect(() => {
@@ -209,9 +213,9 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-6xl max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+      <div className="relative w-full max-w-6xl h-[90vh] lg:h-auto lg:max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white">
+        <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-200 bg-white flex-shrink-0">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Select Your Bike</h2>
             <p className="text-sm text-gray-500">
@@ -223,9 +227,9 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
           </button>
         </div>
 
-        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden relative">
           {/* Left: Bike List */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-4 lg:p-6 pb-32 lg:pb-6">
             {/* Search & Filters */}
             <div className="mb-6 space-y-3">
               <div className="relative">
@@ -405,214 +409,477 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
             )}
           </div>
 
-          {/* Right: Details & Add-ons */}
+          {/* ─── BOTTOM SHEET PREVIEW (Mobile) / SIDE PANEL (Desktop) ─── */}
           {selectedBike && (
-            <div className="w-full lg:w-96 border-l border-gray-200 bg-gray-50 overflow-y-auto p-6">
-              <h3 className="font-bold text-gray-900 mb-4">Selected Bike</h3>
+            <>
+              {/* Mobile: Draggable Bottom Sheet */}
+              <div 
+                className="lg:hidden fixed bottom-0 left-0 right-0 z-20 bg-white rounded-t-2xl shadow-[0_-8px_30px_rgba(0,0,0,0.15)] flex flex-col will-change-transform"
+                style={{
+                  height: previewExpanded ? '75vh' : 'auto',
+                  transition: isDragging ? 'none' : 'height 0.3s ease-out',
+                }}
+              >
+                {/* ─── DRAGGABLE HEADER ─── */}
+                <div 
+                  className="flex-shrink-0 select-none relative touch-none"
+                  onTouchStart={(e) => {
+                    setIsDragging(true);
+                    dragStartY.current = e.touches[0].clientY;
+                    dragStartExpanded.current = previewExpanded;
+                  }}
+                  onTouchMove={(e) => {
+                    if (!isDragging) return;
+                    const delta = dragStartY.current - e.touches[0].clientY;
+                    // Swipe up > 50px expands, swipe down > 50px collapses
+                    if (delta > 50 && !dragStartExpanded.current) {
+                      setPreviewExpanded(true);
+                    } else if (delta < -50 && dragStartExpanded.current) {
+                      setPreviewExpanded(false);
+                    }
+                  }}
+                  onTouchEnd={() => setIsDragging(false)}
+                  onClick={() => !isDragging && setPreviewExpanded(!previewExpanded)}
+                >
+                  {/* Drag Pill */}
+                  <div className="flex justify-center pt-3 pb-2">
+                    <div className="w-12 h-1.5 bg-orange-500 rounded-full" />
+                  </div>
 
-              {/* Selected Bike Summary */}
-              <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <img src={selectedBike.images?.[0] || selectedBike.photos?.[0]?.url || 'https://via.placeholder.com/400x300?text=No+Image'} alt={selectedBike.name} className="w-16 h-16 rounded-lg object-cover" />
-                  <div>
-                    <p className="font-bold text-gray-900">{selectedBike.name}</p>
-                    <p className="text-sm text-gray-500">{selectedBike.brand} {selectedBike.model}</p>
+                  {/* Side Border Indicators - visible when collapsed */}
+                  {!previewExpanded && (
+                    <>
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
+                        <div className="w-0.5 h-8 bg-gradient-to-b from-transparent via-orange-400 to-transparent rounded-full" />
+                        <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                      </div>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
+                        <div className="w-0.5 h-8 bg-gradient-to-b from-transparent via-orange-400 to-transparent rounded-full" />
+                        <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Summary Bar */}
+                  <div className="px-5 pb-4">
+                    <div className="flex items-center gap-4">
+                      <img 
+                        src={selectedBike.images?.[0] || selectedBike.photos?.[0]?.url || 'https://via.placeholder.com/400x300?text=No+Image'} 
+                        alt={selectedBike.name} 
+                        className="w-14 h-14 rounded-xl object-cover flex-shrink-0" 
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 text-base truncate">{selectedBike.name}</p>
+                        <p className="text-sm text-gray-500">{selectedBike.brand} {selectedBike.model}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-lg font-bold text-orange-600">
+                          KSh {calculateBikeTotal(selectedBike).grandTotal.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {previewExpanded ? 'Swipe down ↓' : 'Swipe up ↑'}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Frame Size</span>
-                    <span className="font-semibold uppercase">{selectedBike.frame_size}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Condition</span>
-                    <span className="font-semibold capitalize">{selectedBike.condition || selectedBike.bike_condition}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Daily Rate</span>
-                    <span className="font-semibold">KSh {(selectedBike.daily_rate || 0).toLocaleString()}</span>
-                  </div>
-                </div>
 
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">Your Frame Size</label>
-                  <select
-                    value={frameSize}
-                    onChange={(e) => setFrameSize(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                  >
-                    {['xs', 's', 'm', 'l', 'xl', 'xxl'].map(size => (
-                      <option key={size} value={size}>{size.toUpperCase()}</option>
-                    ))}
-                  </select>
-                  <p className="text-xs text-gray-500 mt-1">We'll match you with the right size</p>
-                </div>
-              </div>
-
-              {/* Dynamic Resource Add-ons from DB */}
-              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Package className="w-5 h-5 text-orange-500" />
-                Equipment Add-ons
-              </h3>
-              
-              {resourceLoading ? (
-                <div className="flex justify-center py-4">
-                  <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : resourceAddOns.length === 0 ? (
-                <p className="text-sm text-gray-400 mb-6">No additional equipment available for these dates</p>
-              ) : (
-                <div className="space-y-3 mb-6">
-                  {resourceAddOns.map(resource => {
-                    const isSelected = selectedResourceAddOns.some(r => r.resourceItem.id === resource.id);
-                    const selectedItem = selectedResourceAddOns.find(r => r.resourceItem.id === resource.id);
-                    const unitPrice = resource.current_price || resource.base_price || 0;
-                    const isLowStock = resource.available_for_request <= (resource.low_stock_threshold || 5);
-
-                    return (
-                      <div
-                        key={resource.id}
-                        className={`p-3 rounded-xl border-2 transition-all ${
-                          isSelected ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white'
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleResourceAddOn(resource)}
-                            className="w-5 h-5 text-orange-500 rounded mt-0.5"
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <p className="text-sm font-semibold text-gray-900">{resource.name}</p>
-                              <span className="text-sm font-bold text-gray-900">KSh {unitPrice.toLocaleString()}</span>
-                            </div>
-                            <p className="text-xs text-gray-500 mb-2">{resource.description}</p>
-                            
-                            {isSelected && (
-                              <div className="flex items-center gap-2 mt-2">
-                                <button
-                                  onClick={() => updateResourceQuantity(resource.id, -1)}
-                                  className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center text-gray-600"
-                                >
-                                  <Minus className="w-3 h-3" />
-                                </button>
-                                <span className="text-sm font-bold w-6 text-center">{selectedItem?.quantity || 1}</span>
-                                <button
-                                  onClick={() => updateResourceQuantity(resource.id, 1)}
-                                  disabled={selectedItem?.quantity >= resource.available_for_request}
-                                  className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center text-gray-600 disabled:opacity-30"
-                                >
-                                  <Plus className="w-3 h-3" />
-                                </button>
-                                <span className="text-xs text-gray-400">
-                                  of {resource.available_for_request} available
-                                </span>
-                              </div>
-                            )}
-
-                            {isLowStock && !isSelected && (
-                              <p className="text-xs text-orange-600 mt-1 flex items-center gap-1">
-                                <Info className="w-3 h-3" />
-                                {resource.remaining_alert || `Only ${resource.available_for_request} left`}
-                              </p>
-                            )}
+                {/* ─── EXPANDABLE CONTENT ─── */}
+                <div 
+                  className="flex-1 overflow-y-auto bg-gray-50 transition-opacity duration-300"
+                  style={{
+                    opacity: previewExpanded ? 1 : 0,
+                    maxHeight: previewExpanded ? 'calc(75vh - 80px)' : 0,
+                    overflow: previewExpanded ? 'auto' : 'hidden',
+                  }}
+                >
+                  <div className="p-5 space-y-5">
+                    
+                    {/* Bike Details Card */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <div className="flex items-center gap-4 mb-4">
+                        <img src={selectedBike.images?.[0] || selectedBike.photos?.[0]?.url || 'https://via.placeholder.com/400x300?text=No+Image'} alt={selectedBike.name} className="w-20 h-20 rounded-xl object-cover" />
+                        <div>
+                          <p className="font-bold text-gray-900 text-lg">{selectedBike.name}</p>
+                          <p className="text-sm text-gray-500">{selectedBike.brand} {selectedBike.model}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-bold rounded-full uppercase">
+                              {selectedBike.frame_size}
+                            </span>
+                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full capitalize">
+                              {selectedBike.condition || 'good'}
+                            </span>
                           </div>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Insurance */}
-              <div className="mb-6">
-                <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                  insuranceOptIn ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white'
-                }`}>
-                  <input
-                    type="checkbox"
-                    checked={insuranceOptIn}
-                    onChange={(e) => setInsuranceOptIn(e.target.checked)}
-                    className="w-5 h-5 text-green-500 rounded"
-                  />
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-900">Ride Insurance</p>
-                    <p className="text-xs text-gray-500">Theft, damage & accident coverage</p>
-                  </div>
-                  <span className="text-sm font-bold text-gray-900">+KSh {(200 * eventDurationDays * participants).toLocaleString()}</span>
-                </label>
-              </div>
-
-              {/* Deposit Notice */}
-              <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-200 mb-6">
-                <div className="flex items-start gap-3">
-                  <Shield className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-yellow-900">Security Deposit</p>
-                    <p className="text-sm text-yellow-700">
-                      KSh {((selectedBike.security_deposit || 0) * participants).toLocaleString()} held during rental. Released when bike is returned in good condition.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Price Breakdown */}
-              <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-                <h4 className="font-bold text-gray-900 mb-3">Price Breakdown</h4>
-                {(() => {
-                  const totals = calculateBikeTotal(selectedBike);
-                  return (
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Bike Rental ({eventDurationDays} days × {participants})</span>
-                        <span className="font-medium">KSh {totals.baseRental.toLocaleString()}</span>
+                      
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between py-2 border-b border-gray-100">
+                          <span className="text-gray-600">Daily Rate</span>
+                          <span className="font-semibold">KSh {(selectedBike.daily_rate || 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between py-2 border-b border-gray-100">
+                          <span className="text-gray-600">Duration</span>
+                          <span className="font-semibold">{eventDurationDays} day{eventDurationDays > 1 ? 's' : ''} × {participants} rider{participants > 1 ? 's' : ''}</span>
+                        </div>
+                        <div className="flex justify-between py-2">
+                          <span className="text-gray-600">Base Rental</span>
+                          <span className="font-bold text-orange-600">KSh {((selectedBike.daily_rate || 0) * eventDurationDays * participants).toLocaleString()}</span>
+                        </div>
                       </div>
-                      {totals.resourceAddOnsTotal > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Equipment Add-ons</span>
-                          <span className="font-medium">KSh {totals.resourceAddOnsTotal.toLocaleString()}</span>
+
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <label className="text-sm font-semibold text-gray-700 mb-2 block">Your Frame Size</label>
+                        <select
+                          value={frameSize}
+                          onChange={(e) => setFrameSize(e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                        >
+                          {['xs', 's', 'm', 'l', 'xl', 'xxl'].map(size => (
+                            <option key={size} value={size}>{size.toUpperCase()}</option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-gray-500 mt-2">We'll match you with the right size</p>
+                      </div>
+                    </div>
+
+                    {/* Equipment Add-ons */}
+                    <div>
+                      <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2 text-base">
+                        <Package className="w-5 h-5 text-orange-500" />
+                        Equipment Add-ons
+                      </h3>
+                      
+                      {resourceLoading ? (
+                        <div className="flex justify-center py-6">
+                          <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      ) : resourceAddOns.length === 0 ? (
+                        <p className="text-sm text-gray-400 py-4">No additional equipment available for these dates</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {resourceAddOns.map(resource => {
+                            const isSelected = selectedResourceAddOns.some(r => r.resourceItem.id === resource.id);
+                            const selectedItem = selectedResourceAddOns.find(r => r.resourceItem.id === resource.id);
+                            const unitPrice = resource.current_price || resource.base_price || 0;
+                            const isLowStock = resource.available_for_request <= (resource.low_stock_threshold || 5);
+
+                            return (
+                              <div
+                                key={resource.id}
+                                className={`p-4 rounded-xl border-2 transition-all ${
+                                  isSelected ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white'
+                                }`}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => toggleResourceAddOn(resource)}
+                                    className="w-5 h-5 text-orange-500 rounded mt-1"
+                                  />
+                                  <div className="flex-1">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <p className="font-semibold text-gray-900">{resource.name}</p>
+                                      <span className="font-bold text-gray-900">KSh {unitPrice.toLocaleString()}</span>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mb-3">{resource.description}</p>
+                                    
+                                    {isSelected && (
+                                      <div className="flex items-center gap-3 mt-2">
+                                        <button
+                                          onClick={() => updateResourceQuantity(resource.id, -1)}
+                                          className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200"
+                                        >
+                                          <Minus className="w-4 h-4" />
+                                        </button>
+                                        <span className="text-base font-bold w-8 text-center">{selectedItem?.quantity || 1}</span>
+                                        <button
+                                          onClick={() => updateResourceQuantity(resource.id, 1)}
+                                          disabled={selectedItem?.quantity >= resource.available_for_request}
+                                          className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 disabled:opacity-30"
+                                        >
+                                          <Plus className="w-4 h-4" />
+                                        </button>
+                                        <span className="text-xs text-gray-400">
+                                          of {resource.available_for_request} available
+                                        </span>
+                                      </div>
+                                    )}
+
+                                    {isLowStock && !isSelected && (
+                                      <p className="text-xs text-orange-600 mt-2 flex items-center gap-1">
+                                        <Info className="w-3 h-3" />
+                                        {resource.remaining_alert || `Only ${resource.available_for_request} left`}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
-                      {totals.insurance > 0 && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Insurance</span>
-                          <span className="font-medium">KSh {totals.insurance.toLocaleString()}</span>
+                    </div>
+
+                    {/* Insurance */}
+                    <div>
+                      <label className={`flex items-center gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all ${
+                        insuranceOptIn ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white'
+                      }`}>
+                        <input
+                          type="checkbox"
+                          checked={insuranceOptIn}
+                          onChange={(e) => setInsuranceOptIn(e.target.checked)}
+                          className="w-6 h-6 text-green-500 rounded"
+                        />
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900 text-base">Ride Insurance</p>
+                          <p className="text-xs text-gray-500">Theft, damage & accident coverage</p>
                         </div>
-                      )}
-                      <div className="border-t border-gray-100 pt-2 mt-2">
-                        <div className="flex justify-between font-bold text-gray-900">
-                          <span>Total Added to Booking</span>
-                          <span className="text-orange-600">KSh {totals.grandTotal.toLocaleString()}</span>
+                        <span className="text-base font-bold text-gray-900">+KSh {(200 * eventDurationDays * participants).toLocaleString()}</span>
+                      </label>
+                    </div>
+
+                    {/* Deposit Notice */}
+                    <div className="p-5 bg-yellow-50 rounded-xl border border-yellow-200">
+                      <div className="flex items-start gap-3">
+                        <Shield className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-semibold text-yellow-900 text-sm">Security Deposit</p>
+                          <p className="text-sm text-yellow-700 mt-1">
+                            KSh {((selectedBike.security_deposit || 0) * participants).toLocaleString()} held during rental. Released when bike is returned in good condition.
+                          </p>
                         </div>
                       </div>
                     </div>
-                  );
-                })()}
+
+                    {/* Price Breakdown */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <h4 className="font-bold text-gray-900 mb-4 text-base">Price Breakdown</h4>
+                      {(() => {
+                        const totals = calculateBikeTotal(selectedBike);
+                        return (
+                          <div className="space-y-3 text-sm">
+                            <div className="flex justify-between py-2">
+                              <span className="text-gray-600">Bike Rental</span>
+                              <span className="font-medium">KSh {totals.baseRental.toLocaleString()}</span>
+                            </div>
+                            {totals.resourceAddOnsTotal > 0 && (
+                              <div className="flex justify-between py-2">
+                                <span className="text-gray-600">Equipment Add-ons</span>
+                                <span className="font-medium">KSh {totals.resourceAddOnsTotal.toLocaleString()}</span>
+                              </div>
+                            )}
+                            {totals.insurance > 0 && (
+                              <div className="flex justify-between py-2">
+                                <span className="text-gray-600">Insurance</span>
+                                <span className="font-medium">KSh {totals.insurance.toLocaleString()}</span>
+                              </div>
+                            )}
+                            <div className="border-t-2 border-gray-200 pt-3 mt-2">
+                              <div className="flex justify-between font-bold text-lg">
+                                <span className="text-gray-900">Total Added to Booking</span>
+                                <span className="text-orange-600">KSh {totals.grandTotal.toLocaleString()}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Confirm Button */}
+                    <button
+                      onClick={handleConfirm}
+                      disabled={isSubmitting}
+                      className={`w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl text-lg transition-all flex items-center justify-center gap-2 ${
+                        isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-0.5'
+                      }`}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-6 h-6" />
+                          Confirm Bike Selection
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              {/* Confirm Button */}
-              <button
-                onClick={handleConfirm}
-                disabled={isSubmitting}
-                className={`w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${
-                  isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-xl hover:shadow-orange-500/30 hover:-translate-y-0.5'
-                }`}
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Check className="w-5 h-5" />
+              {/* Desktop: Side Panel (always expanded) */}
+              <div className="hidden lg:flex w-96 border-l border-gray-200 bg-gray-50 flex-col overflow-y-auto">
+                <div className="p-6 space-y-6">
+                  <h3 className="font-bold text-gray-900 text-lg">Selected Bike</h3>
+
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <div className="flex items-center gap-4 mb-4">
+                      <img src={selectedBike.images?.[0] || selectedBike.photos?.[0]?.url || 'https://via.placeholder.com/400x300?text=No+Image'} alt={selectedBike.name} className="w-20 h-20 rounded-xl object-cover" />
+                      <div>
+                        <p className="font-bold text-gray-900 text-lg">{selectedBike.name}</p>
+                        <p className="text-sm text-gray-500">{selectedBike.brand} {selectedBike.model}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Frame Size</span>
+                        <span className="font-semibold uppercase">{selectedBike.frame_size}</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Condition</span>
+                        <span className="font-semibold capitalize">{selectedBike.condition || selectedBike.bike_condition}</span>
+                      </div>
+                      <div className="flex justify-between py-2">
+                        <span className="text-gray-600">Daily Rate</span>
+                        <span className="font-semibold">KSh {(selectedBike.daily_rate || 0).toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <label className="text-sm font-semibold text-gray-700 mb-2 block">Your Frame Size</label>
+                      <select
+                        value={frameSize}
+                        onChange={(e) => setFrameSize(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-orange-500"
+                      >
+                        {['xs', 's', 'm', 'l', 'xl', 'xxl'].map(size => (
+                          <option key={size} value={size}>{size.toUpperCase()}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Equipment Add-ons */}
+                  <div>
+                    <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                      <Package className="w-5 h-5 text-orange-500" />
+                      Equipment Add-ons
+                    </h3>
+                    
+                    {resourceLoading ? (
+                      <div className="flex justify-center py-4">
+                        <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : resourceAddOns.length === 0 ? (
+                      <p className="text-sm text-gray-400">No additional equipment available</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {resourceAddOns.map(resource => {
+                          const isSelected = selectedResourceAddOns.some(r => r.resourceItem.id === resource.id);
+                          const selectedItem = selectedResourceAddOns.find(r => r.resourceItem.id === resource.id);
+                          const unitPrice = resource.current_price || resource.base_price || 0;
+
+                          return (
+                            <div
+                              key={resource.id}
+                              className={`p-4 rounded-xl border-2 transition-all ${
+                                isSelected ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white'
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => toggleResourceAddOn(resource)}
+                                  className="w-5 h-5 text-orange-500 rounded mt-1"
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <p className="font-semibold text-gray-900">{resource.name}</p>
+                                    <span className="font-bold">KSh {unitPrice.toLocaleString()}</span>
+                                  </div>
+                                  <p className="text-xs text-gray-500">{resource.description}</p>
+                                  
+                                  {isSelected && (
+                                    <div className="flex items-center gap-3 mt-2">
+                                      <button onClick={() => updateResourceQuantity(resource.id, -1)} className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                                        <Minus className="w-4 h-4" />
+                                      </button>
+                                      <span className="font-bold w-8 text-center">{selectedItem?.quantity || 1}</span>
+                                      <button onClick={() => updateResourceQuantity(resource.id, 1)} className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                                        <Plus className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Insurance */}
+                  <label className={`flex items-center gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all ${
+                    insuranceOptIn ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white'
+                  }`}>
+                    <input type="checkbox" checked={insuranceOptIn} onChange={(e) => setInsuranceOptIn(e.target.checked)} className="w-6 h-6 text-green-500 rounded" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-900">Ride Insurance</p>
+                      <p className="text-xs text-gray-500">Theft, damage & accident coverage</p>
+                    </div>
+                    <span className="font-bold">+KSh {(200 * eventDurationDays * participants).toLocaleString()}</span>
+                  </label>
+
+                  {/* Deposit */}
+                  <div className="p-5 bg-yellow-50 rounded-xl border border-yellow-200">
+                    <div className="flex items-start gap-3">
+                      <Shield className="w-6 h-6 text-yellow-600 flex-shrink-0" />
+                      <div>
+                        <p className="font-semibold text-yellow-900 text-sm">Security Deposit</p>
+                        <p className="text-sm text-yellow-700 mt-1">
+                          KSh {((selectedBike.security_deposit || 0) * participants).toLocaleString()} held during rental.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Price Breakdown */}
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <h4 className="font-bold text-gray-900 mb-4">Price Breakdown</h4>
+                    {(() => {
+                      const totals = calculateBikeTotal(selectedBike);
+                      return (
+                        <div className="space-y-3 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Bike Rental</span>
+                            <span className="font-medium">KSh {totals.baseRental.toLocaleString()}</span>
+                          </div>
+                          {totals.resourceAddOnsTotal > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Equipment</span>
+                              <span className="font-medium">KSh {totals.resourceAddOnsTotal.toLocaleString()}</span>
+                            </div>
+                          )}
+                          <div className="border-t-2 border-gray-200 pt-3">
+                            <div className="flex justify-between font-bold text-lg">
+                              <span>Total</span>
+                              <span className="text-orange-600">KSh {totals.grandTotal.toLocaleString()}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Confirm Button */}
+                  <button
+                    onClick={handleConfirm}
+                    disabled={isSubmitting}
+                    className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl text-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                  >
+                    <Check className="w-6 h-6" />
                     Confirm Bike Selection
-                  </>
-                )}
-              </button>
-            </div>
+                  </button>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>
