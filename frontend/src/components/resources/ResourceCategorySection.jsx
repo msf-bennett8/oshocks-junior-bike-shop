@@ -90,7 +90,7 @@ const ResourceCategorySection = ({
               <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {resources.map(resource => {
                 const status = getAvailabilityStatus(resource);
                 const isSelected = selectedMap.has(resource.id);
@@ -139,16 +139,16 @@ const ResourceCategorySection = ({
 
                     {/* Content */}
                     <div className="p-3">
-                      <h4 className="font-semibold text-gray-900 text-sm mb-1">{resource.name}</h4>
+                      <h4 className="font-semibold text-gray-900 text-sm mb-1 truncate">{resource.name}</h4>
                       <p className="text-xs text-gray-500 line-clamp-2 mb-2">{resource.description}</p>
                       
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <span className="text-lg font-bold text-gray-900">KSh {unitPrice.toLocaleString()}</span>
+                      <div className="flex items-center justify-between mb-2 gap-2">
+                        <div className="min-w-0">
+                          <span className="text-base sm:text-lg font-bold text-gray-900">KSh {unitPrice.toLocaleString()}</span>
                           <span className="text-xs text-gray-400">/day</span>
                         </div>
                         {isSelected && (
-                          <span className="text-sm font-bold text-orange-600">
+                          <span className="text-sm font-bold text-orange-600 whitespace-nowrap">
                             KSh {itemTotal.toLocaleString()}
                           </span>
                         )}
@@ -163,23 +163,23 @@ const ResourceCategorySection = ({
 
                       {/* Quantity selector if selected */}
                       {isSelected ? (
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
                           <button
                             onClick={() => onQuantityChange(resource.id, currentQty - 1)}
-                            className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors"
+                            className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0"
                           >
                             <Minus className="w-3 h-3" />
                           </button>
-                          <span className="text-sm font-bold text-gray-900 w-8 text-center">{currentQty}</span>
+                          <span className="text-sm font-bold text-gray-900 w-6 sm:w-8 text-center">{currentQty}</span>
                           <button
                             onClick={() => canAddMore && onQuantityChange(resource.id, currentQty + 1)}
                             disabled={!canAddMore}
-                            className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-30"
+                            className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-30 flex-shrink-0"
                           >
                             <Plus className="w-3 h-3" />
                           </button>
-                          <span className="text-xs text-gray-400 ml-1">
-                            of {maxAvailable} available
+                          <span className="text-xs text-gray-400 ml-auto truncate">
+                            of {maxAvailable}
                           </span>
                         </div>
                       ) : null}
