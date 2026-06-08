@@ -1,4 +1,3 @@
-cat << 'EOF' > frontend/src/pages/resources/ResourceBookingSuccessPage.jsx
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';

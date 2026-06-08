@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
   Package, Clock, CheckCircle, XCircle, ArrowRight, Loader,
-  Calendar, DollarSign, AlertTriangle, RotateCcw
+  Calendar, DollarSign, AlertTriangle, RotateCcw, Plus
 } from 'lucide-react';
 import resourceService from '../../services/resourceService';
 import { useToast } from '../../components/common/ToastContainer';
@@ -94,9 +94,16 @@ const MyResourceBookingsPage = () => {
             <Loader className="w-8 h-8 animate-spin text-purple-600" />
           </div>
         ) : bookings.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12">
             <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p>No bookings found</p>
+            <p className="text-gray-500 mb-4">No bookings found</p>
+            <button
+              onClick={() => navigate('/resources')}
+              className="px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors inline-flex items-center gap-2"
+            >
+              <Package className="w-5 h-5" />
+              Browse Resources
+            </button>
           </div>
         ) : (
           <div className="space-y-4">
@@ -175,6 +182,14 @@ const MyResourceBookingsPage = () => {
             ))}
           </div>
         )}
+        {/* FAB - Add Booking */}
+        <button
+          onClick={() => navigate('/resources')}
+          className="fixed bottom-6 right-6 w-14 h-14 bg-purple-600 text-white rounded-full shadow-lg hover:bg-purple-700 transition-all hover:scale-110 flex items-center justify-center z-50"
+          title="Book a Resource"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
       </div>
     </div>
   );

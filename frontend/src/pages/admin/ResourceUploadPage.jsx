@@ -80,7 +80,12 @@ const ResourceUploadPage = () => {
       const data = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
         if (value !== '' && value !== null && value !== undefined) {
-          data.append(key, value);
+          // Convert booleans to "1"/"0" for Laravel boolean validation
+          if (typeof value === 'boolean') {
+            data.append(key, value ? '1' : '0');
+          } else {
+            data.append(key, value);
+          }
         }
       });
       data.append('resource_type', resourceType);

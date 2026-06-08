@@ -273,6 +273,7 @@ const Navbar = () => {
         items: [
           { name: 'Home', link: '/', icon: Home },
           { name: 'Shop', link: '/shop', icon: Package },
+          { name: 'Equipment & Services', link: '/resources', icon: Package },
           { name: 'Services', link: '/services', icon: Wrench },
           { name: 'About', link: '/about', icon: Info },
           { name: 'Contact', link: '/contact', icon: Mail },

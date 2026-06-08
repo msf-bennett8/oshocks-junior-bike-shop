@@ -174,6 +174,7 @@ const ResourceBookingModerationPage = lazy(() => import('./pages/admin/ResourceB
 const ResourceUploadPage = lazy(() => import('./pages/admin/ResourceUploadPage'));
 const ResourceDetailPage = lazy(() => import('./pages/resources/ResourceDetailPage'));
 const ResourceBookingSuccessPage = lazy(() => import('./pages/resources/ResourceBookingSuccessPage'));
+const ResourcesPage = lazy(() => import('./pages/resources/ResourcesPage'));
 const MyResourceBookingsPage = lazy(() => import('./pages/user/MyResourceBookingsPage'));
 const BikeListingModerationPage = lazy(() => import('./pages/admin/BikeListingModerationPage'));
 const BikeBookingModerationPage = lazy(() => import('./pages/admin/BikeBookingModerationPage'));
@@ -1143,6 +1144,7 @@ function App() {
                 {/* ============================================
                     RESOURCE PUBLIC PAGES
                     ============================================ */}
+                <Route path="/resources" element={<ResourcesPage />} />
                 <Route path="/resources/:resourceCode" element={<ResourceDetailPage />} />
                 <Route path="/resource-bookings/:bookingCode" element={
                   <ProtectedRoute>
@@ -1159,52 +1161,6 @@ function App() {
                   <AdminRoute>
                     <BikeBookingModerationPage />
                   </AdminRoute>
-                } />
-
-                {/* ============================================
-                RESOURCE MODERATION (Admin Only)
-                ============================================ */}
-                <Route path="/admin/resource-asset-moderation" element={
-                  <AdminRoute>
-                    <ResourceAssetModerationPage />
-                  </AdminRoute>
-                } />
-
-                <Route path="/admin/resource-ancillary-moderation" element={
-                  <AdminRoute>
-                    <ResourceAncillaryModerationPage />
-                  </AdminRoute>
-                } />
-
-                <Route path="/admin/resource-booking-moderation" element={
-                  <AdminRoute>
-                    <ResourceBookingModerationPage />
-                  </AdminRoute>
-                } />
-
-                <Route path="/admin/resource-upload" element={
-                  <AdminRoute>
-                    <ResourceUploadPage />
-                  </AdminRoute>
-                } />
-
-                {/* ============================================
-                RESOURCE PUBLIC PAGES
-                ============================================ */}
-                <Route path="/resources/:resourceCode" element={<ResourceDetailPage />} />
-                <Route path="/resource-bookings/:bookingCode" element={
-                  <ProtectedRoute>
-                    <ResourceBookingSuccessPage />
-                  </ProtectedRoute>
-                } />
-
-                {/* ============================================
-                    USER RESOURCE BOOKINGS
-                    ============================================ */}
-                <Route path="/my-resource-bookings" element={
-                  <ProtectedRoute>
-                    <MyResourceBookingsPage />
-                  </ProtectedRoute>
                 } />
 
                 <Route path="/bike-bookings/:bookingCode" element={
