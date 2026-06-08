@@ -81,44 +81,80 @@ class BikeAvailabilityService
         $bikes = $query->get();
 
         return $bikes->map(function ($bike) use ($startDate, $endDate) {
-            $availability = self::checkAvailability($bike->id, $startDate, $endDate);
+            try {
+                $availability = self::checkAvailability($bike->id, $startDate, $endDate);
 
-            // Format next_available_after nicely for frontend
-            $nextAvailable = $availability['next_available_after']
-                ? Carbon::parse($availability['next_available_after'])->format('Y-m-d H:i:s')
-                : null;
+                // Format next_available_after nicely for frontend
+                $nextAvailable = $availability['next_available_after']
+                    ? Carbon::parse($availability['next_available_after'])->format('Y-m-d H:i:s')
+                    : null;
 
-            return [
-                'id' => $bike->id,
-                'listing_code' => $bike->listing_code,
-                'name' => $bike->name,
-                'brand' => $bike->brand,
-                'model' => $bike->model,
-                'category' => $bike->category,
-                'daily_rate' => $bike->daily_rate,
-                'hourly_rate' => $bike->hourly_rate,
-                'weekly_rate' => $bike->weekly_rate,
-                'monthly_rate' => $bike->monthly_rate,
-                'security_deposit' => $bike->security_deposit,
-                'images' => $bike->images,
-                'condition' => $bike->condition,
-                'features' => $bike->features,
-                'owner_name' => $bike->owner_name,
-                'owner_avatar' => $bike->owner_avatar,
-                'owner_initials' => $bike->owner_initials,
-                'is_available' => $availability['available'],
-                'next_available_after' => $availability['next_available_after'],
-                'watermark' => $availability['available'] ? null : 'Booked until ' . $availability['next_available_after'],
-                'location_address' => $bike->location_address,
-                'pickup_type' => $bike->pickup_type,
-                'delivery_fee' => $bike->delivery_fee,
-                'insurance_included' => $bike->insurance_included,
-                'recirculation_status' => $bike->recirculation_status,
-                'is_available' => $availability['available'],
-                'next_available_after' => $nextAvailable,
-                'watermark' => $availability['available'] ? null : 'Booked until ' . ($nextAvailable ? Carbon::parse($nextAvailable)->format('M j, Y g:i A') : 'unknown'),
-            ];
-        })->toArray();
+                return [
+                    'id' => $bike->id,
+                    'listing_code' => $bike->listing_code,
+                    'name' => $bike->name,
+                    'brand' => $bike->brand,
+                    'model' => $bike->model,
+                    'category' => $bike->category,
+                    'daily_rate' => $bike->daily_rate,
+                    'hourly_rate' => $bike->hourly_rate,
+                    'weekly_rate' => $bike->weekly_rate,
+                    'monthly_rate' => $bike->monthly_rate,
+                    'security_deposit' => $bike->security_deposit,
+                    'images' => $bike->images,
+                    'condition' => $bike->condition,
+                    'features' => $bike->features,
+                    'owner_name' => $bike->owner_name,
+                    'owner_avatar' => $bike->owner_avatar,
+                    'owner_initials' => $bike->owner_initials,
+                    'is_available' => $availability['available'],
+                    'next_available_after' => $nextAvailable,
+                    'watermark' => $availability['available'] ? null : 'Booked until ' . ($nextAvailable ? Carbon::parse($nextAvailable)->format('M j, Y g:i A') : 'unknown'),
+                    'location_address' => $bike->location_address,
+                    'pickup_type' => $bike->pickup_type,
+                    'delivery_fee' => $bike->delivery_fee,
+                    'insurance_included' => $bike->insurance_included,
+                    'recirculation_status' => $bike->recirculation_status,
+                    'listing_status' => $bike->listing_status,
+                    'is_available' => $availability['available'],
+                ];
+            } catch (\Exception $e) {
+                // If availability check fails for one bike, return it as unavailable rather than failing all
+                \Illuminate\Support\Facades\Log::warning('Bike availability check failed', [
+                    'bike_id' => $bike->id,
+                    'error' => $e->getMessage(),
+                ]);
+                return [
+                    'id' => $bike->id,
+                    'listing_code' => $bike->listing_code,
+                    'name' => $bike->name,
+                    'brand' => $bike->brand,
+                    'model' => $bike->model,
+                    'category' => $bike->category,
+                    'daily_rate' => $bike->daily_rate,
+                    'hourly_rate' => $bike->hourly_rate,
+                    'weekly_rate' => $bike->weekly_rate,
+                    'monthly_rate' => $bike->monthly_rate,
+                    'security_deposit' => $bike->security_deposit,
+                    'images' => $bike->images,
+                    'condition' => $bike->condition,
+                    'features' => $bike->features,
+                    'owner_name' => $bike->owner_name,
+                    'owner_avatar' => $bike->owner_avatar,
+                    'owner_initials' => $bike->owner_initials,
+                    'is_available' => false,
+                    'next_available_after' => null,
+                    'watermark' => 'Availability check failed',
+                    'location_address' => $bike->location_address,
+                    'pickup_type' => $bike->pickup_type,
+                    'delivery_fee' => $bike->delivery_fee,
+                    'insurance_included' => $bike->insurance_included,
+                    'recirculation_status' => $bike->recirculation_status,
+                    'listing_status' => $bike->listing_status,
+                    'is_available' => $availability['available'],
+                ];
+            }
+        })->filter()->values()->toArray();
     }
 
     /**

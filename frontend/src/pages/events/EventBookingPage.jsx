@@ -1,18 +1,21 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
   ChevronLeft, Calendar, MapPin, Clock, Users, Bike, ArrowRight,
   Check, CreditCard, Shield, AlertTriangle, Minus, Plus, Info, X,
-  Phone, Wallet, Loader
+  Phone, Wallet, Loader, Package, Wrench
 } from 'lucide-react';
-import { MOCK_EVENTS, MOCK_BIKES } from '../../data/cyclingMockData';
+import { MOCK_EVENTS } from '../../data/cyclingMockData';
 import BikeSelectionModal from '../../components/bikes/BikeSelectionModal';
+import EventResourceSelector from '../../components/resources/EventResourceSelector';
+import SelectedResourceChips from '../../components/resources/SelectedResourceChips';
+import { useEventBooking } from '../../hooks/useEventBooking';
 import eventService from '../../services/eventService';
 import paymentService from '../../services/paymentService';
 import { useAuth } from '../../context/AuthContext';
 
-// Helper component for summary rows (full width)
+// ─── Helper Components ───
 const SummaryRow = ({ label, value, highlight = false, discount = false }) => (
   <div className="flex justify-between py-2 border-b border-gray-100 last:border-0">
     <span className="text-gray-500 text-sm">{label}</span>
@@ -24,7 +27,6 @@ const SummaryRow = ({ label, value, highlight = false, discount = false }) => (
   </div>
 );
 
-// Helper component for compact summary rows (2-column layout)
 const CompactRow = ({ label, value, highlight = false }) => (
   <div className="flex justify-between py-1">
     <span className="text-gray-500 text-xs">{label}</span>
@@ -37,39 +39,25 @@ const CompactRow = ({ label, value, highlight = false }) => (
 const EventBookingPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Step management
   const [step, setStep] = useState(1);
+
+  // Event data
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [participants, setParticipants] = useState(1);
-  const [bikeOption, setBikeOption] = useState('own'); // 'own', 'rent', 'included'
-  const [selectedBike, setSelectedBike] = useState(null);
-  const [showBikeModal, setShowBikeModal] = useState(false);
-  const [bikeAddOns, setBikeAddOns] = useState({
-    helmet: false,
-    lights: false,
-    lock: false,
-    repair_kit: false,
-    water_bottle: false,
-    gloves: false
-  });
-  const [addOns, setAddOns] = useState({
-    transport: false,
-    insurance: false,
-    nutrition: false
-  });
-  const [waiverAgreed, setWaiverAgreed] = useState(false);
-  const [emergencyContact, setEmergencyContact] = useState({ name: '', phone: '' });
-  const [actionLoading, setActionLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('mpesa');
-  const [mpesaPhone, setMpesaPhone] = useState('');
+
+  // Use custom booking hook
+  const booking = useEventBooking(event);
+
+  // Payment state is managed by useEventBooking hook
   const [savedCards, setSavedCards] = useState([]);
   const [selectedSavedCard, setSelectedSavedCard] = useState(null);
   const [showAddNewCard, setShowAddNewCard] = useState(false);
   const [loadingSavedCards, setLoadingSavedCards] = useState(false);
-  const [registrationData, setRegistrationData] = useState(null);
-  const { user } = useAuth();
-
-  // Fetch real event from API
+  
+  // Fetch event
   useEffect(() => {
     const fetchEvent = async () => {
       try {
@@ -78,7 +66,6 @@ const EventBookingPage = () => {
         setEvent(response.data?.data);
       } catch (error) {
         console.error('Failed to fetch event:', error);
-        // Fallback to mock data for development
         const mockEvent = MOCK_EVENTS.find(e => e.slug === slug);
         setEvent(mockEvent);
       } finally {
@@ -88,7 +75,7 @@ const EventBookingPage = () => {
     fetchEvent();
   }, [slug]);
 
-  // Define loadSavedCards BEFORE the useEffect that calls it
+  // Load saved cards
   const loadSavedCards = async () => {
     setLoadingSavedCards(true);
     try {
@@ -110,14 +97,166 @@ const EventBookingPage = () => {
     }
   };
 
-  // Load saved cards when on payment step
   useEffect(() => {
     if (step === 4 && user) {
       loadSavedCards();
-      setMpesaPhone(user?.phone || '');
+      if (user?.phone && !mpesaPhone) {
+        setMpesaPhone(user.phone);
+      }
     }
   }, [step, user]);
 
+  // ─── All hooks and derived values BEFORE any conditional return ───
+
+  const eventDate = event ? new Date(event.start_datetime) : null;
+  const formattedDate = eventDate ? eventDate.toLocaleDateString('en-KE', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  }) : '';
+
+  const steps = [
+    { number: 1, label: 'Participants' },
+    { number: 2, label: 'Bike & Equipment' },
+    { number: 3, label: 'Details' },
+    { number: 4, label: 'Payment' }
+  ];
+
+  // ─── Calculate all prices from booking hook ───
+  const {
+    participants, setParticipants,
+    bikeOption, setBikeOption,
+    selectedBike, setSelectedBike,
+    showBikeModal, setShowBikeModal,
+    bikeRentalPrice, bikeSecurityDeposit,
+    selectedResources, setSelectedResources,
+    showResourceSelector, setShowResourceSelector,
+    resourcesTotalPrice,
+    addResource, removeResource, updateResourceQuantity,
+    eventAddOns, toggleEventAddOn,
+    transportPrice, eventInsurancePrice, nutritionPrice,
+    emergencyContact, setEmergencyContact,
+    waiverAgreed, setWaiverAgreed,
+    paymentMethod, setPaymentMethod,
+    mpesaPhone, setMpesaPhone,
+    actionLoading, setActionLoading,
+    basePrice, groupDiscount, total,
+    eventDurationDays,
+    resetBikeSelection,
+  } = booking;
+
+  // ─── Handle Bike Selection ───
+  const handleBikeSelect = useCallback((selection) => {
+    booking.setSelectedBike(selection.bike);
+    // Merge resource add-ons from bike modal into our selected resources
+    if (selection.resourceAddOns?.length > 0) {
+      selection.resourceAddOns.forEach(item => {
+        booking.addResource(item.resourceItem, item.quantity);
+      });
+    }
+    booking.setShowBikeModal(false);
+  }, [booking]);
+
+  // ─── Handle Resource Selection ───
+  const handleResourceConfirm = useCallback(({ resources, resourcesTotalPrice, grandTotal }) => {
+    // Resources are already in booking.selectedResources via the modal's state
+    // The modal updates the parent's state through the hook
+    booking.setShowResourceSelector(false);
+  }, [booking]);
+
+  // ─── Payment Handler ───
+  const handlePayment = useCallback(async () => {
+    if (actionLoading) return;
+    try {
+      setActionLoading(true);
+
+      // Build registration payload
+      const payload = {
+        participant_count: participants,
+        add_ons: {
+          transport: eventAddOns.transport,
+          insurance: eventAddOns.insurance,
+          nutrition: eventAddOns.nutrition,
+        },
+        bike_included: bikeOption === 'included',
+        bike_rental_id: bikeOption === 'rent' ? selectedBike?.id : null,
+        bike_add_ons: bikeOption === 'rent' ? selectedResources.map(r => ({
+          resource_item_id: r.resourceItem.id,
+          quantity: r.quantity,
+        })) : null,
+        resource_bookings: selectedResources.map(r => ({
+          resource_item_id: r.resourceItem.id,
+          quantity: r.quantity,
+          start_datetime: event.start_datetime,
+          end_datetime: event.end_datetime,
+        })),
+        emergency_contact_name: emergencyContact.name,
+        emergency_contact_phone: emergencyContact.phone,
+        waiver_signed: waiverAgreed,
+      };
+
+      const regResponse = await eventService.registerForEvent(slug, payload);
+      const regData = regResponse.data || {};
+      if (!regData.success) {
+        throw new Error(regData.message || 'Registration failed');
+      }
+
+      const regCode = regData.data?.registration_code;
+      const amountDue = regData.data?.amount_due;
+
+      if (!regData.data?.payment_required || amountDue <= 0) {
+        navigate('/my-event-bookings', {
+          state: { success: true, message: 'Registration confirmed!' }
+        });
+        return;
+      }
+
+      // Process payment
+      if (paymentMethod === 'mpesa') {
+        const mpesaResponse = await eventService.initiateEventMpesa({
+          registration_code: regCode,
+          phone_number: mpesaPhone || user?.phone || ''
+        });
+
+        if (mpesaResponse.data?.success) {
+          const paymentId = mpesaResponse.data?.data?.payment_id;
+          paymentService.pollPaymentStatus(
+            paymentId,
+            (status) => {
+              if (status === 'completed') {
+                navigate('/my-event-bookings', {
+                  state: { success: true, message: 'Payment successful! Registration confirmed.' }
+                });
+              } else if (status === 'failed') {
+                alert('Payment failed. Please try again.');
+                setActionLoading(false);
+              }
+            }
+          );
+        }
+      } else if (paymentMethod === 'card') {
+        const cardInit = await eventService.initiateEventCard({
+          registration_code: regCode,
+          email: user?.email
+        });
+        if (cardInit.data?.success && cardInit.data?.data?.authorization_url) {
+          window.location.href = cardInit.data.data.authorization_url;
+        }
+      } else if (paymentMethod === 'cod') {
+        const codResponse = await eventService.eventCod({
+          registration_code: regCode
+        });
+        if (codResponse.data?.success) {
+          navigate('/my-event-bookings', {
+            state: { success: true, message: 'Spot reserved! Pay at the event.' }
+          });
+        }
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || err.message || 'Payment failed. Please try again.');
+      setActionLoading(false);
+    }
+  }, [actionLoading, participants, eventAddOns, bikeOption, selectedBike, selectedResources, event, slug, mpesaPhone, user, navigate, paymentMethod, setActionLoading]);
+
+  // ─── Conditional returns AFTER all hooks ───
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -136,47 +275,6 @@ const EventBookingPage = () => {
       </div>
     );
   }
-
-  const availableBikes = MOCK_BIKES.filter(b => b.category === (event.included_bike_category_id ? 'road' : b.category));
-
-  // Calculate event duration in days
-  const eventStart = new Date(event.start_datetime);
-  const eventEnd = new Date(event.end_datetime);
-  const eventDurationDays = Math.max(1, Math.ceil((eventEnd - eventStart) / (1000 * 60 * 60 * 24)));
-
-  const basePrice = event.price_per_person * participants;
-  
-  // Bike rental pricing (from modal selection)
-  const bikeRentalPrice = bikeOption === 'rent' && selectedBike ? 
-    (selectedBike.daily_rate * eventDurationDays * participants) : 0;
-  const bikeAddOnsPrice = bikeOption === 'rent' && selectedBike ? 
-    Object.entries(bikeAddOns).reduce((sum, [key, checked]) => {
-      if (!checked) return sum;
-      const prices = { helmet: 200, lights: 150, lock: 100, repair_kit: 100, water_bottle: 50, gloves: 150 };
-      return sum + (prices[key] || 0) * participants;
-    }, 0) : 0;
-  const bikeInsurancePrice = bikeOption === 'rent' && selectedBike && selectedBike.insurance_included !== true ? 
-    (200 * eventDurationDays * participants) : 0;
-  
-  const transportPrice = addOns.transport && event.transport_provided ? event.transport_price * participants : 0;
-  const eventInsurancePrice = addOns.insurance ? 200 * participants : 0;
-  const nutritionPrice = addOns.nutrition ? 300 * participants : 0;
-  const groupDiscount = participants >= event.group_discount_threshold 
-    ? Math.round(basePrice * (event.group_discount_percent / 100)) 
-    : 0;
-  const total = basePrice + bikeRentalPrice + bikeAddOnsPrice + bikeInsurancePrice + transportPrice + eventInsurancePrice + nutritionPrice - groupDiscount;
-
-  const eventDate = new Date(event.start_datetime);
-  const formattedDate = eventDate.toLocaleDateString('en-KE', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-  });
-
-  const steps = [
-    { number: 1, label: 'Participants' },
-    { number: 2, label: 'Bike & Add-ons' },
-    { number: 3, label: 'Details' },
-    { number: 4, label: 'Payment' }
-  ];
 
   return (
     <>
@@ -227,7 +325,9 @@ const EventBookingPage = () => {
               ))}
             </div>
 
-            {/* Step 1: Participants */}
+            {/* ═══════════════════════════════════════════════════════
+                STEP 1: PARTICIPANTS
+                ═══════════════════════════════════════════════════════ */}
             {step === 1 && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-6">How many riders?</h2>
@@ -285,17 +385,20 @@ const EventBookingPage = () => {
               </div>
             )}
 
-            {/* Step 2: Bike & Add-ons */}
+            {/* ═══════════════════════════════════════════════════════
+                STEP 2: BIKE & EQUIPMENT (REWRITTEN)
+                ═══════════════════════════════════════════════════════ */}
             {step === 2 && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-6">Bike & Extras</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Bike & Equipment</h2>
 
-                {/* Bike Options */}
+                {/* ─── Bike Options ─── */}
                 <div className="mb-8">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Choose Your Bike</h3>
                   <div className="space-y-3">
+                    {/* Own Bike */}
                     <button
-                      onClick={() => { setBikeOption('own'); setSelectedBike(null); }}
+                      onClick={() => { setBikeOption('own'); setSelectedBike(null); setSelectedResources([]); }}
                       className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4 ${
                         bikeOption === 'own'
                           ? 'border-orange-500 bg-orange-50'
@@ -314,6 +417,7 @@ const EventBookingPage = () => {
                       {bikeOption === 'own' && <Check className="w-5 h-5 text-orange-500 ml-auto" />}
                     </button>
 
+                    {/* Bike Included */}
                     {event.bike_included && (
                       <button
                         onClick={() => { setBikeOption('included'); setSelectedBike(null); }}
@@ -336,6 +440,7 @@ const EventBookingPage = () => {
                       </button>
                     )}
 
+                    {/* Rent a Bike */}
                     <button
                       onClick={() => {
                         setBikeOption('rent');
@@ -354,7 +459,7 @@ const EventBookingPage = () => {
                       </div>
                       <div className="text-left flex-1">
                         <p className="font-semibold text-gray-900">Rent a Bike</p>
-                        <p className="text-sm text-gray-500">Choose from our rental fleet</p>
+                        <p className="text-sm text-gray-500">Choose from our rental fleet with real availability</p>
                       </div>
                       {bikeOption === 'rent' && selectedBike ? (
                         <div className="text-right">
@@ -371,12 +476,12 @@ const EventBookingPage = () => {
                   {bikeOption === 'rent' && selectedBike && (
                     <div className="mt-4 p-4 bg-orange-50 rounded-xl border border-orange-200">
                       <div className="flex items-center gap-3 mb-3">
-                        <img src={selectedBike.images[0]} alt={selectedBike.name} className="w-16 h-16 rounded-lg object-cover" />
+                        <img src={selectedBike.images?.[0] || selectedBike.photos?.[0]?.url} alt={selectedBike.name} className="w-16 h-16 rounded-lg object-cover" />
                         <div className="flex-1">
                           <p className="font-semibold text-gray-900">{selectedBike.name}</p>
                           <p className="text-sm text-gray-500">{selectedBike.brand} {selectedBike.model}</p>
                           <p className="text-sm font-bold text-orange-600">
-                            KSh {(selectedBike.daily_rate * eventDurationDays * participants).toLocaleString()} 
+                            KSh {bikeRentalPrice.toLocaleString()}
                             <span className="text-xs text-gray-500 font-normal"> for {eventDurationDays} day{eventDurationDays > 1 ? 's' : ''}</span>
                           </p>
                         </div>
@@ -387,29 +492,30 @@ const EventBookingPage = () => {
                           Change
                         </button>
                       </div>
-                      
-                      {/* Show selected add-ons */}
-                      {Object.entries(bikeAddOns).some(([_, v]) => v) && (
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          {Object.entries(bikeAddOns).filter(([_, v]) => v).map(([key]) => (
-                            <span key={key} className="px-2 py-1 bg-white text-orange-700 text-xs rounded-full border border-orange-200">
-                              {key.replace(/_/g, ' ')}
-                            </span>
-                          ))}
+
+                      {/* Selected Resource Chips from Bike Modal */}
+                      {selectedResources.length > 0 && (
+                        <div className="mb-3">
+                          <SelectedResourceChips
+                            selectedResources={selectedResources}
+                            onRemove={removeResource}
+                            onQuantityChange={updateResourceQuantity}
+                            eventDurationDays={eventDurationDays}
+                          />
                         </div>
                       )}
-                      
+
                       <button
                         onClick={() => setShowBikeModal(true)}
                         className="text-sm text-orange-600 font-semibold hover:underline flex items-center gap-1"
                       >
                         <Bike className="w-4 h-4" />
-                        Browse more bikes or change add-ons
+                        Browse more bikes or change equipment
                       </button>
                     </div>
                   )}
 
-                  {/* Prompt to select bike if rent chosen but none selected */}
+                  {/* Prompt to select bike */}
                   {bikeOption === 'rent' && !selectedBike && (
                     <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200 text-center">
                       <Bike className="w-8 h-8 text-blue-400 mx-auto mb-2" />
@@ -424,35 +530,85 @@ const EventBookingPage = () => {
                   )}
                 </div>
 
-                {/* Add-ons */}
+                {/* ─── Resources & Equipment Section ─── */}
                 <div className="mb-8">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Add-ons</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+                      <Package className="w-4 h-4" />
+                      Resources & Equipment
+                    </h3>
+                    <button
+                      onClick={() => setShowResourceSelector(true)}
+                      className="text-sm text-orange-600 font-semibold hover:underline flex items-center gap-1"
+                    >
+                      <Plus className="w-4 h-4" />
+                      {selectedResources.length > 0 ? 'Manage' : 'Add'} Equipment
+                    </button>
+                  </div>
+
+                  {/* Selected Resources Chips */}
+                  {selectedResources.length > 0 ? (
+                    <div className="mb-4">
+                      <SelectedResourceChips
+                        selectedResources={selectedResources}
+                        onRemove={removeResource}
+                        onQuantityChange={updateResourceQuantity}
+                        eventDurationDays={eventDurationDays}
+                      />
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-center">
+                      <Wrench className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500 mb-2">No additional equipment selected</p>
+                      <button
+                        onClick={() => setShowResourceSelector(true)}
+                        className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-semibold hover:bg-orange-600 transition-colors"
+                      >
+                        Browse Equipment & Services
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Resources Total */}
+                  {selectedResources.length > 0 && (
+                    <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Equipment & Services Total</span>
+                        <span className="font-bold text-orange-600">KSh {resourcesTotalPrice.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ─── Event Add-ons (Transport, Insurance, Nutrition) ─── */}
+                <div className="mb-8">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Event Add-ons</h3>
                   <div className="space-y-3">
                     {event.transport_provided && (
                       <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                        addOns.transport ? 'border-orange-500 bg-orange-50' : 'border-gray-200'
+                        eventAddOns.transport ? 'border-orange-500 bg-orange-50' : 'border-gray-200'
                       }`}>
                         <input
                           type="checkbox"
-                          checked={addOns.transport}
-                          onChange={(e) => setAddOns({ ...addOns, transport: e.target.checked })}
+                          checked={eventAddOns.transport}
+                          onChange={() => toggleEventAddOn('transport')}
                           className="w-5 h-5 text-orange-500 rounded focus:ring-orange-500"
                         />
                         <div className="flex-1">
                           <p className="font-semibold text-gray-900">Transport to Start Point</p>
                           <p className="text-sm text-gray-500">Pickup from your location</p>
                         </div>
-                        <span className="font-bold text-gray-900">+KSh {event.transport_price.toLocaleString()}</span>
+                        <span className="font-bold text-gray-900">+KSh {(event.transport_price || 0).toLocaleString()}</span>
                       </label>
                     )}
 
                     <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      addOns.insurance ? 'border-orange-500 bg-orange-50' : 'border-gray-200'
+                      eventAddOns.insurance ? 'border-orange-500 bg-orange-50' : 'border-gray-200'
                     }`}>
                       <input
                         type="checkbox"
-                        checked={addOns.insurance}
-                        onChange={(e) => setAddOns({ ...addOns, insurance: e.target.checked })}
+                        checked={eventAddOns.insurance}
+                        onChange={() => toggleEventAddOn('insurance')}
                         className="w-5 h-5 text-orange-500 rounded focus:ring-orange-500"
                       />
                       <div className="flex-1">
@@ -463,12 +619,12 @@ const EventBookingPage = () => {
                     </label>
 
                     <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      addOns.nutrition ? 'border-orange-500 bg-orange-50' : 'border-gray-200'
+                      eventAddOns.nutrition ? 'border-orange-500 bg-orange-50' : 'border-gray-200'
                     }`}>
                       <input
                         type="checkbox"
-                        checked={addOns.nutrition}
-                        onChange={(e) => setAddOns({ ...addOns, nutrition: e.target.checked })}
+                        checked={eventAddOns.nutrition}
+                        onChange={() => toggleEventAddOn('nutrition')}
                         className="w-5 h-5 text-orange-500 rounded focus:ring-orange-500"
                       />
                       <div className="flex-1">
@@ -477,6 +633,59 @@ const EventBookingPage = () => {
                       </div>
                       <span className="font-bold text-gray-900">+KSh 300</span>
                     </label>
+                  </div>
+                </div>
+
+                {/* ─── Running Total ─── */}
+                <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 mb-6">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3">Current Total</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Event Base</span>
+                      <span>KSh {basePrice.toLocaleString()}</span>
+                    </div>
+                    {bikeRentalPrice > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Bike Rental</span>
+                        <span>KSh {bikeRentalPrice.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {resourcesTotalPrice > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Equipment & Services</span>
+                        <span>KSh {resourcesTotalPrice.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {transportPrice > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Transport</span>
+                        <span>KSh {transportPrice.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {eventInsurancePrice > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Insurance</span>
+                        <span>KSh {eventInsurancePrice.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {nutritionPrice > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Nutrition</span>
+                        <span>KSh {nutritionPrice.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {groupDiscount > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Group Discount</span>
+                        <span>-KSh {groupDiscount.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="border-t border-gray-200 pt-2 mt-2">
+                      <div className="flex justify-between font-bold text-lg">
+                        <span className="text-gray-900">Total</span>
+                        <span className="text-orange-600">KSh {total.toLocaleString()}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -489,7 +698,8 @@ const EventBookingPage = () => {
                   </button>
                   <button
                     onClick={() => setStep(3)}
-                    className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center gap-2"
+                    disabled={bikeOption === 'rent' && !selectedBike}
+                    className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Continue
                     <ArrowRight className="w-5 h-5" />
@@ -498,7 +708,9 @@ const EventBookingPage = () => {
               </div>
             )}
 
-            {/* Step 3: Details */}
+            {/* ═══════════════════════════════════════════════════════
+                STEP 3: DETAILS
+                ═══════════════════════════════════════════════════════ */}
             {step === 3 && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-6">Rider Details</h2>
@@ -567,20 +779,21 @@ const EventBookingPage = () => {
               </div>
             )}
 
-            {/* Step 4: Payment & Full Summary */}
+            {/* ═══════════════════════════════════════════════════════
+                STEP 4: PAYMENT & FULL SUMMARY
+                ═══════════════════════════════════════════════════════ */}
             {step === 4 && (
               <div className="grid lg:grid-cols-12 gap-6">
-                {/* Left Column: Payment + Compact Summary */}
+                {/* Left Column */}
                 <div className="lg:col-span-7 xl:col-span-8 space-y-6">
                   
-                  {/* Compact Summary Card - Desktop Optimized */}
+                  {/* Full Summary Card */}
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                     <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                       <Info className="w-5 h-5 text-orange-500" />
                       Booking Summary
                     </h2>
 
-                    {/* Two-column grid for summary sections on desktop */}
                     <div className="grid md:grid-cols-2 gap-4">
                       {/* Event Details */}
                       <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
@@ -595,7 +808,7 @@ const EventBookingPage = () => {
                         </div>
                       </div>
 
-                      {/* Participants & Rider Details */}
+                      {/* Riders */}
                       <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                         <h3 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-2">Riders</h3>
                         <div className="space-y-1 text-sm">
@@ -604,11 +817,7 @@ const EventBookingPage = () => {
                           <CompactRow label="Emergency Phone" value={emergencyContact.phone || '—'} />
                           <CompactRow label="Waiver Signed" value={waiverAgreed ? 'Yes ✓' : 'No ✗'} highlight={waiverAgreed} />
                           {participants >= event.group_discount_threshold && (
-                            <CompactRow 
-                              label="Group Discount" 
-                              value={`${event.group_discount_percent}% off applied!`} 
-                              highlight 
-                            />
+                            <CompactRow label="Group Discount" value={`${event.group_discount_percent}% off applied!`} highlight />
                           )}
                         </div>
                       </div>
@@ -617,41 +826,31 @@ const EventBookingPage = () => {
                       <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                         <h3 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-2">Bike & Equipment</h3>
                         <div className="space-y-1 text-sm">
-                          <CompactRow 
-                            label="Bike" 
+                          <CompactRow
+                            label="Bike"
                             value={
                               bikeOption === 'own' ? 'I have my own bike' :
                               bikeOption === 'included' ? 'Bike included in event' :
-                              bikeOption === 'rent' && selectedBike ? `Rent: ${selectedBike.name} (${selectedBike.brand} ${selectedBike.model})` :
+                              bikeOption === 'rent' && selectedBike ? `Rent: ${selectedBike.name}` :
                               'No bike selected'
-                            } 
+                            }
                           />
                           {bikeOption === 'rent' && selectedBike && (
                             <>
                               <CompactRow label="Rental Duration" value={`${eventDurationDays} day${eventDurationDays > 1 ? 's' : ''} × ${participants} rider${participants > 1 ? 's' : ''}`} />
-                              <CompactRow label="Daily Rate" value={`KSh ${selectedBike.daily_rate.toLocaleString()}`} />
+                              <CompactRow label="Daily Rate" value={`KSh ${(selectedBike.daily_rate || 0).toLocaleString()}`} />
                             </>
                           )}
-                          {bikeOption === 'rent' && selectedBike && selectedBike.insurance_included !== true && (
-                            <CompactRow 
-                              label="Bike Insurance" 
-                              value={addOns.insurance ? 'Included (KSh 200/day)' : 'Not selected'} 
-                              highlight={addOns.insurance}
-                            />
-                          )}
-                          {bikeOption === 'rent' && Object.entries(bikeAddOns).some(([_, v]) => v) && (
+                          {selectedResources.length > 0 && (
                             <div className="mt-2 pt-2 border-t border-gray-200">
-                              <span className="text-xs text-gray-500 font-medium block mb-1">Selected Add-ons:</span>
+                              <span className="text-xs text-gray-500 font-medium block mb-1">Selected Equipment:</span>
                               <div className="space-y-1">
-                                {Object.entries(bikeAddOns).filter(([_, v]) => v).map(([key]) => {
-                                  const prices = { helmet: 200, lights: 150, lock: 100, repair_kit: 100, water_bottle: 50, gloves: 150 };
-                                  return (
-                                    <div key={key} className="flex justify-between items-center px-2 py-1 bg-white rounded border border-gray-100">
-                                      <span className="text-xs text-gray-600 capitalize">{key.replace(/_/g, ' ')}</span>
-                                      <span className="text-xs font-bold text-gray-900">KSh {(prices[key] * participants).toLocaleString()}</span>
-                                    </div>
-                                  );
-                                })}
+                                {selectedResources.map(({ resourceItem, quantity }) => (
+                                  <div key={resourceItem.id} className="flex justify-between items-center px-2 py-1 bg-white rounded border border-gray-100">
+                                    <span className="text-xs text-gray-600">{resourceItem.name}</span>
+                                    <span className="text-xs font-bold text-gray-900">×{quantity}</span>
+                                  </div>
+                                ))}
                               </div>
                             </div>
                           )}
@@ -662,26 +861,14 @@ const EventBookingPage = () => {
                       <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                         <h3 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-2">Add-ons</h3>
                         <div className="space-y-1 text-sm">
-                          <CompactRow 
-                            label="Transport" 
-                            value={addOns.transport ? `✓ (+KSh ${transportPrice.toLocaleString()})` : '—'} 
-                            highlight={addOns.transport}
-                          />
-                          <CompactRow 
-                            label="Insurance" 
-                            value={addOns.insurance ? `✓ (+KSh ${eventInsurancePrice.toLocaleString()})` : '—'} 
-                            highlight={addOns.insurance}
-                          />
-                          <CompactRow 
-                            label="Nutrition" 
-                            value={addOns.nutrition ? `✓ (+KSh ${nutritionPrice.toLocaleString()})` : '—'} 
-                            highlight={addOns.nutrition}
-                          />
+                          <CompactRow label="Transport" value={eventAddOns.transport ? `✓ (+KSh ${transportPrice.toLocaleString()})` : '—'} highlight={eventAddOns.transport} />
+                          <CompactRow label="Insurance" value={eventAddOns.insurance ? `✓ (+KSh ${eventInsurancePrice.toLocaleString()})` : '—'} highlight={eventAddOns.insurance} />
+                          <CompactRow label="Nutrition" value={eventAddOns.nutrition ? `✓ (+KSh ${nutritionPrice.toLocaleString()})` : '—'} highlight={eventAddOns.nutrition} />
                         </div>
                       </div>
                     </div>
 
-                    {/* Price Breakdown - Compact Horizontal */}
+                    {/* Price Breakdown */}
                     <div className="mt-4 bg-gray-50 rounded-xl p-4 border border-gray-100">
                       <h3 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-2">Price Breakdown</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 text-sm">
@@ -695,16 +882,10 @@ const EventBookingPage = () => {
                             <span className="font-bold text-gray-900">KSh {bikeRentalPrice.toLocaleString()}</span>
                           </div>
                         )}
-                        {bikeAddOnsPrice > 0 && (
+                        {resourcesTotalPrice > 0 && (
                           <div className="bg-white rounded-lg p-2 border border-gray-100">
-                            <span className="text-xs text-gray-500 block">Equip</span>
-                            <span className="font-bold text-gray-900">KSh {bikeAddOnsPrice.toLocaleString()}</span>
-                          </div>
-                        )}
-                        {bikeInsurancePrice > 0 && (
-                          <div className="bg-white rounded-lg p-2 border border-gray-100">
-                            <span className="text-xs text-gray-500 block">Bike Ins.</span>
-                            <span className="font-bold text-gray-900">KSh {bikeInsurancePrice.toLocaleString()}</span>
+                            <span className="text-xs text-gray-500 block">Equipment</span>
+                            <span className="font-bold text-gray-900">KSh {resourcesTotalPrice.toLocaleString()}</span>
                           </div>
                         )}
                         {transportPrice > 0 && (
@@ -725,10 +906,10 @@ const EventBookingPage = () => {
                             <span className="font-bold text-gray-900">KSh {nutritionPrice.toLocaleString()}</span>
                           </div>
                         )}
-                        {participants >= event.group_discount_threshold && (
+                        {groupDiscount > 0 && (
                           <div className="bg-green-50 rounded-lg p-2 border border-green-100">
                             <span className="text-xs text-green-600 block">Discount</span>
-                            <span className="font-bold text-green-700">-KSh {Math.round(basePrice * (event.group_discount_percent / 100)).toLocaleString()}</span>
+                            <span className="font-bold text-green-700">-KSh {groupDiscount.toLocaleString()}</span>
                           </div>
                         )}
                         <div className="bg-orange-50 rounded-lg p-2 border border-orange-200 col-span-2 sm:col-span-1">
@@ -743,23 +924,16 @@ const EventBookingPage = () => {
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                     <h2 className="text-xl font-bold text-gray-900 mb-4">Payment Method</h2>
 
-                    {/* Payment Method Selection */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                       <button
                         type="button"
                         onClick={() => setPaymentMethod('mpesa')}
                         className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
-                          paymentMethod === 'mpesa'
-                            ? 'border-orange-600 bg-orange-50'
-                            : 'border-gray-300 hover:border-gray-400'
+                          paymentMethod === 'mpesa' ? 'border-orange-600 bg-orange-50' : 'border-gray-300 hover:border-gray-400'
                         }`}
                       >
                         <div className="text-center">
-                          <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg"
-                            alt="M-Pesa"
-                            className="h-12 w-auto mx-auto mb-2 object-contain"
-                          />
+                          <img src="https://upload.wikimedia.org/wikipedia/commons/1/15/M-PESA_LOGO-01.svg" alt="M-Pesa" className="h-12 w-auto mx-auto mb-2 object-contain" />
                           <div className="text-sm text-gray-600">M-Pesa STK</div>
                         </div>
                       </button>
@@ -768,9 +942,7 @@ const EventBookingPage = () => {
                         type="button"
                         onClick={() => setPaymentMethod('card')}
                         className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
-                          paymentMethod === 'card'
-                            ? 'border-orange-600 bg-orange-50'
-                            : 'border-gray-300 hover:border-gray-400'
+                          paymentMethod === 'card' ? 'border-orange-600 bg-orange-50' : 'border-gray-300 hover:border-gray-400'
                         }`}
                       >
                         <div className="text-center">
@@ -786,9 +958,7 @@ const EventBookingPage = () => {
                         type="button"
                         onClick={() => setPaymentMethod('cod')}
                         className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
-                          paymentMethod === 'cod'
-                            ? 'border-orange-600 bg-orange-50'
-                            : 'border-gray-300 hover:border-gray-400'
+                          paymentMethod === 'cod' ? 'border-orange-600 bg-orange-50' : 'border-gray-300 hover:border-gray-400'
                         }`}
                       >
                         <div className="text-center">
@@ -800,7 +970,6 @@ const EventBookingPage = () => {
                       </button>
                     </div>
 
-                    {/* M-Pesa Payment */}
                     {paymentMethod === 'mpesa' && (
                       <div className="mb-6">
                         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
@@ -812,9 +981,7 @@ const EventBookingPage = () => {
                             <li>You'll receive a confirmation SMS immediately</li>
                           </ol>
                         </div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          M-Pesa Phone Number *
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">M-Pesa Phone Number *</label>
                         <div className="relative">
                           <Phone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                           <input
@@ -828,7 +995,6 @@ const EventBookingPage = () => {
                       </div>
                     )}
 
-                    {/* Card Payment */}
                     {paymentMethod === 'card' && (
                       <div className="mb-6">
                         {loadingSavedCards ? (
@@ -881,7 +1047,6 @@ const EventBookingPage = () => {
                       </div>
                     )}
 
-                    {/* Cash on Delivery */}
                     {paymentMethod === 'cod' && (
                       <div className="mb-6">
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -904,118 +1069,7 @@ const EventBookingPage = () => {
                         Back
                       </button>
                       <button
-                        onClick={async () => {
-                          if (actionLoading) return; // Prevent double-click
-                          try {
-                            setActionLoading(true);
-                            
-                            // Step 1: Register for event
-                            const payload = {
-                              participant_count: participants,
-                              add_ons: {
-                                transport: addOns.transport,
-                                insurance: addOns.insurance,
-                                nutrition: addOns.nutrition,
-                              },
-                              bike_included: bikeOption === 'included',
-                              bike_rental_id: bikeOption === 'rent' ? selectedBike?.id : null,
-                              bike_add_ons: bikeOption === 'rent' ? bikeAddOns : null,
-                              emergency_contact_name: emergencyContact.name,
-                              emergency_contact_phone: emergencyContact.phone,
-                              waiver_signed: waiverAgreed,
-                            };
-                            
-                            const regResponse = await eventService.registerForEvent(slug, payload);
-                            const regData = regResponse.data || {};
-                            if (!regData.success) {
-                              throw new Error(regData.message || 'Registration failed');
-                            }
-
-                            const regCode = regData.data?.registration_code;
-                            const amountDue = regData.data?.amount_due;
-
-                            // If no payment required, go to success
-                            if (!regData.data?.payment_required || amountDue <= 0) {
-                              navigate('/my-event-bookings', {
-                                state: { success: true, message: 'Registration confirmed!' }
-                              });
-                              return;
-                            }
-
-                            // Step 2: Process payment based on method
-                            if (paymentMethod === 'mpesa') {
-                              const mpesaResponse = await eventService.initiateEventMpesa({
-                                registration_code: regCode,
-                                phone_number: mpesaPhone || user?.phone || ''
-                              });
-                              
-                              if (mpesaResponse.data?.success) {
-                                const paymentId = mpesaResponse.data?.data?.payment_id;
-                                const isMock = mpesaResponse.data?.data?.mock;
-
-                                if (isMock) {
-                                  // Mock mode: show message and poll briefly
-                                  console.log('🧪 Mock M-Pesa payment — auto-completing in 5 seconds...');
-                                }
-
-                                // Poll for payment status
-                                paymentService.pollPaymentStatus(
-                                  paymentId,
-                                  (status) => {
-                                    if (status === 'completed') {
-                                      navigate('/my-event-bookings', {
-                                        state: { success: true, message: 'Payment successful! Registration confirmed.' }
-                                      });
-                                    } else if (status === 'failed') {
-                                      alert('Payment failed. Please try again.');
-                                      setActionLoading(false);
-                                    }
-                                  }
-                                );
-                              }
-                            } else if (paymentMethod === 'card') {
-                              if (selectedSavedCard && !showAddNewCard) {
-                                // Charge saved card
-                                const cardResponse = await paymentService.chargeSavedCard({
-                                  order_id: null, // Event payment doesn't use order_id
-                                  email: user?.email,
-                                  authorization_code: selectedSavedCard.authorization_code
-                                });
-                                // Note: This needs backend support for event registration charging
-                                // For now, redirect to Paystack
-                                const cardInit = await eventService.initiateEventCard({
-                                  registration_code: regCode,
-                                  email: user?.email
-                                });
-                                if (cardInit.data?.success && cardInit.data?.data?.authorization_url) {
-                                  window.location.href = cardInit.data.data.authorization_url;
-                                }
-                              } else {
-                                // New card - redirect to Paystack
-                                const cardInit = await eventService.initiateEventCard({
-                                  registration_code: regCode,
-                                  email: user?.email
-                                });
-                                if (cardInit.data?.success && cardInit.data?.data?.authorization_url) {
-                                  window.location.href = cardInit.data.data.authorization_url;
-                                }
-                              }
-                            } else if (paymentMethod === 'cod') {
-                              const codResponse = await eventService.eventCod({
-                                registration_code: regCode
-                              });
-                              if (codResponse.data?.success) {
-                                navigate('/my-event-bookings', {
-                                  state: { success: true, message: 'Spot reserved! Pay at the event.' }
-                                });
-                              }
-                            }
-
-                          } catch (err) {
-                            alert(err.response?.data?.message || err.message || 'Payment failed. Please try again.');
-                            setActionLoading(false);
-                          }
-                        }}
+                        onClick={handlePayment}
                         disabled={actionLoading}
                         className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center gap-2 disabled:opacity-50"
                       >
@@ -1035,16 +1089,17 @@ const EventBookingPage = () => {
                   </div>
                 </div>
 
-                {/* Right Column: Sticky Compact Sidebar */}
+                {/* Right Column: Sticky Sidebar */}
                 <div className="lg:col-span-5 xl:col-span-4">
                   <div className="lg:sticky lg:top-24 space-y-4">
-                    {/* Quick Overview Card */}
+                    
+                    {/* Quick Overview */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
                       <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider">Order Overview</h3>
-                      
+
                       <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-100">
-                        <img 
-                          src={event.photos?.[0]?.url || event.photos?.[0] || 'https://res.cloudinary.com/demo/image/upload/v1/placeholder-event.jpg'} 
+                        <img
+                          src={event.photos?.[0]?.url || event.photos?.[0] || 'https://res.cloudinary.com/demo/image/upload/v1/placeholder-event.jpg'}
                           alt={event.title}
                           className="w-14 h-14 rounded-lg object-cover"
                         />
@@ -1066,16 +1121,10 @@ const EventBookingPage = () => {
                             <span className="font-medium">KSh {bikeRentalPrice.toLocaleString()}</span>
                           </div>
                         )}
-                        {bikeAddOnsPrice > 0 && (
+                        {resourcesTotalPrice > 0 && (
                           <div className="flex justify-between">
-                            <span className="text-gray-500">Equip</span>
-                            <span className="font-medium">KSh {bikeAddOnsPrice.toLocaleString()}</span>
-                          </div>
-                        )}
-                        {bikeInsurancePrice > 0 && (
-                          <div className="flex justify-between">
-                            <span className="text-gray-500">Bike Ins.</span>
-                            <span className="font-medium">KSh {bikeInsurancePrice.toLocaleString()}</span>
+                            <span className="text-gray-500">Equipment</span>
+                            <span className="font-medium">KSh {resourcesTotalPrice.toLocaleString()}</span>
                           </div>
                         )}
                         {transportPrice > 0 && (
@@ -1096,10 +1145,10 @@ const EventBookingPage = () => {
                             <span className="font-medium">KSh {nutritionPrice.toLocaleString()}</span>
                           </div>
                         )}
-                        {participants >= event.group_discount_threshold && (
+                        {groupDiscount > 0 && (
                           <div className="flex justify-between text-green-600">
                             <span className="font-medium text-xs">Discount</span>
-                            <span className="font-medium text-xs">-KSh {Math.round(basePrice * (event.group_discount_percent / 100)).toLocaleString()}</span>
+                            <span className="font-medium text-xs">-KSh {groupDiscount.toLocaleString()}</span>
                           </div>
                         )}
                       </div>
@@ -1110,83 +1159,46 @@ const EventBookingPage = () => {
                       </div>
                     </div>
 
-                    {/* Event Add-ons Mini Card */}
-                    {(addOns.transport || addOns.insurance || addOns.nutrition) && (
+                    {/* Selected Resources Mini Card */}
+                    {selectedResources.length > 0 && (
                       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-                        <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider">Event Add-ons</h3>
-                        <div className="space-y-2 text-sm">
-                          <CompactRow 
-                            label="Transport to Start" 
-                            value={addOns.transport ? `Yes (+KSh ${transportPrice.toLocaleString()})` : 'Not selected'} 
-                            highlight={addOns.transport}
-                          />
-                          <CompactRow 
-                            label="Ride Insurance" 
-                            value={addOns.insurance ? `Yes (+KSh ${eventInsurancePrice.toLocaleString()})` : 'Not selected'} 
-                            highlight={addOns.insurance}
-                          />
-                          <CompactRow 
-                            label="Nutrition Pack" 
-                            value={addOns.nutrition ? `Yes (+KSh ${nutritionPrice.toLocaleString()})` : 'Not selected'} 
-                            highlight={addOns.nutrition}
-                          />
+                        <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider">Equipment</h3>
+                        <div className="space-y-2">
+                          {selectedResources.map(({ resourceItem, quantity }) => (
+                            <div key={resourceItem.id} className="flex justify-between items-center text-sm">
+                              <span className="text-gray-600 truncate">{resourceItem.name}</span>
+                              <span className="font-medium">×{quantity}</span>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}
 
-                    {/* Bike Details Mini Card */}
+                    {/* Bike Details */}
                     {bikeOption === 'rent' && selectedBike && (
                       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-                        <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider">Bike Details</h3>
-                        <div className="flex items-center gap-3 mb-3">
-                          <img 
-                            src={selectedBike.images?.[0]} 
-                            alt={selectedBike.name}
-                            className="w-14 h-14 rounded-lg object-cover border border-gray-100"
-                          />
+                        <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider">Bike</h3>
+                        <div className="flex items-center gap-3">
+                          <img src={selectedBike.images?.[0] || selectedBike.photos?.[0]?.url} alt={selectedBike.name} className="w-14 h-14 rounded-lg object-cover" />
                           <div className="flex-1 min-w-0">
                             <h4 className="font-bold text-gray-900 text-sm truncate">{selectedBike.name}</h4>
                             <p className="text-xs text-gray-500">{selectedBike.brand} {selectedBike.model}</p>
-                            <p className="text-xs text-orange-600 font-semibold">KSh {selectedBike.daily_rate.toLocaleString()}/day</p>
+                            <p className="text-xs text-orange-600 font-semibold">KSh {(selectedBike.daily_rate || 0).toLocaleString()}/day</p>
                           </div>
                         </div>
-                        {Object.entries(bikeAddOns).some(([_, v]) => v) && (
-                          <div className="mt-2 pt-2 border-t border-gray-100">
-                            <span className="text-xs text-gray-500 font-medium block mb-1">Selected Add-ons:</span>
-                            <div className="flex flex-wrap gap-1">
-                              {Object.entries(bikeAddOns).filter(([_, v]) => v).map(([key]) => (
-                                <span key={key} className="px-2 py-1 bg-orange-50 text-orange-700 text-xs rounded-full border border-orange-200 capitalize">
-                                  {key.replace(/_/g, ' ')}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     )}
 
-                    {/* Rider Details Mini Card */}
+                    {/* Rider Info */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
                       <h3 className="font-bold text-gray-900 mb-3 text-sm uppercase tracking-wider">Rider Info</h3>
                       <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Emergency</span>
-                          <span className="font-medium text-gray-900">{emergencyContact.name || '—'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Phone</span>
-                          <span className="font-medium text-gray-900">{emergencyContact.phone || '—'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-500">Waiver</span>
-                          <span className={`font-medium ${waiverAgreed ? 'text-green-600' : 'text-red-500'}`}>
-                            {waiverAgreed ? '✓ Signed' : '✗ Not signed'}
-                          </span>
-                        </div>
+                        <CompactRow label="Emergency" value={emergencyContact.name || '—'} />
+                        <CompactRow label="Phone" value={emergencyContact.phone || '—'} />
+                        <CompactRow label="Waiver" value={waiverAgreed ? '✓ Signed' : '✗ Not signed'} highlight={waiverAgreed} />
                       </div>
                     </div>
 
-                    {/* Status Badge */}
                     {waiverAgreed && emergencyContact.name && emergencyContact.phone && (
                       <div className="bg-green-50 rounded-2xl border border-green-200 p-4 text-center">
                         <p className="text-sm text-green-700 font-semibold">✓ Ready to complete booking</p>
@@ -1198,20 +1210,24 @@ const EventBookingPage = () => {
             )}
           </div>
         </div>
-        {/* Bike Selection Modal */}
+
+        {/* ─── Modals ─── */}
         <BikeSelectionModal
           isOpen={showBikeModal}
           onClose={() => setShowBikeModal(false)}
-          onSelect={(selection) => {
-            setSelectedBike(selection.bike);
-            setBikeAddOns(selection.addOns);
-            // Merge bike insurance into event addOns
-            if (selection.insurance) {
-              setAddOns(prev => ({ ...prev, insurance: true }));
-            }
-          }}
+          onSelect={handleBikeSelect}
           event={event}
           participants={participants}
+        />
+
+        <EventResourceSelector
+          isOpen={showResourceSelector}
+          onClose={() => setShowResourceSelector(false)}
+          onConfirm={handleResourceConfirm}
+          event={event}
+          participants={participants}
+          initialSelectedResources={selectedResources}
+          selectedBike={selectedBike}
         />
       </div>
     </>

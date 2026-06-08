@@ -649,7 +649,7 @@ class BikeRentalController extends Controller
     public function availableWithConflictResolution(Request $request)
     {
         $validated = $request->validate([
-            'start_datetime' => 'required|date|after:now',
+            'start_datetime' => 'required|date',
             'end_datetime' => 'required|date|after:start_datetime',
             'category' => 'nullable|string',
             'owner_type' => 'nullable|string|in:platform,user',

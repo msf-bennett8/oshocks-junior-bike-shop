@@ -1,46 +1,84 @@
 import { useState, useMemo, useEffect } from 'react';
-import { X, Search, Filter, MapPin, Star, Shield, Check, Bike, ArrowRight, Heart, Clock, Info } from 'lucide-react';
+import { X, Search, Filter, MapPin, Star, Shield, Check, Bike, Clock, Info, Plus, Minus, Package } from 'lucide-react';
 import bikeService from '../../services/bikeService';
-import { BIKE_CATEGORY_CONFIG, FRAME_SIZE_CONFIG } from '../../data/cyclingMockData';
+import resourceService from '../../services/resourceService';
+import { BIKE_CATEGORY_CONFIG } from '../../data/cyclingMockData';
 
 const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedSize, setSelectedCategorySize] = useState('all');
+  const [selectedSize, setSelectedSize] = useState('all');
   const [selectedBike, setSelectedBike] = useState(null);
   const [bikes, setBikes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [resourceAddOns, setResourceAddOns] = useState([]);
+  const [selectedResourceAddOns, setSelectedResourceAddOns] = useState([]);
+  const [resourceLoading, setResourceLoading] = useState(false);
+  const [insuranceOptIn, setInsuranceOptIn] = useState(true);
+  const [frameSize, setFrameSize] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Fetch available bikes WITH conflict checking for event dates
   useEffect(() => {
     if (!isOpen) return;
-    
+
     const fetchBikes = async () => {
       try {
         setLoading(true);
-        const response = await bikeService.getBikes({ per_page: 100 });
+        
+        // Validate event dates before calling availability endpoint
+        const start = event?.start_datetime;
+        const end = event?.end_datetime;
+        const hasValidDates = start && end && !isNaN(new Date(start).getTime()) && !isNaN(new Date(end).getTime());
+
+        let response;
+        if (hasValidDates) {
+          // Call availability endpoint with positional args (start, end, filters)
+          response = await bikeService.getAvailableBikes(start, end, { per_page: 100 });
+        } else {
+          // Fallback: fetch all approved bikes without date filtering
+          response = await bikeService.getBikes({ per_page: 100 });
+        }
+        
         const bikeData = response.data?.data || response.data || [];
         setBikes(bikeData);
       } catch (err) {
-        console.error('Failed to fetch bikes:', err);
+        console.error('Failed to fetch bikes:', err?.response?.data || err.message);
+        setBikes([]); // Prevent infinite loading state
       } finally {
         setLoading(false);
       }
     };
 
     fetchBikes();
-  }, [isOpen]);
-  const [selectedAddOns, setSelectedAddOns] = useState({
-    helmet: true,
-    lights: false,
-    lock: false,
-    repair_kit: false,
-    water_bottle: false,
-    gloves: false
-  });
-  const [insuranceOptIn, setInsuranceOptIn] = useState(true);
-  const [frameSize, setFrameSize] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  }, [isOpen, event]);
+
+  // Fetch available resource add-ons from DB (helmets, lights, locks, etc.)
+  useEffect(() => {
+    if (!isOpen || !event?.start_datetime || !event?.end_datetime) return;
+
+    const fetchResourceAddOns = async () => {
+      try {
+        setResourceLoading(true);
+        const response = await resourceService.getAvailableResources(
+          event.start_datetime,
+          event.end_datetime,
+          { resource_type: 'asset', per_page: 50 }
+        );
+        const items = response.data?.data || [];
+        // Filter to bike-related equipment categories
+        const bikeEquipmentCategories = ['helmet', 'bike_light', 'u_lock', 'repair_kit', 'water_bottle', 'gloves', 'cycling_kit', 'pump'];
+        setResourceAddOns(items.filter(r => bikeEquipmentCategories.includes(r.category)));
+      } catch (err) {
+        console.error('Failed to fetch resource add-ons:', err);
+      } finally {
+        setResourceLoading(false);
+      }
+    };
+
+    fetchResourceAddOns();
+  }, [isOpen, event]);
 
   // Determine suitable categories based on event terrain
   const suitableCategories = useMemo(() => {
@@ -61,10 +99,10 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
         bike.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         bike.brand.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || bike.category === selectedCategory;
-      const matchesSize = selectedSize === 'all' || bike.frame_size === selectedSize;
+      const matchesSize = selectedSize === 'all' || (bike.frame_size && bike.frame_size.toLowerCase() === selectedSize.toLowerCase());
       const matchesTerrain = suitableCategories.includes(bike.category);
-      // Only show bikes that are active, verified, AND currently available
-      const isAvailable = bike.is_active && bike.is_verified && bike.is_available !== false;
+      // Defensive: backend already filters approved+active; handle missing field gracefully
+      const isAvailable = bike.is_available !== false && (!bike.listing_status || bike.listing_status === 'approved');
       return matchesSearch && matchesCategory && matchesSize && matchesTerrain && isAvailable;
     });
   }, [searchQuery, selectedCategory, selectedSize, suitableCategories, bikes]);
@@ -79,20 +117,48 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
 
   // Calculate total for a bike
   const calculateBikeTotal = (bike) => {
-    const baseRental = bike.daily_rate * eventDurationDays * participants;
-    const addOnsTotal = Object.entries(selectedAddOns).reduce((sum, [key, checked]) => {
-      if (!checked) return sum;
-      const prices = { helmet: 200, lights: 150, lock: 100, repair_kit: 100, water_bottle: 50, gloves: 150 };
-      return sum + (prices[key] || 0) * participants;
+    const baseRental = (bike.daily_rate || 0) * eventDurationDays * participants;
+    
+    // Calculate resource add-ons from DB
+    const resourceAddOnsTotal = selectedResourceAddOns.reduce((sum, item) => {
+      const unitPrice = item.resourceItem.current_price || item.resourceItem.base_price || 0;
+      return sum + (unitPrice * item.quantity * eventDurationDays);
     }, 0);
+
     const insurance = insuranceOptIn ? 200 * eventDurationDays * participants : 0;
-    const deposit = bike.security_deposit * participants;
-    return { baseRental, addOnsTotal, insurance, deposit, grandTotal: baseRental + addOnsTotal + insurance };
+    const deposit = (bike.security_deposit || 0) * participants;
+    return { 
+      baseRental, 
+      resourceAddOnsTotal,
+      insurance, 
+      deposit, 
+      grandTotal: baseRental + resourceAddOnsTotal + insurance 
+    };
+  };
+
+  // Resource add-on management
+  const toggleResourceAddOn = (resourceItem) => {
+    setSelectedResourceAddOns(prev => {
+      const existing = prev.find(r => r.resourceItem.id === resourceItem.id);
+      if (existing) {
+        return prev.filter(r => r.resourceItem.id !== resourceItem.id);
+      }
+      return [...prev, { resourceItem, quantity: 1, price: resourceItem.current_price || resourceItem.base_price }];
+    });
+  };
+
+  const updateResourceQuantity = (resourceId, delta) => {
+    setSelectedResourceAddOns(prev => prev.map(item => {
+      if (item.resourceItem.id === resourceId) {
+        const newQty = Math.max(1, Math.min(item.quantity + delta, item.resourceItem.available_for_request || 999));
+        return { ...item, quantity: newQty };
+      }
+      return item;
+    }));
   };
 
   const handleSelectBike = (bike) => {
     setSelectedBike(bike);
-    // Auto-select frame size if not set
     if (!frameSize) setFrameSize(bike.frame_size);
   };
 
@@ -104,7 +170,7 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
       await onSelect({
         bike: selectedBike,
         frameSize: frameSize || selectedBike.frame_size,
-        addOns: selectedAddOns,
+        resourceAddOns: selectedResourceAddOns,
         insurance: insuranceOptIn,
         ...totals
       });
@@ -117,12 +183,15 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
     }
   };
 
-  const toggleAddOn = (key) => {
-    setSelectedAddOns(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const addOnPrices = { helmet: 200, lights: 150, lock: 100, repair_kit: 100, water_bottle: 50, gloves: 150 };
-  const addOnLabels = { helmet: 'Helmet', lights: 'Bike Lights', lock: 'U-Lock', repair_kit: 'Repair Kit', water_bottle: 'Water Bottle', gloves: 'Cycling Gloves' };
+  // Group resource add-ons by category
+  const groupedResourceAddOns = useMemo(() => {
+    return selectedResourceAddOns.reduce((acc, item) => {
+      const cat = item.resourceItem.category || 'other';
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(item);
+      return acc;
+    }, {});
+  }, [selectedResourceAddOns]);
 
   if (!isOpen) return null;
 
@@ -171,7 +240,6 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
                   Filters
                 </button>
 
-                {/* Category quick filters */}
                 <button
                   onClick={() => setSelectedCategory('all')}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
@@ -199,7 +267,7 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
                     <label className="text-sm font-semibold text-gray-700 mb-2 block">Frame Size</label>
                     <div className="flex flex-wrap gap-2">
                       <button
-                        onClick={() => setSelectedCategorySize('all')}
+                        onClick={() => setSelectedSize('all')}
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                           selectedSize === 'all' ? 'bg-orange-500 text-white' : 'bg-white border border-gray-200 text-gray-600'
                         }`}
@@ -209,7 +277,7 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
                       {['xs', 's', 'm', 'l', 'xl', 'xxl'].map(size => (
                         <button
                           key={size}
-                          onClick={() => setSelectedCategorySize(size)}
+                          onClick={() => setSelectedSize(size)}
                           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all uppercase ${
                             selectedSize === size ? 'bg-orange-500 text-white' : 'bg-white border border-gray-200 text-gray-600'
                           }`}
@@ -231,15 +299,17 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
                 {filteredBikes.map(bike => {
                   const isSelected = selectedBike?.id === bike.id;
                   const totals = calculateBikeTotal(bike);
+                  const isAvailable = bike.is_available !== false;
+                  
                   return (
                     <button
                       key={bike.id}
-                      onClick={() => bike.is_available ? handleSelectBike(bike) : null}
-                      disabled={!bike.is_available}
+                      onClick={() => isAvailable ? handleSelectBike(bike) : null}
+                      disabled={!isAvailable}
                       className={`relative text-left rounded-xl border-2 transition-all overflow-hidden ${
                         isSelected
                           ? 'border-orange-500 ring-2 ring-orange-200 shadow-lg'
-                          : !bike.is_available
+                          : !isAvailable
                             ? 'border-gray-200 opacity-60 cursor-not-allowed'
                             : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
                       }`}
@@ -252,13 +322,13 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
                       )}
 
                       {/* Availability Watermark */}
-                      {!bike.is_available && (
+                      {!isAvailable && (
                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm rounded-xl z-20">
                           <div className="text-center text-white">
                             <Clock className="w-6 h-6 mx-auto mb-1" />
-                            <p className="text-xs font-bold">Booked</p>
-                            {bike.next_available_after && (
-                              <p className="text-[10px] opacity-80">Available after {new Date(bike.next_available_after).toLocaleDateString()}</p>
+                            <p className="text-xs font-bold">Booked for These Dates</p>
+                            {bike.next_available_at && (
+                              <p className="text-[10px] opacity-80">Available after {new Date(bike.next_available_at).toLocaleDateString()}</p>
                             )}
                           </div>
                         </div>
@@ -290,16 +360,16 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
                         <div className="flex items-center gap-3 mb-3 text-sm">
                           <span className="flex items-center gap-1 text-gray-600">
                             <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                            {bike.rating}
+                            {bike.rating || '4.5'}
                           </span>
                           <span className="flex items-center gap-1 text-gray-600">
                             <MapPin className="w-4 h-4 text-gray-400" />
-                            {bike.location_address.split(',')[0]}
+                            {bike.location_address?.split(',')[0] || 'Nairobi'}
                           </span>
                         </div>
 
                         <div className="flex flex-wrap gap-1 mb-3">
-                          {bike.features.slice(0, 3).map((f, i) => (
+                          {(bike.features || bike.bike_features || []).slice(0, 3).map((f, i) => (
                             <span key={i} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
                               {f.replace(/_/g, ' ')}
                             </span>
@@ -311,7 +381,7 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
                             <p className="text-lg font-bold text-orange-600">KSh {totals.baseRental.toLocaleString()}</p>
                             <p className="text-xs text-gray-500">for {eventDurationDays} day{eventDurationDays > 1 ? 's' : ''}</p>
                           </div>
-                          <span className="text-xs text-gray-500">{bike.total_rentals} rentals</span>
+                          <span className="text-xs text-gray-500">{bike.total_rentals || 0} rentals</span>
                         </div>
                       </div>
                     </button>
@@ -321,8 +391,8 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
             ) : (
               <div className="text-center py-12">
                 <Bike className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-gray-900 mb-2">No bikes found</h3>
-                <p className="text-gray-500">Try adjusting your filters or search query.</p>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">No bikes available</h3>
+                <p className="text-gray-500">All bikes are booked for these event dates. Try a different event date.</p>
               </div>
             )}
           </div>
@@ -331,7 +401,7 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
           {selectedBike && (
             <div className="w-full lg:w-96 border-l border-gray-200 bg-gray-50 overflow-y-auto p-6">
               <h3 className="font-bold text-gray-900 mb-4">Selected Bike</h3>
-              
+
               {/* Selected Bike Summary */}
               <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
                 <div className="flex items-center gap-3 mb-3">
@@ -348,15 +418,14 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Condition</span>
-                    <span className="font-semibold capitalize">{selectedBike.condition}</span>
+                    <span className="font-semibold capitalize">{selectedBike.condition || selectedBike.bike_condition}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Daily Rate</span>
-                    <span className="font-semibold">KSh {selectedBike.daily_rate.toLocaleString()}</span>
+                    <span className="font-semibold">KSh {(selectedBike.daily_rate || 0).toLocaleString()}</span>
                   </div>
                 </div>
 
-                {/* Frame Size Selector (if different from bike size) */}
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <label className="text-sm font-semibold text-gray-700 mb-2 block">Your Frame Size</label>
                   <select
@@ -368,38 +437,86 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
                       <option key={size} value={size}>{size.toUpperCase()}</option>
                     ))}
                   </select>
-                  {frameSize && frameSize !== selectedBike.frame_size && (
-                    <p className="text-xs text-orange-600 mt-1">
-                      Note: This bike is size {selectedBike.frame_size.toUpperCase()}. Size {frameSize.toUpperCase()} availability depends on stock.
-                    </p>
-                  )}
                   <p className="text-xs text-gray-500 mt-1">We'll match you with the right size</p>
                 </div>
               </div>
 
-              {/* Add-ons */}
-              <h3 className="font-bold text-gray-900 mb-4">Add-on Equipment</h3>
-              <div className="space-y-3 mb-6">
-                {Object.entries(addOnLabels).map(([key, label]) => (
-                  <label
-                    key={key}
-                    className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                      selectedAddOns[key] ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedAddOns[key]}
-                      onChange={() => toggleAddOn(key)}
-                      className="w-5 h-5 text-orange-500 rounded"
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">{label}</p>
-                    </div>
-                    <span className="text-sm font-bold text-gray-900">+KSh {addOnPrices[key].toLocaleString()}</span>
-                  </label>
-                ))}
-              </div>
+              {/* Dynamic Resource Add-ons from DB */}
+              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Package className="w-5 h-5 text-orange-500" />
+                Equipment Add-ons
+              </h3>
+              
+              {resourceLoading ? (
+                <div className="flex justify-center py-4">
+                  <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : resourceAddOns.length === 0 ? (
+                <p className="text-sm text-gray-400 mb-6">No additional equipment available for these dates</p>
+              ) : (
+                <div className="space-y-3 mb-6">
+                  {resourceAddOns.map(resource => {
+                    const isSelected = selectedResourceAddOns.some(r => r.resourceItem.id === resource.id);
+                    const selectedItem = selectedResourceAddOns.find(r => r.resourceItem.id === resource.id);
+                    const unitPrice = resource.current_price || resource.base_price || 0;
+                    const isLowStock = resource.available_for_request <= (resource.low_stock_threshold || 5);
+
+                    return (
+                      <div
+                        key={resource.id}
+                        className={`p-3 rounded-xl border-2 transition-all ${
+                          isSelected ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleResourceAddOn(resource)}
+                            className="w-5 h-5 text-orange-500 rounded mt-0.5"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-semibold text-gray-900">{resource.name}</p>
+                              <span className="text-sm font-bold text-gray-900">KSh {unitPrice.toLocaleString()}</span>
+                            </div>
+                            <p className="text-xs text-gray-500 mb-2">{resource.description}</p>
+                            
+                            {isSelected && (
+                              <div className="flex items-center gap-2 mt-2">
+                                <button
+                                  onClick={() => updateResourceQuantity(resource.id, -1)}
+                                  className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center text-gray-600"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="text-sm font-bold w-6 text-center">{selectedItem?.quantity || 1}</span>
+                                <button
+                                  onClick={() => updateResourceQuantity(resource.id, 1)}
+                                  disabled={selectedItem?.quantity >= resource.available_for_request}
+                                  className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center text-gray-600 disabled:opacity-30"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                                <span className="text-xs text-gray-400">
+                                  of {resource.available_for_request} available
+                                </span>
+                              </div>
+                            )}
+
+                            {isLowStock && !isSelected && (
+                              <p className="text-xs text-orange-600 mt-1 flex items-center gap-1">
+                                <Info className="w-3 h-3" />
+                                {resource.remaining_alert || `Only ${resource.available_for_request} left`}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Insurance */}
               <div className="mb-6">
@@ -427,7 +544,7 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
                   <div>
                     <p className="text-sm font-semibold text-yellow-900">Security Deposit</p>
                     <p className="text-sm text-yellow-700">
-                      KSh {(selectedBike.security_deposit * participants).toLocaleString()} held during rental. Released when bike is returned in good condition.
+                      KSh {((selectedBike.security_deposit || 0) * participants).toLocaleString()} held during rental. Released when bike is returned in good condition.
                     </p>
                   </div>
                 </div>
@@ -444,10 +561,10 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
                         <span className="text-gray-600">Bike Rental ({eventDurationDays} days × {participants})</span>
                         <span className="font-medium">KSh {totals.baseRental.toLocaleString()}</span>
                       </div>
-                      {totals.addOnsTotal > 0 && (
+                      {totals.resourceAddOnsTotal > 0 && (
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Add-ons</span>
-                          <span className="font-medium">KSh {totals.addOnsTotal.toLocaleString()}</span>
+                          <span className="text-gray-600">Equipment Add-ons</span>
+                          <span className="font-medium">KSh {totals.resourceAddOnsTotal.toLocaleString()}</span>
                         </div>
                       )}
                       {totals.insurance > 0 && (
