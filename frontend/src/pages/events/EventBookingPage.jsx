@@ -157,16 +157,8 @@ const EventBookingPage = () => {
 
   // ─── Handle Resource Selection ───
   const handleResourceConfirm = useCallback(({ resources }) => {
-    // Clear existing resources first, then add all from modal
-    booking.setSelectedResources([]);
-    // Use setTimeout to ensure clear happens before add
-    setTimeout(() => {
-      if (resources && resources.length > 0) {
-        resources.forEach(item => {
-          booking.addResource(item.resourceItem, item.quantity);
-        });
-      }
-    }, 0);
+    // Replace all resources with modal's selection
+    booking.setSelectedResources(resources || []);
     booking.setShowResourceSelector(false);
   }, [booking]);
 
@@ -1224,10 +1216,7 @@ const EventBookingPage = () => {
           onConfirm={handleResourceConfirm}
           event={event}
           participants={participants}
-          initialSelectedResources={selectedResources.map(r => ({
-            ...r.resourceItem,
-            quantity: r.quantity,
-          }))}
+          initialSelectedResources={selectedResources}  // Already in correct format: [{resourceItem, quantity, price}]
           selectedBike={selectedBike}
         />
       </div>

@@ -29,6 +29,13 @@ const EventResourceSelector = ({
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedResources, setSelectedResources] = useState(initialSelectedResources);
+
+  // Sync with parent state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedResources(initialSelectedResources);
+    }
+  }, [isOpen, initialSelectedResources]);
   const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'asset', 'ancillary'
   const [error, setError] = useState(null);
 
@@ -99,10 +106,9 @@ const EventResourceSelector = ({
     setSelectedResources(prev => {
       const existing = prev.find(r => r.resourceItem.id === resourceItem.id);
       if (existing) {
-        const maxAvailable = resourceItem.available_for_request || resourceItem.total_quantity || 999;
-        const newQty = Math.min(existing.quantity + quantity, maxAvailable);
-        return prev.map(r => 
-          r.resourceItem.id === resourceItem.id ? { ...r, quantity: newQty } : r
+        // Replace quantity instead of adding (parent manages the truth)
+        return prev.map(r =>
+          r.resourceItem.id === resourceItem.id ? { ...r, quantity } : r
         );
       }
       return [...prev, { resourceItem, quantity, price: resourceItem.current_price || resourceItem.base_price }];
