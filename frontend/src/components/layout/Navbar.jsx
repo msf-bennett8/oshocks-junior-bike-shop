@@ -372,6 +372,11 @@ const Navbar = () => {
             { name: 'Bike Listing Moderation', link: '/admin/bike-listing-moderation', icon: Bike },
             { name: 'Bike Booking Moderation', link: '/admin/bike-booking-moderation', icon: ClipboardList },
           ]},
+          { name: 'Resource Moderation', link: '#', icon: Package2, hasSubmenu: true, submenuItems: [
+            { name: 'Asset Moderation', link: '/admin/resource-asset-moderation', icon: Wrench },
+            { name: 'Ancillary Moderation', link: '/admin/resource-ancillary-moderation', icon: Package },
+            { name: 'Resource Booking Moderation', link: '/admin/resource-booking-moderation', icon: ClipboardList },
+          ]},
           { name: 'Community Moderation', link: '/admin/community-moderation', icon: MessageCircle },
           { name: 'Custom Rides Moderation', link: '/admin/custom-rides-moderation', icon: Bike },
           { name: 'Settings', link: '/super-admin/settings', icon: Settings },
@@ -945,6 +950,46 @@ const Navbar = () => {
                             </div>
                           </div>
 
+                          {/* Resource Moderation - Parent */}
+                          <div className="px-4 py-2">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Package2 className="w-4 h-4 text-purple-600" />
+                              <span className="text-sm font-bold text-gray-800">Resource Moderation</span>
+                            </div>
+                            <div className="pl-6 space-y-1">
+                              <button
+                                onClick={() => {
+                                  setShowQuickActions(false);
+                                  navigate('/admin/resource-asset-moderation');
+                                }}
+                                className="flex items-center gap-2 px-3 py-1.5 hover:bg-purple-100/50 rounded transition-colors w-full text-left"
+                              >
+                                <Wrench className="w-3 h-3 text-purple-500" />
+                                <span className="text-xs text-gray-700">Asset Moderation</span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setShowQuickActions(false);
+                                  navigate('/admin/resource-ancillary-moderation');
+                                }}
+                                className="flex items-center gap-2 px-3 py-1.5 hover:bg-purple-100/50 rounded transition-colors w-full text-left"
+                              >
+                                <Package className="w-3 h-3 text-purple-500" />
+                                <span className="text-xs text-gray-700">Ancillary Moderation</span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setShowQuickActions(false);
+                                  navigate('/admin/resource-booking-moderation');
+                                }}
+                                className="flex items-center gap-2 px-3 py-1.5 hover:bg-purple-100/50 rounded transition-colors w-full text-left"
+                              >
+                                <ClipboardList className="w-3 h-3 text-purple-500" />
+                                <span className="text-xs text-gray-700">Resource Booking Moderation</span>
+                              </button>
+                            </div>
+                          </div>
+
                           {/* Community Moderation */}
                           <button
                             onClick={() => {
@@ -1088,6 +1133,21 @@ const Navbar = () => {
                             <div>
                               <span className="text-sm text-gray-800 font-medium">My Bike Hires</span>
                               <p className="text-[11px] text-gray-500">Your bike rental bookings</p>
+                            </div>
+                          </button>
+
+                          {/* My Resource Bookings */}
+                          <button
+                            onClick={() => {
+                              setShowQuickActions(false);
+                              navigate('/my-resource-bookings');
+                            }}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-indigo-100/50 transition-colors w-full text-left"
+                          >
+                            <Package className="w-4 h-4 text-indigo-600" />
+                            <div>
+                              <span className="text-sm text-gray-800 font-medium">My Resource Bookings</span>
+                              <p className="text-[11px] text-gray-500">Your equipment & service bookings</p>
                             </div>
                           </button>
                         </div>

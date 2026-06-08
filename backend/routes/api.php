@@ -702,6 +702,20 @@ Route::prefix('v1/bike-rental-payments')->middleware(['auth:sanctum', 'audit', '
     Route::get('/card/verify/{reference}', [\App\Http\Controllers\Api\BikeRentalPaymentController::class, 'verifyCard']);
 });
 
+// ============================================================================
+// RESOURCE PAYMENT ROUTES (M-Pesa, Card, COD for resource bookings)
+// ============================================================================
+Route::prefix('v1/resource-payments')->middleware(['auth:sanctum', 'audit', 'security.monitor'])->group(function () {
+    Route::post('/mpesa/initiate', [\App\Http\Controllers\Api\ResourcePaymentController::class, 'initiateMpesa']);
+    Route::post('/card/initialize', [\App\Http\Controllers\Api\ResourcePaymentController::class, 'initiateCard']);
+    Route::post('/cod', [\App\Http\Controllers\Api\ResourcePaymentController::class, 'cod']);
+    Route::get('/{paymentId}/status', [\App\Http\Controllers\Api\ResourcePaymentController::class, 'checkStatus']);
+    Route::get('/card/verify/{reference}', [\App\Http\Controllers\Api\ResourcePaymentController::class, 'verifyCard']);
+});
+
+// Public callback for resource card payments
+Route::get('/v1/resource-payments/card/callback', [\App\Http\Controllers\Api\ResourcePaymentController::class, 'cardCallback']);
+
 // Public callback for bike rental card payments
 Route::get('/v1/bike-rental-payments/card/callback', [\App\Http\Controllers\Api\BikeRentalPaymentController::class, 'cardCallback']);
 
@@ -739,6 +753,70 @@ Route::prefix('v1/bike-rental-bookings')->middleware(['auth:sanctum', 'audit', '
     Route::get('/{bookingCode}', [\App\Http\Controllers\Api\BikeRentalBookingController::class, 'show']);
     Route::post('/{bookingCode}/status', [\App\Http\Controllers\Api\BikeRentalBookingController::class, 'updateStatus']);
     Route::post('/{bookingCode}/cancel', [\App\Http\Controllers\Api\BikeRentalBookingController::class, 'cancel']);
+});
+
+// ============================================================================
+// RESOURCE ITEMS — PUBLIC
+// ============================================================================
+Route::prefix('v1/resources')->middleware(['api', 'audit'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\ResourceItemController::class, 'index']);
+    Route::get('/available', [\App\Http\Controllers\Api\ResourceItemController::class, 'availableWithConflictResolution']);
+    Route::get('/{resourceCode}', [\App\Http\Controllers\Api\ResourceItemController::class, 'show']);
+    Route::get('/{resourceCode}/availability', [\App\Http\Controllers\Api\ResourceItemController::class, 'checkAvailability']);
+    Route::get('/{resourceCode}/stats', [\App\Http\Controllers\Api\ResourceItemController::class, 'stats']);
+});
+
+// ============================================================================
+// RESOURCE BOOKINGS — PROTECTED
+// ============================================================================
+Route::prefix('v1/resource-bookings')->middleware(['auth:sanctum', 'audit', 'security.monitor'])->group(function () {
+    Route::post('/', [\App\Http\Controllers\Api\ResourceBookingController::class, 'store']);
+    Route::get('/my-bookings', [\App\Http\Controllers\Api\ResourceBookingController::class, 'myBookings']);
+    Route::get('/{bookingCode}', [\App\Http\Controllers\Api\ResourceBookingController::class, 'show']);
+    Route::post('/{bookingCode}/cancel', [\App\Http\Controllers\Api\ResourceBookingController::class, 'cancel']);
+    Route::post('/{bookingCode}/status', [\App\Http\Controllers\Api\ResourceBookingController::class, 'updateStatus']);
+
+    // Link resource bookings to bike rental bookings
+    Route::post('/link-to-bike', [\App\Http\Controllers\Api\ResourceBookingController::class, 'linkToBikeRental']);
+    Route::post('/link-to-event', [\App\Http\Controllers\Api\ResourceBookingController::class, 'linkToEvent']);
+    // Get available resources for a bike rental period
+    Route::get('/available-for-bike', [\App\Http\Controllers\Api\ResourceItemController::class, 'availableForBikeRental']);
+    // Get available resources for an event
+    Route::get('/available-for-event/{eventId}', [\App\Http\Controllers\Api\ResourceItemController::class, 'availableForEvent']);
+});
+
+// ============================================================================
+// RESOURCE ITEMS — PROTECTED (Upload/Edit)
+// ============================================================================
+Route::prefix('v1/resources')->middleware(['auth:sanctum', 'audit', 'security.monitor'])->group(function () {
+    Route::post('/', [\App\Http\Controllers\Api\ResourceItemController::class, 'store']);
+    Route::put('/{resourceCode}', [\App\Http\Controllers\Api\ResourceItemController::class, 'update']);
+    Route::delete('/{resourceCode}', [\App\Http\Controllers\Api\ResourceItemController::class, 'destroy']);
+    Route::get('/my/resources', [\App\Http\Controllers\Api\ResourceItemController::class, 'myResources']);
+});
+
+// ============================================================================
+// RESOURCE MODERATION — ADMIN/SUPER ADMIN ONLY
+// ============================================================================
+Route::prefix('v1/admin/resources')->middleware(['auth:sanctum', 'audit', 'security.monitor', 'role:admin,super_admin'])->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\ResourceModerationController::class, 'index']);
+    Route::get('/stats', [\App\Http\Controllers\Api\ResourceModerationController::class, 'stats']);
+    Route::post('/{resourceCode}/approve', [\App\Http\Controllers\Api\ResourceModerationController::class, 'approve']);
+    Route::post('/{resourceCode}/reject', [\App\Http\Controllers\Api\ResourceModerationController::class, 'reject']);
+    Route::post('/{resourceCode}/pause', [\App\Http\Controllers\Api\ResourceModerationController::class, 'pause']);
+    Route::post('/{resourceCode}/resume', [\App\Http\Controllers\Api\ResourceModerationController::class, 'resume']);
+    Route::post('/{resourceCode}/out-of-service', [\App\Http\Controllers\Api\ResourceModerationController::class, 'markOutOfService']);
+    Route::put('/{resourceCode}/pricing-rules', [\App\Http\Controllers\Api\ResourceModerationController::class, 'updatePricingRules']);
+    Route::post('/{resourceCode}/force-price-update', [\App\Http\Controllers\Api\ResourceModerationController::class, 'forcePriceUpdate']);
+    Route::post('/{resourceCode}/adjust-inventory', [\App\Http\Controllers\Api\ResourceModerationController::class, 'adjustInventory']);
+    Route::get('/bookings', [\App\Http\Controllers\Api\ResourceModerationController::class, 'bookings']);
+    Route::post('/bookings/{bookingCode}/returned', [\App\Http\Controllers\Api\ResourceModerationController::class, 'markReturned']);
+    Route::post('/bookings/{bookingCode}/complete-recirculation', [\App\Http\Controllers\Api\ResourceModerationController::class, 'completeRecirculation']);
+    Route::post('/bookings/batch-recirculate', [\App\Http\Controllers\Api\ResourceModerationController::class, 'batchRecirculate']);
+    Route::get('/bookings/pending-recirculation', [\App\Http\Controllers\Api\ResourceModerationController::class, 'pendingRecirculation']);
+    Route::get('/bookings/pending-auto-return', [\App\Http\Controllers\Api\ResourceModerationController::class, 'pendingAutoReturn']);
+    Route::post('/auto-recirculate', [\App\Http\Controllers\Api\ResourceModerationController::class, 'autoRecirculate']);
+    Route::post('/events/{eventId}/auto-recirculate', [\App\Http\Controllers\Api\ResourceModerationController::class, 'autoRecirculateEvent']);
 });
 
     // ============================================================================
