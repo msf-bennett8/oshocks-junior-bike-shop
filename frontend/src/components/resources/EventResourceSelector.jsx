@@ -1,26 +1,19 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { X, Search, Package, Loader, AlertCircle, ChevronLeft, Check } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { X, Search, Package, Loader, AlertCircle, ChevronLeft, Check, Minus, Plus, Shield } from 'lucide-react';
 import resourceService from '../../services/resourceService';
 import ResourceCategorySection from './ResourceCategorySection';
 import SelectedResourceChips from './SelectedResourceChips';
 import toast from 'react-hot-toast';
 
 /**
- * EventResourceSelector — Modal/Page for selecting resources & equipment during event booking
- * 
- * Features:
- * - Loads real resources from database with conflict checking
- * - Groups by category (helmet, lights, locks, etc.)
- * - Shows real-time availability for event date range
- * - Selected items appear as removable chips
- * - Running price calculation
- * - Industry best practice: Modal on desktop, full page on mobile
+ * EventResourceSelector — Modal with draggable bottom sheet preview
+ * Matches BikeSelectionModal layout exactly
  */
-const EventResourceSelector = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  event, 
+const EventResourceSelector = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  event,
   participants = 1,
   initialSelectedResources = [],
   selectedBike = null
@@ -29,15 +22,22 @@ const EventResourceSelector = ({
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedResources, setSelectedResources] = useState(initialSelectedResources);
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [error, setError] = useState(null);
+  
+  // Bottom sheet state
+  const [previewExpanded, setPreviewExpanded] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartY = useRef(0);
+  const dragStartExpanded = useRef(false);
 
   // Sync with parent state when modal opens
   useEffect(() => {
     if (isOpen) {
       setSelectedResources(initialSelectedResources);
+      setPreviewExpanded(false);
     }
   }, [isOpen, initialSelectedResources]);
-  const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'asset', 'ancillary'
-  const [error, setError] = useState(null);
 
   // Event date range
   const startDatetime = event?.start_datetime;
@@ -83,13 +83,13 @@ const EventResourceSelector = ({
   // Group resources by category
   const groupedResources = useMemo(() => {
     const filtered = resources.filter(r => {
-      const matchesSearch = !searchQuery || 
+      const matchesSearch = !searchQuery ||
         r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         r.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         r.brand?.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       const matchesType = activeFilter === 'all' || r.resource_type === activeFilter;
-      
+
       return matchesSearch && matchesType;
     });
 
@@ -106,7 +106,6 @@ const EventResourceSelector = ({
     setSelectedResources(prev => {
       const existing = prev.find(r => r.resourceItem.id === resourceItem.id);
       if (existing) {
-        // Replace quantity instead of adding (parent manages the truth)
         return prev.map(r =>
           r.resourceItem.id === resourceItem.id ? { ...r, quantity } : r
         );
@@ -124,7 +123,7 @@ const EventResourceSelector = ({
       removeResource(resourceId);
       return;
     }
-    setSelectedResources(prev => prev.map(r => 
+    setSelectedResources(prev => prev.map(r =>
       r.resourceItem.id === resourceId ? { ...r, quantity } : r
     ));
   }, [removeResource]);
@@ -156,57 +155,46 @@ const EventResourceSelector = ({
 
   if (!isOpen) return null;
 
+  const hasSelectedItems = selectedResources.length > 0 || selectedBike;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal Container */}
-      <div className="relative w-full max-w-5xl max-h-[100vh] md:max-h-[90vh] bg-white md:rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+      {/* Modal */}
+      <div className="relative w-full max-w-6xl h-[90vh] lg:h-auto lg:max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-gray-200 bg-white shrink-0">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors md:hidden"
-            >
-              <ChevronLeft className="w-5 h-5 text-gray-600" />
-            </button>
-            <div>
-              <h2 className="text-lg md:text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Package className="w-5 h-5 text-orange-500" />
-                Equipment & Services
-              </h2>
-              <p className="text-xs md:text-sm text-gray-500">
-                {event?.title} • {eventDurationDays} day{eventDurationDays > 1 ? 's' : ''} • {participants} rider{participants > 1 ? 's' : ''}
-              </p>
-            </div>
+        <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-200 bg-white flex-shrink-0">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <Package className="w-5 h-5 text-orange-500" />
+              Equipment & Services
+            </h2>
+            <p className="text-sm text-gray-500">
+              {event?.title} • {eventDurationDays} day{eventDurationDays > 1 ? 's' : ''} • {participants} rider{participants > 1 ? 's' : ''}
+            </p>
           </div>
-          <button 
-            onClick={onClose}
-            className="hidden md:block p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-500" />
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <X className="w-6 h-6 text-gray-500" />
           </button>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
-          
+        <div className="flex flex-col lg:flex-row flex-1 overflow-hidden relative">
           {/* Left: Resource List */}
-          <div className="flex-1 overflow-y-auto p-4 md:p-6">
+          <div className="flex-1 overflow-y-auto p-4 lg:p-6 pb-32 lg:pb-6">
             
             {/* Search & Filters */}
-            <div className="mb-4 space-y-3">
+            <div className="mb-6 space-y-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search equipment, services..."
-                  className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
 
@@ -219,7 +207,7 @@ const EventResourceSelector = ({
                   <button
                     key={filter.key}
                     onClick={() => setActiveFilter(filter.key)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                       activeFilter === filter.key
                         ? 'bg-orange-500 text-white'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -236,7 +224,7 @@ const EventResourceSelector = ({
               <div className="mb-4 p-4 bg-red-50 rounded-xl border border-red-200 flex items-center gap-3">
                 <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
                 <p className="text-sm text-red-700">{error}</p>
-                <button 
+                <button
                   onClick={() => window.location.reload()}
                   className="text-sm font-semibold text-red-600 hover:underline ml-auto"
                 >
@@ -254,7 +242,7 @@ const EventResourceSelector = ({
             ) : Object.keys(groupedResources).length === 0 ? (
               <div className="text-center py-12">
                 <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No equipment available</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">No equipment available</h3>
                 <p className="text-gray-500 text-sm">
                   {searchQuery ? 'Try a different search term' : 'All equipment is booked for these dates'}
                 </p>
@@ -279,94 +267,266 @@ const EventResourceSelector = ({
             )}
           </div>
 
-          {/* Right: Summary Sidebar */}
-          <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-gray-200 bg-gray-50 shrink-0 overflow-y-auto">
-            <div className="p-4 md:p-5 space-y-4">
-              
-              {/* Selected Items */}
-              <SelectedResourceChips
-                selectedResources={selectedResources}
-                onRemove={removeResource}
-                onQuantityChange={updateResourceQuantity}
-                eventDurationDays={eventDurationDays}
-              />
-
-              {/* Bike Summary */}
-              {selectedBike && (
-                <div className="p-3 bg-white rounded-xl border border-gray-200">
-                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Selected Bike</h4>
-                  <div className="flex items-center gap-2 mb-2">
-                    <img 
-                      src={selectedBike.images?.[0] || selectedBike.photos?.[0]?.url || '/placeholder-bike.jpg'} 
-                      alt={selectedBike.name}
-                      className="w-10 h-10 rounded-lg object-cover"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{selectedBike.name}</p>
-                      <p className="text-xs text-gray-500">KSh {(selectedBike.daily_rate || 0).toLocaleString()}/day</p>
-                    </div>
+          {/* ─── BOTTOM SHEET PREVIEW (Mobile) / SIDE PANEL (Desktop) ─── */}
+          {hasSelectedItems && (
+            <>
+              {/* Mobile: Draggable Bottom Sheet */}
+              <div 
+                className="lg:hidden fixed bottom-0 left-0 right-0 z-20 bg-white rounded-t-2xl shadow-[0_-8px_30px_rgba(0,0,0,0.25)] flex flex-col will-change-transform"
+                style={{
+                  height: previewExpanded ? '75vh' : 'auto',
+                  transition: isDragging ? 'none' : 'height 0.3s ease-out',
+                }}
+              >
+                {/* ─── DRAGGABLE HEADER ─── */}
+                <div 
+                  className="flex-shrink-0 select-none relative touch-none"
+                  onTouchStart={(e) => {
+                    setIsDragging(true);
+                    dragStartY.current = e.touches[0].clientY;
+                    dragStartExpanded.current = previewExpanded;
+                  }}
+                  onTouchMove={(e) => {
+                    if (!isDragging) return;
+                    const delta = dragStartY.current - e.touches[0].clientY;
+                    if (delta > 50 && !dragStartExpanded.current) {
+                      setPreviewExpanded(true);
+                    } else if (delta < -50 && dragStartExpanded.current) {
+                      setPreviewExpanded(false);
+                    }
+                  }}
+                  onTouchEnd={() => setIsDragging(false)}
+                  onClick={() => !isDragging && setPreviewExpanded(!previewExpanded)}
+                >
+                  {/* Drag Pill */}
+                  <div className="flex justify-center pt-3 pb-2">
+                    <div className="w-12 h-1.5 bg-orange-500 rounded-full" />
                   </div>
-                  <div className="text-xs text-gray-500">
-                    {eventDurationDays} day{eventDurationDays > 1 ? 's' : ''} × {participants} = {' '}
-                    <span className="font-bold text-gray-900">KSh {bikeRentalPrice.toLocaleString()}</span>
+
+                  {/* Side Border Indicators - visible when collapsed */}
+                  {!previewExpanded && (
+                    <>
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
+                        <div className="w-0.5 h-8 bg-gradient-to-b from-transparent via-orange-400 to-transparent rounded-full" />
+                        <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                      </div>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
+                        <div className="w-0.5 h-8 bg-gradient-to-b from-transparent via-orange-400 to-transparent rounded-full" />
+                        <div className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Summary Bar */}
+                  <div className="px-5 pb-4">
+                    <div className="flex items-center gap-4">
+                      {selectedBike && (
+                        <img 
+                          src={selectedBike.images?.[0] || selectedBike.photos?.[0]?.url || 'https://via.placeholder.com/400x300?text=No+Image'} 
+                          alt={selectedBike.name} 
+                          className="w-14 h-14 rounded-xl object-cover flex-shrink-0" 
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-900 text-base truncate">
+                          {selectedResources.length > 0 ? `${selectedResources.length} item${selectedResources.length !== 1 ? 's' : ''} selected` : 'Selected Bike'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {selectedBike ? `${selectedBike.brand} ${selectedBike.model}` : 'No bike selected'}
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-lg font-bold text-orange-600">
+                          KSh {grandTotal.toLocaleString()}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {previewExpanded ? 'Swipe down ↓' : 'Swipe up ↑'}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              )}
 
-              {/* Price Breakdown */}
-              <div className="p-4 bg-white rounded-xl border border-gray-200">
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Price Summary</h4>
-                
-                {selectedBike && (
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">Bike Rental</span>
-                    <span className="font-medium">KSh {bikeRentalPrice.toLocaleString()}</span>
-                  </div>
-                )}
-                
-                {selectedResources.length > 0 && (
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">Equipment & Services</span>
-                    <span className="font-medium">KSh {resourcesTotalPrice.toLocaleString()}</span>
-                  </div>
-                )}
+                {/* ─── EXPANDABLE CONTENT ─── */}
+                <div 
+                  className="flex-1 overflow-y-auto bg-white transition-opacity duration-300"
+                  style={{
+                    opacity: previewExpanded ? 1 : 0,
+                    maxHeight: previewExpanded ? 'calc(75vh - 80px)' : 0,
+                    overflow: previewExpanded ? 'auto' : 'hidden',
+                  }}
+                >
+                  <div className="p-5 space-y-5">
+                    
+                    {/* Selected Items */}
+                    <SelectedResourceChips
+                      selectedResources={selectedResources}
+                      onRemove={removeResource}
+                      onQuantityChange={updateResourceQuantity}
+                      eventDurationDays={eventDurationDays}
+                    />
 
-                {(selectedBike || selectedResources.length > 0) && (
-                  <div className="border-t border-gray-100 pt-2 mt-2">
-                    <div className="flex justify-between font-bold text-gray-900">
-                      <span>Added to Booking</span>
-                      <span className="text-orange-600">KSh {grandTotal.toLocaleString()}</span>
+                    {/* Bike Summary */}
+                    {selectedBike && (
+                      <div className="bg-white rounded-xl border border-gray-200 p-5">
+                        <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Selected Bike</h4>
+                        <div className="flex items-center gap-4 mb-3">
+                          <img
+                            src={selectedBike.images?.[0] || selectedBike.photos?.[0]?.url || 'https://via.placeholder.com/400x300?text=No+Image'}
+                            alt={selectedBike.name}
+                            className="w-16 h-16 rounded-xl object-cover"
+                          />
+                          <div>
+                            <p className="font-bold text-gray-900 text-lg">{selectedBike.name}</p>
+                            <p className="text-sm text-gray-500">{selectedBike.brand} {selectedBike.model}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-bold rounded-full uppercase">
+                                {selectedBike.frame_size}
+                              </span>
+                              <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full capitalize">
+                                {selectedBike.condition || 'good'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between py-2 border-b border-gray-100">
+                            <span className="text-gray-600">Daily Rate</span>
+                            <span className="font-semibold">KSh {(selectedBike.daily_rate || 0).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between py-2">
+                            <span className="text-gray-600">Bike Rental Total</span>
+                            <span className="font-bold text-orange-600">KSh {bikeRentalPrice.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Price Breakdown */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <h4 className="font-bold text-gray-900 mb-4 text-base">Price Summary</h4>
+                      {selectedBike && (
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-gray-600">Bike Rental</span>
+                          <span className="font-medium">KSh {bikeRentalPrice.toLocaleString()}</span>
+                        </div>
+                      )}
+                      {selectedResources.length > 0 && (
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-gray-600">Equipment & Services</span>
+                          <span className="font-medium">KSh {resourcesTotalPrice.toLocaleString()}</span>
+                        </div>
+                      )}
+                      <div className="border-t-2 border-gray-200 pt-3 mt-2">
+                        <div className="flex justify-between font-bold text-lg">
+                          <span className="text-gray-900">Total Added</span>
+                          <span className="text-orange-600">KSh {grandTotal.toLocaleString()}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                )}
 
-                {!selectedBike && selectedResources.length === 0 && (
-                  <p className="text-sm text-gray-400 text-center py-2">
-                    Select equipment or services to see pricing
-                  </p>
-                )}
+                    {/* Confirm Button */}
+                    <button
+                      onClick={handleConfirm}
+                      className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl text-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                    >
+                      <Check className="w-6 h-6" />
+                      {selectedResources.length > 0
+                        ? `Confirm ${selectedResources.length} Item${selectedResources.length !== 1 ? 's' : ''}`
+                        : 'Skip & Continue'
+                      }
+                    </button>
+
+                    <button
+                      onClick={onClose}
+                      className="w-full py-3 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              {/* Confirm Button */}
-              <button
-                onClick={handleConfirm}
-                className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2"
-              >
-                <Check className="w-5 h-5" />
-                {selectedResources.length > 0 
-                  ? `Confirm ${selectedResources.length} Item${selectedResources.length !== 1 ? 's' : ''}`
-                  : 'Skip & Continue'
-                }
-              </button>
+              {/* Desktop: Side Panel (always expanded) */}
+              <div className="hidden lg:flex w-96 border-l border-gray-200 bg-gray-50 flex-col overflow-y-auto">
+                <div className="p-6 space-y-6">
+                  <h3 className="font-bold text-gray-900 text-lg">Selected Items</h3>
 
-              <button
-                onClick={onClose}
-                className="w-full py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
+                  {/* Selected Items */}
+                  <SelectedResourceChips
+                    selectedResources={selectedResources}
+                    onRemove={removeResource}
+                    onQuantityChange={updateResourceQuantity}
+                    eventDurationDays={eventDurationDays}
+                  />
+
+                  {/* Bike Summary */}
+                  {selectedBike && (
+                    <div className="bg-white rounded-xl border border-gray-200 p-5">
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Selected Bike</h4>
+                      <div className="flex items-center gap-4 mb-3">
+                        <img
+                          src={selectedBike.images?.[0] || selectedBike.photos?.[0]?.url || 'https://via.placeholder.com/400x300?text=No+Image'}
+                          alt={selectedBike.name}
+                          className="w-16 h-16 rounded-xl object-cover"
+                        />
+                        <div>
+                          <p className="font-bold text-gray-900">{selectedBike.name}</p>
+                          <p className="text-sm text-gray-500">{selectedBike.brand} {selectedBike.model}</p>
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {eventDurationDays} day{eventDurationDays > 1 ? 's' : ''} × {participants} = {' '}
+                        <span className="font-bold text-gray-900">KSh {bikeRentalPrice.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Price Breakdown */}
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <h4 className="font-bold text-gray-900 mb-4">Price Summary</h4>
+                    {selectedBike && (
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-gray-600">Bike Rental</span>
+                        <span className="font-medium">KSh {bikeRentalPrice.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {selectedResources.length > 0 && (
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-gray-600">Equipment & Services</span>
+                        <span className="font-medium">KSh {resourcesTotalPrice.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="border-t-2 border-gray-200 pt-3 mt-2">
+                      <div className="flex justify-between font-bold text-lg">
+                        <span>Total Added</span>
+                        <span className="text-orange-600">KSh {grandTotal.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Confirm Button */}
+                  <button
+                    onClick={handleConfirm}
+                    className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl text-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                  >
+                    <Check className="w-6 h-6" />
+                    {selectedResources.length > 0
+                      ? `Confirm ${selectedResources.length} Item${selectedResources.length !== 1 ? 's' : ''}`
+                      : 'Skip & Continue'
+                    }
+                  </button>
+
+                  <button
+                    onClick={onClose}
+                    className="w-full py-3 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
