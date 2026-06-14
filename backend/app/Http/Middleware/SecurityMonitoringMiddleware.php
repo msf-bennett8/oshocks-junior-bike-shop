@@ -30,6 +30,7 @@ class SecurityMonitoringMiddleware
         'api/v1/payments/card/initialize',
         'api/v1/payments/card/charge-saved',
         'api/v1/payments/card/verify',
+        'api/v1/payments/card/saved-cards',
         'api/v1/payments/record',
     ];
 

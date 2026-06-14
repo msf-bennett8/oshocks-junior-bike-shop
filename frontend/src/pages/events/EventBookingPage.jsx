@@ -56,6 +56,7 @@ const EventBookingPage = () => {
   const [selectedSavedCard, setSelectedSavedCard] = useState(null);
   const [showAddNewCard, setShowAddNewCard] = useState(false);
   const [loadingSavedCards, setLoadingSavedCards] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
   
   // Fetch event
   useEffect(() => {
@@ -165,6 +166,7 @@ const EventBookingPage = () => {
   // ─── Payment Handler ───
   const handlePayment = useCallback(async () => {
     if (actionLoading) return;
+    setPaymentError(null);
     try {
       setActionLoading(true);
 
@@ -196,7 +198,9 @@ const EventBookingPage = () => {
       const regResponse = await eventService.registerForEvent(slug, payload);
       const regData = regResponse.data || {};
       if (!regData.success) {
-        throw new Error(regData.message || 'Registration failed');
+        const error = new Error(regData.message || 'Registration failed');
+        error.response = { data: regData };
+        throw error;
       }
 
       const regCode = regData.data?.registration_code;
@@ -226,11 +230,15 @@ const EventBookingPage = () => {
                   state: { success: true, message: 'Payment successful! Registration confirmed.' }
                 });
               } else if (status === 'failed') {
-                alert('Payment failed. Please try again.');
+                setPaymentError('Payment failed. Please try again.');
                 setActionLoading(false);
               }
             }
           );
+        } else {
+          const mpesaErr = new Error(mpesaResponse.data?.message || 'M-Pesa payment failed');
+          mpesaErr.response = { data: mpesaResponse.data };
+          throw mpesaErr;
         }
       } else if (paymentMethod === 'card') {
         const cardInit = await eventService.initiateEventCard({
@@ -239,6 +247,10 @@ const EventBookingPage = () => {
         });
         if (cardInit.data?.success && cardInit.data?.data?.authorization_url) {
           window.location.href = cardInit.data.data.authorization_url;
+        } else {
+          const cardErr = new Error(cardInit.data?.message || 'Card payment failed');
+          cardErr.response = { data: cardInit.data };
+          throw cardErr;
         }
       } else if (paymentMethod === 'cod') {
         const codResponse = await eventService.eventCod({
@@ -248,10 +260,15 @@ const EventBookingPage = () => {
           navigate('/my-event-bookings', {
             state: { success: true, message: 'Spot reserved! Pay at the event.' }
           });
+        } else {
+          const codErr = new Error(codResponse.data?.message || 'Cash on delivery failed');
+          codErr.response = { data: codResponse.data };
+          throw codErr;
         }
       }
     } catch (err) {
-      alert(err.response?.data?.message || err.message || 'Payment failed. Please try again.');
+      const message = err.response?.data?.message || err.message || 'Payment failed. Please try again.';
+      setPaymentError(message);
       setActionLoading(false);
     }
   }, [actionLoading, participants, eventAddOns, bikeOption, selectedBike, selectedResources, event, slug, mpesaPhone, user, navigate, paymentMethod, setActionLoading]);
@@ -912,10 +929,27 @@ const EventBookingPage = () => {
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                     <h2 className="text-xl font-bold text-gray-900 mb-4">Payment Method</h2>
 
+                    {/* Error Banner */}
+                    {paymentError && (
+                      <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+                        <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-red-900">Booking Error</p>
+                          <p className="text-sm text-red-700">{paymentError}</p>
+                        </div>
+                        <button 
+                          onClick={() => setPaymentError(null)}
+                          className="text-red-400 hover:text-red-600 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                       <button
                         type="button"
-                        onClick={() => setPaymentMethod('mpesa')}
+                        onClick={() => { setPaymentMethod('mpesa'); setPaymentError(null); }}
                         className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
                           paymentMethod === 'mpesa' ? 'border-orange-600 bg-orange-50' : 'border-gray-300 hover:border-gray-400'
                         }`}
@@ -928,7 +962,7 @@ const EventBookingPage = () => {
 
                       <button
                         type="button"
-                        onClick={() => setPaymentMethod('card')}
+                        onClick={() => { setPaymentMethod('card'); setPaymentError(null); }}
                         className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
                           paymentMethod === 'card' ? 'border-orange-600 bg-orange-50' : 'border-gray-300 hover:border-gray-400'
                         }`}
@@ -944,7 +978,7 @@ const EventBookingPage = () => {
 
                       <button
                         type="button"
-                        onClick={() => setPaymentMethod('cod')}
+                        onClick={() => { setPaymentMethod('cod'); setPaymentError(null); }}
                         className={`p-4 border-2 rounded-lg flex items-center justify-center transition ${
                           paymentMethod === 'cod' ? 'border-orange-600 bg-orange-50' : 'border-gray-300 hover:border-gray-400'
                         }`}
@@ -1051,7 +1085,7 @@ const EventBookingPage = () => {
 
                     <div className="flex justify-between">
                       <button
-                        onClick={() => setStep(3)}
+                        onClick={() => { setStep(3); setPaymentError(null); }}
                         className="px-6 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all text-sm"
                       >
                         Back

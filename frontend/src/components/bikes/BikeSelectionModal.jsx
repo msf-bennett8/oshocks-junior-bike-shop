@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { X, Search, Filter, MapPin, Star, Shield, Check, Bike, Clock, Info, Plus, Minus, Package } from 'lucide-react';
+import { X, Search, Filter, MapPin, Star, Shield, Check, Bike, Clock, Info, Plus, Minus, Package, AlertTriangle } from 'lucide-react';
 import bikeService from '../../services/bikeService';
 import resourceService from '../../services/resourceService';
 import { BIKE_CATEGORY_CONFIG } from '../../data/cyclingMockData';
@@ -18,6 +18,7 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
   const [frameSize, setFrameSize] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
   const [previewExpanded, setPreviewExpanded] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartY = useRef(0);
@@ -171,12 +172,14 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
 
   const handleSelectBike = (bike) => {
     setSelectedBike(bike);
+    setError(null);
     if (!frameSize) setFrameSize(bike.frame_size);
   };
 
   const handleConfirm = async () => {
     if (!selectedBike) return;
     setIsSubmitting(true);
+    setError(null);
     try {
       const totals = calculateBikeTotal(selectedBike);
       await onSelect({
@@ -189,7 +192,7 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
       onClose();
     } catch (err) {
       console.error('Bike selection failed:', err);
-      alert('Failed to confirm selection. Please try again.');
+      setError(err.message || 'Failed to confirm selection. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -214,6 +217,20 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
 
       {/* Modal */}
       <div className="relative w-full max-w-6xl h-[90vh] lg:h-auto lg:max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        {/* Error Banner */}
+        {error && (
+          <div className="mx-4 lg:mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
+            <p className="text-sm text-red-700 flex-1">{error}</p>
+            <button 
+              onClick={() => setError(null)}
+              className="text-red-400 hover:text-red-600 transition-colors"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-200 bg-white flex-shrink-0">
           <div>
@@ -222,7 +239,7 @@ const BikeSelectionModal = ({ isOpen, onClose, onSelect, event, participants = 1
               {event?.title} • {eventDurationDays} day{eventDurationDays > 1 ? 's' : ''} • {participants} rider{participants > 1 ? 's' : ''}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <button onClick={() => { setError(null); onClose(); }} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <X className="w-6 h-6 text-gray-500" />
           </button>
         </div>
