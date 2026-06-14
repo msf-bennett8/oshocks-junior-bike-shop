@@ -18,6 +18,8 @@ const PaymentCallback = () => {
       const urlStatus = searchParams.get('status');
       const orderId = localStorage.getItem('pendingOrderId');
       const orderNumber = localStorage.getItem('pendingOrderNumber');
+      const orderDisplay = localStorage.getItem('pendingOrderDisplay');
+      const purchaseId = localStorage.getItem('pendingPurchaseId');
 
       console.log('========================================');
       console.log('🔄 [PaymentCallback] Page loaded');
@@ -86,8 +88,17 @@ const PaymentCallback = () => {
           // Redirect to success page after 2 seconds
           setTimeout(() => {
             navigate('/order-success', {
-              state: { 
-                orderNumber: orderNumber || response.data?.reference,
+              state: {
+                orderData: {
+                  orderNumber: orderNumber,
+                  orderDisplay: orderDisplay,
+                  purchaseId: purchaseId,
+                  payment: {
+                    method: 'Credit/Debit Card',
+                    transactionId: reference,
+                    status: 'completed'
+                  }
+                },
                 paymentMethod: 'card',
                 reference: reference
               }

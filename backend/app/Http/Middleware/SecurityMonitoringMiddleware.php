@@ -21,6 +21,19 @@ class SecurityMonitoringMiddleware
     ];
 
     /**
+     * Customer-facing payment endpoints that skip admin permission checks.
+     * These are actions where the user is acting on their OWN data (paying for their order),
+     * not accessing system-wide payment data.
+     */
+    protected array $customerPaymentActions = [
+        'api/v1/payments/mpesa/initiate',
+        'api/v1/payments/card/initialize',
+        'api/v1/payments/card/charge-saved',
+        'api/v1/payments/card/verify',
+        'api/v1/payments/record',
+    ];
+
+    /**
      * Handle security monitoring
      */
     public function handle(Request $request, Closure $next)
@@ -152,6 +165,11 @@ class SecurityMonitoringMiddleware
             return;
         }
 
+        // Skip admin permission checks for customer-facing payment actions
+        if ($resourceType === 'payments' && $this->isCustomerPaymentAction($request)) {
+            return;
+        }
+
         // Check permissions
         $hasPermission = $this->checkPermission($user, $resourceType, $accessType);
 
@@ -268,6 +286,29 @@ class SecurityMonitoringMiddleware
             'DELETE' => 'admin',
             default => 'read',
         };
+    }
+
+    /**
+     * Check if the request is a customer-initiated payment action
+     * (not an admin viewing/managing system-wide payments).
+     */
+    private function isCustomerPaymentAction(Request $request): bool
+    {
+        $path = $request->path();
+
+        // Exact endpoint matches
+        foreach ($this->customerPaymentActions as $endpoint) {
+            if ($path === $endpoint || str_contains($path, $endpoint)) {
+                return true;
+            }
+        }
+
+        // Pattern match: GET /payments/{numeric_id} (customer checking their payment status)
+        if (preg_match('#^api/v1/payments/\d+$#', $path)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

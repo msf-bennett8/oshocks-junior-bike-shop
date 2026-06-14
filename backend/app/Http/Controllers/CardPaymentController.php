@@ -45,7 +45,7 @@ class CardPaymentController extends Controller
 
             // Generate unique reference
             $reference = 'OS_CARD_' . strtoupper(Str::random(10)) . '_' . time();
-            
+
             $amount = $order->total;
             $sellerId = $order->items->first()->product->seller_id ?? null;
             $commissionData = $this->commissionService->calculate($amount, $sellerId);
@@ -74,7 +74,7 @@ class CardPaymentController extends Controller
 
             // Initialize Paystack transaction
             $callbackUrl = rtrim(config('app.url'), '/') . '/api/v1/payments/card/callback';
-            
+
             $response = $this->paystackService->initializeTransaction(
                 email: $validated['email'],
                 amount: $amount,
@@ -220,18 +220,18 @@ class CardPaymentController extends Controller
         // Verify webhook signature
         $signature = $request->header('x-paystack-signature');
         $secret = config('services.paystack.secret_key');
-        
+
         // Validate we have required values
         if (empty($signature)) {
             Log::warning('Paystack webhook: Missing signature header');
             return response()->json(['status' => 'missing signature'], 400);
         }
-        
+
         if (empty($secret)) {
             Log::error('Paystack webhook: Secret key not configured');
             return response()->json(['status' => 'server config error'], 500);
         }
-        
+
         $computed = hash_hmac('sha512', $request->getContent(), $secret);
 
         if (!hash_equals($computed, $signature)) {
@@ -249,19 +249,19 @@ class CardPaymentController extends Controller
 
         if ($event === 'charge.success') {
             $reference = $data['reference'] ?? null;
-            
+
             if (!$reference) {
                 Log::warning('Paystack webhook: charge.success missing reference');
                 return response()->json(['status' => 'missing reference'], 400);
             }
-            
+
             $payment = Payment::where('transaction_reference', $reference)->first();
 
             if ($payment && $payment->status === 'pending') {
                 // Extract authorization data for saved cards
                 $authorization = $data['authorization'] ?? [];
                 $isReusable = $authorization['reusable'] ?? false;
-                
+
                 $payment->update([
                     'status' => 'completed',
                     'external_transaction_id' => (string) ($data['id'] ?? ''),
@@ -286,7 +286,7 @@ class CardPaymentController extends Controller
                     'payment_status' => 'paid',
                     'status' => 'processing'
                 ]);
-                
+
                 Log::info('Paystack webhook processed charge.success', [
                     'payment_id' => $payment->id,
                     'reference' => $reference
@@ -311,7 +311,7 @@ class CardPaymentController extends Controller
     {
         try {
             $verification = $this->paystackService->verifyTransaction($reference);
-            
+
             if (!$verification['success']) {
                 return response()->json([
                     'success' => false,
@@ -320,6 +320,15 @@ class CardPaymentController extends Controller
             }
 
             $payment = Payment::where('transaction_reference', $reference)->first();
+
+            // Authorization: user can only verify their own payments, or admin can verify any
+            $user = auth('sanctum')->user();
+            if ($user && !$user->hasAdminAccess() && $payment?->order?->user_id !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
 
             return response()->json([
                 'success' => true,
@@ -346,7 +355,7 @@ class CardPaymentController extends Controller
     {
         try {
             $user = $request->user();
-            
+
             // Get unique saved cards from successful payments
             $savedCards = Payment::whereHas('order', function ($query) use ($user) {
                     $query->where('user_id', $user->id);
@@ -415,7 +424,7 @@ class CardPaymentController extends Controller
 
             // Generate new reference
             $reference = 'OS_CARD_SAVED_' . strtoupper(Str::random(10)) . '_' . time();
-            
+
             $amount = $order->total;
             $sellerId = $order->items->first()->product->seller_id ?? null;
             $commissionData = $this->commissionService->calculate($amount, $sellerId);

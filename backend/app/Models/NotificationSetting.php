@@ -92,14 +92,52 @@ class NotificationSetting extends Model
         if (!$this->isChannelEnabled($channel)) {
             return false;
         }
-        
+
         $catPrefs = $this->category_preferences[$category] ?? ['enabled' => true];
-        
+
         if (!($catPrefs['enabled'] ?? true)) {
             return false;
         }
-        
+
         return $catPrefs[$channel] ?? ($channel === 'in_app');
+    }
+
+    /**
+     * Map template key to category and check if should send
+     */
+    public function shouldSendToTemplate(string $templateKey, string $channel): bool
+    {
+        $categoryMap = [
+            'order_placed' => 'orders',
+            'order_status_changed' => 'orders',
+            'order_shipped' => 'shipping',
+            'order_out_for_delivery' => 'shipping',
+            'order_delivered' => 'shipping',
+            'order_cancelled' => 'orders',
+            'payment_successful' => 'payments',
+            'payment_failed' => 'payments',
+            'payment_refunded' => 'payments',
+            'low_stock_alert' => 'inventory',
+            'stock_running_low' => 'inventory',
+            'back_in_stock' => 'inventory',
+            'new_product_arrival' => 'inventory',
+            'price_drop' => 'promotions',
+            'flash_sale' => 'promotions',
+            'loyalty_tier_changed' => 'promotions',
+            'security_alert' => 'system',
+            'login_failed' => 'system',
+            'audit_alert' => 'audit',
+            'mass_purchase_alert' => 'admin',
+            'bulk_operation_alert' => 'admin',
+            'system_maintenance' => 'system',
+            'support_message' => 'messages',
+            'delivery_issue' => 'shipping',
+            'pickup_ready' => 'shipping',
+        ];
+
+        $category = $categoryMap[$templateKey] ?? 'system';
+
+        return $this->shouldSendToChannel($category, $channel);
     }
 
     public function isQuietHours(): bool
@@ -110,15 +148,15 @@ class NotificationSetting extends Model
 
         $now = now()->timezone($this->timezone);
         $currentTime = $now->format('H:i');
-        
+
         $start = $this->quiet_hours_start;
         $end = $this->quiet_hours_end;
-        
+
         // Handle overnight quiet hours (e.g., 22:00 - 07:00)
         if ($start > $end) {
             return $currentTime >= $start || $currentTime < $end;
         }
-        
+
         return $currentTime >= $start && $currentTime < $end;
     }
 }

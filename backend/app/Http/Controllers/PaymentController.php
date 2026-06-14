@@ -361,6 +361,16 @@ class PaymentController extends Controller
     public function show($id)
     {
         $payment = Payment::with(['order', 'seller'])->findOrFail($id);
+
+        // Authorization: user can only view their own payments, or admin can view any
+        $user = auth('sanctum')->user();
+        if (!$user->hasAdminAccess() && $payment->order?->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
         return response()->json([
             'success' => true,
             'data' => $payment

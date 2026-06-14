@@ -62,8 +62,8 @@ const OrderSuccessPage = () => {
     
     // Simulate fetching order data
     const mockOrder = {
-      orderNumber: `OS${Date.now().toString().slice(-8)}`,
-      orderDisplay: location.state?.orderData?.orderDisplay || null,
+      orderNumber: location.state?.orderData?.orderNumber || `OS${Date.now().toString().slice(-8)}`,
+      orderDisplay: location.state?.orderData?.orderDisplay || location.state?.orderDisplay || null,
       purchaseId: location.state?.orderData?.purchaseId || null,
       orderDate: new Date().toISOString(),
       status: 'confirmed',
