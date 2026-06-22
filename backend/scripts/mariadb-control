@@ -2,8 +2,8 @@
 
 case "$1" in
   start)
-    if pgrep -x "mariadbd" > /dev/null || pgrep -x "mysqld" > /dev/null; then
-      echo "MariaDB is already running"
+    if ss -tlnp 2>/dev/null | grep -q ':3306\s'; then
+      echo "MariaDB is already listening on port 3306"
       exit 0
     fi
     echo "Starting MariaDB..."
@@ -20,11 +20,11 @@ case "$1" in
     echo "MariaDB stopped"
     ;;
   status)
-    if pgrep -x "mariadbd" > /dev/null || pgrep -x "mysqld" > /dev/null; then
-      echo "MariaDB is running"
-      ps aux | grep -E "mariadb|mysqld" | grep -v grep
+    if ss -tlnp 2>/dev/null | grep -q ':3306\s'; then
+      echo "MariaDB is listening on port 3306"
+      ss -tlnp | grep ':3306\s'
     else
-      echo "MariaDB is NOT running"
+      echo "MariaDB is NOT listening on port 3306"
     fi
     ;;
   restart)
