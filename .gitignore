@@ -75,3 +75,8 @@ backend/storage/framework/sessions/
 
 # Vite PWA / Workbox dev build artifacts
 frontend/dev-dist/
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
