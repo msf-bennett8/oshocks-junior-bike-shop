@@ -5,15 +5,21 @@ PIDFILE="/tmp/reverb-oshocks.pid"
 LOGFILE="/tmp/reverb-oshocks.log"
 PROJECT_DIR="$HOME/studio.dev/oshocks/backend"
 
+C_RESET='\033[0m'
+C_RED='\033[0;31m'
+C_GREEN='\033[0;32m'
+C_MAGENTA='\033[0;35m'
+C_CYAN='\033[0;36m'
+
 start_reverb() {
     if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
-        echo "⚠️  Reverb already running (PID: $(cat $PIDFILE))"
+        echo -e "[${C_MAGENTA}REVERB${C_RESET}] ${C_GREEN}Already running (PID: $(cat $PIDFILE))${C_RESET}"
         exit 1
     fi
     cd "$PROJECT_DIR" || exit 1
     nohup php artisan reverb:start --host=0.0.0.0 --port=8080 > "$LOGFILE" 2>&1 &
     echo $! > "$PIDFILE"
-    echo "🟠 Reverb started on 0.0.0.0:8080 (PID: $!)"
+    echo -e "[${C_GREEN}OK${C_RESET}] ${C_GREEN}Reverb started on 0.0.0.0:8080 (PID: $!)${C_RESET}"
 }
 
 stop_reverb() {
@@ -23,35 +29,35 @@ stop_reverb() {
             kill "$PID" 2>/dev/null
             sleep 1
             kill -0 "$PID" 2>/dev/null && kill -9 "$PID" 2>/dev/null
-            echo "🟠 Reverb stopped"
+            echo -e "[${C_GREEN}OK${C_RESET}] ${C_GREEN}Reverb stopped${C_RESET}"
         else
-            echo "🟠 Reverb not running (stale PID file)"
+            echo -e "[${C_MAGENTA}REVERB${C_RESET}] ${C_RED}Not running (stale PID file)${C_RESET}"
         fi
         rm -f "$PIDFILE"
     else
-        echo "🟠 Reverb not running"
+        echo -e "[${C_MAGENTA}REVERB${C_RESET}] ${C_RED}Not running${C_RESET}"
     fi
 }
 
 status_reverb() {
     if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
-        echo "🟠 Reverb: RUNNING (PID: $(cat $PIDFILE), Port: 8080)"
+        echo -e "[${C_MAGENTA}REVERB${C_RESET}]  ${C_GREEN}RUNNING${C_RESET} (PID: $(cat $PIDFILE), Port: ${C_CYAN}8080${C_RESET})"
     else
-        echo "🟠 Reverb: STOPPED"
+        echo -e "[${C_MAGENTA}REVERB${C_RESET}]  ${C_RED}STOPPED${C_RESET}"
         [ -f "$PIDFILE" ] && rm -f "$PIDFILE"
     fi
 }
 
 clear_reverb() {
     rm -f "$LOGFILE"
-    echo "🟠 Reverb logs cleared"
+    echo -e "[${C_GREEN}OK${C_RESET}] ${C_GREEN}Reverb logs cleared${C_RESET}"
 }
 
 logs_reverb() {
     if [ -f "$LOGFILE" ]; then
         tail -f "$LOGFILE"
     else
-        echo "🟠 No log file found. Start Reverb first."
+        echo -e "[${C_MAGENTA}REVERB${C_RESET}] ${C_RED}No log file found. Start Reverb first.${C_RESET}"
     fi
 }
 
@@ -62,5 +68,5 @@ case "$1" in
     status)  status_reverb ;;
     clear)   clear_reverb ;;
     logs)    logs_reverb ;;
-    *)       echo "Usage: $0 {start|stop|restart|status|clear|logs}"; exit 1 ;;
+    *)       echo -e "${C_RED}Usage: $0 {start|stop|restart|status|clear|logs}${C_RESET}"; exit 1 ;;
 esac

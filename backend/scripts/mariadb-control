@@ -1,30 +1,37 @@
 #!/bin/bash
 
+C_RESET='\033[0m'
+C_RED='\033[0;31m'
+C_GREEN='\033[0;32m'
+C_BLUE='\033[0;34m'
+C_YELLOW='\033[0;33m'
+
 case "$1" in
   start)
     if ss -tlnp 2>/dev/null | grep -q ':3306\s'; then
-      echo "MariaDB is already listening on port 3306"
+      echo -e "[${C_BLUE}MARIADB${C_RESET}] ${C_GREEN}Already listening on port 3306${C_RESET}"
       exit 0
     fi
-    echo "Starting MariaDB..."
+    echo -e "[${C_BLUE}MARIADB${C_RESET}] Starting..."
     sudo mariadbd-safe --datadir=/var/lib/mysql &
     sleep 2
     ps aux | grep -E "mariadb|mysqld" | grep -v grep
+    echo -e "[${C_GREEN}OK${C_RESET}] ${C_GREEN}MariaDB started${C_RESET}"
     ;;
   stop)
-    echo "Stopping MariaDB..."
+    echo -e "[${C_BLUE}MARIADB${C_RESET}] Stopping..."
     sudo pkill -f mariadbd-safe
     sudo pkill -f mysqld_safe
     sudo killall mysqld mariadbd 2>/dev/null
     sleep 2
-    echo "MariaDB stopped"
+    echo -e "[${C_GREEN}OK${C_RESET}] ${C_GREEN}MariaDB stopped${C_RESET}"
     ;;
   status)
     if ss -tlnp 2>/dev/null | grep -q ':3306\s'; then
-      echo "MariaDB is listening on port 3306"
+      echo -e "[${C_BLUE}MARIADB${C_RESET}]  ${C_GREEN}RUNNING${C_RESET} -- port 3306"
       ss -tlnp | grep ':3306\s'
     else
-      echo "MariaDB is NOT listening on port 3306"
+      echo -e "[${C_BLUE}MARIADB${C_RESET}]  ${C_RED}STOPPED${C_RESET} -- port 3306 not listening"
     fi
     ;;
   restart)
@@ -33,9 +40,9 @@ case "$1" in
     $0 start
     ;;
   clear)
-    echo "Clearing MariaDB caches..."
+    echo -e "[${C_CYAN}CLEAR${C_RESET}] Clearing MariaDB caches..."
     # Add any cache clearing commands here if needed
-    echo "Caches cleared"
+    echo -e "[${C_GREEN}OK${C_RESET}] ${C_GREEN}Caches cleared${C_RESET}"
     ;;
   clear-restart)
     $0 clear
@@ -43,7 +50,7 @@ case "$1" in
     $0 restart
     ;;
   *)
-    echo "Usage: mariadb control.sh {start|stop|status|restart|clear|clear-restart}"
+    echo -e "${C_RED}Usage: $0 {start|stop|status|restart|clear|clear-restart}${C_RESET}"
     exit 1
     ;;
 esac

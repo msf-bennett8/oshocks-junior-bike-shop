@@ -4,35 +4,43 @@ PIDFILE="/tmp/npm-run-dev.pid"
 LOGFILE="/tmp/npm-run-dev.log"
 FRONTEND_DIR="/home/msf_bennett/studio.dev/oshocks/frontend"
 
+C_RESET='\033[0m'
+C_RED='\033[0;31m'
+C_GREEN='\033[0;32m'
+C_YELLOW='\033[0;33m'
+C_CYAN='\033[0;36m'
+
 case "$1" in
   start)
     if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
-      echo "npm run dev is already running (PID: $(cat $PIDFILE))"
+      echo -e "[${C_YELLOW}NPM${C_RESET}] ${C_GREEN}Already running (PID: $(cat $PIDFILE))${C_RESET}"
       exit 0
     fi
-    echo "Starting npm run dev on http://localhost:3000..."
+    echo -e "[${C_YELLOW}NPM${C_RESET}] Starting on ${C_CYAN}http://localhost:3000${C_RESET}..."
     cd "$FRONTEND_DIR" || exit 1
+    # Use --no-open to prevent Vite from opening a new tab automatically
+    # We'll handle opening/reloading from the control script
     nohup npm run dev -- --port 3000 > "$LOGFILE" 2>&1 &
     echo $! > "$PIDFILE"
     sleep 3
-    echo "Started (PID: $(cat $PIDFILE))"
+    echo -e "[${C_GREEN}OK${C_RESET}] ${C_GREEN}Started (PID: $(cat $PIDFILE))${C_RESET}"
     ;;
   stop)
     if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
-      echo "Stopping npm run dev (PID: $(cat $PIDFILE))..."
+      echo -e "[${C_YELLOW}NPM${C_RESET}] Stopping (PID: $(cat $PIDFILE))..."
       kill $(cat "$PIDFILE") 2>/dev/null
       rm -f "$PIDFILE"
-      echo "Stopped"
+      echo -e "[${C_GREEN}OK${C_RESET}] ${C_GREEN}Stopped${C_RESET}"
     else
-      echo "npm run dev is not running"
+      echo -e "[${C_YELLOW}NPM${C_RESET}] ${C_RED}Not running${C_RESET}"
       rm -f "$PIDFILE"
     fi
     ;;
   status)
     if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
-      echo "Running (PID: $(cat $PIDFILE)) — http://localhost:3000"
+      echo -e "[${C_YELLOW}NPM${C_RESET}]  ${C_GREEN}RUNNING${C_RESET} (PID: $(cat $PIDFILE)) -- ${C_CYAN}http://localhost:3000${C_RESET}"
     else
-      echo "Not running"
+      echo -e "[${C_YELLOW}NPM${C_RESET}]  ${C_RED}STOPPED${C_RESET}"
       rm -f "$PIDFILE" 2>/dev/null
     fi
     ;;
@@ -41,24 +49,24 @@ case "$1" in
     sleep 1
     $0 start
     ;;
-    logs)
+  logs)
     if [ -f "$LOGFILE" ]; then
       tail -f "$LOGFILE"
     else
-      echo "No log file found"
+      echo -e "[${C_YELLOW}NPM${C_RESET}] ${C_RED}No log file found${C_RESET}"
     fi
     ;;
   clear)
-    echo "Clearing npm run dev cache and logs..."
+    echo -e "[${C_CYAN}CLEAR${C_RESET}] Clearing npm cache and logs..."
     rm -f "$PIDFILE"
     rm -f "$LOGFILE"
     cd "$FRONTEND_DIR" || exit 1
     rm -rf node_modules/.vite
     rm -rf node_modules/.cache
-    echo "Cache cleared"
+    echo -e "[${C_GREEN}OK${C_RESET}] ${C_GREEN}Cache cleared${C_RESET}"
     ;;
   *)
-    echo "Usage: npm run dev {start|stop|status|restart|logs|clear}"
+    echo -e "${C_RED}Usage: $0 {start|stop|status|restart|logs|clear}${C_RESET}"
     exit 1
     ;;
 esac

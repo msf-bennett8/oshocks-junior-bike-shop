@@ -4,35 +4,41 @@ PIDFILE="/tmp/php-artisan-serve.pid"
 LOGFILE="/tmp/php-artisan-serve.log"
 BACKEND_DIR="/home/msf_bennett/studio.dev/oshocks/backend"
 
+C_RESET='\033[0m'
+C_RED='\033[0;31m'
+C_GREEN='\033[0;32m'
+C_BLUE='\033[0;34m'
+C_CYAN='\033[0;36m'
+
 case "$1" in
   start)
     if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
-      echo "PHP artisan serve is already running (PID: $(cat $PIDFILE))"
+      echo -e "[${C_GREEN}PHP${C_RESET}] ${C_GREEN}Already running (PID: $(cat $PIDFILE))${C_RESET}"
       exit 0
     fi
-    echo "Starting PHP artisan serve on http://0.0.0.0:8000..."
+    echo -e "[${C_GREEN}PHP${C_RESET}] Starting on ${C_CYAN}http://0.0.0.0:8000${C_RESET}..."
     cd "$BACKEND_DIR" || exit 1
     nohup php artisan serve --host=0.0.0.0 --port=8000 > "$LOGFILE" 2>&1 &
     echo $! > "$PIDFILE"
     sleep 2
-    echo "Started (PID: $(cat $PIDFILE))"
+    echo -e "[${C_GREEN}OK${C_RESET}] ${C_GREEN}Started (PID: $(cat $PIDFILE))${C_RESET}"
     ;;
   stop)
     if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
-      echo "Stopping PHP artisan serve (PID: $(cat $PIDFILE))..."
+      echo -e "[${C_GREEN}PHP${C_RESET}] Stopping (PID: $(cat $PIDFILE))..."
       kill $(cat "$PIDFILE") 2>/dev/null
       rm -f "$PIDFILE"
-      echo "Stopped"
+      echo -e "[${C_GREEN}OK${C_RESET}] ${C_GREEN}Stopped${C_RESET}"
     else
-      echo "PHP artisan serve is not running"
+      echo -e "[${C_GREEN}PHP${C_RESET}] ${C_RED}Not running${C_RESET}"
       rm -f "$PIDFILE"
     fi
     ;;
   status)
     if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
-      echo "Running (PID: $(cat $PIDFILE)) — http://0.0.0.0:8000"
+      echo -e "[${C_GREEN}PHP${C_RESET}]  ${C_GREEN}RUNNING${C_RESET} (PID: $(cat $PIDFILE)) -- ${C_CYAN}http://0.0.0.0:8000${C_RESET}"
     else
-      echo "Not running"
+      echo -e "[${C_GREEN}PHP${C_RESET}]  ${C_RED}STOPPED${C_RESET}"
       rm -f "$PIDFILE" 2>/dev/null
     fi
     ;;
@@ -42,16 +48,16 @@ case "$1" in
     $0 start
     ;;
   clear)
-    echo "Clearing caches..."
+    echo -e "[${C_CYAN}CLEAR${C_RESET}] Clearing caches..."
     cd "$BACKEND_DIR" || exit 1
     php artisan cache:clear
     php artisan config:clear
     php artisan route:clear
     php artisan view:clear
-    echo "Caches cleared"
+    echo -e "[${C_GREEN}OK${C_RESET}] ${C_GREEN}Caches cleared${C_RESET}"
     ;;
   *)
-    echo "Usage: php artisan serve {start|stop|status|restart|clear}"
+    echo -e "${C_RED}Usage: $0 {start|stop|status|restart|clear}${C_RESET}"
     exit 1
     ;;
 esac
