@@ -20,7 +20,7 @@ case "$1" in
     cd "$FRONTEND_DIR" || exit 1
     # Use --no-open to prevent Vite from opening a new tab automatically
     # We'll handle opening/reloading from the control script
-    nohup npm run dev -- --port 3000 > "$LOGFILE" 2>&1 &
+    nohup npm run dev -- --port 3000 --no-open > "$LOGFILE" 2>&1 &
     echo $! > "$PIDFILE"
     sleep 3
     echo -e "[${C_GREEN}OK${C_RESET}] ${C_GREEN}Started (PID: $(cat $PIDFILE))${C_RESET}"
